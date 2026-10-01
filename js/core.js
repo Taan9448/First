@@ -66,6 +66,13 @@
         return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
       });
     },
+    // 조사: josa('브리아', '이/가') → '브리아가', josa('검', '을/를') → '검을'
+    josa: function (word, pair) {
+      var c = word.charCodeAt(word.length - 1);
+      var batchim = c >= 0xac00 && c <= 0xd7a3 && (c - 0xac00) % 28 !== 0;
+      var p = pair.split('/');
+      return word + (batchim ? p[0] : p[1]);
+    },
     cmp: function (a, op, n) {
       switch (op) {
         case '<': return a < n;

@@ -183,8 +183,8 @@
     if (def.unplayable) return { ok: false, reason: '사용할 수 없는 카드' };
     if (this.phase !== 'player') return { ok: false, reason: '내 턴이 아님' };
     var caster = this.casterOf(inst);
-    if (caster && caster.dead) return { ok: false, reason: caster.name + '이(가) 쓰러짐' };
-    if (caster && S.has(caster, 'frozen')) return { ok: false, reason: caster.name + '이(가) 빙결됨' };
+    if (caster && caster.dead) return { ok: false, reason: U.josa(caster.name, '이/가') + ' 쓰러짐' };
+    if (caster && S.has(caster, 'frozen')) return { ok: false, reason: U.josa(caster.name, '이/가') + ' 빙결됨' };
     var cost = this.costOf(inst);
     if (cost !== 'X' && cost > this.energy) return { ok: false, reason: '에너지 부족' };
     if (def.target === 'downedAlly' && !this.heroes.some(function (h) { return h.dead; })) {

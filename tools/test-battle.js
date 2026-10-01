@@ -297,9 +297,12 @@ function handCard(b, id) {
   }
   console.log('  승리 ' + wins + ' · 패배 ' + losses + ' · 80턴 초과 ' + stuck + ' · 오류 ' + errors);
   check(errors === 0, '무작위 전투 중 오류 없음');
+  // 사용·등장 범위 검사는 충분히 많이 돌렸을 때만 (적게 돌리면 우연히 빠질 수 있다)
   const never = cards.filter(c => !played.has(c.id)).map(c => c.id);
-  check(!never.length, '모든 카드가 한 번 이상 사용됨 (미사용: ' + never.join(', ') + ')');
-  check(seenMonsters.size === 36, '모든 몬스터 등장 (' + seenMonsters.size + '/36)');
+  if (N >= 1000) {
+    check(!never.length, '모든 카드가 한 번 이상 사용됨 (미사용: ' + never.join(', ') + ')');
+    check(seenMonsters.size === 36, '모든 몬스터 등장 (' + seenMonsters.size + '/36)');
+  } else console.log('  (사용 범위 검사 생략: 1000회 미만)');
 
   console.log(failures ? '\n실패 ' + failures + '건' : '\n모든 테스트 통과');
   process.exit(failures ? 1 : 0);

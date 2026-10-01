@@ -1,5 +1,4 @@
-// main.js — 초기화, 전투 테스트 메뉴(2단계 임시 화면), ?debug=1 처리
-// 3단계에서 타이틀 → 맵 → 파티 편성 흐름으로 바뀐다.
+// main.js — 초기화, ?debug=1 처리, 디버그용 전투 테스트 메뉴
 (function () {
   'use strict';
   var G = Game, UI = G.UI;
@@ -37,7 +36,7 @@
     }).join('');
     var enc = state.encounter.map(function (id) { return G.Data.monsterById[id].name; }).join(', ') || '(없음)';
     root.innerHTML =
-      '<h1>다섯 영웅의 원정</h1><div class="sub">2단계 · 전투 테스트</div>' +
+      '<h1>전투 테스트</h1><div class="sub">디버그 전용 · 저장과 무관 · <a href="#" class="back-title">타이틀로</a></div>' +
       '<div class="panel pix"><h2>파티 (최대 3명)</h2><div class="row">' + heroes + '</div></div>' +
       '<div class="panel pix"><h2>덱</h2><div class="row">' + decks + '</div></div>' +
       '<div class="panel pix"><h2>적 (최대 4마리) — 현재: ' + enc + '</h2><div class="enc-list">' + monsters + '</div>' +
@@ -74,6 +73,7 @@
     });
     root.querySelector('.clear').onclick = function () { state.encounter = []; renderMenu(); };
     root.querySelector('.start').onclick = startBattle;
+    root.querySelector('.back-title').onclick = function (e) { e.preventDefault(); G.Meta.title(); };
   }
 
   function startBattle() {
@@ -89,7 +89,7 @@
         monsters: state.encounter.slice(),
         deck: deck,
         gold: 100
-      }, backToMenu);
+      }, { onExit: backToMenu });
     });
   }
 
@@ -99,10 +99,13 @@
     renderMenu();
   }
 
+  G.TestMenu = { open: function () { UI.show('test'); renderMenu(); } };
+
   window.addEventListener('DOMContentLoaded', function () {
+    var settings = G.Save.loadSettings();
+    G.speed = settings.speed || 1;
     G.BattleUI.init();
-    UI.show('test');
-    renderMenu();
+    G.Meta.title();
     // 나머지 카드 그림은 뒤에서 미리 변환해 둔다
     setTimeout(function () { G.ArtCards.preload(G.Data.cards); }, 300);
   });

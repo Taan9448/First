@@ -362,204 +362,6 @@
   });
 
   // =====================================================================
-  // 몬스터 (왼쪽을 바라본다). 숲 7종은 고유 그림, 나머지는 3단계에서 고유 그림으로 바꾼다
-  // =====================================================================
-  P.def('slime', {
-    pal: { a: '#6fd36a', A: '#3f9a46', w: '#ffffff', e: '#1d2b1e', m: '#2b6e33' },
-    flat: 'ewm',
-    half: [
-      '.....aaa',
-      '...aaaaa',
-      '..aaaaaa',
-      '.aawaaaa',
-      '.awwaeea',
-      'aaaaaeea',
-      'aaaaaaaa',
-      'aaaaaamm',
-      'aAaaaaaa',
-      'AAAaaaaa',
-      '.AAAAAAA'
-    ],
-    breathe: 4
-  });
-
-  P.def('mushroom', {
-    pal: { r: '#d9473f', R: '#9c2b2b', w: '#fff4e0', s: '#efe0c4', S: '#c9b28c', e: '#2a1b3d', m: '#8a5040' },
-    flat: 'em',
-    half: [
-      '.....rrr',
-      '...rrrrr',
-      '..rrwwrr',
-      '.rrrwwrr',
-      '.rrrrrrw',
-      'rrwwrrrr',
-      'rrwwrrrr',
-      'RRRRRRRR',
-      '...sssss',
-      '...seess',
-      '...seess',
-      '...sssmm',
-      '...sssss',
-      '..SSSSSS'
-    ],
-    breathe: 7
-  });
-
-  P.def('forest_wolf', {
-    pal: { a: '#8a8f9e', A: '#5c6070', c: '#c8ccd6', e: '#ffd23f', k: '#2a1b3d', t: '#ffffff', n: '#2a1b3d' },
-    flat: 'ekn',
-    rows: [
-      '..a.a...................',
-      '..aaaa..................',
-      '.aaeaaa.................',
-      'naaaaaaa................',
-      'nntttaaaaaaaaaaaaaa.....',
-      '...cccaaaaaaaaaaaaaaa...',
-      '....ccaaaaaaaaaaaaaaaaa.',
-      '.....aaaaaaaaaaaaaaa.aaa',
-      '.....aaAAAAAAAAAaaa...aa',
-      '.....aa.aa....aa.aa.....',
-      '.....aa.aa....aa.aa.....',
-      '.....AA.AA....AA.AA.....'
-    ],
-    breathe: 4
-  });
-
-  P.def('vine', {
-    pal: { g: '#5fbf4f', G: '#357a35', l: '#9be36a', e: '#ffe066', k: '#2a1b3d', r: '#e05a8a' },
-    flat: 'ek',
-    rows: [
-      '....r.......r...',
-      '...rrr..l..rrr..',
-      '....g..lll..g...',
-      '.l..gg.ggg.gg..l',
-      'lll..gggggggg.ll',
-      '.g..ggkeeekgg.g.',
-      '.gg.gggeeeggg.g.',
-      '..ggggggggggggg.',
-      '...gggGgggGggg..',
-      '....ggGgggGgg...',
-      '..lgggGgggGgggl.',
-      '.ll.gGG.g.GGg.ll',
-      '...gG..ggg..Gg..',
-      '..GG..gG.Gg..GG.'
-    ],
-    breathe: 7
-  });
-
-  P.def('goblin', {
-    pal: { g: '#7cc95a', G: '#4e8f3a', e: '#ffdb4d', k: '#2a1b3d', a: '#7a5233', A: '#4f3420', w: '#e9e4d6', s: '#cfd6e0' },
-    flat: 'ek',
-    rows: [
-      '................',
-      'gg....gggg....gg',
-      '.ggg.gggggg.ggg.',
-      '..gggggggggggg..',
-      '....ggekggekg...',
-      '....gggggggggg..',
-      '....ggwgwgwggg..',
-      '.....gggggggg...',
-      '...aaaaaaaaaaa..',
-      '..gaaAaaaaAaaag.',
-      's.gaaAaaaaAaaag.',
-      'sgg.aaaaaaaaa.gg',
-      's...AAAAAAAAA...',
-      '.....gg...gg....',
-      '.....gg...gg....',
-      '....GGG...GGG...'
-    ],
-    breathe: 8
-  });
-
-  P.def('giant_spider', {
-    pal: { a: '#5a3f7a', A: '#3a2852', r: '#d94a6a', e: '#ff5a5a', w: '#ffd0d0', l: '#43305e' },
-    flat: 'ew',
-    half: [
-      '...........',
-      '.......aaaa',
-      '.....aaaaaa',
-      '....aaaraaa',
-      '....aaarraa',
-      'l...aaaaaaa',
-      '.l..aaaaaaa',
-      '..l.aaewaew',
-      '..lllaeeaee',
-      '.l...aaaaaa',
-      'l...llaaaaw',
-      '...l..lAAAA',
-      '..l..l..lAA',
-      '.l..l..l...',
-      'l..l..l....'
-    ],
-    breathe: 7
-  });
-
-  P.def('treant', {
-    pal: { b: '#7a5233', B: '#4f3420', g: '#4fae4a', G: '#2f7a35', l: '#8fdc6a', e: '#ffcf4d', k: '#1a1028', m: '#2a1b10' },
-    flat: 'ekm',
-    half: [
-      '......llll..',
-      '...lllgggggg',
-      '..lgggggGggg',
-      '.lggGggggggg',
-      'lgggggggGggg',
-      'lggggGgggggg',
-      '.gggggggggGg',
-      '..gGgg.gggbb',
-      '....bbbbbbbb',
-      '...bbbbBbbbb',
-      'b..bkkkbbbBb',
-      'bb.bkeekbbbb',
-      '.bbbbkkbbbbb',
-      '..bbbbbbbbbB',
-      '...bbBbmmmmm',
-      '...bbBbbmbmb',
-      '...bbbbbbbbb',
-      '...bbbBbbbbb',
-      '..bbbbBbbbbb',
-      '.bbBbbbbbBbb',
-      'bbB.bbb..bbb',
-      'bB..Bb....Bb'
-    ],
-    breathe: 9
-  });
-
-  // 임시 그림(3단계에서 테마별 고유 그림으로 교체)
-  P.def('_unknown', { pal: { a: '#888', A: '#555', e: '#fff' }, flat: 'e', half: ['..aa', '.aaa', 'aaee', 'aaaa', 'AAAA'] });
-  var TEMP = {
-    scorpion: ['giant_spider', { a: '#c99a52', A: '#8a6230', r: '#e0b060', l: '#a07840' }],
-    cactus: ['mushroom', { r: '#4fae4a', R: '#2f7a35', w: '#f2e6a0' }],
-    bandit: ['goblin', { g: '#d9a37f', G: '#a8775a', a: '#c9a441', A: '#8a6a25' }],
-    mummy: ['goblin', { g: '#e6dcc0', G: '#b3a888', a: '#d6caa8', A: '#a89a78' }],
-    sand_spirit: ['slime', { a: '#e0c27a', A: '#b08f45' }],
-    sandworm: ['vine', { g: '#c99a52', G: '#8a6230', l: '#e6c27a' }],
-    pharaoh: ['treant', { b: '#2f5fb0', B: '#1f3f80', g: '#f0c75e', G: '#b08f2a', l: '#ffe08a' }],
-    snow_rabbit: ['slime', { a: '#f4f6fb', A: '#b8c4d6' }],
-    frost_wolf: ['forest_wolf', { a: '#cfe6f5', A: '#8fb0cc', c: '#ffffff', e: '#7fe3ff' }],
-    frost_spirit: ['vine', { g: '#8fd6f2', G: '#4f9cc8', l: '#e6fbff' }],
-    yeti: ['goblin', { g: '#e9f1f7', G: '#a9bccf', a: '#8fb0cc', A: '#5f7f9c' }],
-    ice_witch: ['mushroom', { r: '#5b8fd9', R: '#35589a', w: '#e6fbff' }],
-    glacier_golem: ['treant', { b: '#8fc6e6', B: '#5a8fb3', g: '#e6fbff', G: '#a9d6ef', l: '#ffffff' }],
-    frost_queen: ['giant_spider', { a: '#8fd6f2', A: '#4f9cc8', r: '#e6fbff', l: '#cfe6f5' }],
-    fire_imp: ['goblin', { g: '#e0584a', G: '#9c2f2a', a: '#3d2a2a', A: '#241818' }],
-    lava_slime: ['slime', { a: '#ff8a3d', A: '#c24a1f' }],
-    fire_bat: ['forest_wolf', { a: '#a33a2f', A: '#6b241c', c: '#ff8a3d', e: '#ffe066' }],
-    magma_golem: ['treant', { b: '#4a3a3a', B: '#2a1f1f', g: '#ff8a3d', G: '#c24a1f', l: '#ffd23f' }],
-    fire_shaman: ['mushroom', { r: '#ff8a3d', R: '#c24a1f', w: '#ffe066' }],
-    phoenix: ['vine', { g: '#ff8a3d', G: '#c24a1f', l: '#ffe066', r: '#ffffff' }],
-    ignis: ['giant_spider', { a: '#c24a1f', A: '#7a2412', r: '#ffd23f', l: '#a33a2f' }],
-    skeleton: ['goblin', { g: '#e9e4d6', G: '#a8a090', a: '#5a5f69', A: '#3a3e46' }],
-    dark_mage: ['mushroom', { r: '#5a3f7a', R: '#3a2852', w: '#c9a0ff' }],
-    gargoyle: ['goblin', { g: '#8a8f99', G: '#5a5f69', a: '#6a6f79', A: '#4a4f59' }],
-    vampire: ['forest_wolf', { a: '#3a2852', A: '#241838', c: '#d94a6a', e: '#ff5a5a' }],
-    cursed_armor: ['treant', { b: '#5a5f69', B: '#3a3e46', g: '#8a3a5a', G: '#5a2440', l: '#c9a0ff' }],
-    death_knight: ['giant_spider', { a: '#3a3e46', A: '#24272e', r: '#7fe3ff', l: '#5a5f69' }],
-    baltar: ['treant', { b: '#3a2852', B: '#241838', g: '#d94a6a', G: '#8a2440', l: '#ffb0c0' }],
-    astaroth: ['giant_spider', { a: '#2a1838', A: '#160c22', r: '#ff3a5a', e: '#ffd23f', l: '#5a2a6a' }]
-  };
-  Object.keys(TEMP).forEach(function (id) { P.alias(id, TEMP[id][0], TEMP[id][1]); });
-
-  // =====================================================================
   // 아이콘 (행동 예고·상태이상·메뉴)
   // =====================================================================
   var ICONS = {
@@ -624,7 +426,18 @@
     discard: { pal: { a: '#8a8f99', A: '#5a5f69', r: '#ff6a6a' }, rows: [
       'aaaaa..', 'aAAAAa.', 'aArrrAa', 'aAAAAAa', 'aArrrAa', '.aAAAAa', '..aaaaa'] },
     exhaust: { pal: { r: '#ff7a3a', y: '#ffd23f' }, rows: [
-      '..r..r.', '.rr.rr.', '.ryrryr', 'ryyyyyr', 'ryyyyyr', '.ryyyr.'] }
+      '..r..r.', '.rr.rr.', '.ryrryr', 'ryyyyyr', 'ryyyyyr', '.ryyyr.'] },
+    // 맵·노드
+    crown: { pal: { y: '#ffd23f', Y: '#c99a20', r: '#ff5a5a' }, rows: [
+      'y..y..y', 'yy.y.yy', 'yyyyyyy', 'yryyyry', 'YYYYYYY'] },
+    elite: { pal: { w: '#e9e4d6', k: '#1a1028', r: '#ff5a5a' }, rows: [
+      'r.....r', 'rr...rr', '.wwwww.', 'wkkwkkw', 'wwwkwww', '.wkwkw.'] },
+    campfire: { pal: { r: '#ff7a2a', y: '#ffd23f', b: '#8a5a35' }, rows: [
+      '...r...', '..rr.r.', '.ryrrr.', '.ryyyr.', '..ryr..', 'b.bbb.b', '.b...b.'] },
+    lock: { pal: { a: '#8a93b8', A: '#5a6080', k: '#1a1028' }, rows: [
+      '.aaa.', 'a...a', 'a...a', 'AAAAA', 'AAkAA', 'AAkAA', 'AAAAA'] },
+    check: { pal: { g: '#7cf27c' }, rows: [
+      '......g', '.....gg', 'g...gg.', 'gg.gg..', '.ggg...', '..g....'] }
   };
   P.ICONS = ICONS;
 })();

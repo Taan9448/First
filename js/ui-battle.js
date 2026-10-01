@@ -12,16 +12,23 @@
   var drag = null;         // { inst, x0, y0, active }
   var hoverUnit = null;
   var opts = null;         // 전투를 다시 시작하기 위한 설정
-  var onExit = null;
+  var onExit = null;       // '맵으로'/'메뉴로' 버튼
+  var onEnd = null;        // 전투가 끝나면 결과를 넘길 함수(없으면 테스트용 결과 창)
 
   var BattleUI = G.BattleUI = {};
 
   function $(sel) { return root.querySelector(sel); }
 
   // ================= 시작 =================
-  BattleUI.start = function (battleOpts, exitFn) {
+  // hooks: { onExit, onEnd(result, battle), exitLabel, confirmExit }
+  BattleUI.start = function (battleOpts, hooks) {
     opts = battleOpts;
-    onExit = exitFn || onExit;
+    hooks = hooks || {};
+    onExit = hooks.onExit || onExit;
+    onEnd = hooks.onEnd || null;
+    var exitBtn = document.querySelector('#screen-battle .to-menu');
+    exitBtn.textContent = hooks.exitLabel || '메뉴로';
+    exitBtn._confirm = !!hooks.confirmExit;
     root = document.getElementById('screen-battle');
     field = $('.field'); heroesEl = $('.side.heroes'); monstersEl = $('.side.monsters');
     handEl = $('.hand'); fxEl = document.getElementById('fx'); aimEl = document.getElementById('aim');
@@ -377,7 +384,10 @@
     on('fx:revive', function (d) { renderUnit(d.unit); float(d.unit, '부활', 'text good'); });
     on('battle:end', function (d) {
       var ended = B;
-      setTimeout(function () { if (B === ended) showResult(d.result); }, 700);
+      setTimeout(function () {
+        if (B !== ended) return;
+        if (onEnd) onEnd(d.result, ended); else showResult(d.result);
+      }, d.result === 'win' ? 900 : 1300);
     });
   }
 
@@ -388,7 +398,7 @@
     var m = UI.modal('<h2>' + (win ? '승리!' : '패배') + '</h2>' + gold +
       '<div class="row" style="justify-content:center"><button class="btn gold again">다시 하기</button><button class="btn back">테스트 메뉴</button></div>',
     'result ' + (win ? 'win' : 'lose'));
-    m.querySelector('.again').onclick = function () { BattleUI.start(opts); };
+    m.querySelector('.again').onclick = function () { BattleUI.start(opts, { onExit: onExit }); };
     m.querySelector('.back').onclick = function () { UI.closeModal(m); if (onExit) onExit(); };
   }
 
@@ -412,7 +422,14 @@
     root.querySelector('.pile-draw').addEventListener('click', function () { showPile('draw', '뽑을 카드'); });
     root.querySelector('.pile-discard').addEventListener('click', function () { showPile('discard', '버린 카드'); });
     root.querySelector('.pile-exhaust').addEventListener('click', function () { showPile('exhaust', '소멸한 카드'); });
-    root.querySelector('.to-menu').addEventListener('click', function () { if (onExit) onExit(); });
+    root.querySelector('.to-menu').addEventListener('click', function () {
+      if (!onExit) return;
+      if (!this._confirm) { G.Battle.current = null; B = null; onExit(); return; }
+      var m = UI.modal('<h2>맵으로 나갈까요?</h2><p>이 전투는 다음에 처음부터 다시 한다.</p>' +
+        '<div class="row" style="justify-content:flex-end"><button class="btn no">계속 싸우기</button><button class="btn gold yes">맵으로</button></div>');
+      m.querySelector('.no').onclick = function () { UI.closeModal(m); };
+      m.querySelector('.yes').onclick = function () { UI.closeModal(m); G.Battle.current = null; B = null; onExit(); };
+    });
     root.querySelector('.debug-kill').addEventListener('click', function () { if (B && B.phase === 'player' && !B.busy) B.debugKillAll(); });
     root.querySelector('.field').addEventListener('click', function (e) {
       if (selected && !B.needsTarget(selected) && !e.target.closest('.unit')) tryPlay(selected, null);

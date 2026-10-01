@@ -93,6 +93,21 @@
     bomb: circ(36, 34, 17, '#3b3557') + circ(30, 28, 4, '#8a8fb0', 'stroke="none"') + path('M46 20 Q54 10 60 12', 'none', 'stroke="' + brown + '" stroke-width="3"') + path('M60 4 l2 6 6 2 -6 2 -2 6 -2 -6 -6 -2 6 -2 Z', '#ffe066', 'stroke-width="1"'),
     potion: path('M34 6 H46 V16 Q60 22 60 36 Q60 52 40 52 Q20 52 20 36 Q20 22 34 16 Z', '#ff6a8a') + rect(32, 4, 16, 5, '#c9a441') + circ(32, 34, 4, '#ffd0dc', 'stroke="none"'),
     chest: rect(14, 24, 52, 26, '#a8683a') + path('M14 24 Q14 8 40 8 Q66 8 66 24 Z', '#c27a45') + rect(14, 22, 52, 5, gold) + rect(36, 26, 8, 10, gold),
+    // 전설 카드 전용
+    musou: [0, 45, 90, 135, 180, 225, 270, 315].map(function (a) {
+      return g('translate(40 28) rotate(' + a + ') translate(0 -14) scale(0.45)', swordShape(steel, gold, brown));
+    }).join('') + circ(40, 28, 6, '#ffe066'),
+    fortress: rect(14, 22, 52, 30, '#9aa7b8') + rect(10, 10, 14, 42, '#b8c4d6') + rect(56, 10, 14, 42, '#b8c4d6') +
+      path('M10 10 V6 H14 V10 M20 10 V6 H24 V10 M56 10 V6 H60 V10 M66 10 V6 H70 V10', 'none', 'stroke-width="2"') + path('M34 52 V38 Q40 30 46 38 V52 Z', '#3b3557') + rect(37, 14, 6, 6, '#ffe066'),
+    miracle: glow(40, 28, 26, '#fff3a8') + path('M40 2 L45 22 L66 28 L45 34 L40 54 L35 34 L14 28 L35 22 Z', '#ffffff') + circ(40, 28, 6, '#ffe066'),
+    goddess: circ(40, 12, 9, 'none', 'stroke="' + gold + '" stroke-width="3"') + path('M36 30 Q12 8 2 20 Q12 26 6 34 Q20 36 36 36 Z', '#ffffff') +
+      path('M44 30 Q68 8 78 20 Q68 26 74 34 Q60 36 44 36 Z', '#ffffff') + path('M34 54 L36 24 Q40 18 44 24 L46 54 Z', '#fff3a8') + circ(40, 20, 5, '#ffd0b0'),
+    fate: path('M6 10 Q40 50 74 10', 'none', 'stroke="#ff6ad9" stroke-width="3"') + path('M6 46 Q40 6 74 46', 'none', 'stroke="#7fe3ff" stroke-width="3"') +
+      rect(30, 18, 20, 22, '#3b3557') + path('M34 24 H46 M34 30 H46', 'none', 'stroke="#4fbf8a" stroke-width="2"'),
+    pandora: glow(40, 18, 22, '#ff9ad9') + path('M12 30 L40 22 L68 30 L40 38 Z', '#7a4aa8') + path('M12 30 V48 L40 56 V38 Z', '#5a2f86') + path('M68 30 V48 L40 56 V38 Z', '#4a2470') +
+      path('M14 26 L36 6 L64 14 L44 20 Z', '#9a6ad6') + circ(30, 14, 2, '#ffe066') + circ(52, 8, 2, '#7fe3ff') + circ(42, 4, 2, '#ff6ad9'),
+    armory: g('translate(28 30) rotate(-25) scale(0.8)', swordShape(steel, gold, brown)) + g('translate(52 30) rotate(25) scale(0.8)', swordShape(steel, gold, brown)) +
+      g('translate(40 30) scale(0.75)', rect(-2, -16, 4, 36, brown) + path('M2 -16 Q18 -14 18 -2 Q10 -6 2 -4 Z', steel) + path('M-2 -16 Q-18 -14 -18 -2 Q-10 -6 -2 -4 Z', steel)),
     sand: path('M2 44 Q20 30 40 40 Q60 50 78 36 V56 H2 Z', '#e0c27a') + path('M10 52 Q30 42 50 50 Q66 56 78 48', 'none', 'stroke="#b08f45" stroke-width="2"') + circ(24, 20, 2, '#e0c27a') + circ(44, 14, 2, '#e0c27a') + circ(58, 24, 2, '#e0c27a')
   };
 
