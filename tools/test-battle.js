@@ -223,7 +223,8 @@ function handCard(b, id) {
   b = await newBattle(['kai'], ['phoenix']);
   b.energy = 9; b.heroes[0].status.strength = 300;
   await b.play(handCard(b, 'K01'), b.monsters[0]);
-  check(!b.monsters[0].dead && b.monsters[0].hp === 56, '불사조 부활 체력 40% = 56');
+  const rev = Math.floor(b.monsters[0].maxHp * G.Data.monsterById.phoenix.revive.pct);
+  check(!b.monsters[0].dead && b.monsters[0].hp === rev, '불사조 부활 체력 = ' + rev + ' (실제 ' + b.monsters[0].hp + ')');
   await b.play(handCard(b, 'K01'), b.monsters[0]);
   check(b.result === 'win', '두 번째에는 처치 → 승리');
 

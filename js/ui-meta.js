@@ -121,7 +121,9 @@
   }
 
   // 진행 중인 스테이지의 현재 노드로
+  var starting = false; // 전투 시작 버튼을 빠르게 두 번 눌러도 전투는 하나만
   Meta.continueRun = function () {
+    if (starting) return;
     var r = St.data.run;
     if (!r) return Meta.map();
     if (r.pending) return Meta.reward();
@@ -129,7 +131,9 @@
     if (node.type === 'rest') return r.shop ? Meta.shop() : Meta.camp();
     var opts = St.battleOptions();
     var defs = opts.deck.map(function (id) { return D.cardById[id]; });
+    starting = true;
     G.ArtCards.preload(defs).then(function () {
+      starting = false;
       G.BattleUI.start(opts, {
         exitLabel: '맵으로', confirmExit: true,
         onExit: function () { Meta.map(); },

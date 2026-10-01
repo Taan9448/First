@@ -30,8 +30,8 @@ Game.Data.stages = [
     easy: [['skeleton', 'dark_mage'], ['gargoyle', 'skeleton'], ['vampire']],
     hard: [['cursed_armor', 'dark_mage'], ['vampire', 'gargoyle'], ['skeleton', 'skeleton', 'dark_mage']] },
   { n: 10, theme: 'castle', nodes: ['battle', 'midboss', 'rest', 'final'], boss: 'astaroth', midboss: 'baltar',
-    easy: [['cursed_armor', 'vampire'], ['gargoyle', 'dark_mage', 'skeleton']],
-    hard: [['cursed_armor', 'vampire'], ['gargoyle', 'dark_mage', 'skeleton']] }
+    easy: [['skeleton', 'dark_mage'], ['gargoyle', 'skeleton'], ['vampire', 'skeleton']],
+    hard: [['skeleton', 'dark_mage'], ['gargoyle', 'skeleton'], ['vampire', 'skeleton']] }
 ];
 
 Game.Data.THEME_NAME = { forest: '속삭이는 숲', desert: '타오르는 사막', snow: '얼어붙은 설원', volcano: '용암 화산', castle: '마왕성' };
