@@ -164,7 +164,7 @@
   // ---------------- 카드 요소 ----------------
   UI.cardEl = function (def, opts) {
     opts = opts || {};
-    var c = UI.el('div', 'card r-' + def.rarity + (opts.static ? ' static' : '') + (def.duo ? ' duo' : ''));
+    var c = UI.el('div', 'card r-' + def.rarity + ' t-' + def.type + (opts.static ? ' static' : '') + (def.duo ? ' duo' : ''));
     var owner = G.Data.characters.filter(function (x) { return x.id === def.owner; })[0];
     var band = owner ? owner.color : '#8a93b8';
     if (def.duo) {
@@ -174,7 +174,7 @@
     var plain = def.text.replace(/\{d\d\}/g, '00').replace(/\{\+([^}]*)\}/g, '$1');
     var len = plain.length;
     c.innerHTML = '<div class="cin">' +
-      '<div class="cf"></div><div class="cart"></div>' +
+      '<div class="cf"></div><div class="cart"></div>' + UI.starsHTML(def.rarity) +
       '<div class="cband" style="background:' + band + '"></div>' +
       '<div class="ccost' + (def.upgraded && def.cost !== G.Data.cardById[def.base].cost ? ' upg' : '') + '"><span>' + (def.cost == null ? '' : def.cost) + '</span></div>' +
       '<div class="cname' + (def.upgraded ? ' upg' : '') + '"><span>' + U.esc(def.name) + '</span></div>' +
@@ -190,11 +190,21 @@
     return c;
   };
 
+  // 등급 별: 일반 1개 ~ 전설 5개(빈 칸은 흐리게)
+  UI.starsHTML = function (rarity) {
+    var n = G.RARITIES.indexOf(rarity) + 1;
+    if (n <= 0) return '';
+    var on = UI.iconStyle('star_' + rarity), html = '<div class="cstars" data-n="' + n + '">';
+    for (var i = 1; i <= 5; i++) html += '<i class="' + (i <= n ? 'on' : 'off') + '" style="' + on + '"></i>';
+    return html + '</div>';
+  };
+
   UI.cardTip = function (def) {
     var owner = G.Data.characters.filter(function (x) { return x.id === def.owner; })[0];
     var who = owner ? owner.name : def.owner === 'common' ? '공용' : def.duo ? def.duo.map(function (id) {
       return G.Data.characters.filter(function (x) { return x.id === id; })[0].name; }).join('+') + ' 합동기' : '';
-    return '<b>' + U.esc(def.name) + '</b> · ' + (def.duo ? '' : G.RARITY_NAME[def.rarity] + ' ') + (G.TYPE_NAME[def.type] || '') +
+    var stars = G.RARITIES.indexOf(def.rarity) + 1;
+    return '<b>' + U.esc(def.name) + '</b> · ' + (def.duo ? '합동기 ' : stars ? G.RARITY_NAME[def.rarity] + '(별 ' + stars + ') ' : '') + (G.TYPE_NAME[def.type] || '') +
       ' · ' + who +
       (def.exhaust ? ' · 소멸' : '') + (def.tags ? '<br><span style="color:#8a93b8">' + def.tags + '</span>' : '');
   };

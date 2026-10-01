@@ -46,7 +46,7 @@
   X.refreshMenu = function () {
     var m = document.getElementById('gmenu');
     if (!m) return;
-    var title = document.getElementById('screen-title').classList.contains('on') || document.getElementById('screen-test').classList.contains('on');
+    var title = ['title', 'test', 'lobby'].some(function (k) { var e = document.getElementById('screen-' + k); return e && e.classList.contains('on'); });
     m.style.display = !St().data || title ? 'none' : '';
     var deck = m.querySelector('.deck');
     deck.disabled = inBattle();
@@ -56,13 +56,14 @@
   function win(title, body, cls) {
     UI.$$('.modal.win').forEach(UI.closeModal);
     var m = UI.modal('<div class="win-head"><h2>' + title + '</h2><button class="btn small close">닫기</button></div>' + body, 'win ' + (cls || ''));
-    m.querySelector('.close').onclick = function () { UI.closeModal(m); };
+    m.querySelector('.close').onclick = function () { UI.closeModal(m); if (cls === 'deckwin') X.refreshScreen(); };
     return m;
   }
 
   // ================= 도감 =================
   var codexState = { tab: 'cards', rarity: 'all', owner: 'all', type: 'all' };
-  X.codex = function () {
+  X.codex = function (tab) {
+    if (tab) codexState.tab = tab;
     var m = win('도감', '<div class="codex-body"></div>', 'codex');
     renderCodex(m);
   };
@@ -73,20 +74,39 @@
     if (cs.tab === 'cards') {
       var all = D.cards.filter(function (c) { return c.owner !== 'none'; });
       var owned = all.filter(function (c) { return d.cards.indexOf(c.id) >= 0; }).length;
-      var opt = function (key, val, label) {
-        return '<button class="btn small ' + (cs[key] === val ? 'on' : '') + '" data-f="' + key + '" data-v="' + val + '">' + label + '</button>';
+      // 거르기는 한 줄: 등급 · 소유 · 유형 드롭다운 + 보이는 장수 + 수집률(12단계)
+      var FILTERS = {
+        rarity: { label: '등급', en: 'RANK', opts: [['all', '전체']].concat(G.RARITIES.map(function (r, i) { return [r, G.RARITY_NAME[r] + ' · 별 ' + (i + 1)]; })) },
+        owner: { label: '소유', en: 'OWNER', opts: [['all', '전체']].concat(OWNERS.map(function (o) { return [o, ownerName(o)]; })) },
+        type: { label: '유형', en: 'TYPE', opts: [['all', '전체']].concat(['attack', 'block', 'skill', 'heal', 'power'].map(function (t) { return [t, G.TYPE_NAME[t]]; })) }
       };
-      html += '<div class="codex-sum">수집률 <b>' + owned + '/' + all.length + '</b> (' + Math.floor(owned / all.length * 100) + '%)' +
-        (G.debug && inBattle() ? ' · <span class="dbg">디버그: 카드를 누르면 손패에 넣는다</span>' : '') + '</div>' +
-        '<div class="filters"><div class="row">' + opt('rarity', 'all', '전체 등급') + G.RARITIES.map(function (r) { return opt('rarity', r, G.RARITY_NAME[r]); }).join('') + '</div>' +
-        '<div class="row">' + opt('owner', 'all', '전체') + OWNERS.map(function (o) { return opt('owner', o, ownerName(o)); }).join('') + '</div>' +
-        '<div class="row">' + opt('type', 'all', '전체 유형') + ['attack', 'block', 'skill', 'heal', 'power'].map(function (t) { return opt('type', t, G.TYPE_NAME[t]); }).join('') + '</div></div>' +
+      var shown = all.filter(function (c) {
+        return (cs.rarity === 'all' || c.rarity === cs.rarity) && (cs.owner === 'all' || c.owner === cs.owner) && (cs.type === 'all' || c.type === cs.type);
+      });
+      html += '<div class="filterbar">' + Object.keys(FILTERS).map(function (k) {
+        var f = FILTERS[k], cur = f.opts.filter(function (o) { return o[0] === cs[k]; })[0] || f.opts[0];
+        return '<div class="dd' + (cs[k] !== 'all' ? ' set' : '') + '" data-f="' + k + '"><button><small>' + f.en + '</small>' + (cs[k] === 'all' ? f.label + ' 전체' : cur[1]) + '</button></div>';
+      }).join('') + (cs.rarity !== 'all' || cs.owner !== 'all' || cs.type !== 'all' ? '<button class="btn small ghost f-reset">초기화</button>' : '') +
+        '<span class="spacer"></span><span class="count"><b>' + shown.length + '</b>장 표시 · 수집률 <b>' + owned + '/' + all.length + '</b> (' + Math.floor(owned / all.length * 100) + '%)</span></div>' +
+        (G.debug && inBattle() ? '<div class="codex-sum"><span class="dbg">디버그: 카드를 누르면 손패에 넣는다</span></div>' : '') +
         '<div class="grid cards"></div>';
       body.innerHTML = html;
       var grid = body.querySelector('.grid.cards');
-      all.filter(function (c) {
-        return (cs.rarity === 'all' || c.rarity === cs.rarity) && (cs.owner === 'all' || c.owner === cs.owner) && (cs.type === 'all' || c.type === cs.type);
-      }).forEach(function (c) {
+      UI.$$('.dd', body).forEach(function (dd) {
+        var k = dd.getAttribute('data-f');
+        dd.querySelector('button').onclick = function (e) {
+          e.stopPropagation();
+          var open = dd.querySelector('.dd-menu');
+          UI.$$('.dd-menu', body).forEach(function (x) { x.parentNode.removeChild(x); });
+          if (open) return;
+          var menu = UI.el('div', 'dd-menu', FILTERS[k].opts.map(function (o) { return '<button class="' + (cs[k] === o[0] ? 'on' : '') + '" data-v="' + o[0] + '">' + o[1] + '</button>'; }).join(''));
+          dd.appendChild(menu);
+          UI.$$('button', menu).forEach(function (b) { b.onclick = function () { cs[k] = b.getAttribute('data-v'); renderCodex(m); }; });
+        };
+      });
+      body.onclick = function (e) { if (!e.target.closest('.dd')) UI.$$('.dd-menu', body).forEach(function (x) { x.parentNode.removeChild(x); }); };
+      if (body.querySelector('.f-reset')) body.querySelector('.f-reset').onclick = function () { cs.rarity = cs.owner = cs.type = 'all'; renderCodex(m); };
+      shown.forEach(function (c) {
         var has = d.cards.indexOf(c.id) >= 0;
         var el = UI.cardEl(has ? St().cardDef(c.id) : c, { static: true, silhouette: !has });
         if (!has) {
@@ -103,7 +123,6 @@
         }
         grid.appendChild(el);
       });
-      UI.$$('[data-f]', body).forEach(function (b) { b.onclick = function () { cs[b.getAttribute('data-f')] = b.getAttribute('data-v'); renderCodex(m); }; });
     } else if (cs.tab === 'monsters') {
       var seenN = Object.keys(d.codex.monsters).length;
       html += '<div class="codex-sum">만난 몬스터 <b>' + seenN + '/' + D.monsters.length + '</b></div><div class="mon-list"></div>';
@@ -246,6 +265,42 @@
     body.querySelector('.auto').onclick = function () { d.decks[deckOwner] = St().autoBuild(deckOwner); St().save(); renderDeck(m); };
   }
 
+  // ================= 기록(12단계) =================
+  X.stats = function () {
+    var d = St().data;
+    if (!d) return;
+    var kills = 0, seen = Object.keys(d.codex.monsters).length;
+    Object.keys(d.codex.monsters).forEach(function (k) { kills += d.codex.monsters[k].kills || 0; });
+    var all = D.cards.filter(function (c) { return c.owner !== 'none'; }).length;
+    var talks = Object.keys(d.talks || {}).reduce(function (s, k) { return s + d.talks[k]; }, 0);
+    var stat = function (label, v, sub) { return '<div class="stat"><small>' + label + '</small><b>' + v + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</div>'; };
+    win('원정 기록', '<div class="stat-grid">' +
+      stat('클리어한 스테이지', d.clearedStage + '/' + D.stages.length, d.flags.ended ? '마왕을 쓰러뜨렸다' : '') +
+      stat('승천', St().ascLevel() ? '승천 ' + St().ascLevel() : '기본', '최고 기록 ' + (d.ascension.best ? '승천 ' + d.ascension.best : '—')) +
+      stat('동료', d.characters.length + '/' + D.characters.length) +
+      stat('최고 레벨', 'Lv ' + Math.max.apply(null, d.characters.map(function (id) { return St().levelOf(id); }))) +
+      stat('모은 카드', d.cards.filter(function (id) { return D.cardById[id] && D.cardById[id].owner !== 'none'; }).length + '/' + all) +
+      stat('강화한 카드', (d.upgraded || []).length) +
+      stat('모은 유물', d.relics.length + '/' + D.relics.length) +
+      stat('만난 몬스터', seen + '/' + D.monsters.length) +
+      stat('쓰러뜨린 적', kills) +
+      stat('모닥불 이야기', talks + '/' + (D.dialogues ? Object.keys(D.dialogues).length * 3 : 30)) +
+      stat('골드', d.gold) +
+      '</div>', 'setwin');
+  };
+
+  // ================= 도움말(12단계) =================
+  X.help = function () {
+    var rows = [
+      ['원정', '스테이지 10개를 차례로 깬다. 지도에서 갈림길을 고르고, 전투·이벤트·휴식·상점을 지나 정예나 보스를 쓰러뜨리면 다음 스테이지가 열린다.'],
+      ['전투', '매 턴 에너지 3으로 카드를 쓴다. 적의 머리 위 예고를 보고 막거나 먼저 쓰러뜨린다. 쓰러진 동료는 전투 뒤 25%로 돌아온다.'],
+      ['카드 등급', '카드 위쪽의 별이 등급이다. 별 1 일반 · 2 고급 · 3 희귀 · 4 영웅 · 5 전설. 합동기는 무지갯빛 테두리.'],
+      ['동료', '2·4·6·8 스테이지를 깨면 새 동료가 합류한다. 전투로 경험치를 얻어 레벨이 오르면 특성을 고르고, 함께 싸울수록 친밀도가 쌓인다.'],
+      ['패배', '스테이지를 처음부터 다시 한다. 얻은 카드·골드·유물은 남는다.']
+    ];
+    win('도움말', '<div class="mon-list">' + rows.map(function (r) { return '<div class="mon-row"><div class="info"><b>' + r[0] + '</b><div>' + r[1] + '</div></div></div>'; }).join('') + '</div>', 'setwin');
+  };
+
   // ================= 설정 =================
   X.settingsWin = function () {
     var s = X.settings, debug = '';
@@ -320,6 +375,7 @@
   // 메뉴 창을 닫은 뒤 현재 화면 숫자(골드·체력)를 다시 그린다
   X.refreshScreen = function () {
     if (document.getElementById('screen-map').classList.contains('on')) G.Meta.map();
+    if (document.getElementById('screen-lobby').classList.contains('on')) G.Meta.lobby();
   };
 
   // ================= 첫 전투 튜토리얼 =================

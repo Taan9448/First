@@ -13,9 +13,15 @@
   function goldHTML() {
     return '<span class="gold"><i class="ico" style="' + UI.iconStyle('gold') + '"></i>' + St.data.gold + '</span>';
   }
+  // 화면 제목 + 작은 영문 부제(12단계)
+  var TITLE_EN = { '원정 지도': 'WORLD MAP', '파티 편성': 'SQUAD', '보상': 'REWARD', '휴식': 'CAMP', '카드 강화': 'UPGRADE', '이벤트': 'EVENT', '상점': 'SHOP',
+    '새 원정': 'NEW EXPEDITION', '스테이지 클리어': 'STAGE CLEAR', '모닥불 이야기': 'CAMPFIRE TALK', '스토리': 'STORY' };
   function topbar(title, extra) {
-    return '<div class="topbar"><span class="title">' + title + '</span><span class="spacer"></span>' + (extra || '') + goldHTML() + '</div>';
+    var key = title.replace(/<[^>]*>.*$/, '').trim();
+    return '<div class="topbar"><span class="title">' + title + '</span>' + (TITLE_EN[key] ? '<small class="title-en">' + TITLE_EN[key] + '</small>' : '') +
+      '<span class="spacer"></span>' + (extra || '') + goldHTML() + '</div>';
   }
+  Meta.topbar = topbar;
   // 메타 화면 배경: 지금 테마의 전투 배경을 어둡게 깐다
   function backdrop(el, theme) {
     var bg = UI.el('div', 'meta-bg');
@@ -61,13 +67,13 @@
       '<button class="btn big new">새 게임</button>' +
       (G.debug ? '<button class="btn small test">전투 테스트 (디버그)</button>' : '') +
       '</div>' + (G.debug ? '<div class="debugtag">디버그 모드 · 별도 저장</div>' : '') + '</div>' +
-      '<div class="title-foot">진행은 브라우저에 자동 저장된다 · 오른쪽 위 메뉴: 도감 · 덱 · 설정</div>';
+      '<div class="title-foot">진행은 브라우저에 자동 저장된다 · 로비에서 원정 · 동료 · 덱 · 도감을 연다</div>';
     G.Art.scene('castle').then(function (u) { if (u) el.querySelector('.title-bg').style.backgroundImage = 'url(' + u + ')'; });
     var line = el.querySelector('.lineup');
     D.characters.forEach(function (c) { var w = UI.el('div', 'slot'); w.appendChild(UI.spriteEl(c.id, 1.1)); line.appendChild(w); });
-    el.querySelector('.cont').onclick = function () { if (St.load()) Meta.map(); else Meta.title(); };
+    el.querySelector('.cont').onclick = function () { if (St.load()) Meta.lobby(); else Meta.title(); };
     el.querySelector('.new').onclick = function () {
-      var start = function () { St.newGame(); Meta.map(); };
+      var start = function () { St.newGame(); Meta.lobby(); };
       if (has) confirmBox('저장된 진행을 지우고 새로 시작할까요?', '새 게임', start); else start();
     };
     if (G.debug) el.querySelector('.test').onclick = function () { G.TestMenu.open(); };
@@ -83,7 +89,7 @@
     mapSel = sel || (r ? r.stage : mapSel) || Math.min(D.stages.length, d.clearedStage + 1);
     var asc = St.ascLevel();
     el.innerHTML = topbar('원정 지도' + (asc ? ' <span class="asc-chip">승천 ' + asc + '</span>' : ''),
-      (d.flags.ended ? '<button class="btn small cyan ascend">새 원정</button>' : '') + '<button class="btn small ghost to-title">타이틀</button>') +
+      (d.flags.ended ? '<button class="btn small cyan ascend">새 원정</button>' : '') + '<button class="btn small ghost to-title">' + UI.icon('home') + '로비</button>') +
       '<div class="map-layout"><div class="map-frame"><div class="map-canvas"></div></div><aside class="map-side frame"></aside></div>' +
       '<div class="map-bottom"><div class="party-row"></div><div class="relic-bar"></div></div>';
     var canvas = el.querySelector('.map-canvas');
@@ -139,7 +145,7 @@
     el.querySelector('.party-row').innerHTML = d.party.map(miniHero).join('');
     fillSprites(el.querySelector('.party-row'), 0.6);
     el.querySelector('.map-bottom .relic-bar').innerHTML = UI.relicBar(d.relics);
-    el.querySelector('.to-title').onclick = function () { Meta.title(); };
+    el.querySelector('.to-title').onclick = function () { Meta.lobby(); };
     if (el.querySelector('.ascend')) el.querySelector('.ascend').onclick = function () { Meta.ascend(); };
     UI.show('map');
     fitMap();
@@ -676,11 +682,11 @@
       '<p>카이는 되찾은 고향의 언덕에 섰고, 브리아는 다시 숲으로, 리라는 새로운 유적으로, 세라는 수도원으로, 녹스는 어딘가로 길을 떠났다.</p>' +
       '<p>다섯 영웅의 원정은 이렇게 끝났다.</p>' + (St.ascLevel() ? '<p class="asc-done">승천 ' + St.ascLevel() + ' 원정 완료!</p>' : '') +
       '<p class="dim">플레이해 주셔서 감사합니다. 카드·유물·성장을 그대로 가지고 더 어려운 <b>승천</b> 원정을 떠날 수 있다.</p></div>' +
-      '<div class="menu"><button class="btn gold big asc">새 원정 (승천)</button><button class="btn big ok">맵으로</button></div></div>';
+      '<div class="menu"><button class="btn gold big asc">새 원정 (승천)</button><button class="btn big ok">로비로</button></div></div>';
     G.Art.scene('forest').then(function (u) { if (u) el.querySelector('.title-bg').style.backgroundImage = 'url(' + u + ')'; });
     var line = el.querySelector('.lineup');
     D.characters.forEach(function (c) { var w = UI.el('div', 'slot'); w.appendChild(UI.spriteEl(c.id, 1.1)); line.appendChild(w); });
-    el.querySelector('.ok').onclick = function () { Meta.map(); };
+    el.querySelector('.ok').onclick = function () { Meta.lobby(); };
     el.querySelector('.asc').onclick = function () { Meta.ascend(); };
     UI.show('ending');
   };

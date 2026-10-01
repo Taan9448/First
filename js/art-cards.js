@@ -1,5 +1,5 @@
 // art-cards.js — 카드 속성 배경, 등급별 금속 프레임, 카드 그림 조합
-// 프레임(125×175)과 그림(80×56)은 SVG로 그린 뒤 절반 해상도로 찍어 도트 그림으로 쓴다.
+// 프레임(125×175)과 그림(80×66)은 SVG로 그린 뒤 절반 해상도로 찍어 도트 그림으로 쓴다.
 (function () {
   'use strict';
   var G = Game;
@@ -36,8 +36,8 @@
   function bgSvg(el) {
     var c = EL[el] || EL.neutral;
     return '<defs><radialGradient id="bg" cx="0.5" cy="0.55" r="0.75"><stop offset="0" stop-color="' + c[1] + '"/><stop offset="1" stop-color="' + c[0] + '"/></radialGradient></defs>' +
-      '<rect width="80" height="56" fill="url(#bg)"/>' +
-      '<path d="M0 46 Q20 40 40 46 T80 44 V56 H0 Z" fill="' + c[0] + '" opacity="0.6"/>';
+      '<rect width="80" height="66" fill="url(#bg)"/>' +
+      '<path d="M0 54 Q20 48 40 54 T80 52 V66 H0 Z" fill="' + c[0] + '" opacity="0.6"/>';
   }
 
   // ---------------- 등급별 금속 프레임 ----------------
@@ -48,48 +48,51 @@
     epic: { hi: '#d9b8ff', mid: '#9b6bd6', lo: '#55307f', gem: '#e07aff' },
     legendary: { hi: '#fff0a8', mid: '#e8b83a', lo: '#8a5f12', gem: '#ff5a5a' }
   };
+  // 12단계 카드 틀: 왼쪽 위·오른쪽 아래를 깎은 금속 틀, 큰 그림 창, 아래쪽 이름 판과 본문 판, 왼쪽 위 육각 비용
   function frameSvg(rarity) {
-    var m = METAL[rarity];
-    var corner = function (x, y) {
-      return '<rect x="' + (x - 6) + '" y="' + (y - 6) + '" width="12" height="12" fill="' + m.mid + '" stroke="' + K + '" stroke-width="2" transform="rotate(45 ' + x + ' ' + y + ')"/>' +
-        '<rect x="' + (x - 2.5) + '" y="' + (y - 2.5) + '" width="5" height="5" fill="' + m.hi + '" transform="rotate(45 ' + x + ' ' + y + ')"/>';
+    var m = METAL[rarity] || METAL.common;
+    var hex = function (cx, cy, r) {
+      var p = [];
+      for (var i = 0; i < 6; i++) { var a = Math.PI / 3 * i + Math.PI / 6; p.push((cx + Math.cos(a) * r).toFixed(1) + ',' + (cy + Math.sin(a) * r).toFixed(1)); }
+      return p.join(' ');
     };
     return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 125 175" width="125" height="175">' +
-      // 바깥 금속 테두리
-      '<rect x="1" y="1" width="123" height="173" fill="' + m.lo + '" stroke="' + K + '" stroke-width="2"/>' +
-      '<rect x="4" y="4" width="117" height="167" fill="' + m.mid + '"/>' +
-      '<rect x="4" y="4" width="117" height="3" fill="' + m.hi + '"/>' +
-      '<rect x="8" y="8" width="109" height="159" fill="#1a1d38" stroke="' + K + '" stroke-width="2"/>' +
-      // 그림 창
-      '<rect x="11" y="27" width="103" height="72" fill="' + m.lo + '" stroke="' + K + '" stroke-width="2"/>' +
-      // 이름 띠
-      '<rect x="22" y="9" width="92" height="16" fill="' + m.mid + '" stroke="' + K + '" stroke-width="2"/>' +
-      '<rect x="24" y="11" width="88" height="12" fill="#2a2e52"/>' +
-      // 유형 메달
-      '<rect x="38" y="98" width="49" height="13" fill="' + m.mid + '" stroke="' + K + '" stroke-width="2"/>' +
-      '<rect x="40" y="100" width="45" height="9" fill="#2a2e52"/>' +
+      // 바깥 금속 틀(깎은 모서리)
+      '<polygon points="13,1 124,1 124,162 112,174 1,174 1,13" fill="' + m.lo + '" stroke="' + K + '" stroke-width="2"/>' +
+      '<polygon points="14,4 121,4 121,161 111,171 4,171 4,14" fill="' + m.mid + '"/>' +
+      '<polyline points="5,14 14,5 120,5" fill="none" stroke="' + m.hi + '" stroke-width="2"/>' +
+      '<polygon points="15,7 118,7 118,159 109,168 7,168 7,15" fill="#0b1226" stroke="' + K + '" stroke-width="1.5"/>' +
+      // 그림 창 테두리
+      '<rect x="7" y="7" width="111" height="93" fill="' + m.lo + '"/>' +
+      // 이름 판(왼쪽에 등급 색 띠)
+      '<rect x="7" y="99" width="111" height="18" fill="#141e38" stroke="' + K + '" stroke-width="1.5"/>' +
+      '<rect x="8" y="100" width="4" height="16" fill="' + m.gem + '"/>' +
+      '<rect x="112" y="104" width="4" height="2" fill="' + m.hi + '"/><rect x="112" y="108" width="4" height="2" fill="' + m.hi + '"/>' +
       // 본문 판
-      '<rect x="12" y="113" width="101" height="50" fill="#232746" stroke="' + K + '" stroke-width="1.5"/>' +
-      // 비용 보석
-      '<circle cx="15" cy="15" r="12" fill="' + m.mid + '" stroke="' + K + '" stroke-width="2"/>' +
-      '<circle cx="15" cy="15" r="9" fill="#2e6fd8"/><circle cx="12" cy="12" r="3" fill="#8fc6ff"/>' +
-      // 등급 보석
-      '<rect x="56" y="161" width="13" height="13" fill="' + m.gem + '" stroke="' + K + '" stroke-width="2" transform="rotate(45 62.5 167.5)"/>' +
-      corner(118, 9) + corner(7, 168) + corner(118, 168) +
+      '<rect x="9" y="119" width="107" height="46" fill="#101a32"/>' +
+      '<rect x="9" y="119" width="107" height="2" fill="' + m.lo + '"/>' +
+      '<rect x="9" y="119" width="6" height="2" fill="' + m.hi + '"/><rect x="110" y="119" width="6" height="2" fill="' + m.hi + '"/>' +
+      // 비용 육각
+      '<polygon points="' + hex(16.5, 16.5, 13) + '" fill="' + m.mid + '" stroke="' + K + '" stroke-width="2"/>' +
+      '<polygon points="' + hex(16.5, 16.5, 10) + '" fill="#1f5fd0"/>' +
+      '<polygon points="' + hex(16.5, 16.5, 10) + '" fill="none" stroke="#5aa0ff" stroke-width="1.5"/>' +
+      // 오른쪽 아래 장식
+      '<polygon points="104,171 111,171 121,161 121,154" fill="' + m.hi + '" opacity="0.8"/>' +
       '</svg>';
   }
 
+  // 그림 창이 커져서(12단계) 배경을 80×66 으로 늘리고, 80×56 기준으로 그린 글리프를 가운데로 내린다
   function artSvg(def) {
-    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 56" width="80" height="56">' +
-      bgSvg(elementOf(def)) + G.Art.glyph(def.art || 'star') + '</svg>';
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 66" width="80" height="66">' +
+      bgSvg(elementOf(def)) + '<g transform="translate(0 5)">' + G.Art.glyph(def.art || 'star') + '</g></svg>';
   }
 
   G.ArtCards = {
     elementOf: elementOf,
-    frame: function (rarity) { return G.Pixel.raster('frame:' + rarity, frameSvg(rarity), 63, 88, 12); },
-    frameCached: function (rarity) { return G.Pixel.rasterCached('frame:' + rarity); },
-    art: function (def) { return G.Pixel.raster('art:' + (def.base || def.id), artSvg(def), 50, 35, 10); },
-    artCached: function (def) { return G.Pixel.rasterCached('art:' + (def.base || def.id)); },
+    frame: function (rarity) { return G.Pixel.raster('frame2:' + rarity, frameSvg(rarity), 63, 88, 12); },
+    frameCached: function (rarity) { return G.Pixel.rasterCached('frame2:' + rarity); },
+    art: function (def) { return G.Pixel.raster('art2:' + (def.base || def.id), artSvg(def), 50, 41, 10); },
+    artCached: function (def) { return G.Pixel.rasterCached('art2:' + (def.base || def.id)); },
     // 미리 변환해 둔다(화면에 처음 뜰 때 빈 그림이 보이지 않도록)
     preload: function (defs) {
       var jobs = G.RARITIES.map(function (r) { return G.ArtCards.frame(r); });

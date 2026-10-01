@@ -311,5 +311,28 @@
     r_contract: { pal: { w: '#f4e6c0', r: '#d9334a', b: '#8a5a35' }, rows: ['bwwwwwb', '.w.r.w.', '.wwwww.', '.w.r.w.', '.wwwrr.', '.wwwrr.', 'bwwwwwb'] },
     r_stone: { pal: { r: '#ff3a5a', R: '#a3203a', w: '#ffd0d6' }, rows: ['..rrr..', '.rwrrr.', 'rwrrrrR', 'rrrrrrR', 'rrrrrRR', '.rrRRR.', '..RRR..'] }
   };
+  // 12단계: 로비·메뉴 아이콘
+  Object.assign(ICONS, {
+    map: { pal: { p: '#e8d8a8', P: '#b8a070', r: '#ff5a5a', g: '#6fb36a' }, rows: [
+      'ppPPppPPp', 'pgPPpgPPp', 'pgPPggPPp', 'ppPPrpPPp', 'ppPrrrPPp', 'ppPPrpPPp', 'ppPPppPPp'] },
+    party: { pal: { a: '#9ab8ff', A: '#4a6ad0', b: '#ffcb52', B: '#c08a20' }, rows: [
+      '.aa..bb.', 'aaaabbbb', 'aaaabbbb', '.aa..bb.', '........', 'aaaabbbb', 'aaaabbbb', 'AAAABBBB'] },
+    scroll: { pal: { p: '#f0e0b0', P: '#b89a60', k: '#6a4a22' }, rows: [
+      'PPPPPPPP.', 'PppppppPP', '.pkkkkpP.', '.ppppppP.', '.pkkkppP.', '.ppppppP.', '.pkkkkpP.', 'PPppppppP', '.PPPPPPPP'] },
+    stats: { pal: { c: '#5ee6ff', C: '#2a8fb8', w: '#e8f0ff' }, rows: [
+      '......cc', '......cC', '...cc.cC', '...cC.cC', 'cc.cC.cC', 'cC.cC.cC', 'wwwwwwww'] },
+    home: { pal: { a: '#e8f0ff', A: '#8aa0c8', r: '#ff6a6a', R: '#b33a3a' }, rows: [
+      '...rr...', '..rrrr..', '.rrrrrr.', 'rRRRRRRr', '.aaaaaa.', '.aaAAaa.', '.aaAAaa.'] },
+    swap: { pal: { w: '#e8f0ff', c: '#5ee6ff' }, rows: [
+      '..w.....', '.wwwwww.', '..w.....', '........', '.....c..', '.cccccc.', '.....c..'] },
+    help: { pal: { w: '#e8f0ff', c: '#5ee6ff' }, rows: [
+      '.cccc.', 'cc..cc', '....cc', '...cc.', '..cc..', '......', '..cc..'] },
+    sword2: { pal: { k: '#e9eef5', K: '#9aa7b8', r: '#ff5a5a', g: '#f0c75e' }, rows: [
+      'k.......k', '.k.....k.', '..k...k..', '...kKk...', '....K....', '...kKk...', '..g...g..', '.r.....r.', 'r.......r'] }
+  });
+  // 카드 등급 별(1~5단계 색)
+  [['common', '#c9ced8', '#7a808c'], ['uncommon', '#7cf27c', '#2f9a3f'], ['rare', '#7ac4ff', '#2f6fc8'], ['epic', '#e09aff', '#8a3ad0'], ['legendary', '#ffe066', '#c98a10']].forEach(function (r) {
+    ICONS['star_' + r[0]] = { pal: { y: r[1], Y: r[2], w: '#ffffff' }, rows: ['...y...', '...w...', 'yyywyyy', '.yyyyY.', '..yyY..', '.yY.yY.', 'Y.....Y'] };
+  });
   P.ICONS = ICONS;
 })();
