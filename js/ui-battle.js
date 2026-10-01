@@ -89,14 +89,16 @@
     B.monsters.forEach(function (u) { renderUnit(u); });
     fitField();
     renderHand();
-    $('.energy .crystal').textContent = B.energy;
-    $('.energy small').textContent = B.nextEnergy ? '다음 턴 +' + B.nextEnergy : '에너지';
-    $('.cnt-draw').textContent = B.piles.draw.length;
-    $('.cnt-discard').textContent = B.piles.discard.length;
-    $('.cnt-exhaust').textContent = B.piles.exhaust.length;
-    $('.turn').textContent = B.turn;
-    var gold = B.gold + B.goldDelta;
-    $('.goldv').textContent = gold;
+    renderIncoming();
+    UI.setNum($('.energy .ev'), B.energy);
+    $('.energy .emax').textContent = '/' + (B.energyMax || 3);
+    $('.energy .next').textContent = B.nextEnergy ? '다음 턴 +' + B.nextEnergy : '';
+    $('.energy').classList.toggle('empty', B.phase === 'player' && B.energy <= 0);
+    UI.setNum($('.cnt-draw'), B.piles.draw.length, '.pilebtn');
+    UI.setNum($('.cnt-discard'), B.piles.discard.length, '.pilebtn');
+    UI.setNum($('.cnt-exhaust'), B.piles.exhaust.length, '.pilebtn');
+    UI.setNum($('.turn'), B.turn, '.turn-badge');
+    UI.setNum($('.goldv'), B.gold + B.goldDelta, '.gold');
     $('.endturn').disabled = B.phase !== 'player' || B.busy;
     var canAny = B.phase === 'player' && B.piles.hand.some(function (c) { return B.canPlay(c).ok; });
     $('.endturn').classList.toggle('ready', B.phase === 'player' && !B.busy && !canAny);
@@ -122,8 +124,9 @@
   function unitEl(u) {
     if (unitEls[u.uid]) return unitEls[u.uid];
     var e = UI.el('div', 'unit ' + u.side);
-    e.innerHTML = '<div class="intent"></div><div class="sprite-wrap"><div class="shadow"></div></div>' +
-      '<div class="hpbar pix"><i></i><span></span><div class="blockbadge"></div></div><div class="sts"></div><div class="uname"></div>';
+    e.innerHTML = '<div class="intent"></div>' + (u.side === 'ally' ? '<div class="incoming"></div>' : '') +
+      '<div class="sprite-wrap"><div class="shadow"></div></div>' +
+      '<div class="hpbar"><div class="ghost"></div><i></i><span></span><div class="blockbadge"></div></div><div class="sts"></div><div class="uname"></div>';
     var sp = UI.spriteEl(u.side === 'ally' ? u.id : u.def.sprite, u.side === 'enemy' ? u.size || u.def.size : 1);
     if (u.affix) {
       var ax = G.Data.affixes[u.affix];
@@ -134,7 +137,6 @@
     e.querySelector('.sprite-wrap').appendChild(sp);
     e._sprite = sp;
     e._unit = u;
-    e.querySelector('.blockbadge').setAttribute('style', UI.iconStyle('block'));
     e.addEventListener('click', function () { onUnitClick(u); });
     e.addEventListener('mouseenter', function () { hoverUnit = u; e.classList.add('hover'); });
     e.addEventListener('mouseleave', function () { if (hoverUnit === u) hoverUnit = null; e.classList.remove('hover'); });
@@ -146,13 +148,16 @@
   function renderUnit(u) {
     var e = unitEl(u);
     var hp = e.querySelector('.hpbar');
-    hp.querySelector('i').style.width = Math.max(0, u.hp / u.maxHp * 100) + '%';
+    var pct = Math.max(0, u.hp / u.maxHp * 100) + '%';
+    hp.querySelector('i').style.width = pct;
+    hp.querySelector('.ghost').style.width = pct;
     hp.querySelector('span').textContent = u.hp + '/' + u.maxHp;
     hp.classList.toggle('has-block', u.block > 0);
     var bb = e.querySelector('.blockbadge');
     bb.textContent = u.block || '';
     bb.style.display = u.block > 0 ? '' : 'none';
-    e.querySelector('.sts').innerHTML = UI.statusHTML(u);
+    var sts = UI.statusHTML(u);
+    if (e._sts !== sts) { e.querySelector('.sts').innerHTML = sts; e._sts = sts; }
     e.querySelector('.uname').textContent = u.name;
     e.classList.toggle('dead', u.dead);
     var targetable = !!(selected && B.validTargets(selected).indexOf(u) >= 0);
@@ -160,16 +165,54 @@
     // 행동 예고
     var it = e.querySelector('.intent');
     if (u.side === 'enemy' && !u.dead && u.intent && !B.over()) {
+      // 큰 아이콘 + 큰 숫자. 공격이면 대상 아군의 색 점, 전체 공격이면 '전체'
       var info = B.intentInfo(u);
-      var html = info.kinds.map(function (k) { return UI.icon(k); }).join('');
-      if (info.dmg != null) html += '<span class="dmg">' + info.dmg + (info.times > 1 ? '×' + info.times : '') + (info.all ? ' 전체' : '') + '</span>';
-      if (info.target && !info.all && info.dmg != null) html += '<span class="tgt">→ ' + info.target.name + '</span>';
-      it.innerHTML = html;
+      var main = info.kinds.indexOf('attack') >= 0 ? 'attack' : info.kinds[0] || 'special';
+      var html = UI.icon(main);
+      if (info.dmg != null) html += '<span class="dmg">' + info.dmg + '</span>' + (info.times > 1 ? '<span class="times">×' + info.times + '</span>' : '');
+      info.kinds.forEach(function (k) { if (k !== main) html += UI.icon(k, 'sub'); });
+      if (info.dmg != null && info.all) html += '<span class="all">전체</span>';
+      else if (info.dmg != null && info.target) { var tc = heroColor(info.target); html += '<i class="tdot" style="background:' + tc + ';color:' + tc + '"></i>'; }
+      if (it._html !== html) { it.innerHTML = html; it._html = html; }
+      it.className = 'intent k-' + main;
       it.style.display = '';
       it.setAttribute('data-tip', '<b>' + U.esc(info.name) + '</b>' + intentDesc(u));
     } else {
       it.style.display = 'none';
     }
+  }
+
+  function heroColor(h) {
+    var c = G.Data.characters.filter(function (x) { return x.id === h.id; })[0];
+    return c ? c.color : '#ffffff';
+  }
+
+  // 아군 머리 위 '받을 피해': 적들의 공격 예고를 합친다(취약·경감 반영, 보호막과 비교)
+  function renderIncoming() {
+    var inc = {};
+    if (!B.over()) B.monsters.forEach(function (m) {
+      if (m.dead || !m.intent) return;
+      var info = B.intentInfo(m);
+      if (info.dmg == null) return;
+      var hit = function (h, base) {
+        var d = Math.max(0, base - S.get(h, 'reduce'));
+        inc[h.uid] = (inc[h.uid] || 0) + d * info.times;
+      };
+      if (info.all) B.heroes.forEach(function (h) { if (!h.dead) hit(h, Math.floor(info.dmg * (S.has(h, 'vulnerable') ? 1.5 : 1))); });
+      else if (info.target && !info.target.dead) hit(info.target, info.dmg);
+    });
+    B.heroes.forEach(function (h) {
+      var e = unitEls[h.uid], box = e && e.querySelector('.incoming');
+      if (!box) return;
+      var n = inc[h.uid] || 0, through = Math.max(0, n - h.block);
+      box.classList.toggle('on', n > 0 && !h.dead);
+      box.classList.toggle('safe', n > 0 && through === 0);
+      box.classList.toggle('lethal', through >= h.hp && n > 0);
+      var html = UI.icon(through === 0 ? 'block' : 'attack') + '<b>' + (through === 0 ? n : through) + '</b>';
+      if (box._html !== html) { box.innerHTML = html; box._html = html; }
+      box.setAttribute('data-tip', '<b>적 턴에 받을 피해</b> ' + n + (h.block ? '<br>보호막 ' + h.block + ' → 체력 -' + through : '') +
+        (through >= h.hp ? '<br><span style="color:#ff8a8a">이대로면 쓰러진다!</span>' : ''));
+    });
   }
 
   function intentDesc(m) {
@@ -208,11 +251,15 @@
         el = UI.cardEl(inst.def, { battle: B, inst: inst });
         el._inst = inst;
         el.addEventListener('pointerdown', function (ev) { onCardDown(ev, inst); });
-        el.addEventListener('mouseenter', function () { el.classList.add('hovered'); layoutHand(); });
+        el.addEventListener('mouseenter', function () { if (!drag || !drag.active) { el.classList.add('hovered'); layoutHand(); } });
         el.addEventListener('mouseleave', function () { el.classList.remove('hovered'); layoutHand(); });
-        el.style.left = (handEl.clientWidth / 2) + 'px';
-        el.style.top = '120px';
+        // 뽑은 카드는 왼쪽 아래(뽑을 더미)에서 날아 들어온다
+        el.style.left = '-60px';
+        el.style.top = '170px';
+        el.style.transform = 'rotate(-28deg) scale(0.55)';
+        el.style.setProperty('--sd', (-Math.random() * 3).toFixed(2) + 's');
         handEl.appendChild(el);
+        void el.offsetWidth;
         cardEls[inst.uid] = el;
       }
       UI.updateCard(el, inst, B);
@@ -222,28 +269,46 @@
       if (!live[uid]) {
         var el = cardEls[uid];
         delete cardEls[uid];
-        if (!el.classList.contains('flying')) { el.classList.add('flying'); el.style.top = '160px'; }
-        setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 260);
+        // 버린 카드는 오른쪽 아래(버린 더미)로 날아간다
+        if (!el.classList.contains('flying')) {
+          el.classList.remove('dragging', 'hovered');
+          el.classList.add('flying');
+          el.style.left = (handEl.clientWidth + 60) + 'px';
+          el.style.top = '170px';
+          el.style.transform = 'rotate(28deg) scale(0.55)';
+        }
+        setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 360);
       }
     });
     layoutHand();
   }
 
+  // 부채꼴 배치. 마우스를 올린 카드는 크게 떠오르고 양옆 카드는 비켜 준다
   function layoutHand() {
     var hand = B.piles.hand, n = hand.length;
     var W = handEl.clientWidth;
-    var ch = parseFloat(getComputedStyle(root).getPropertyValue('--ch')) || 210;
+    var ch = parseFloat(getComputedStyle(root).getPropertyValue('--ch')) || 200;
     var cw = ch * 125 / 175;
-    var spacing = n > 1 ? Math.min(cw * 0.88, (W - cw) / (n - 1)) : 0;
+    var spacing = n > 1 ? Math.min(cw * 0.86, (W - cw) / (n - 1)) : 0;
     var start = (W - (cw + spacing * (n - 1))) / 2;
+    var focus = -1;
+    hand.forEach(function (inst, i) { var el = cardEls[inst.uid]; if (el && (el.classList.contains('hovered') || selected === inst)) focus = i; });
     hand.forEach(function (inst, i) {
       var el = cardEls[inst.uid];
-      if (!el || el.classList.contains('flying')) return;
+      if (!el || el.classList.contains('flying') || el.classList.contains('dragging')) return;
       var mid = (n - 1) / 2, d = i - mid;
-      var lifted = el.classList.contains('hovered') || selected === inst;
-      el.style.left = (start + i * spacing) + 'px';
-      el.style.top = (lifted ? -ch * 0.12 : 14 + d * d * 1.6) + 'px';
-      el.style.transform = lifted ? 'scale(1.12)' : 'rotate(' + (d * 3) + 'deg)';
+      var lifted = i === focus;
+      var push = focus >= 0 && !lifted ? (i < focus ? -1 : 1) * cw * 0.22 / Math.max(1, Math.abs(i - focus)) : 0;
+      if (lifted && selected === inst && drag && drag.aim) {
+        // 대상을 고르는 중: 손패 가운데 위로 올라와 기다린다
+        el.style.left = (W / 2 - cw / 2) + 'px';
+        el.style.top = (-ch * 0.42) + 'px';
+        el.style.transform = 'scale(1.08)';
+      } else {
+        el.style.left = (start + i * spacing + push) + 'px';
+        el.style.top = (lifted ? -ch * 0.34 : 18 + d * d * 2.2) + 'px';
+        el.style.transform = lifted ? 'scale(1.16)' : 'rotate(' + (d * 3.2) + 'deg)';
+      }
       el.style.zIndex = lifted ? 100 : 10 + i;
     });
   }
@@ -267,30 +332,51 @@
   function onCardDown(ev, inst) {
     if (ev.button !== 0 || !B || B.phase !== 'player') return;
     ev.preventDefault();
-    drag = { inst: inst, x0: ev.clientX, y0: ev.clientY, active: false };
+    var el = cardEls[inst.uid], r = el.getBoundingClientRect();
+    drag = { inst: inst, x0: ev.clientX, y0: ev.clientY, active: false, gx: ev.clientX - r.left, gy: ev.clientY - r.top, lx: ev.clientX, vx: 0, aim: false };
   }
 
+  // 끌기: 대상이 필요 없는 카드는 손가락을 따라오며 움직이는 방향으로 기울고,
+  // 대상이 필요한 카드는 손패 위로 올라와 조준 화살표를 그린다
   window.addEventListener('pointermove', function (ev) {
+    // 눌러서 고른 카드도 대상을 고르는 동안 화살표를 보여 준다
+    if (!drag && B && selected && B.needsTarget(selected) && root.classList.contains('on')) drawAim(selected, ev.clientX, ev.clientY);
     if (!drag || !B) return;
     if (!drag.active && Math.hypot(ev.clientX - drag.x0, ev.clientY - drag.y0) > 10) {
-      if (!B.canPlay(drag.inst).ok) { drag = null; return; }
+      if (!B.canPlay(drag.inst).ok) { flashCard(drag.inst); drag = null; return; }
       drag.active = true;
+      drag.aim = B.needsTarget(drag.inst);
       select(drag.inst);
     }
-    if (drag.active) drawAim(drag.inst, ev.clientX, ev.clientY);
+    if (!drag.active) return;
+    var el = cardEls[drag.inst.uid];
+    if (drag.aim) { drawAim(drag.inst, ev.clientX, ev.clientY); return; }
+    if (!el) return;
+    var hr = handEl.getBoundingClientRect();
+    drag.vx = drag.vx * 0.7 + (ev.clientX - drag.lx) * 0.3;
+    drag.lx = ev.clientX;
+    el.classList.add('dragging');
+    el.classList.remove('hovered');
+    el.style.left = (ev.clientX - hr.left - drag.gx) + 'px';
+    el.style.top = (ev.clientY - hr.top - drag.gy) + 'px';
+    var over = ev.clientY < hr.top + 10;
+    el.style.transform = 'rotate(' + Math.max(-22, Math.min(22, drag.vx * 1.6)).toFixed(1) + 'deg) scale(' + (over ? 1.12 : 1.04) + ')';
+    el.classList.toggle('ready', over);
   });
 
   window.addEventListener('pointerup', function (ev) {
     if (!drag || !B) return;
     var d = drag;
     drag = null;
+    var el = cardEls[d.inst.uid];
+    if (el) el.classList.remove('dragging', 'ready');
     if (d.active) {
       var under = document.elementFromPoint(ev.clientX, ev.clientY);
       var ue = under && under.closest('.unit');
       var u = ue && ue._unit;
       if (B.needsTarget(d.inst)) {
         if (u && B.validTargets(d.inst).indexOf(u) >= 0) return tryPlay(d.inst, u);
-      } else if (ev.clientY < handEl.getBoundingClientRect().top) {
+      } else if (ev.clientY < handEl.getBoundingClientRect().top + 10) {
         return tryPlay(d.inst, null);
       }
       clearAim();
@@ -322,25 +408,31 @@
     el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake');
   }
 
-  // 조준 화살표: 도트를 곡선을 따라 찍는다
+  // 조준 화살표: 카드에서 마우스까지 휘어진 굵은 선 + 화살촉. 유효한 대상 위에서는 붉게 빛난다
   function drawAim(inst, x, y) {
     var el = cardEls[inst.uid];
     if (!el) return;
+    if (drag && drag.aim) layoutHand();
     var app = document.getElementById('app').getBoundingClientRect();
     var r = el.getBoundingClientRect();
-    var x0 = r.left + r.width / 2 - app.left, y0 = r.top + 10 - app.top;
+    var x0 = r.left + r.width / 2 - app.left, y0 = r.top + 8 - app.top;
     var x1 = x - app.left, y1 = y - app.top;
-    var cx = (x0 + x1) / 2, cy = Math.min(y0, y1) - 80;
+    var cx = (x0 + x1) / 2, cy = Math.min(y0, y1) - 120;
     var ok = !B.needsTarget(inst) || (hoverUnit && B.validTargets(inst).indexOf(hoverUnit) >= 0);
-    var col = ok ? '#f0c75e' : '#8a93b8';
-    var dots = '';
-    for (var i = 0; i <= 16; i++) {
-      var t = i / 16, a = (1 - t) * (1 - t), b = 2 * (1 - t) * t, c = t * t;
-      var px = a * x0 + b * cx + c * x1, py = a * y0 + b * cy + c * y1;
-      var s = 6 + Math.round(t * 4);
-      dots += '<rect x="' + Math.round(px - s / 2) + '" y="' + Math.round(py - s / 2) + '" width="' + s + '" height="' + s + '" fill="' + col + '" stroke="#05070f" stroke-width="2"/>';
-    }
-    aimEl.innerHTML = '<svg width="100%" height="100%" shape-rendering="crispEdges">' + dots + '</svg>';
+    var col = ok ? '#ff5d6c' : '#ffcb52';
+    // 화살촉 방향: 곡선 끝의 접선
+    var ang = Math.atan2(y1 - cy, x1 - cx), s = 18;
+    var p1 = (x1 + Math.cos(ang) * 4) + ',' + (y1 + Math.sin(ang) * 4);
+    var p2 = (x1 - Math.cos(ang - 0.5) * s) + ',' + (y1 - Math.sin(ang - 0.5) * s);
+    var p3 = (x1 - Math.cos(ang + 0.5) * s) + ',' + (y1 - Math.sin(ang + 0.5) * s);
+    var path = 'M' + x0 + ' ' + y0 + ' Q' + cx + ' ' + cy + ' ' + x1 + ' ' + y1;
+    aimEl.innerHTML = '<svg width="100%" height="100%">' +
+      '<path d="' + path + '" fill="none" stroke="rgba(0,0,0,0.55)" stroke-width="12" stroke-linecap="round"/>' +
+      '<path d="' + path + '" fill="none" stroke="' + col + '" stroke-width="7" stroke-linecap="round" stroke-dasharray="14 10">' +
+      '<animate attributeName="stroke-dashoffset" from="48" to="0" dur="0.5s" repeatCount="indefinite"/></path>' +
+      '<polygon points="' + p1 + ' ' + p2 + ' ' + p3 + '" fill="' + col + '" stroke="rgba(0,0,0,0.6)" stroke-width="3" stroke-linejoin="round"/>' +
+      (ok ? '<circle cx="' + x1 + '" cy="' + y1 + '" r="26" fill="none" stroke="' + col + '" stroke-width="3" opacity="0.7"><animate attributeName="r" values="20;30;20" dur="0.8s" repeatCount="indefinite"/></circle>' : '') +
+      '</svg>';
   }
   function clearAim() { if (aimEl) aimEl.innerHTML = ''; }
 
@@ -360,6 +452,7 @@
     var stack = fxEl.querySelectorAll('.float').length % 3;
     e.style.left = p.x + (stack - 1) * 14 + 'px';
     e.style.top = p.y + stack * 10 + 'px';
+    e.style.setProperty('--dx', Math.round((Math.random() - 0.5) * 50) + 'px');
     fxEl.appendChild(e);
     setTimeout(function () { if (e.parentNode) e.parentNode.removeChild(e); }, 950);
   }

@@ -12,12 +12,48 @@
       if (html != null) e.innerHTML = html;
       return e;
     },
+    // 화면 전환: 이전 화면은 흐려지며 빠지고 새 화면이 떠오른다. 전투에 들어가고 나올 때는 대각선 띠가 쓸고 지나간다
+    // 같은 화면을 다시 그릴 때는 제목(.topbar .title)이 바뀐 경우만 새 화면으로 친다(휴식 → 카드 강화 등)
     show: function (id) {
-      UI.$$('.screen').forEach(function (s) { s.classList.toggle('on', s.id === 'screen-' + id); });
+      var next = document.getElementById('screen-' + id), prev = UI.$('.screen.on');
+      var titleEl = next.querySelector('.topbar .title'), key = titleEl ? titleEl.textContent : '';
+      var fresh = prev !== next || next._key !== key;
+      next._key = key;
+      UI.$$('.screen').forEach(function (s) { s.classList.toggle('on', s === next); });
+      if (fresh) {
+        if (prev && prev !== next) {
+          prev.classList.remove('enter');
+          prev.classList.add('leave');
+          clearTimeout(prev._lt);
+          prev._lt = setTimeout(function () { prev.classList.remove('leave'); }, 300);
+          if (id === 'battle' || prev.id === 'screen-battle') UI.wipe();
+        }
+        next.classList.remove('leave', 'enter');
+        void next.offsetWidth;
+        next.classList.add('enter');
+        clearTimeout(next._et);
+        next._et = setTimeout(function () { next.classList.remove('enter'); }, 1000);
+      }
       UI.hideTip();
       if (id !== 'battle') UI.$$('.tut-layer').forEach(function (e) { e.parentNode.removeChild(e); });
       if (id !== 'reward' && id !== 'clear' && G.FX && G.FX.clear) G.FX.clear();
       if (G.Extra) G.Extra.refreshMenu();
+    },
+    wipe: function () {
+      var w = document.getElementById('wipe');
+      if (!w || (G.FX && G.FX.low)) return;
+      w.classList.remove('run'); void w.offsetWidth; w.classList.add('run');
+      clearTimeout(w._t);
+      w._t = setTimeout(function () { w.classList.remove('run'); }, 950);
+    },
+    // 숫자가 바뀌면 통통 튄다
+    setNum: function (el, v, cls) {
+      if (!el) return;
+      v = String(v);
+      if (el.textContent === v) return;
+      el.textContent = v;
+      var t = cls ? el.closest(cls) || el : el;
+      t.classList.remove('bump'); void t.offsetWidth; t.classList.add('bump');
     },
     iconStyle: function (id) { return 'background-image:url(' + G.Pixel.icon(id) + ')'; },
     icon: function (id, cls) { return '<i class="ico ' + (cls || '') + '" style="' + UI.iconStyle(id) + '"></i>'; }
@@ -132,14 +168,14 @@
     var owner = G.Data.characters.filter(function (x) { return x.id === def.owner; })[0];
     var plain = def.text.replace(/\{d\d\}/g, '00').replace(/\{\+([^}]*)\}/g, '$1');
     var len = plain.length;
-    c.innerHTML =
+    c.innerHTML = '<div class="cin">' +
       '<div class="cf"></div><div class="cart"></div>' +
       '<div class="cband" style="background:' + (owner ? owner.color : '#8a93b8') + '"></div>' +
       '<div class="ccost' + (def.upgraded && def.cost !== G.Data.cardById[def.base].cost ? ' upg' : '') + '"><span>' + (def.cost == null ? '' : def.cost) + '</span></div>' +
       '<div class="cname' + (def.upgraded ? ' upg' : '') + '"><span>' + U.esc(def.name) + '</span></div>' +
       '<div class="ctype"><span>' + (G.TYPE_NAME[def.type] || '') + '</span></div>' +
       '<div class="ctext' + (len > 62 ? ' xlong' : len > 44 ? ' long' : '') + '"><span>' + UI.cardText(def, opts.battle, opts.inst) + '</span></div>' +
-      '<div class="ccond"><span>조건 충족</span></div>';
+      '<div class="ccond"><span>조건 충족</span></div></div>';
     if (opts.silhouette) c.classList.add('silhouette');
     var setImg = function (sel, url) { if (url) c.querySelector(sel).style.backgroundImage = 'url(' + url + ')'; };
     var f = G.ArtCards.frameCached(def.rarity), a = G.ArtCards.artCached(def);
@@ -197,6 +233,29 @@
     e._size = size;
     return e;
   };
+
+  // ---------------- 카드 기울기 ----------------
+  // 마우스를 올린 카드는 마우스 쪽으로 기울고 빛이 따라 움직인다(모든 화면의 카드 공통)
+  var tiltCard = null;
+  function resetTilt(c) {
+    c.classList.remove('tilting');
+    ['--rx', '--ry', '--mx', '--my'].forEach(function (k) { c.style.removeProperty(k); });
+  }
+  document.addEventListener('pointermove', function (e) {
+    var c = e.target.closest && e.target.closest('.card');
+    if (c && (c.classList.contains('dragging') || c.classList.contains('flying') || c.classList.contains('silhouette'))) c = null;
+    if (tiltCard && tiltCard !== c) { resetTilt(tiltCard); tiltCard = null; }
+    if (!c || (G.FX && G.FX.low)) return;
+    var r = c.getBoundingClientRect();
+    var x = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)), y = Math.max(0, Math.min(1, (e.clientY - r.top) / r.height));
+    c.style.setProperty('--ry', ((x - 0.5) * 24).toFixed(1) + 'deg');
+    c.style.setProperty('--rx', ((0.5 - y) * 18).toFixed(1) + 'deg');
+    c.style.setProperty('--mx', Math.round(x * 100) + '%');
+    c.style.setProperty('--my', Math.round(y * 100) + '%');
+    c.classList.add('tilting');
+    tiltCard = c;
+  });
+  document.addEventListener('pointerleave', function () { if (tiltCard) { resetTilt(tiltCard); tiltCard = null; } });
 
   // ---------------- 창 ----------------
   UI.modal = function (html, cls) {

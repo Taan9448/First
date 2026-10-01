@@ -460,6 +460,10 @@
     check: { pal: { g: '#7cf27c' }, rows: [
       '......g', '.....gg', 'g...gg.', 'gg.gg..', '.ggg...', '..g....'] },
     // 맵 노드·이벤트
+    book: { pal: { r: '#d9504a', R: '#8a2a2a', w: '#f2ead8', y: '#ffd23f' }, rows: [
+      '.rrrrrr.', 'rRwwwwwr', 'rRwyywwr', 'rRwwwwwr', 'rRwwyywr', 'rRwwwwwr', 'rRrrrrrr', '.RRRRRRR'] },
+    gear: { pal: { a: '#c8d0e8', A: '#7a84a8', k: '#1a1028' }, rows: [
+      '...aa...', '.a.aa.a.', '..aaaa..', 'aaaAAaaa', 'aaAkkAaa', '..aAAa..', '.a.aa.a.', '...aa...'] },
     event: { pal: { y: '#ffd23f', Y: '#c99a20' }, rows: [
       '.yyyy.', 'yY..yY', '....yY', '...yY.', '..yY..', '......', '..yY..'] },
     shop: { pal: { b: '#c98a4a', B: '#8a5a2a', y: '#ffd23f', k: '#5a3a20' }, rows: [

@@ -166,6 +166,7 @@
     var energy = ENERGY + this.nextEnergy + (m.turnEnergy || 0) + (turn === 1 ? m.firstTurnEnergy || 0 : 0);
     m.everyN.forEach(function (e) { if (turn % e.n === 0) energy += e.v; });
     this.energy = energy;
+    this.energyMax = energy; // 화면 표시용(이번 턴에 채운 에너지)
     this.nextEnergy = 0;
     this.drawCards(Math.max(0, DRAW + this.nextDraw + (m.turnDraw || 0) + (turn === 1 ? m.firstTurnDraw || 0 : 0)));
     this.nextDraw = 0;

@@ -22,12 +22,12 @@
     <div class="screen" id="screen-battle">
       <div class="topbar">
         <div class="stage-chip"><i class="chip"></i><span class="title">전투</span></div>
-        <div class="turn-badge"><small>TURN</small><b class="turn">1</b></div>
+        <div class="turn-badge"><small>턴</small><b class="turn">1</b></div>
         <span class="spacer"></span>
         <div class="relic-bar"></div>
         <span class="gold"><i class="ico ico-gold"></i><span class="goldv">0</span></span>
         <button class="btn small debug-kill">적 즉사</button>
-        <button class="btn small to-menu">메뉴로</button>
+        <button class="btn small ghost to-menu">메뉴로</button>
       </div>
       <div class="field">
         <div class="hitcount"><b>0</b><small>HIT</small></div>
@@ -35,7 +35,7 @@
         <div class="side monsters"></div>
       </div>
       <div class="handbar">
-        <div class="energy"><div class="crystal">3</div><small>에너지</small></div>
+        <div class="energy" data-tip="<b>에너지</b><br>카드를 쓰는 데 든다. 매 턴 다시 채워진다."><div class="crystal"><span class="ev">3</span><small class="emax">/3</small></div><small class="next"></small></div>
         <div class="piles">
           <div class="pilebtn pix pile-draw" data-tip="뽑을 카드 (클릭해서 보기)"><i class="ico ico-draw"></i><span class="cnt-draw">0</span></div>
         </div>
@@ -49,6 +49,7 @@
     </div>
 
     <div id="fx"></div>
+    <div id="wipe"><i></i><i></i></div>
     <div id="aim"></div>
   </div>
   <div id="tip" class="pix"></div>

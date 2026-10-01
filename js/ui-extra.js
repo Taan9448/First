@@ -24,6 +24,7 @@
     X.settings = s;
     G.speed = s.speed || 1;
     G.FX.low = s.fx === 'low';
+    document.body.classList.toggle('fx-low', G.FX.low);
     G.Audio.setVolume((s.volume == null ? 70 : s.volume) / 100);
     G.Save.writeSettings(s);
   };
@@ -32,7 +33,9 @@
   X.initMenu = function () {
     var m = UI.el('div', '', '');
     m.id = 'gmenu';
-    m.innerHTML = '<button class="btn small codex">도감</button><button class="btn small deck">덱</button><button class="btn small settings">설정</button>';
+    m.innerHTML = '<button class="btn icon ghost codex" data-tip="도감">' + UI.icon('book') + '</button>' +
+      '<button class="btn icon ghost deck">' + UI.icon('deck') + '</button>' +
+      '<button class="btn icon ghost settings" data-tip="설정">' + UI.icon('gear') + '</button>';
     document.getElementById('app').appendChild(m);
     m.querySelector('.codex').onclick = function () { X.codex(); };
     m.querySelector('.deck').onclick = function () { X.deck(); };

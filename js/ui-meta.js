@@ -82,7 +82,7 @@
     var d = St.data, r = d.run, el = screen('map');
     mapSel = sel || (r ? r.stage : mapSel) || Math.min(D.stages.length, d.clearedStage + 1);
     el.innerHTML = topbar('원정 지도', '<button class="btn small to-title">타이틀</button>') +
-      '<div class="map-layout"><div class="map-frame frame"><div class="map-canvas"></div></div><aside class="map-side frame"></aside></div>' +
+      '<div class="map-layout"><div class="map-frame"><div class="map-canvas"></div></div><aside class="map-side frame"></aside></div>' +
       '<div class="map-bottom"><div class="party-row"></div><div class="relic-bar"></div></div>';
     var canvas = el.querySelector('.map-canvas');
     G.ArtMap.world().then(function (u) { if (u) canvas.style.backgroundImage = 'url(' + u + ')'; });
@@ -283,8 +283,8 @@
       var deckSize = St.battleDeck(pick).length;
       el.innerHTML = topbar('파티 편성') +
         '<div class="meta-body"><span class="ribbon">출전할 동료를 최대 3명 고른다</span><div class="row heroes" style="justify-content:center;gap:14px">' + heroes + locked + '</div>' +
-        '<div class="frame" style="padding:10px 16px">전투 덱: 캐릭터 덱 + 공용 덱 ' + ((d.decks.common || []).length) + '장 = <b>' + deckSize + '장</b>' +
-        ' <span class="dim">(덱마다 ' + e.deckMin + '~' + e.deckMax + '장, 오른쪽 위 \'덱\'에서 편집)</span></div>' +
+        '<div class="deck-count" data-tip="전투 덱 = 고른 동료들의 덱 + 공용 덱 ' + ((d.decks.common || []).length) + '장<br>덱마다 ' + e.deckMin + '~' + e.deckMax + '장 (오른쪽 위 덱 메뉴에서 편집)">' +
+        UI.icon('deck') + '<b>' + deckSize + '</b><span>장</span></div>' +
         '<div class="row"><button class="btn back">뒤로</button><button class="btn gold ok" ' + (pick.length ? '' : 'disabled') + '>' + okLabel + '</button></div></div>';
       backdrop(el, runTheme());
       fillSprites(el, 1);
@@ -376,7 +376,7 @@
       (mods.noRestHeal ? '마왕의 왕관: 휴식으로 회복할 수 없다' : '동료 전원 체력 ' + e.restPct * 100 + '% 회복') + '</small></button>' +
       '<button class="choice up" ' + (St.upgradable().length ? '' : 'disabled') + '><i class="ico" style="' + UI.iconStyle('anvil') + '"></i><span>강화</span><small>' +
       (St.upgradable().length ? '보유 카드 1장 강화' : '강화할 카드가 없다') + '</small></button>' +
-      '</div><div class="frame panel-box"><div class="party-row">' + d.characters.map(miniHero).join('') + '</div></div>' +
+      '</div><div class="panel-box"><div class="party-row">' + d.characters.map(miniHero).join('') + '</div></div>' +
       '<div class="row"><button class="btn party">파티 편성</button><button class="btn back">맵으로</button></div></div>';
     backdrop(el, runTheme());
     fillSprites(el, 0.75);
