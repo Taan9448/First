@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>다섯 영웅의 원정</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app">
+    <div class="screen" id="screen-test"></div>
+
+    <div class="screen" id="screen-battle">
+      <div class="topbar">
+        <span class="title">전투</span>
+        <span class="turn">턴 1</span>
+        <span class="spacer"></span>
+        <span class="gold"><i class="ico ico-gold"></i><b class="goldv">0</b></span>
+        <button class="btn small debug-kill">적 즉사</button>
+        <button class="btn small to-menu">메뉴로</button>
+      </div>
+      <div class="field">
+        <div class="side heroes"></div>
+        <div class="side monsters"></div>
+      </div>
+      <div class="handbar">
+        <div class="energy"><div class="crystal">3</div><small>에너지</small></div>
+        <div class="piles">
+          <div class="pilebtn pix pile-draw" data-tip="뽑을 카드 (클릭해서 보기)"><i class="ico ico-draw"></i><span class="cnt-draw">0</span></div>
+        </div>
+        <div class="hand"></div>
+        <div class="piles right">
+          <div class="pilebtn pix pile-exhaust" data-tip="소멸한 카드"><i class="ico ico-exhaust"></i><span class="cnt-exhaust">0</span></div>
+          <div class="pilebtn pix pile-discard" data-tip="버린 카드 (클릭해서 보기)"><i class="ico ico-discard"></i><span class="cnt-discard">0</span></div>
+        </div>
+        <button class="btn gold endturn">턴 종료</button>
+      </div>
+    </div>
+
+    <div id="fx"></div>
+    <div id="aim"></div>
+  </div>
+  <div id="tip" class="pix"></div>
+
+  <!-- 순서대로 로드한다 (ES 모듈·fetch 미사용, file:// 에서 동작) -->
+  <script src="js/core.js"></script>
+  <script src="data/keywords.js"></script>
+  <script src="data/characters.js"></script>
+  <script src="data/cards.js"></script>
+  <script src="data/monsters.js"></script>
+  <script src="js/pixel.js"></script>
+  <script src="js/art.js"></script>
+  <script src="js/art-cards.js"></script>
+  <script src="js/status.js"></script>
+  <script src="js/deck.js"></script>
+  <script src="js/battle.js"></script>
+  <script src="js/ui-common.js"></script>
+  <script src="js/ui-battle.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

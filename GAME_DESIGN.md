@@ -1,6 +1,6 @@
 # GAME_DESIGN.md — 다섯 영웅의 원정 (가제)
 
-> 문서 버전 1.0 (재구축판) · 최종 수정 2026-10-01
+> 문서 버전 1.1 (재구축 2단계: 전투 엔진·데이터 형식·도트 그래픽) · 최종 수정 2026-10-01
 > 이전 세션(회사 PC 로컬)에서 7단계까지 만든 v0.7 문서와 인수인계서(`docs/HANDOFF.md`)를 합쳐, 코드를 **처음부터 다시 만들기 위한 기준 문서**로 정리했다.
 > 규칙이나 데이터 구조가 바뀌면 코드와 함께 이 문서를 갱신한다. 수치는 v0.7 밸런스 조정(18장)이 반영된 값이며, 5단계 시뮬레이션에서 다시 조정한다.
 > v0.7과 달라졌거나 이번에 새로 정한 부분은 17장에 모았다.
@@ -25,11 +25,11 @@
 - **ES 모듈과 `fetch()` 금지**(file://에서 막힘). 일반 `<script>` 태그를 순서대로 로드하고, 전역 네임스페이스 `window.Game` 하나에 모듈을 붙인다(`Game.Battle`, `Game.Data.cards` …)
 - 이미지·음원 파일 없음: 그래픽은 전부 코드로 그리고(도트 스프라이트 + SVG를 도트로 변환), 효과음은 Web Audio API로 합성한다. **화면에 이모지를 쓰지 않는다**
 - 데이터(`data/`)와 로직(`js/`) 완전 분리. 카드·몬스터 효과는 코드가 아니라 **효과 목록 데이터**로 기술한다
-- 전투 로직은 화면을 직접 만지지 않는다. `Game.bus`로 이벤트(`fx:damage`, `fx:status`, `card:played` …)만 내보내고 그리기는 UI가 맡는다
+- 전투 로직은 화면을 직접 만지지 않는다. `Game.bus`로 이벤트(`fx:hit`, `fx:status`, `card:play`, `monster:act`, `battle:update` …)만 내보내고 그리기는 UI가 맡는다. 다시 시작해서 버려진 전투는 이벤트를 내보내지 않는다
 - 연출 대기는 모두 `Game.wait(ms)`를 거친다. 테스트·시뮬레이션에서는 이를 즉시 완료로 바꿔 빠르게 자동 플레이한다
 
 ### 2.2 파일 구성
-`index.html`은 아래 순서대로 스크립트를 로드한다(위에 있는 파일이 먼저).
+`index.html`은 `core.js` → `data/*` → 그래픽 → 로직 → UI → `main.js` 순서로 스크립트를 로드한다. 아래 목록은 역할별로 묶은 것이다.
 ```
 index.html
 css/style.css          레이아웃, 도트풍 UI, 카드, 등급 프레임, 애니메이션
@@ -57,8 +57,11 @@ js/ui-meta.js          타이틀, 스테이지 맵, 파티 편성, 보상, 휴�
 js/ui-extra.js         공통 메뉴 창(도감·덱 편집·설정)과 첫 전투 튜토리얼
 js/main.js             초기화, ?debug=1 처리와 디버그 패널
 
-tools/sim.js           밸런스 시뮬레이터(개발 전용, index.html에서 로드하지 않음)
+tools/test-battle.js   전투 엔진 자동 테스트: 데이터 검사, 기획서 8장 표와 데이터 대조, 규칙 단위 테스트, 무작위 전투 수천 회
+                       (node tools/test-battle.js [횟수])
+tools/sim.js           밸런스 시뮬레이터(5단계)
 ```
+`tools/`는 개발 전용이며 `index.html`에서 로드하지 않는다.
 
 ### 2.3 데이터 형식
 
@@ -66,11 +69,11 @@ tools/sim.js           밸런스 시뮬레이터(개발 전용, index.html에서
 ```js
 // data/cards.js
 { id:'K03', name:'연속 베기', owner:'kai', type:'attack', rarity:'common', cost:1,
-  target:'enemy', basic:true, el:'steel', art:'twinSlash', fx:'slash',
+  target:'enemy', basic:true, art:'twin', tags:'조건',
   effects:[ {op:'if', cond:{is:'firstCard'},
              then:[ {op:'damage', value:3, times:3} ],
              else:[ {op:'damage', value:3, times:2} ]} ],
-  text:'피해 {0}을 2회. 이번 턴 첫 카드라면 3회.' }
+  text:'피해 {d1}을 2회. 이번 턴 첫 카드라면 3회.' }
 ```
 - `owner`: `kai / bram / lyra / sera / nox / common`
 - `type`: `attack / skill(보조) / block(방어) / heal(회복) / power(지속) / curse(방해)`
@@ -80,34 +83,40 @@ tools/sim.js           밸런스 시뮬레이터(개발 전용, index.html에서
 - `el`(속성 배경): `fire / ice / lightning / arcane / poison / shadow / holy / nature / earth / steel / guard / gold / neutral`. 없으면 유형·효과로 자동 결정
 - `art`: 카드 일러스트 글리프 키. 같은 그림을 여러 카드가 공유해도 된다
 - `fx`: 피해 이펙트 키 / `sfx`: 사용 순간 고유 이펙트 키(희귀 이상 전부)
-- `exhaust:true`(소멸), `text`: 설명 문구. `{0}`, `{1}` …은 효과 목록에서 `value`를 가진 항목의 순서(깊이 우선)이며, 화면에서는 힘·약화를 반영한 값으로 바뀐다
+- `exhaust:true`(소멸), `tags`: 8장 표의 분류(조건/무작위/치명), `text`: 설명 문구. `{d0}`, `{d1}` …은 **damage 효과**의 순서(깊이 우선, `then` 다음 `else`)이며 화면에서는 시전자의 힘·약화를 반영한 값으로 바뀐다(범위는 `2~12`, 비례식은 현재 값). 그 밖의 수치는 글자로 적는다
 
 #### 효과 `op`
 | op | 주요 필드 | 설명 |
 |---|---|---|
-| `damage` | `value, times, target, pierceBlock, breakBlock, lifesteal, critBonus, forceCrit` | 피해 |
+| `damage` | `value, times, target, breakBlock, lifesteal, leech, critBonus, forceCrit, onHit, onCrit, onKill` | 피해. `lifesteal`: 입힌 만큼 회복(몬스터), `leech`: 입힌 피해 × 비율 회복. `onHit/onCrit/onKill`: 맞을 때·치명타마다·처치 시 추가 효과 |
 | `block` | `value, target, keep` | 보호막(`keep`: 다음 턴에도 유지) |
 | `heal` | `value \| pct, target, overflowToBlock` | 회복 |
 | `draw` / `energy` | `value, nextTurn` | 드로우 / 에너지(`nextTurn`: 다음 턴) |
 | `status` | `status, value, target` | 상태 부여. `status:'randomDebuff'` 가능 |
 | `cleanse` | `count \| all, target` | 디버프 제거 |
-| `revive` | `pct, target` | 쓰러진 아군 부활 |
-| `power` | `hook, effects` | 지속 효과 등록. `hook`: `turnStart / turnEnd / onAttackCard / onHeal / passive` |
+| `revive` | `pct, target` | 쓰러진 아군 부활(`target:'allDowned'`: 전원) |
+| `loseHp` | `value, target` | 체력 손실(보호막 무시) |
+| `discount` | `value` | 이번 턴 다음 카드 비용 감소 |
+| `doubleNext` | — | 이번 턴 다음 카드 2번 발동 |
+| `freeRandom` | — | 손패의 무작위 1장 이번 턴 비용 0 |
+| `summon` | `monster` | (몬스터) 소환 |
+| `power` | `hook, effects` | 지속 효과 등록. `hook`: `turnStart / turnEnd / onAttackCard / onHeal`. 상시 효과는 상태(`status`)로 건다 |
 | `if` | `cond, then, else` | 조건부 |
 | `chance` | `p, then, else` | 동전 던지기(결과를 글자로 표시) |
-| `oneOf` | `options:[[...],[...]]` | 여러 효과 중 하나 무작위 |
-| `conjure` | `pool, count, temp, free` | 무작위 카드 생성(그 턴만, 비용 0) |
+| `oneOf` | `options:[{label, effects}]` | 여러 효과 중 하나 무작위(`label`을 화면에 표시) |
+| `conjure` | `pool:{owner, minRarity}, count` | 무작위 카드 생성(그 턴만, 비용 0). `owner`: 캐릭터 id / `heroes` / `partyAndCommon` |
 | `randomizeCosts` | `min, max` | 손패 비용 섞기 |
-| `addCard` | `card, pile, count` | 카드 추가(몬스터의 '모래' 등) |
+| `addCard` | `card, pile, count, temp` | 카드 추가(몬스터의 '모래', 마력 폭주 등). `pile`: `hand / draw / discard` |
 | `gold` | `value` | 전투 중 골드 증감 |
-| `custom` | `name` | 데이터로 표현하기 어려운 소수 카드 전용 핸들러 |
+| `custom` | `name` | 데이터로 표현하기 어려운 소수 카드 전용 핸들러: `teamUndying`(B25), `spreadBurn`(L15), `doublePoison`(N17), `redraw`(C23) |
 
-- 수치 `value`는 숫자, 범위 `[2,12]`(무작위), 또는 비례식 `{base:8, per:'targetStatus', status:'poison', mult:1}` 형식
+- 수치 `value`·`times`는 숫자, 범위 `[2,12]`(무작위, 연타는 1회마다 다시 굴림), 또는 비례식 `{base:8, per:'targetStatus', status:'poison', mult:1, cap}` 형식(내림)
 - 비례식 `per`: `selfBlock / targetStatus / targetDebuffKinds / selfLostHp / attacksThisTurn / aliveAllies / x`
+- 효과의 `target`이 없으면 카드의 `target`을 따른다. 그 밖의 대상: `lowestAlly`(체력 비율이 가장 낮은 아군), `healed`(onHeal 지속 효과에서 회복한 아군), `allDowned`
 
 #### 조건 `cond`
 `{is:'<이름>', op:'<=', n:3, status:'burn'}` 형식. 사용하는 조건:
-`firstCard` · `attacksThisTurn` · `lastCardType` · `handSize` · `energyLeft` · `enemyCount` · `allAlive` · `anyDown` · `noAttackInHand` · `selfHp` / `targetHp`(비율, `full` 포함) · `selfBlock` / `targetBlock` · `selfHas` / `targetHas`(상태) · `targetDebuffKinds` · `targetIntentAttack`
+`firstCard` · `attacksThisTurn` · `lastCardType` · `handSize`(이 카드를 뺀 손패) · `energyLeft`(비용을 낸 뒤) · `enemyCount` · `allAlive` · `anyDown` · `allFull` · `noAttackInHand` · `selfHp` / `targetHp`(비율, `op:'full'`은 가득 참) · `selfBlock` / `targetBlock` · `selfHas` / `targetHas`(상태, `status:'debuff'`는 디버프 아무거나, `pre:true`는 카드를 쓰기 시작한 시점의 상태) · `targetDebuffKinds` · `targetIntentAttack`
 - 대상과 무관한 조건만 손패에서 "조건 충족" 표시를 한다(대상마다 달라지는 조건은 표시하지 않음)
 
 #### 몬스터
@@ -115,37 +124,40 @@ tools/sim.js           밸런스 시뮬레이터(개발 전용, index.html에서
 // data/monsters.js
 { id:'pharaoh', name:'파라오 세트', theme:'desert', rank:'boss', hp:190, size:1.5, sprite:'pharaoh',
   moves:{
-    curse:{ name:'왕의 저주', intent:'debuff', effects:[{op:'status', status:'weak', value:2, target:'allAllies'}] },
-    judge:{ name:'심판',     intent:'attack', effects:[{op:'damage', value:14}] },
-    raise:{ name:'미라 소환', intent:'special', effects:[{op:'summon', monster:'mummy'}] },
-    storm:{ name:'모래폭풍', intent:'attack', effects:[{op:'damage', value:7, target:'allAllies'},
-                                                    {op:'addCard', card:'SAND', pile:'discard', count:2}] },
-    gold: { name:'황금 갑옷', intent:'block',  effects:[{op:'block', value:20}] } },
+    curse:{ name:'왕의 저주', effects:[{op:'status', status:'weak', value:2, target:'allAllies'}] },
+    judge:{ name:'심판',     effects:[{op:'damage', value:14}] },
+    raise:{ name:'미라 소환', effects:[{op:'summon', monster:'mummy'}] },
+    storm:{ name:'모래폭풍', effects:[{op:'damage', value:7, target:'allAllies'},
+                                     {op:'addCard', card:'SAND', pile:'discard', count:2}] },
+    gold: { name:'황금 갑옷', effects:[{op:'block', value:20, target:'self'}] } },
   pattern:['curse','judge','raise','storm'],
-  triggers:[ { hpBelow:0.5, name:'황금 갑옷', effects:[{op:'block', value:20}],
+  triggers:[ { hpBelow:0.5, name:'황금 갑옷', effects:[{op:'block', value:20, target:'self'}],
                pattern:['judge','storm','gold','curse','judge','gold'] } ],
   desc:'모래에 묻힌 왕조의 마지막 왕.' }
 ```
 - `rank`: `normal / elite / boss / final`
 - `triggers[]`: `hpBelow`(비율) 도달 즉시 1회 발동. `effects`(즉시 효과), `pattern`(패턴 교체), `everyTurn`(매 턴 효과), `name`(화면 표시)
-- 그 외: `startStatus`(시작 상태), `onDeath`(죽을 때 효과), `revive:{pct}`(1회 부활), 차지 행동의 `charge:{cancelStatus}`(차지 중 보호막이 깨지면 취소 + 상태)
-- 몬스터 행동의 기본 대상은 아군 1명(예고 시 결정). 몬스터에게 거는 버프는 `target:'self' / 'allMonsters'`
+- 그 외: `startStatus`(시작 상태), `onDeath`(죽을 때 효과), `revive:{pct}`(1회 부활), 차지 행동의 `charge:{cancelStatus}`(차지 중 보호막이 깨지면 취소 + 상태)와 차지 공격의 `requiresCharge:true`
+- 행동 예고 아이콘(공격·방어·버프·디버프·특수)은 효과 목록에서 자동으로 정한다
+- 몬스터 행동의 대상: 기본값 `'target'`은 예고 때 정한 아군 1명(도발·수호 우선), `'allAllies'`는 아군 전체, `'self'`·`'allMonsters'`는 몬스터 쪽
 
 #### 도트 스프라이트
 ```js
 // js/pixel.js
 Pixel.def('kai', {
-  pal:{ k:'#1a1430', s:'#f2c79b', h:'#5a3a8a', a:'#3fb6d9', g:'#e8c35a' },
-  half:[ '.....hh',            // 왼쪽 절반만 적는다. 오른쪽은 좌우 대칭으로 펼친다
-         '....hhhh',
-         '....hssk', ... ],
-  over:[ {x:12, y:7, rows:['..g','.g.','g..']} ],   // 칼 같은 비대칭 부분 덧그림
-  frames:{ idle2:{ dy:1 }, attack:{ over:[...] } }, // 숨쉬기 2프레임, 공격 자세
-  tip:{ x:15, y:6 } });                              // 무기 끝 좌표(이펙트·마법 탄 발사점)
-Pixel.alias('frost_wolf', 'forest_wolf', { g:'#9fd8f0' }); // 색만 바꾼 변형
+  pal:{ h:'#d9503f', s:'#f7d2ae', a:'#8eaee0', ... },  // 글자 → 색
+  half:[ '......hhhh',          // 왼쪽 절반만 적는다. 오른쪽은 좌우 대칭으로 펼친다 (전체를 적을 때는 rows)
+         '....hhhhhh', ... ],
+  over:[ {x:18, y:4, rows:['.k','.k', ...]} ],   // 칼 같은 비대칭 부분 덧그림('.' 투명, '_' 지우기)
+  attackOver:[ ... ],                            // 공격 자세 프레임의 덧그림(over 대신)
+  breathe:13,                                    // 숨쉬기 프레임: 이 줄 위쪽을 1칸 내린다
+  flat:'ew',                                     // 음영을 넣지 않을 글자(눈 등)
+  tip:{ x:19, y:5 }, tipAttack:{ x:29, y:17 } }); // 무기 끝 좌표(이펙트·마법 탄 발사점)
+Pixel.alias('frost_wolf', 'forest_wolf', { a:'#cfe6f5' }); // 색만 바꾼 변형
 ```
 - 그릴 때 윤곽선 1px과 음영(윗변 밝게, 아랫변·오른쪽 끝 어둡게)을 자동으로 입힌다
-- 화면의 도트 1칸 크기는 CSS 변수 `--px` 하나로 통일하고, 보스는 `size` 배율로 키운다
+- `Pixel.sheet(id)`는 [대기, 숨쉬기, 공격] 3프레임 시트를 만들어 캐시한다. 화면은 `steps()`로 프레임을 넘긴다
+- 화면의 도트 1칸 크기는 CSS 변수 `--px` 하나로 통일하고, 보스는 `size` 배율(정예 1.25, 보스 1.5)로 키운다. 양쪽 진영이 화면에 다 들어가지 않으면 전투 화면이 `--px`를 자동으로 줄인다
 
 ### 2.4 아트 방향
 - 방향: **도트 캐릭터 + 장식 프레임 카드 + 네이비/시안/골드 UI**
@@ -155,7 +167,8 @@ Pixel.alias('frost_wolf', 'forest_wolf', { g:'#9fd8f0' }); // 색만 바꾼 변�
   2. 카드별 일러스트(`art` 글리프, SVG)
   3. 등급별 금속 프레임: 테두리·모서리 장식·이름 띠·본문 판·유형 메달·등급 보석
   - 영웅·전설은 광택 띠가 흐른다. 카드 크기는 CSS 변수 `--ch` 하나, 내부는 `em` 단위
-- **SVG → 도트 변환**(`Pixel.raster`): SVG를 data URL 이미지로 만들어 낮은 해상도 캔버스에 찍고 색 단계를 줄인다(file://에서도 동작). 일러스트 80×56, 프레임 125×175, 전투 배경 400×150. 비동기이며 키별로 한 번만 변환해 캐시한다
+- **SVG → 도트 변환**(`Pixel.raster`): SVG를 data URL 이미지로 만들어 낮은 해상도 캔버스에 찍고 색 단계를 줄이며 반투명을 없앤다(file://에서도 동작). 그리는 좌표계는 일러스트 80×56, 프레임 125×175, 전투 배경 400×150이고, 찍는 해상도는 그 절반(50×35, 63×88, 200×75)이라 화면에서 약 2배 크기의 도트가 된다. 비동기이며 키별로 한 번만 변환해 캐시한다
+- SVG 요소에 같은 속성이 두 번 들어가면 변환이 조용히 실패하므로, 글리프 도우미 함수가 속성을 합쳐서 쓴다
 - **전투 배경 5종**: 테마별 SVG(원경 여러 겹 + 조명) → 도트 변환 + 떠다니는 픽셀 입자
 - **아이콘**: 행동 예고·상태이상·메뉴 아이콘 30여 종을 도트로 직접 그린다(`Pixel.icon`, 10×10 안팎)
 - **이펙트**: 파티클 캔버스를 화면보다 훨씬 낮은 해상도로 만들고 확대해서 굵은 픽셀로 보이게 한다. 원·선·궤적도 픽셀을 하나씩 찍어 그린다(`js/effects.js`)
@@ -190,10 +203,10 @@ Pixel.alias('frost_wolf', 'forest_wolf', { g:'#9fd8f0' }); // 색만 바꾼 변�
 
 ## 4. 전투 규칙
 1. **전투 시작**: 편성된 캐릭터들의 캐릭터 덱 + 공용 덱을 합쳐 섞는다. 몬스터는 첫 행동을 예고한다
-2. **플레이어 턴 시작**: 아군 보호막 제거(유지 효과 제외) → 턴 시작 효과(재생, 지속 카드) → 에너지 3으로 리셋 → 5장 드로우
+2. **플레이어 턴 시작**: 아군 보호막 제거(버티기·난공불락 제외) → 가시(일시) 제거·도발 1 감소 → 재생 → 에너지 3(+다음 턴 에너지) → 5장 드로우 → 지속 카드의 턴 시작 효과(드로우 뒤라서 '손패의 무작위 1장 비용 0' 같은 효과가 이번 손패에 적용된다)
 3. **카드 사용**: 에너지를 내고 카드를 쓴다. 대상이 필요한 카드는 선택 후 대상 클릭(또는 대상 위로 드래그)
 4. **턴 종료**: 남은 손패 전부 버림(그 턴 한정 카드는 사라짐) → 아군 턴 종료 효과(지속 카드 → 중독 → 화상, 이번 턴 한정 상태 제거)
-5. **적 턴**: 적 보호막 제거 → 각 적이 예고한 행동 수행(빙결·정지면 건너뜀) → 적 턴 종료 효과 → **라운드 종료**(약화·취약 1 감소) → 다음 행동 예고
+5. **적 턴**: 적 보호막 제거·가시(일시)/용암 갑옷 제거 → 각 적이 차례로 매 턴 효과(보스) → 예고한 행동 수행(빙결·정지면 건너뜀) → 적의 중독·화상 → **라운드 종료**(약화·취약·빙결 면역·종말 1 감소) → 다음 행동 예고
 6. 뽑을 덱이 비면 버린 더미를 섞어 덱으로. 손패 상한 10장(넘치는 드로우는 버린 더미로)
 7. **승리**: 모든 적 처치 / **패배**: 편성한 캐릭터 전원 쓰러짐
 
@@ -238,7 +251,7 @@ Pixel.alias('frost_wolf', 'forest_wolf', { g:'#9fd8f0' }); // 색만 바꾼 변�
 | 지속 | 카드 | 전투가 끝날 때까지 효과 유지 |
 | 방해 카드 | 카드 | 몬스터가 버린 더미에 섞는 카드. **모래**(사용 불가, 손패 자리만 차지, 전투 종료 시 제거) |
 | 종말 | 특수 | 최종 보스 3페이즈. 남은 턴 수를 표시하고 적 턴 종료마다 1 감소. 0이 되는 턴에 보스가 '종말'(아군 전체 피해 50)을 쓴다 |
-| 그 외 | — | 수호(항상 도발)·경감(공격 1회당 받는 피해 감소)·버티기/난공불락(보호막 유지)·불굴(쓰러질 피해를 체력 1로 1회 버팀)·원소 친화·용암 갑옷(공격자에게 화상)·광분(매 턴 체력 감소)·차지·빙결 면역. 정의와 툴팁 문구는 `data/keywords.js` |
+| 그 외 | — | 힘(이번 턴)·가시(일시)·수호(항상 도발)·경감(공격 1회당 받는 피해 감소)·버티기/난공불락(보호막 유지)·원소 친화·용암 갑옷(다음 턴까지 공격자에게 화상)·차지·빙결 면역. 정의와 툴팁 문구는 `data/keywords.js`. 불멸의 수호자(B25)의 '체력 1로 버팀'은 상태가 아니라 전투 단위 효과다 |
 
 ## 6. 캐릭터
 | ID | 이름 | 역할 | 체력 | 치명타 | 합류 | 특징 |
@@ -696,9 +709,9 @@ Pixel.alias('frost_wolf', 'forest_wolf', { g:'#9fd8f0' }); // 색만 바꾼 변�
 
 | 단계 | 내용 | 상태 |
 |---|---|---|
-| 1 | 기획서(GAME_DESIGN.md) 작성 | **검토 대기** |
-| 2 | 전투 엔진 + 데이터 형식 + 도트 그래픽 시스템. 카이 1명 + 슬라임으로 시작해 파티 3인 전투, 효과 해석기(조건·무작위·지속 포함), 상태이상, 행동 예고, 클릭/드래그 사용, 도트 스프라이트·아이콘·SVG→도트 변환, 카드 프레임 | 예정 |
-| 3 | 스테이지·보상·저장·화면 흐름(타이틀 → 맵 → 편성 → 전투 → 보상 → 휴식/상점 → 클리어) + 카드 192장·몬스터 36종 데이터, 보스 패턴 전부, 테마 배경 5종 | 예정 |
+| 1 | 기획서(GAME_DESIGN.md) 작성 | 완료 |
+| 2 | 전투 엔진 + 데이터 형식 + 도트 그래픽 시스템. 파티 3인 전투, 효과 해석기(조건·무작위·지속 포함), 상태이상, 행동 예고, 클릭/드래그 사용, 도트 스프라이트·아이콘·SVG→도트 변환, 카드 프레임. 카드 192장·몬스터 36종 데이터(엔진 검증을 위해 3단계 몫을 앞당김), 전투 배경 5종, 엔진 자동 테스트. 임시 화면은 '전투 테스트' 메뉴 | **검토 대기** |
+| 3 | 스테이지·보상·저장·화면 흐름(타이틀 → 맵 → 편성 → 전투 → 보상 → 휴식/상점 → 클리어), `data/stages.js`, 숲 밖 몬스터 29종의 고유 도트 그림(2단계는 숲 몬스터를 색만 바꾼 임시 그림), 카드 글리프 보강 | 예정 |
 | 4 | 도감·덱 편집·설정·튜토리얼 + 이펙트·애니메이션(카드 비행, 돌진, 탄 발사, 피격, 조각남, 축포, 고유 이펙트), 효과음, 디버그 모드 | 예정 |
 | 5 | 밸런스 시뮬레이션(`tools/sim.js`)과 버그 수정, GitHub Pages 배포 확인 | 예정 |
 
@@ -730,6 +743,17 @@ Pixel.alias('frost_wolf', 'forest_wolf', { g:'#9fd8f0' }); // 색만 바꾼 변�
 19. **표기 정리**: K28·N28의 "치명타 피해 +50%"를 [치명 강화] 1로 명시했다. L13의 "직전 카드가 공격이면 7"은 화상 수치(4 → 7)로 해석했다
 20. **보상 세부**: 정예 보상 등급 비율, 보스 보상의 중간 스테이지 보간, 등급 내림/올림 규칙을 10장에 명시했다
 21. **저장 호환**: 재구축판은 저장 `version: 1`부터 시작하고 이전 세션의 저장 데이터와 호환하지 않는다
+
+### 17.3 2단계(전투 엔진)에서 정한 세부 규칙
+22. **몬스터는 치명타가 없다.** 치명타는 아군 카드(공용 포함)가 적을 공격할 때만 난다
+23. **가시 반격 피해는 보호막에 막힌다**(화상과 같음). 중독·체력 손실만 보호막을 무시한다
+24. **지속 카드의 턴 시작 효과는 드로우 뒤에** 발동한다(4장 2번)
+25. **무작위 디버프** 후보와 수치: 중독 3 / 화상 3 / 약화 1 / 취약 1 / 한기 1
+26. **훔친 기술(N32)**로 편성에 없는 캐릭터의 카드가 나오면 시전자 없는 카드(공용처럼)로 쓴다
+27. **그림자 분신(N24)**으로 두 번 발동할 때 조건은 카드를 쓰기 시작한 시점 기준으로 판정한다. **원소 공명(L26)**의 두 조건도 카드를 쓰기 전 상태로 본다(화상을 걸고 바로 한기 조건까지 충족되는 일 없음)
+28. **차지 취소**: 보호막이 깨지면 예고된 차지 공격을 건너뛰고 다음 행동을 바로 예고한다
+29. **행운의 부적(B32)·변덕스러운 축복(S31)의 '힘 +2'**는 전투 끝까지 유지되는 힘이다('이번 턴'이라고 적힌 카드만 그 턴 한정)
+30. **2단계 임시 화면**: 타이틀 대신 '전투 테스트' 메뉴(파티·덱·적 선택)로 시작한다. 3단계에서 정식 흐름으로 바꾼다
 
 ## 18. 밸런스 기록
 간단한 판단 규칙 AI(보호막이 필요하면 막고, 아니면 체력이 낮은 적부터 공격, 보상은 높은 등급 우선)로 캠페인 전체를 반복 플레이해 스테이지별 실패율을 본다(`tools/sim.js`, 개발용). 사람은 이 AI보다 잘하므로, **AI 기준으로 초반은 거의 첫 시도에 깨고 후반 보스는 1~3번 만에 깨는 정도**를 목표로 한다.

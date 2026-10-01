@@ -1,0 +1,48 @@
+// keywords.js — 상태이상·키워드 정의와 툴팁 문구
+// kind: buff / debuff / special.  {n} 은 현재 수치로 바뀐다.
+// decay: 'round'(라운드 끝 1 감소) · 'turnStart'(주인의 턴 시작 시 1 감소) · 'turnStartClear'(주인의 턴 시작 시 제거)
+//        'turnEndClear'(주인의 턴 끝에 제거) · 없음(전투 끝까지 유지)
+Game.Data.statuses = {
+  strength:  { name: '힘', kind: 'buff', icon: 'strength', desc: '공격 1회당 피해 +{n}.' },
+  tempStr:   { name: '힘(이번 턴)', kind: 'buff', icon: 'strength', decay: 'turnEndClear', desc: '이번 턴 동안 공격 1회당 피해 +{n}.' },
+  focus:     { name: '집중', kind: 'buff', icon: 'focus', desc: '다음 공격 {n}회가 반드시 치명타.' },
+  keen:      { name: '예리함', kind: 'buff', icon: 'keen', desc: '치명타 확률 +{p}%.', pct: 10 },
+  critUp:    { name: '치명 강화', kind: 'buff', icon: 'critUp', desc: '치명타 피해 배율 +{h}배.', half: true },
+  regen:     { name: '재생', kind: 'buff', icon: 'regen', desc: '턴 시작 시 체력 {n} 회복 후 1 감소.' },
+  thorns:    { name: '가시', kind: 'buff', icon: 'thorns', desc: '공격받을 때마다 공격자에게 {n} 피해.' },
+  thornsTemp:{ name: '가시(일시)', kind: 'buff', icon: 'thorns', decay: 'turnStartClear', desc: '다음 턴 시작 전까지 공격받을 때마다 공격자에게 {n} 피해.' },
+  taunt:     { name: '도발', kind: 'buff', icon: 'taunt', decay: 'turnStart', desc: '적의 단일 공격이 이 캐릭터를 향한다. {n}턴 남음.' },
+  guardian:  { name: '수호', kind: 'buff', icon: 'taunt', desc: '적의 단일 공격이 항상 이 캐릭터를 향한다.' },
+  reduce:    { name: '경감', kind: 'buff', icon: 'reduce', desc: '공격 1회당 받는 피해 -{n}.' },
+  hold:      { name: '버티기', kind: 'buff', icon: 'hold', desc: '다음 턴 시작 시 보호막이 사라지지 않는다.' },
+  fortress:  { name: '난공불락', kind: 'buff', icon: 'hold', desc: '턴 시작 시 보호막이 사라지지 않는다.' },
+  affinity:  { name: '원소 친화', kind: 'buff', icon: 'affinity', desc: '부여하는 화상과 한기 +{n}.' },
+  lavaArmor: { name: '용암 갑옷', kind: 'buff', icon: 'burn', decay: 'turnStartClear', desc: '다음 턴까지 공격받을 때마다 공격자에게 화상 {n}.' },
+  charge:    { name: '차지', kind: 'special', icon: 'charge', desc: '강력한 공격을 준비 중. 보호막이 모두 깨지면 취소된다.' },
+  doom:      { name: '종말', kind: 'special', icon: 'doom', desc: '{n}턴 뒤 종말이 찾아온다.' },
+  freezeImmune: { name: '빙결 면역', kind: 'special', icon: 'freezeImmune', decay: 'round', desc: '한기가 쌓이지 않는다. {n}라운드 남음.' },
+
+  poison:    { name: '중독', kind: 'debuff', icon: 'poison', desc: '턴 종료 시 {n} 피해(보호막 무시) 후 1 감소.' },
+  burn:      { name: '화상', kind: 'debuff', icon: 'burn', desc: '턴 종료 시 {n} 피해(보호막에 막힘) 후 절반으로 감소.' },
+  weak:      { name: '약화', kind: 'debuff', icon: 'weak', decay: 'round', desc: '주는 공격 피해 -25%. {n}턴 남음.' },
+  vulnerable:{ name: '취약', kind: 'debuff', icon: 'vulnerable', decay: 'round', desc: '받는 공격 피해 +50%. {n}턴 남음.' },
+  chill:     { name: '한기', kind: 'debuff', icon: 'chill', desc: '3 중첩되면 사라지며 빙결된다. ({n}/3)' },
+  frozen:    { name: '빙결', kind: 'debuff', icon: 'frozen', desc: '적: 다음 행동을 건너뛴다. 아군: 이번 턴 이 캐릭터의 카드를 쓸 수 없다.' },
+  stun:      { name: '정지', kind: 'debuff', icon: 'stun', desc: '다음 행동을 건너뛴다.' }
+};
+
+// 카드 설명에서 굵게 표시하고 툴팁을 띄우는 키워드
+Game.Data.keywords = {
+  '보호막': '받는 피해를 대신 흡수한다. 자신의 다음 턴 시작 시 사라진다.',
+  '소멸': '사용하면 이번 전투에서 제거된다.',
+  '지속': '사용하면 전투가 끝날 때까지 효과가 유지되고 덱으로 돌아가지 않는다.',
+  '치명타': '피해 2배. 캐릭터마다 확률이 다르고, 공용 카드는 5%.',
+  '모래': '사용할 수 없는 방해 카드. 손패 자리만 차지하고 전투가 끝나면 사라진다.'
+};
+['strength', 'focus', 'keen', 'critUp', 'regen', 'thorns', 'taunt', 'poison', 'burn', 'weak',
+ 'vulnerable', 'chill', 'frozen', 'stun'].forEach(function (k) {
+  var s = Game.Data.statuses[k];
+  Game.Data.keywords[s.name] = s.desc.replace(/\{n\}턴 남음\.|\(\{n\}\/3\)|\{n\}회|\{n\}/g, function (m) {
+    return m === '{n}' ? 'N' : m === '{n}회' ? 'N회' : m.indexOf('/3') > 0 ? '' : 'N턴 지속.';
+  }).replace('{p}', '10/중첩').replace('{h}', '0.5/중첩').trim();
+});
