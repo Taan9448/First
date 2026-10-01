@@ -8,7 +8,7 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 global.window = global;
 ['js/core.js', 'data/keywords.js', 'data/characters.js', 'data/cards.js', 'data/monsters.js', 'data/relics.js',
- 'data/upgrades.js', 'data/events.js', 'js/status.js', 'js/deck.js', 'js/upgrade.js', 'js/battle.js', 'js/effects.js'].forEach(f => {
+ 'data/upgrades.js', 'data/events.js', 'data/bonds.js', 'data/traits.js', 'js/status.js', 'js/deck.js', 'js/upgrade.js', 'js/battle.js', 'js/effects.js'].forEach(f => {
   vm.runInThisContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), { filename: f });
 });
 const G = global.Game;
@@ -74,6 +74,36 @@ check(!G.Data.cardById['L12+'].exhaust, '예외: 마력 충전+ 소멸 제거');
 check(G.Data.cardById['C29+'].effects[0].p === 0.65, '예외: 동전 던지기+ 앞면 65%');
 check(G.Data.cardById['C30+'].effects[0].options[3].effects[0].value === 3, '아군에게 거는 디버프(수상한 물약의 중독)는 올리지 않음');
 check(G.util.numJosa('피해 4을 3회, 6를, 7으로') === '피해 4를 3회, 6을, 7로', '숫자 조사 교정');
+
+// 9단계: 짝 연계 10 · 합동기 10 · 대화 30 · 특성 50
+const HEROES = G.Data.characters.map(c => c.id);
+check(G.Data.pairCombos.length === 10, '짝 연계 10종');
+check(new Set(G.Data.pairCombos.map(p => p.from + '>' + p.to)).size === 10, '짝 연계 중복 없음');
+G.Data.pairCombos.forEach(p => { check(HEROES.includes(p.from) && HEROES.includes(p.to) && p.from !== p.to, p.name + ': 캐릭터'); if (p.after) walk(p.after, p.name); });
+check(G.Data.duoCards.length === 10, '합동기 10장');
+G.Data.duoCards.forEach(c => {
+  walk(c.effects, c.id);
+  check(c.duo.length === 2 && c.duo.includes(c.caster), c.id + ': 짝과 시전자');
+  check(G.Data.cardById[c.id] === c && !G.Data.cards.includes(c), c.id + ': 조회 표에만 등록');
+  check(c.sfx && G.FX.SFX[c.sfx], c.id + ': 고유 이펙트');
+});
+const pairKeys = []; for (let i = 0; i < 5; i++) for (let j = i + 1; j < 5; j++) pairKeys.push(HEROES[i] + '+' + HEROES[j]);
+check(pairKeys.every(k => G.Data.duoByPair[k]), '짝마다 합동기 1장');
+check(Object.keys(G.Data.dialogues).length === 10 && pairKeys.every(k => G.Data.dialogues[k] && G.Data.dialogues[k].length === 3), '대화 짝 10 × 3편');
+pairKeys.forEach(k => G.Data.dialogues[k].forEach((d, i) => {
+  check(d.length >= 3 && d.length <= 6, k + ' 대화 ' + (i + 1) + ': 3~6줄');
+  check(d.every(l => k.split('+').includes(l[0]) && l[1]), k + ' 대화 ' + (i + 1) + ': 말하는 사람은 그 짝');
+}));
+const TRAIT_KEYS = ['maxHp', 'critAdd', 'startStatus', 'startBlock', 'turnStartBlock', 'firstAttackBonus', 'lowHpDamage', 'aoeDamage', 'singleDamage',
+  'selfBlockDmgMult', 'frozenDmgMult', 'onKillBlock', 'onKillHeal', 'onKillEnergy', 'thirdAttackDraw', 'firstOwnAttackDiscount', 'firstOwnCardDiscount',
+  'blockAdd', 'healAdd', 'statusAdd', 'endTurnThornsIfBlock', 'shareBlock', 'undyingOnce', 'onHitBlock', 'onFreezeDraw', 'burnVuln', 'cleanseBlock',
+  'overhealBlock', 'revivePct', 'selfRevive', 'turnStartHealLowest', 'attackHealLowest', 'firstDebuffDraw', 'firstTurnEnergy', 'firstTurnDraw', 'everyN', 'winHeal'];
+let traitN = 0;
+HEROES.forEach(id => {
+  check(G.Data.traits[id] && G.Data.traits[id].length === 5, id + ': 특성 5레벨');
+  (G.Data.traits[id] || []).forEach(lv => { check(lv.length === 2, id + ': 레벨마다 2개'); lv.forEach(t => { traitN++; Object.keys(t.mods).forEach(k => check(TRAIT_KEYS.includes(k), id + ' ' + t.name + ': 알 수 없는 특성 효과 ' + k)); }); });
+});
+check(traitN === 50, '특성 50개 (' + traitN + ')');
 
 // 이벤트 15종
 check(G.Data.events.length === 15, '이벤트 15종');
@@ -358,6 +388,59 @@ function handCard(b, id) {
   b = await newBattle(['kai', 'bram'], ['slime'], ['C01'], { startEffects: [{ name: '샘의 저주', effects: [{ op: 'status', status: 'weak', value: 2, target: 'allAllies' }] }] });
   check(b.heroes.every(h => h.status.weak === 2), '전투 시작 효과: 아군 전체 약화 2');
 
+  // ---------------------------------------------------------------- 9단계: 연계·짝 연계·합동기·특성
+  // 카이 → 리라: 연계 2(공격 피해 +1) + 짝 연계 '검기 마법'(추가 피해 4)
+  b = await newBattle(['kai', 'lyra'], ['treant'], ['C01']);
+  b.heroes.forEach(h => { h.crit = 0; }); b.energy = 5;
+  hp0 = b.monsters[0].hp;
+  await b.play(handCard(b, 'K01'), b.monsters[0]);
+  check(hp0 - b.monsters[0].hp === 6 && b.chain.count === 1, '연계 1: 베기 6');
+  hp0 = b.monsters[0].hp;
+  await b.play(handCard(b, 'L08'), b.monsters[0]);
+  check(b.chain.count === 2, '연계 2');
+  check(hp0 - b.monsters[0].hp === (4 + 1) * 2 + 4, '연계 +1 × 2회 + 검기 마법 4 = 14 (실제 ' + (hp0 - b.monsters[0].hp) + ')');
+  hp0 = b.monsters[0].hp;
+  await b.play(handCard(b, 'L08'), b.monsters[0]);
+  check(b.chain.count === 1 && hp0 - b.monsters[0].hp === 8, '같은 캐릭터를 이어 쓰면 연계가 1로');
+  // 공용 카드는 연계를 끊지 않는다 / 짝 연계는 턴당 한 번
+  b = await newBattle(['kai', 'lyra'], ['treant'], ['C01']);
+  b.heroes.forEach(h => { h.crit = 0; }); b.energy = 9;
+  await b.play(handCard(b, 'K01'), b.monsters[0]);
+  await b.play(handCard(b, 'C01'), b.monsters[0]);
+  check(b.chain.last === 'kai' && b.chain.count === 1, '공용 카드는 연계를 끊지도 올리지도 않음');
+  // 친밀도 2단계: 짝 연계 1.5배
+  b = await newBattle(['kai', 'lyra'], ['treant'], ['C01'], { bonds: { 'kai+lyra': 25 } });
+  b.heroes.forEach(h => { h.crit = 0; }); b.energy = 5;
+  await b.play(handCard(b, 'K01'), b.monsters[0]);
+  hp0 = b.monsters[0].hp;
+  await b.play(handCard(b, 'L08'), b.monsters[0]);
+  check(hp0 - b.monsters[0].hp === 10 + 6, '친밀도 2단계: 검기 마법 6 (실제 ' + (hp0 - b.monsters[0].hp - 10) + ')');
+  // 합동기: 두 사람 모두 편성·생존해야 쓸 수 있다
+  b = await newBattle(['kai'], ['treant'], ['C01']);
+  b.energy = 3;
+  check(!b.canPlay(handCard(b, 'D02')).ok, '합동기: 짝이 편성되지 않으면 못 씀');
+  b = await newBattle(['kai', 'lyra'], ['treant', 'slime'], ['C01']);
+  b.energy = 3;
+  const duoC = handCard(b, 'D02');
+  check(b.canPlay(duoC).ok, '합동기: 두 사람이 있으면 씀');
+  b.heroes[1].hp = 0; b.heroes[1].dead = true;
+  check(!b.canPlay(duoC).ok, '합동기: 한 사람이 쓰러지면 못 씀');
+  // 특성
+  b = await newBattle(['kai'], ['treant'], ['C01'], { party: [{ id: 'kai', traits: [{ maxHp: 10 }, { firstOwnAttackDiscount: 1 }, { startStatus: { strength: 1 } }] }] });
+  check(b.heroes[0].maxHp === 80 && b.heroes[0].hp === 80, '특성: 최대 체력 +10');
+  check(b.heroes[0].status.strength === 1, '특성: 시작 힘 1');
+  const k1 = handCard(b, 'K01');
+  check(b.costOf(k1) === 0, '특성: 매 턴 첫 공격 카드 비용 -1');
+  b.energy = 3; await b.play(k1, b.monsters[0]);
+  check(b.costOf(handCard(b, 'K01')) === 1, '두 번째 공격 카드는 그대로');
+  b = await newBattle(['bram'], ['treant'], ['C01'], { party: [{ id: 'bram', traits: [{ undyingOnce: true }, { startBlock: 8 }] }] });
+  check(b.heroes[0].block === 8, '특성: 시작 보호막 8');
+  await b.loseHp(b.heroes[0], 999);
+  check(!b.heroes[0].dead && b.heroes[0].hp === 1, '특성: 불굴(체력 1로 버팀)');
+  b = await newBattle(['lyra'], ['treant'], ['C01'], { party: [{ id: 'lyra', traits: [{ statusAdd: { burn: 1 } }] }] });
+  b.energy = 3; await b.play(handCard(b, 'L01'), b.monsters[0]);
+  check(b.monsters[0].status.burn === 3, '특성: 리라가 거는 화상 +1');
+
   b = await newBattle(['kai'], ['slime', 'slime'], ['C01'], { affixes: ['giant', 'angry'] });
   check(b.monsters[0].maxHp === 27 && b.monsters[0].name === '거대한 슬라임', '거대한: 체력 1.5배·이름');
   check(b.monsters[1].status.strength === 2, '분노한: 힘 2');
@@ -386,7 +469,11 @@ function handCard(b, id) {
     const relics = G.rng.shuffle(G.Data.relics.map(r => r.id)).slice(0, G.rng.int(0, 6));
     const affixes = enc.map(() => G.rng.chance(0.3) ? G.rng.pick(Object.keys(G.Data.affixes)) : null);
     try {
-      const b = G.Battle.create({ party: party.map(id => ({ id })), monsters: enc, deck, gold: 30, relics, affixes, stage: G.rng.int(1, 10) });
+      // 특성(무작위로 고른 레벨), 친밀도, 합동기도 섞는다
+      const pty = party.map(id => ({ id, traits: G.Data.traits[id].slice(0, G.rng.int(0, 5)).map(lv => G.rng.pick(lv).mods) }));
+      const bonds = {}; for (let i = 0; i < party.length; i++) for (let j = i + 1; j < party.length; j++) bonds[[party[i], party[j]].sort((x, y) => heroes.indexOf(x) - heroes.indexOf(y)).join('+')] = G.rng.int(0, 60);
+      const duos = Object.keys(bonds).filter(k => G.Data.duoByPair[k]).map(k => G.Data.duoByPair[k].id);
+      const b = G.Battle.create({ party: pty, monsters: enc, deck: deck.concat(duos), gold: 30, relics, affixes, stage: G.rng.int(1, 10), bonds });
       await b.start();
       let guard = 0;
       while (!b.over() && b.turn < 80 && guard++ < 5000) {
@@ -421,6 +508,8 @@ function handCard(b, id) {
   if (N >= 1000) {
     check(!never.length, '모든 카드가 한 번 이상 사용됨 (미사용: ' + never.join(', ') + ')');
     const neverUp = cards.filter(c => !played.has(c.id + '+')).map(c => c.id + '+');
+    const neverDuo = G.Data.duoCards.filter(c => !played.has(c.id)).map(c => c.id);
+    check(!neverDuo.length, '모든 합동기가 한 번 이상 사용됨 (미사용: ' + neverDuo.join(', ') + ')');
     check(!neverUp.length, '모든 강화 카드가 한 번 이상 사용됨 (미사용: ' + neverUp.join(', ') + ')');
     check(seenMonsters.size === 41, '모든 몬스터 등장 (' + seenMonsters.size + '/41)');
   } else console.log('  (사용 범위 검사 생략: 1000회 미만)');

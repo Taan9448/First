@@ -158,12 +158,39 @@
         var cards = D.cards.filter(function (x) { return x.owner === c.id; }).map(function (x) {
           return d.cards.indexOf(x.id) >= 0 ? '<span class="cn r-' + x.rarity + '">' + x.name + '</span>' : '<span class="cn dim">???</span>';
         }).join(' ');
+        // 성장(레벨·경험치·고른 특성)
+        var growth = '';
+        if (joined) {
+          var ei = St().expInfo(c.id), g = St().growthOf(c.id);
+          var pct = ei.need ? Math.round((ei.exp - ei.prev) / (ei.need - ei.prev) * 100) : 100;
+          var picks = g.traits.map(function (p, lv) { var t = D.traits[c.id][lv][p]; return '<span class="trait-chip" data-tip="<b>' + t.name + '</b><br>' + t.desc + '">Lv' + (lv + 1) + ' ' + t.name + '</span>'; }).join('');
+          growth = '<div class="lvline"><span class="lv">Lv ' + ei.level + '</span><span class="expbar"><i style="width:' + pct + '%"></i></span>' +
+            '<span class="dim">' + (ei.need ? ei.exp + '/' + ei.need : '최고 레벨') + '</span></div>' + (picks ? '<div class="cnames">' + picks + '</div>' : '');
+        }
         row.appendChild(UI.el('div', 'info', joined ?
-          '<b>' + c.name + '</b> <span class="dim">' + c.role + ' · ' + c.job + ' · 체력 ' + c.hp + ' · 치명타 ' + Math.round(c.crit * 100) + '%</span>' +
-          '<div class="dim">' + c.desc + '</div><div class="cnames">' + cards + '</div>' :
+          '<b>' + c.name + '</b> <span class="dim">' + c.role + ' · ' + c.job + ' · 체력 ' + St().maxHp(c.id) + ' · 치명타 ' + Math.round(c.crit * 100) + '%</span>' +
+          growth + '<div class="dim">' + c.desc + '</div><div class="cnames">' + cards + '</div>' :
           '<b>???</b> <span class="dim">' + c.joinAfter + ' 스테이지를 클리어하면 합류한다</span>'));
         hl.appendChild(row);
       });
+      // 짝 친밀도: 막대, 단계, 다음 해금, 합동기
+      hl.appendChild(UI.el('div', 'theme-title', '친밀도'));
+      var chars = D.characters.map(function (c) { return c.id; });
+      for (var i = 0; i < chars.length; i++) for (var j = i + 1; j < chars.length; j++) {
+        var key = St().pairKey(chars[i], chars[j]);
+        if (d.characters.indexOf(chars[i]) < 0 || d.characters.indexOf(chars[j]) < 0) continue;
+        var v = (d.bonds || {})[key] || 0, lv = St().bondLevel(key), next = D.bondLevels[lv];
+        var nextText = lv === 0 ? '대화 1' : lv === 1 ? '대화 2 · 짝 연계 1.5배' : lv === 2 ? '대화 3 · 합동기' : '모두 해금';
+        var duoC = D.duoByPair[key];
+        var pcs = D.pairCombos.filter(function (p) { return St().pairKey(p.from, p.to) === key; })
+          .map(function (p) { return '<span class="trait-chip" data-tip="<b>' + p.name + '</b><br>' + charDef(p.from).name + ' → ' + charDef(p.to).name + ': ' + p.desc + '">' + p.name + '</span>'; }).join('');
+        var br = UI.el('div', 'mon-row bond-row');
+        br.innerHTML = '<div class="info"><b>' + charDef(chars[i]).name + ' · ' + charDef(chars[j]).name + '</b> <span class="dim">' + lv + '단계 · 대화 ' + ((d.talks || {})[key] || 0) + '/3</span>' +
+          '<div class="lvline"><span class="expbar bond"><i style="width:' + Math.min(100, Math.round(v / D.bondLevels[2] * 100)) + '%"></i></span>' +
+          '<span class="dim">' + v + (next ? '/' + next + ' → ' + nextText : ' · ' + nextText) + '</span></div>' +
+          '<div class="cnames">' + pcs + (duoC ? '<span class="trait-chip duo" data-tip="<b>' + duoC.name + '</b> (합동기)<br>' + U.esc(duoC.text.replace(/\{d0\}/, '')) + '">' + (lv >= 3 ? '합동기 ' + duoC.name : '합동기 ???') + '</span>' : '') + '</div></div>';
+        hl.appendChild(br);
+      }
     }
     UI.$$('.tab', body).forEach(function (b) { b.onclick = function () { cs.tab = b.getAttribute('data-tab'); renderCodex(m); }; });
   }
@@ -224,7 +251,7 @@
     var s = X.settings, debug = '';
     if (G.debug) {
       debug = '<div class="set-row"><span>디버그</span><div class="row"><button class="btn small dbg-gold">골드 +500</button>' +
-        '<button class="btn small dbg-heal">전원 회복</button><button class="btn small dbg-relic">무작위 유물 +1</button><button class="btn small dbg-test">전투 테스트 메뉴</button></div></div>';
+        '<button class="btn small dbg-heal">전원 회복</button><button class="btn small dbg-relic">무작위 유물 +1</button><button class="btn small dbg-exp">경험치 +100</button><button class="btn small dbg-bond">친밀도 +20</button><button class="btn small dbg-test">전투 테스트 메뉴</button></div></div>';
     }
     var m = win('설정',
       '<div class="settings">' +
@@ -269,6 +296,18 @@
         UI.closeModal(m); X.refreshScreen();
       };
       m.querySelector('.dbg-test').onclick = function () { UI.closeModal(m); G.TestMenu.open(); };
+      m.querySelector('.dbg-exp').onclick = function () {
+        if (!St().data) return;
+        St().data.characters.forEach(function (id) { St().growthOf(id).exp += 100; });
+        St().save(); UI.closeModal(m);
+        if (!inBattle()) G.Meta.traits(function () { X.refreshScreen(); });
+      };
+      m.querySelector('.dbg-bond').onclick = function () {
+        if (!St().data) return;
+        var cs = St().data.characters;
+        St().partyPairs(cs).forEach(function (k) { St().data.bonds[k] = (St().data.bonds[k] || 0) + 20; });
+        St().save(); UI.closeModal(m); X.refreshScreen();
+      };
       m.querySelector('.dbg-relic').onclick = function () {
         if (!St().data) return;
         var free = D.relics.filter(function (r) { return St().data.relics.indexOf(r.id) < 0; });

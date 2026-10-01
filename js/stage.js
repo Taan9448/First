@@ -162,7 +162,7 @@
     startStage: function (n) {
       var d = St.data, def = St.stageDef(n);
       var hp = {};
-      d.characters.forEach(function (id) { hp[id] = charDef(id).hp; });
+      d.characters.forEach(function (id) { hp[id] = St.maxHp(id); });
       var battles = 0;
       var map = def.cols.map(function (col, ci) {
         var last = ci === def.cols.length - 1;
@@ -251,12 +251,13 @@
       return {
         title: '스테이지 ' + r.stage + ' · ' + D.NODE_NAME[type],
         stage: r.stage, nodeType: type, theme: def.theme,
-        party: party.map(function (id) { return { id: id, hp: Math.max(1, r.hp[id]) }; }),
+        party: party.map(function (id) { return { id: id, hp: Math.max(1, r.hp[id]), traits: St.traitMods(id) }; }),
+        bonds: Object.assign({}, d.bonds),
         monsters: monsters,
         affixes: affixes,
         relics: (d.relics || []).slice(),
         startEffects: startEffects,
-        deck: St.battleDeck(party).concat(extra),
+        deck: St.battleDeck(party).concat(St.duoDeck(party), extra),
         gold: d.gold,
         boss: type !== 'battle'
       };
@@ -271,11 +272,19 @@
     battleWon: function (battle) {
       var d = St.data, r = d.run, node = St.node(), mods = St.mods();
       var downed = Math.max(eco().downedPct, mods.downedPct || 0);
+      var winHeal = (mods.winHeal || 0);
+      battle.heroes.forEach(function (h) { winHeal += h.tm && h.tm.winHeal || 0; });
       battle.heroes.forEach(function (h) {
         var hp = h.dead ? Math.max(1, Math.floor(h.maxHp * downed)) : h.hp;
-        if (mods.winHeal) hp = Math.min(h.maxHp, hp + mods.winHeal);
+        if (winHeal) hp = Math.min(h.maxHp, hp + winHeal);
         r.hp[h.id] = hp;
       });
+      // 성장·친밀도(9단계): 편성된 동료는 쓰러져 있어도 경험치를 받고, 함께 이긴 짝은 친밀도 +1
+      var fightType = node.fight ? node.fight.kind : node.type;
+      var exp = (D.growth.exp[fightType] || D.growth.exp.battle);
+      battle.heroes.forEach(function (h) { St.growthOf(h.id).exp += exp; });
+      St.partyPairs(battle.heroes.map(function (h) { return h.id; })).forEach(function (k) { d.bonds[k] = (d.bonds[k] || 0) + D.bondGain.battle; });
+      St.lastExp = { amount: exp, heroes: battle.heroes.map(function (h) { return h.id; }) };
       battle.monsters.forEach(function (m) { St.markSeen([m.id]); });
       battle.kills.forEach(function (id) { d.codex.monsters[id].kills++; });
       d.gold = Math.max(0, d.gold + battle.goldDelta);
@@ -393,7 +402,7 @@
     healAll: function (pct) {
       var r = St.data.run;
       St.data.characters.forEach(function (id) {
-        var max = charDef(id).hp;
+        var max = St.maxHp(id);
         if (r.hp[id] != null) r.hp[id] = Math.min(max, r.hp[id] + Math.floor(max * pct));
       });
     },
@@ -436,7 +445,7 @@
       d.gold -= eco().healCost;
       s.healed = true;
       d.characters.forEach(function (id) {
-        var max = charDef(id).hp;
+        var max = St.maxHp(id);
         d.run.hp[id] = Math.min(max, d.run.hp[id] + Math.floor(max * eco().healPct));
       });
       St.save();
@@ -488,7 +497,7 @@
             op.who === 'all' ? Object.keys(r.hp) : party;
           var sum = 0;
           who.forEach(function (id) {
-            var max = charDef(id).hp, n = op.pct != null ? Math.floor(max * Math.abs(op.pct)) : Math.abs(op.value);
+            var max = St.maxHp(id), n = op.pct != null ? Math.floor(max * Math.abs(op.pct)) : Math.abs(op.value);
             var loss = (op.pct != null ? op.pct : op.value) < 0;
             r.hp[id] = loss ? Math.max(1, r.hp[id] - n) : Math.min(max, r.hp[id] + n);
             sum = n;
@@ -603,6 +612,80 @@
       var g = St.data.growth = St.data.growth || {};
       return (g[id] = g[id] || { exp: 0, traits: [] });
     },
+
+    levelOf: function (id) {
+      var exp = St.growthOf(id).exp, lv = 0;
+      D.growth.levels.forEach(function (t) { if (exp >= t) lv++; });
+      return lv;
+    },
+    // 다음 레벨까지: { level, exp, need(다음 문턱, 최고 레벨이면 null) }
+    expInfo: function (id) {
+      var lv = St.levelOf(id);
+      return { level: lv, exp: St.growthOf(id).exp, need: D.growth.levels[lv] || null, prev: lv ? D.growth.levels[lv - 1] : 0 };
+    },
+    traitMods: function (id) {
+      var g = St.growthOf(id), list = D.traits[id] || [];
+      return g.traits.map(function (pick, lv) { return list[lv] && list[lv][pick] ? list[lv][pick].mods : null; }).filter(Boolean);
+    },
+    maxHp: function (id) {
+      var add = 0;
+      St.traitMods(id).forEach(function (m) { add += m.maxHp || 0; });
+      return charDef(id).hp + add;
+    },
+    // 레벨업했는데 아직 특성을 고르지 않은 동료(합류한 순서대로)
+    pendingTrait: function () {
+      var d = St.data;
+      for (var i = 0; i < d.characters.length; i++) {
+        var id = d.characters[i], g = St.growthOf(id), lv = St.levelOf(id);
+        if (g.traits.length < lv && D.traits[id]) return { id: id, level: g.traits.length + 1, options: D.traits[id][g.traits.length] };
+      }
+      return null;
+    },
+    chooseTrait: function (id, pick) {
+      var g = St.growthOf(id), lv = St.levelOf(id);
+      if (g.traits.length >= lv || (pick !== 0 && pick !== 1)) return false;
+      var opt = D.traits[id][g.traits.length][pick];
+      g.traits.push(pick);
+      // 최대 체력이 늘면 지금 체력도 같이 는다
+      var r = St.data.run;
+      if (opt.mods.maxHp && r && r.hp[id] != null) r.hp[id] += opt.mods.maxHp;
+      St.save();
+      return true;
+    },
+    // 친밀도 단계(0~3)
+    bondLevel: function (key) {
+      var v = St.data.bonds[key] || 0, lv = 0;
+      D.bondLevels.forEach(function (t) { if (v >= t) lv++; });
+      return lv;
+    },
+    // 합동기: 친밀도 3단계인 짝이 둘 다 편성되어 있으면 전투 덱에 1장
+    duoDeck: function (party) {
+      return St.partyPairs(party).filter(function (k) { return St.bondLevel(k) >= 3 && D.duoByPair[k]; })
+        .map(function (k) { return D.duoByPair[k].id; });
+    },
+    // 휴식 노드의 대화: 편성된 짝 중 볼 대화가 남은 짝(친밀도가 가장 높은 짝 먼저)
+    pendingTalk: function () {
+      var d = St.data, r = d.run, node = St.node();
+      if (!r || !node || node.type !== 'rest' || node.talked) return null;
+      d.talks = d.talks || {};
+      var best = null;
+      St.partyPairs(St.partyAlive()).forEach(function (k) {
+        var seen = d.talks[k] || 0, lines = D.dialogues[k];
+        if (!lines || seen >= lines.length || (d.bonds[k] || 0) < D.bondLevels[seen]) return;
+        if (!best || (d.bonds[k] || 0) > (d.bonds[best.key] || 0)) best = { key: k, index: seen, lines: lines[seen] };
+      });
+      return best;
+    },
+    finishTalk: function (key) {
+      var d = St.data, node = St.node();
+      if (node) node.talked = true;
+      if (key) {
+        d.talks[key] = (d.talks[key] || 0) + 1;
+        d.bonds[key] = (d.bonds[key] || 0) + D.bondGain.talk;
+      }
+      St.save();
+    },
+
     // 짝 이름: 캐릭터 순서대로 'kai+lyra'
     pairKey: function (a, b) {
       var order = D.characters.map(function (c) { return c.id; });
@@ -637,7 +720,7 @@
     debugHealAll: function () {
       var r = St.data.run;
       if (!r) return;
-      St.data.characters.forEach(function (id) { r.hp[id] = charDef(id).hp; });
+      St.data.characters.forEach(function (id) { r.hp[id] = St.maxHp(id); });
       St.save();
     }
   };

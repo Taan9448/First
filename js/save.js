@@ -77,7 +77,12 @@
       d.relics = (d.relics || []).filter(function (id) { return G.Data.relicById && G.Data.relicById[id]; });
       d.upgraded = (d.upgraded || []).filter(function (id) { return d.cards.indexOf(id) >= 0; });
       d.growth = d.growth && typeof d.growth === 'object' ? d.growth : {};
-      Object.keys(d.growth).forEach(function (k) { if (chars.indexOf(k) < 0) delete d.growth[k]; });
+      Object.keys(d.growth).forEach(function (k) {
+        if (chars.indexOf(k) < 0) { delete d.growth[k]; return; }
+        var g = d.growth[k];
+        g.exp = Math.max(0, g.exp | 0);
+        g.traits = (g.traits || []).filter(function (t) { return t === 0 || t === 1; }).slice(0, 5);
+      });
       d.bonds = d.bonds && typeof d.bonds === 'object' ? d.bonds : {};
       d.talks = d.talks && typeof d.talks === 'object' ? d.talks : {};
       d.ascension = d.ascension || { current: 0, best: 0 };

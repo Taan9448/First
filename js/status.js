@@ -64,6 +64,7 @@
     },
     // 적이 빙결된 순간 (얼음 왕관 유물)
     frozeEnemy: function (battle, u) {
+      if (battle.onEnemyFrozen) battle.onEnemyFrozen(u);
       var v = battle.mods && battle.mods.freezeVuln;
       if (!v) return;
       battle.relicFx(battle.relicWith('freezeVuln'));

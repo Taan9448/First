@@ -27,7 +27,7 @@
     return r ? St.stageDef(r.stage).theme : 'forest';
   }
   function hpBar(id) {
-    var r = St.data.run, max = charDef(id).hp, hp = r && r.hp[id] != null ? r.hp[id] : max;
+    var r = St.data.run, max = St.maxHp(id), hp = r && r.hp[id] != null ? r.hp[id] : max;
     return '<div class="hpbar"><i style="width:' + (hp / max * 100) + '%"></i><span>' + hp + '/' + max + '</span></div>';
   }
   function miniHero(id) {
@@ -257,8 +257,8 @@
   function onBattleEnd(result, battle) {
     if (result === 'win') {
       var res = St.battleWon(battle);
-      if (res.ending) return Meta.clear(res.clear);
-      return Meta.reward();
+      var next = function () { if (res.ending) Meta.clear(res.clear); else Meta.reward(); };
+      return Meta.traits(next);
     }
     St.battleLost(battle);
     var m = UI.modal('<h2>패배…</h2><p>스테이지를 처음부터 다시 시작한다.<br>얻은 카드·골드·유물은 그대로 남는다.</p>' +
@@ -275,7 +275,7 @@
       var heroes = d.characters.map(function (id) {
         var c = charDef(id), on = pick.indexOf(id) >= 0;
         return '<div class="hero-pick ' + (on ? 'on' : '') + '" data-hero="' + id + '"><div class="portrait" style="--hc:' + UI.shade(c.color, -0.55) + '"><div class="sp" data-id="' + id + '"></div></div>' +
-          '<b>' + c.name + '</b><small>' + c.role + ' · ' + c.job + '<br>치명타 ' + Math.round(c.crit * 100) + '% · 덱 ' + (d.decks[id] || []).length + '장</small>' + hpBar(id) + '</div>';
+          '<b>' + c.name + ' <span class="lvtag">Lv ' + St.levelOf(id) + '</span></b><small>' + c.role + ' · ' + c.job + '<br>치명타 ' + Math.round(c.crit * 100) + '% · 덱 ' + (d.decks[id] || []).length + '장</small>' + hpBar(id) + '</div>';
       }).join('');
       var locked = D.characters.filter(function (c) { return d.characters.indexOf(c.id) < 0; }).map(function (c) {
         return '<div class="hero-pick locked"><div class="portrait"><div class="sp lock-sp" data-lock="' + c.id + '"></div></div><b>???</b><small>' + c.joinAfter + ' 스테이지 클리어 시 합류</small></div>';
@@ -322,6 +322,7 @@
       '<h1 class="big-title">' + title + '</h1>' +
       '<p class="gain"><i class="ico" style="' + UI.iconStyle('gold') + '"></i> 골드 +' + p.gold +
       (p.fill ? ' <span class="dim">(카드 후보가 모자라 +' + p.fill * D.economy.fillGold + ')</span>' : '') + '</p>' +
+      (St.lastExp ? '<p class="exp-gain">' + St.lastExp.heroes.map(function (id) { return charDef(id).name; }).join(' · ') + ' 경험치 <b>+' + St.lastExp.amount + '</b></p>' : '') +
       relicPart +
       '<span class="ribbon">카드 1장을 고른다</span><div class="row reward-cards"></div>' +
       '<p class="dim deck-note">&nbsp;</p>' +
@@ -368,6 +369,8 @@
 
   // ================= 휴식 =================
   Meta.rest = function () {
+    var talk = St.pendingTalk();
+    if (talk) return Meta.talk(talk, Meta.rest);
     var d = St.data, el = screen('camp'), e = D.economy, mods = St.mods();
     el.innerHTML = topbar('휴식') + '<div class="meta-body">' +
       '<h1 class="big-title">모닥불</h1><p class="dim">하나만 고를 수 있다.</p>' +
@@ -497,6 +500,61 @@
     UI.show('camp');
   };
   function SND(k) { if (G.Audio) G.Audio.play(k); }
+
+  // ================= 야영지 대화(9단계) =================
+  // 두 캐릭터의 도트 초상이 좌우에 서고, 말하는 쪽이 밝아진다. 누르면 다음 줄, 건너뛰기 가능
+  Meta.talk = function (t, done) {
+    var pair = t.key.split('+'), el = screen('camp'), i = 0;
+    el.innerHTML = topbar('모닥불 이야기') + '<div class="talk">' +
+      '<div class="talk-stage"><div class="portrait-l"></div><div class="fire"><i class="ico" style="' + UI.iconStyle('campfire') + '"></i></div><div class="portrait-r"></div></div>' +
+      '<div class="talk-box frame"><b class="who"></b><p class="line"></p><div class="row talk-btns"><button class="btn small ghost skip">건너뛰기</button><button class="btn gold next">다음</button></div></div>' +
+      '<p class="dim talk-note">' + charDef(pair[0]).name + ' · ' + charDef(pair[1]).name + ' — 이야기 ' + (t.index + 1) + '/3 · 끝까지 들으면 친밀도 +' + D.bondGain.talk + '</p></div>';
+    backdrop(el, runTheme());
+    var pl = el.querySelector('.portrait-l'), pr = el.querySelector('.portrait-r');
+    [[pl, pair[0], false], [pr, pair[1], true]].forEach(function (x) {
+      var sp = UI.spriteEl(x[1], 2.6);
+      if (x[2]) sp.style.transform = 'scaleX(-1)';
+      x[0].appendChild(sp);
+      x[0].setAttribute('data-id', x[1]);
+    });
+    var show = function () {
+      var ln = t.lines[i], who = ln[0];
+      el.querySelector('.who').textContent = charDef(who).name;
+      el.querySelector('.who').style.color = charDef(who).color;
+      var line = el.querySelector('.line');
+      line.textContent = ln[1];
+      line.classList.remove('in'); void line.offsetWidth; line.classList.add('in');
+      pl.classList.toggle('speak', who === pair[0]); pr.classList.toggle('speak', who === pair[1]);
+      el.querySelector('.next').textContent = i === t.lines.length - 1 ? '마치기' : '다음';
+    };
+    var end = function (finished) { St.finishTalk(finished ? t.key : null); done(); };
+    el.querySelector('.next').onclick = function () { if (++i >= t.lines.length) end(true); else show(); };
+    el.querySelector('.talk-box').addEventListener('click', function (e) { if (!e.target.closest('.btn')) el.querySelector('.next').click(); });
+    el.querySelector('.skip').onclick = function () { end(true); };
+    show();
+    UI.show('camp');
+  };
+
+  // ================= 레벨업 특성 고르기(9단계) =================
+  Meta.traits = function (next) {
+    var p = St.pendingTrait();
+    if (!p) return next();
+    var c = charDef(p.id);
+    var m = UI.modal('<div class="lvup"><div class="lvup-sp"></div><div><small class="dim">LEVEL UP</small><h2>' + c.name + ' Lv ' + p.level + '</h2>' +
+      '<p class="dim">두 특성 중 하나를 고른다. 고른 특성은 바꿀 수 없다.</p></div></div>' +
+      '<div class="row choices">' + p.options.map(function (o, i) {
+        return '<button class="choice trait" data-i="' + i + '"><span>' + U.esc(o.name) + '</span><small>' + U.esc(o.desc) + '</small></button>';
+      }).join('') + '</div>', 'lvmodal', true);
+    m.querySelector('.lvup-sp').appendChild(UI.spriteEl(p.id, 1.4));
+    SND('win');
+    UI.$$('.choice.trait', m).forEach(function (b) {
+      b.onclick = function () {
+        St.chooseTrait(p.id, +b.getAttribute('data-i'));
+        UI.closeModal(m);
+        Meta.traits(next);
+      };
+    });
+  };
 
   // ================= 상점 =================
   Meta.shop = function () {

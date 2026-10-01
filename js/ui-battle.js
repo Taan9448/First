@@ -46,6 +46,7 @@
     $('.relic-bar').innerHTML = UI.relicBar(battleOpts.relics);
     $('.debug-kill').style.display = G.debug ? '' : 'none';
     hits = 0; showHits();
+    $('.combo').classList.remove('on');
     field.classList.remove('zoom'); field.style.transform = '';
     UI.show('battle');
     B = G.Battle.create(battleOpts);
@@ -493,6 +494,7 @@
     on('battle:turn', function (d) {
       banner(d.side === 'ally' ? '내 턴' : '적의 턴', d.side === 'ally' ? '' : 'enemy');
       if (d.side === 'ally') { hits = 0; showHits(); }
+      $('.combo').classList.remove('on');
       SND.play('turn');
       handSig = '';
     });
@@ -538,6 +540,23 @@
       }
     });
     on('card:done', function () { cur = null; });
+    // 연계 수와 짝 연계
+    on('combo', function (d) {
+      var c = $('.combo');
+      if (d.count >= 2) {
+        c.querySelector('b').textContent = d.count;
+        c.querySelector('.bonus').textContent = '공격 피해 +' + Math.min(G.Data.combo.maxBonus, d.count - 1);
+        c.classList.add('on');
+        pulseClass(c, 'bump', 300);
+      }
+      if (d.pair) {
+        var b = UI.el('div', 'pair-banner', U.esc(d.pair.name) + (d.pair.boosted ? ' ×1.5' : '') + '<small>' + U.esc(d.pair.desc) + '</small>');
+        field.appendChild(b);
+        setTimeout(function () { if (b.parentNode) b.parentNode.removeChild(b); }, 1350);
+        if (d.unit) FX.burst(spritePt(d.unit), { colors: ['#ff8ab0', '#8ad8ff', '#ffffff'], n: 18, speed: 2.4 });
+        SND.play('buff');
+      }
+    });
     on('monster:act', function (d) { pulseClass(unitEls[d.unit.uid], 'lunge-l', 330); });
     on('monster:summon', function (d) {
       renderUnit(d.unit); pulseClass(unitEls[d.unit.uid], 'summoned', 420);

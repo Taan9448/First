@@ -164,18 +164,23 @@
   // ---------------- 카드 요소 ----------------
   UI.cardEl = function (def, opts) {
     opts = opts || {};
-    var c = UI.el('div', 'card r-' + def.rarity + (opts.static ? ' static' : ''));
+    var c = UI.el('div', 'card r-' + def.rarity + (opts.static ? ' static' : '') + (def.duo ? ' duo' : ''));
     var owner = G.Data.characters.filter(function (x) { return x.id === def.owner; })[0];
+    var band = owner ? owner.color : '#8a93b8';
+    if (def.duo) {
+      var cs = def.duo.map(function (id) { return G.Data.characters.filter(function (x) { return x.id === id; })[0].color; });
+      band = 'linear-gradient(90deg,' + cs[0] + ' 0 50%,' + cs[1] + ' 50% 100%)';
+    }
     var plain = def.text.replace(/\{d\d\}/g, '00').replace(/\{\+([^}]*)\}/g, '$1');
     var len = plain.length;
     c.innerHTML = '<div class="cin">' +
       '<div class="cf"></div><div class="cart"></div>' +
-      '<div class="cband" style="background:' + (owner ? owner.color : '#8a93b8') + '"></div>' +
+      '<div class="cband" style="background:' + band + '"></div>' +
       '<div class="ccost' + (def.upgraded && def.cost !== G.Data.cardById[def.base].cost ? ' upg' : '') + '"><span>' + (def.cost == null ? '' : def.cost) + '</span></div>' +
       '<div class="cname' + (def.upgraded ? ' upg' : '') + '"><span>' + U.esc(def.name) + '</span></div>' +
       '<div class="ctype"><span>' + (G.TYPE_NAME[def.type] || '') + '</span></div>' +
       '<div class="ctext' + (len > 62 ? ' xlong' : len > 44 ? ' long' : '') + '"><span>' + UI.cardText(def, opts.battle, opts.inst) + '</span></div>' +
-      '<div class="ccond"><span>조건 충족</span></div></div>';
+      '<div class="ccond"><span>조건 충족</span></div><div class="cchain"></div></div>';
     if (opts.silhouette) c.classList.add('silhouette');
     var setImg = function (sel, url) { if (url) c.querySelector(sel).style.backgroundImage = 'url(' + url + ')'; };
     var f = G.ArtCards.frameCached(def.rarity), a = G.ArtCards.artCached(def);
@@ -187,8 +192,10 @@
 
   UI.cardTip = function (def) {
     var owner = G.Data.characters.filter(function (x) { return x.id === def.owner; })[0];
-    return '<b>' + U.esc(def.name) + '</b> · ' + G.RARITY_NAME[def.rarity] + ' ' + (G.TYPE_NAME[def.type] || '') +
-      ' · ' + (owner ? owner.name : def.owner === 'common' ? '공용' : '') +
+    var who = owner ? owner.name : def.owner === 'common' ? '공용' : def.duo ? def.duo.map(function (id) {
+      return G.Data.characters.filter(function (x) { return x.id === id; })[0].name; }).join('+') + ' 합동기' : '';
+    return '<b>' + U.esc(def.name) + '</b> · ' + (def.duo ? '' : G.RARITY_NAME[def.rarity] + ' ') + (G.TYPE_NAME[def.type] || '') +
+      ' · ' + who +
       (def.exhaust ? ' · 소멸' : '') + (def.tags ? '<br><span style="color:#8a93b8">' + def.tags + '</span>' : '');
   };
 
@@ -202,6 +209,11 @@
     var can = battle.canPlay(inst);
     el.classList.toggle('unplayable', !can.ok);
     el.classList.toggle('cond', can.ok && battle.condMet(inst) === true);
+    // 연계 미리보기: 이어 쓰면 연계 수가 오르는 카드, 짝 연계가 발동하는 카드
+    var cp = can.ok && battle.comboPreview ? battle.comboPreview(inst) : null;
+    el.classList.toggle('chain', !!cp);
+    el.classList.toggle('pairable', !!(cp && cp.pair));
+    if (cp) el.querySelector('.cchain').textContent = cp.pair ? cp.pair.name : '연계 ' + cp.count;
     el.querySelector('.ctext span').innerHTML = UI.cardText(inst.def, battle, inst);
     var tip = UI.cardTip(inst.def) + (can.ok ? '' : '<br><span style="color:#ff8a8a">' + can.reason + '</span>');
     el.setAttribute('data-tip', tip);
@@ -258,10 +270,11 @@
   document.addEventListener('pointerleave', function () { if (tiltCard) { resetTilt(tiltCard); tiltCard = null; } });
 
   // ---------------- 창 ----------------
-  UI.modal = function (html, cls) {
+  // sticky: 바깥을 눌러도 닫히지 않는다(꼭 골라야 하는 창)
+  UI.modal = function (html, cls, sticky) {
     var m = UI.el('div', 'modal ' + (cls || ''), '<div class="box pix">' + html + '</div>');
     document.getElementById('app').appendChild(m);
-    m.addEventListener('mousedown', function (e) { if (e.target === m) UI.closeModal(m); });
+    if (!sticky) m.addEventListener('mousedown', function (e) { if (e.target === m) UI.closeModal(m); });
     return m;
   };
   UI.closeModal = function (m) { if (m && m.parentNode) m.parentNode.removeChild(m); };

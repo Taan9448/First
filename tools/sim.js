@@ -17,7 +17,7 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 global.window = global;
 ['js/core.js', 'data/keywords.js', 'data/characters.js', 'data/cards.js', 'data/monsters.js', 'data/stages.js', 'data/relics.js',
- 'data/upgrades.js', 'data/events.js', 'js/status.js', 'js/deck.js', 'js/upgrade.js', 'js/battle.js', 'js/save.js', 'js/stage.js'].forEach(f => {
+ 'data/upgrades.js', 'data/events.js', 'data/bonds.js', 'data/traits.js', 'js/status.js', 'js/deck.js', 'js/upgrade.js', 'js/battle.js', 'js/save.js', 'js/stage.js'].forEach(f => {
   vm.runInThisContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), { filename: f });
 });
 const G = global.Game, St = G.Stage, D = G.Data, S = G.Status;
@@ -197,6 +197,8 @@ async function campaign(seed, order) {
       }
       const node = St.node();
       if (node.type === 'rest') {
+        const talk = St.pendingTalk();
+        if (talk) St.finishTalk(talk.key);
         if (avgHp() < 0.8 && !St.mods().noRestHeal) { if (St.rest()) done = true; }
         else { St.restUpgrade(); useUpgrades(); if (St.advance()) done = true; }
         continue;
@@ -224,6 +226,8 @@ async function campaign(seed, order) {
       if (result === 'win') {
         rec.turns.push(b.turn);
         const res = St.battleWon(b);
+        let pend;
+        while ((pend = St.pendingTrait())) St.chooseTrait(pend.id, 0);
         if (res.ending) { done = true; break; }
         const p = St.data.run.pending;
         if (p.relicChoice && p.relicChoice.length) St.takeRelic(p.relicChoice[0]);

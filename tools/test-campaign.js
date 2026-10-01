@@ -9,7 +9,7 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 global.window = global;
 ['js/core.js', 'data/keywords.js', 'data/characters.js', 'data/cards.js', 'data/monsters.js', 'data/stages.js', 'data/relics.js',
- 'data/upgrades.js', 'data/events.js', 'js/status.js', 'js/deck.js', 'js/upgrade.js', 'js/battle.js', 'js/save.js', 'js/stage.js'].forEach(f => {
+ 'data/upgrades.js', 'data/events.js', 'data/bonds.js', 'data/traits.js', 'js/status.js', 'js/deck.js', 'js/upgrade.js', 'js/battle.js', 'js/save.js', 'js/stage.js'].forEach(f => {
   vm.runInThisContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), { filename: f });
 });
 const G = global.Game, St = G.Stage, D = G.Data;
@@ -49,12 +49,13 @@ function invariants(where) {
   d.upgraded.forEach(id => check(d.cards.includes(id), where + ': 미보유 카드 강화 ' + id));
   check(new Set(d.upgraded).size === d.upgraded.length, where + ': 강화 중복');
   d.buffs.forEach(b => check(b.battles > 0, where + ': 다 쓴 이벤트 효과가 남음'));
+  d.characters.forEach(id => check(St.growthOf(id).traits.length <= St.levelOf(id), where + ': ' + id + ' 특성이 레벨보다 많음'));
   if (d.run) {
     check(d.run.col < d.run.map.length, where + ': 열 번호');
     d.run.path.forEach((i, c) => check(i == null || d.run.map[c][i], where + ': 고른 길이 없음'));
   }
   if (d.run) Object.keys(d.run.hp).forEach(id => {
-    const max = D.characters.find(c => c.id === id).hp;
+    const max = St.maxHp(id);
     check(d.run.hp[id] > 0 && d.run.hp[id] <= max, where + ': ' + id + ' 체력 ' + d.run.hp[id]);
   });
   // 저장 → 불러오기 왕복
@@ -66,7 +67,7 @@ function invariants(where) {
 
 (async () => {
   const N = +(process.argv[2] || 3);
-  let totalBattles = 0, losses = 0, kills = 0, bought = 0, rests = 0, shops = 0, ups = 0, mirrors = 0, eventFights = 0;
+  let totalBattles = 0, losses = 0, kills = 0, bought = 0, rests = 0, shops = 0, ups = 0, mirrors = 0, eventFights = 0, traitsPicked = 0, talks = 0;
   const eventsSeen = new Set(), typesSeen = new Set();
   const useUpgrades = () => {
     while (St.data.run.upgrades) {
@@ -107,6 +108,15 @@ function invariants(where) {
         typesSeen.add(node.type);
         let clearInfo = null, handled = true;
         if (node.type === 'rest') {
+          const talk = St.pendingTalk();
+          if (talk) {
+            const bond0 = St.data.bonds[talk.key] || 0, seen0 = St.data.talks[talk.key] || 0;
+            check(talk.lines.length >= 3 && bond0 >= D.bondLevels[talk.index], '대화 조건(친밀도 단계)');
+            St.finishTalk(talk.key);
+            talks++;
+            check(St.data.bonds[talk.key] === bond0 + D.bondGain.talk && St.data.talks[talk.key] === seen0 + 1, '대화: 친밀도 +3, 본 대화 수 +1');
+            check(!St.pendingTalk(), '휴식 노드마다 대화는 한 번');
+          }
           if (G.rng.next() < 0.5) { rests++; clearInfo = St.rest(); }
           else { St.restUpgrade(); useUpgrades(); clearInfo = St.advance(); }
         } else if (node.type === 'shop') {
@@ -143,7 +153,20 @@ function invariants(where) {
         else await autoBattle(b);
         totalBattles++;
         if (b.result === 'win') {
+          const party = b.heroes.map(h => h.id);
+          const exp0 = party.map(id => St.growthOf(id).exp);
           const res = St.battleWon(b);
+          check(party.every((id, i) => St.growthOf(id).exp > exp0[i]), '이긴 전투마다 경험치');
+          let pend;
+          while ((pend = St.pendingTrait())) {
+            const hpBefore = St.data.run ? St.data.run.hp[pend.id] : null, max0 = St.maxHp(pend.id);
+            const pick = G.rng.int(0, 1);
+            check(St.chooseTrait(pend.id, pick), '특성 고르기');
+            traitsPicked++;
+            const add = pend.options[pick].mods.maxHp || 0;
+            check(St.maxHp(pend.id) === max0 + add, '특성 최대 체력 반영');
+            if (St.data.run && hpBefore != null) check(St.data.run.hp[pend.id] === hpBefore + add, '최대 체력이 늘면 지금 체력도');
+          }
           if (res.ending) {
             check(n === 10, '엔딩은 10 스테이지에서만');
             check(St.data.flags.ended && St.data.clearedStage === 10 && !St.data.run, '엔딩 후 상태');
@@ -199,6 +222,18 @@ function invariants(where) {
     ['battle', 'elite', 'event', 'rest', 'shop', 'boss', 'midboss', 'final'].forEach(t => check(typesSeen.has(t), '노드 종류 등장: ' + t));
   }
 
+  // 성장·친밀도·합동기
+  check(traitsPicked > 0, '레벨업 특성을 골랐다 (' + traitsPicked + ')');
+  check(Object.keys(St.data.bonds).length > 0, '친밀도가 쌓였다');
+  St.data.bonds['kai+bram'] = 45;
+  check(St.duoDeck(['kai', 'bram']).includes('D01') && !St.duoDeck(['kai', 'lyra']).includes('D01'), '친밀도 3단계 짝이 함께 편성되면 합동기');
+  St.data.party = ['kai', 'bram'];
+  St.startStage(1);
+  St.autoPick();
+  check(St.battleOptions().deck.includes('D01'), '전투 덱에 합동기');
+  check(St.battleOptions().party.every(p => Array.isArray(p.traits)), '전투에 특성 전달');
+  St.abandon();
+
   // 저장 v1 → v2: 진행 중인 스테이지는 지우고 카드·골드·동료·유물은 유지
   const v1 = { version: 1, gold: 77, clearedStage: 3, characters: ['kai', 'bram'], party: ['kai'], cards: ['K01', 'C01'], decks: { kai: ['K01'], common: ['C01'] },
     relics: ['R01'], run: { stage: 4, node: 1, nodes: [{ type: 'battle' }], hp: { kai: 50 } }, codex: { monsters: {} }, flags: {} };
@@ -214,7 +249,7 @@ function invariants(where) {
   check(!cleaned.cards.includes('ZZZ99') && !cleaned.decks.common.includes('ZZZ99'), '알 수 없는 카드 ID 제거');
 
   console.log('캠페인 ' + N + '회 · 전투 ' + totalBattles + ' · AI 패배 ' + losses + ' · 강제 승리 ' + kills +
-    ' · 상점 ' + shops + '(구매 ' + bought + ') · 휴식 ' + rests + ' · 강화 ' + ups + ' · 이벤트 ' + eventsSeen.size + '종(전투 ' + eventFights + ') · 그림자 ' + mirrors);
+    ' · 상점 ' + shops + '(구매 ' + bought + ') · 휴식 ' + rests + ' · 강화 ' + ups + ' · 이벤트 ' + eventsSeen.size + '종(전투 ' + eventFights + ') · 그림자 ' + mirrors + ' · 특성 ' + traitsPicked + ' · 대화 ' + talks);
   console.log(failures ? '실패 ' + failures + '건' : '모든 테스트 통과');
   process.exit(failures ? 1 : 0);
 })().catch(err => { console.error(err); process.exit(1); });

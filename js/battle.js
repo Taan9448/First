@@ -10,12 +10,30 @@
   var TARGET_DEPENDENT = { targetHp: 1, targetBlock: 1, targetHas: 1, targetDebuffKinds: 1, targetIntentAttack: 1 };
   var NEEDS_TARGET = { enemy: 1, ally: 1, downedAlly: 1 };
 
-  function makeHero(id, hp) {
+  // 캐릭터 특성(9단계)을 하나로 합친다: 숫자는 더하고, 배율은 곱하고, 상태 표는 합친다
+  function mergeTraits(list) {
+    var m = { statusAdd: {}, startStatus: {} };
+    (list || []).forEach(function (x) {
+      Object.keys(x || {}).forEach(function (k) {
+        var v = x[k];
+        if (k === 'statusAdd' || k === 'startStatus') Object.keys(v).forEach(function (s) { m[k][s] = (m[k][s] || 0) + v[s]; });
+        else if (k === 'selfBlockDmgMult' || k === 'frozenDmgMult') m[k] = (m[k] || 1) * v;
+        else if (k === 'everyN' || typeof v === 'boolean') m[k] = v;
+        else m[k] = (m[k] || 0) + v;
+      });
+    });
+    return m;
+  }
+  G.mergeTraits = mergeTraits;
+
+  function makeHero(id, hp, traits) {
     var c = G.Data.characters.filter(function (x) { return x.id === id; })[0];
     if (!c) throw new Error('알 수 없는 캐릭터: ' + id);
-    var cur = hp == null ? c.hp : hp;
-    return { uid: uidSeq++, side: 'ally', id: id, name: c.name, def: c, maxHp: c.hp, hp: Math.max(0, cur),
-      block: 0, status: {}, dead: cur <= 0, crit: c.crit };
+    var tm = mergeTraits(traits);
+    var max = c.hp + (tm.maxHp || 0);
+    var cur = hp == null ? max : Math.min(hp, max);
+    return { uid: uidSeq++, side: 'ally', id: id, name: c.name, def: c, maxHp: max, hp: Math.max(0, cur),
+      block: 0, status: {}, dead: cur <= 0, crit: c.crit + (tm.critAdd || 0), tm: tm };
   }
 
   function makeMonster(id, affix, stage) {
@@ -64,12 +82,22 @@
 
   function Battle(opts) {
     this.opts = opts;
-    this.heroes = opts.party.map(function (p) { return makeHero(p.id, p.hp); });
+    this.heroes = opts.party.map(function (p) { return makeHero(p.id, p.hp, p.traits); });
     var affixes = opts.affixes || [];
     this.monsters = opts.monsters.map(function (id, i) { return makeMonster(id, affixes[i], opts.stage); });
     this.startEffects = opts.startEffects || [];  // 이벤트가 남긴 전투 시작 효과 [{ name, effects }]
     this.relics = (opts.relics || []).map(function (id) { return G.Data.relicById[id]; }).filter(Boolean);
     this.mods = mergeMods(this.relics);
+    // 전투 전체에 걸리는 특성(첫 턴 에너지·드로우, N턴마다 에너지)은 유물 보정에 더한다
+    var mods = this.mods;
+    this.heroes.forEach(function (h) {
+      var t = h.tm;
+      if (t.firstTurnEnergy) mods.firstTurnEnergy = (mods.firstTurnEnergy || 0) + t.firstTurnEnergy;
+      if (t.firstTurnDraw) mods.firstTurnDraw = (mods.firstTurnDraw || 0) + t.firstTurnDraw;
+      if (t.everyN) mods.everyN.push(t.everyN);
+    });
+    this.bonds = opts.bonds || {};
+    this.chain = { last: null, count: 0, used: {} };   // 연계(9단계)
     this.phoenixUsed = false;
     this.firstAttackDone = false;
     this.nextDraw = 0;
@@ -109,6 +137,12 @@
     var self = this;
     this.monsters.forEach(function (m) { self.predict(m); });
     await this.relicHooks('battleStart');
+    // 특성: 시작 상태·보호막
+    this.heroes.forEach(function (h) {
+      if (h.dead) return;
+      Object.keys(h.tm.startStatus).forEach(function (k) { S.set(h, k, S.get(h, k) + h.tm.startStatus[k]); });
+      if (h.tm.startBlock) self.addBlock(h, h.tm.startBlock);
+    });
     for (var i = 0; i < this.startEffects.length && !this.over(); i++) {
       this.emit('fx:text', { text: this.startEffects[i].name, kind: 'buff' });
       await this.run(this.startEffects[i].effects, { src: null, target: null, isCard: false, defTarget: 'none', pre: {} });
@@ -135,6 +169,15 @@
 
   // 아군이 적에게 거는 상태의 유물 보정 (status.js 가 부른다)
   P.statusMod = function (u, key, n, src) {
+    // 특성: 그 캐릭터가 거는 상태 +n (적에게 거는 것, 재생은 아군에게)
+    if (src && src.side === 'ally' && src.tm) {
+      var toEnemy = u.side === 'enemy';
+      if (src.tm.statusAdd[key] && (toEnemy || key === 'regen')) n += src.tm.statusAdd[key];
+      if (toEnemy && src.tm.firstDebuffDraw && !src._debuffDrawn && S.isDebuff(key)) {
+        src._debuffDrawn = true;
+        this.drawCards(src.tm.firstDebuffDraw);
+      }
+    }
     if (u.side !== 'enemy' || (src && src.side === 'enemy')) return n;
     var m = this.mods;
     if (m.statusAdd[key]) n += m.statusAdd[key];
@@ -151,6 +194,8 @@
     this.lastType = null;
     this.discount = 0;
     this.doubleNext = false;
+    this.chain = { last: null, count: 0, used: {} };
+    this.heroes.forEach(function (h) { h._cardTurn = false; h._atkTurn = false; h._debuffDrawn = false; });
     this.emit('battle:turn', { turn: this.turn, side: 'ally' });
     var self = this;
     for (var i = 0; i < this.heroes.length; i++) {
@@ -159,6 +204,7 @@
       if (S.has(h, 'hold')) S.dec(h, 'hold');
       else if (!S.has(h, 'fortress') && this.turn > 1) h.block = 0; // 첫 턴에는 전투 시작 효과의 보호막을 남긴다
       S.turnStart(h);
+      if (h.tm.turnStartBlock) this.addBlock(h, h.tm.turnStartBlock);
       var r = S.get(h, 'regen');
       if (r > 0) { await this.heal(h, r); S.dec(h, 'regen'); }
     }
@@ -170,6 +216,7 @@
     this.nextEnergy = 0;
     this.drawCards(Math.max(0, DRAW + this.nextDraw + (m.turnDraw || 0) + (turn === 1 ? m.firstTurnDraw || 0 : 0)));
     this.nextDraw = 0;
+    await this.traitTurnStart();
     await this.runHooks('turnStart');
     await this.relicHooks('turnStart');
     this.retarget();
@@ -195,6 +242,8 @@
       if (bare.length) this.relicFx(this.relicWith('turnEndBlockIfNone'));
       for (var b = 0; b < bare.length; b++) this.addBlock(bare[b], this.mods.turnEndBlockIfNone);
     }
+    var self = this;
+    this.alive('ally').forEach(function (h) { if (h.tm.endTurnThornsIfBlock && h.block > 0) S.add(self, h, 'thornsTemp', h.tm.endTurnThornsIfBlock, h); });
     var heroes = this.alive('ally');
     for (var i = 0; i < heroes.length && !this.over(); i++) await this.tickDots(heroes[i]);
     this.heroes.forEach(function (h) { S.turnEnd(h); });
@@ -251,6 +300,7 @@
   P.casterOf = function (inst) {
     var o = inst.def.owner;
     if (o === 'common' || o === 'none') return null;
+    if (o === 'duo') return this.heroById(inst.def.caster);
     return this.heroById(o); // 편성에 없는 캐릭터의 카드(훔친 기술 등)는 시전자 없음
   };
 
@@ -260,6 +310,12 @@
     if (def.cost == null) return null;
     if (inst.freeTurn) return 0;
     var c = inst.costTurn != null ? inst.costTurn : def.cost;
+    // 특성: 매 턴 그 캐릭터의 첫 (공격) 카드 비용 -1
+    var h = def.owner !== 'duo' ? this.casterOf(inst) : null;
+    if (h && h.tm) {
+      if (h.tm.firstOwnCardDiscount && !h._cardTurn) c -= h.tm.firstOwnCardDiscount;
+      if (h.tm.firstOwnAttackDiscount && def.type === 'attack' && !h._atkTurn) c -= h.tm.firstOwnAttackDiscount;
+    }
     return Math.max(0, c - this.discount);
   };
 
@@ -268,6 +324,15 @@
     if (def.unplayable) return { ok: false, reason: '사용할 수 없는 카드' };
     if (this.phase !== 'player') return { ok: false, reason: '내 턴이 아님' };
     var caster = this.casterOf(inst);
+    // 합동기: 두 사람 모두 편성되어 있고, 쓰러지거나 빙결되지 않아야 한다
+    if (def.duo) {
+      for (var di = 0; di < def.duo.length; di++) {
+        var dh = this.heroById(def.duo[di]);
+        if (!dh) return { ok: false, reason: '함께할 동료가 편성되지 않음' };
+        if (dh.dead) return { ok: false, reason: U.josa(dh.name, '이/가') + ' 쓰러짐' };
+        if (S.has(dh, 'frozen')) return { ok: false, reason: U.josa(dh.name, '이/가') + ' 빙결됨' };
+      }
+    }
     if (caster && caster.dead) return { ok: false, reason: U.josa(caster.name, '이/가') + ' 쓰러짐' };
     if (caster && S.has(caster, 'frozen')) return { ok: false, reason: U.josa(caster.name, '이/가') + ' 빙결됨' };
     var cost = this.costOf(inst);
@@ -306,14 +371,19 @@
     this.doubleNext = false;
     hand.splice(idx, 1);
     var caster = this.casterOf(inst);
+    var link = this.linkCard(inst);
     var ctx = {
       card: def, inst: inst, src: caster, target: target, x: x, isCard: true, defTarget: def.target,
       cardsBefore: this.cardsThisTurn, attacksBefore: this.attacksThisTurn, lastType: this.lastType,
       pre: target ? Object.assign({}, target.status) : {},
       firstAttackOfBattle: def.type === 'attack' && !this.firstAttackDone,
-      firstAttackOfTurn: def.type === 'attack' && this.attacksThisTurn === 0
+      firstAttackOfTurn: def.type === 'attack' && this.attacksThisTurn === 0,
+      heroFirstAttack: def.type === 'attack' && caster && !caster._firstAtkDone,
+      comboBonus: link.bonus, pair: link.pair, prevCaster: link.prev
     };
     if (def.type === 'attack') this.firstAttackDone = true;
+    if (caster) { caster._cardTurn = true; if (def.type === 'attack') { caster._atkTurn = true; caster._firstAtkDone = true; } }
+    if (link.count >= 2 || link.pair) this.emit('combo', { count: link.count, pair: link.pair, unit: caster });
     this.emit('card:play', { inst: inst, caster: caster, target: target });
     this.update();
     await G.wait(T.card);
@@ -322,9 +392,14 @@
       this.emit('fx:text', { unit: caster, text: '분신!', kind: 'info' });
       await this.run(def.effects, ctx);
     }
+    // 짝 연계의 뒤 효과
+    if (ctx.pair && ctx.pair.after && !this.over()) {
+      await this.run(ctx.pair.after, Object.assign({}, ctx, { pair: null, comboBonus: 0, heroFirstAttack: false }));
+    }
     if (def.type === 'attack' && !this.over()) await this.runHooks('onAttackCard');
     this.cardsThisTurn++;
     if (def.type === 'attack') this.attacksThisTurn++;
+    if (!this.over()) await this.traitAfterCard(def, caster);
     this.lastType = def.type;
     if (!this.over()) {
       if (this.mods.thirdCardBlock && this.cardsThisTurn === 3) {
@@ -344,6 +419,83 @@
     this.update();
     this.checkEnd();
     return true;
+  };
+
+  // ================= 연계(9단계) =================
+  // 캐릭터 카드를 직전과 다른 캐릭터의 카드로 이어 쓰면 연계 수 +1. 공용·합동기는 그대로 둔다
+  P.linkCard = function (inst) {
+    var o = inst.def.owner, ch = this.chain;
+    if (o === 'common' || o === 'none' || o === 'duo' || !this.heroById(o)) return { count: ch.count, bonus: 0, pair: null, prev: null };
+    var prev = ch.last, pair = null;
+    if (prev && prev !== o) {
+      ch.count++;
+      var key = prev + '>' + o;
+      var pc = (G.Data.pairCombos || []).filter(function (p) { return p.from === prev && p.to === o; })[0];
+      if (pc && !ch.used[key] && (!pc.attackOnly || inst.def.type === 'attack')) {
+        ch.used[key] = true;
+        pair = this.scalePair(pc);
+      }
+    } else ch.count = 1;
+    ch.last = o;
+    var bonus = inst.def.type === 'attack' && ch.count >= 2 ? Math.min((G.Data.combo || { maxBonus: 4 }).maxBonus, ch.count - 1) : 0;
+    return { count: ch.count, bonus: bonus, pair: pair, prev: prev ? this.heroById(prev) : null };
+  };
+  // 친밀도 2단계면 짝 연계 수치 1.5배(올림)
+  P.scalePair = function (pc) {
+    var key = G.Stage && G.Stage.pairKey ? G.Stage.pairKey(pc.from, pc.to) : pc.from + '+' + pc.to;
+    var lv2 = (this.bonds[key] || 0) >= (G.Data.bondLevels || [10, 25, 45])[1];
+    var k = lv2 ? 1.5 : 1;
+    var up = function (v) { return typeof v === 'number' ? Math.ceil(v * k) : v; };
+    var out = { name: pc.name, desc: pc.desc, boosted: lv2, forceCrit: pc.forceCrit };
+    if (pc.dmgAdd) out.dmgAdd = up(pc.dmgAdd);
+    if (pc.blockAdd) out.blockAdd = up(pc.blockAdd);
+    if (pc.healAdd) out.healAdd = up(pc.healAdd);
+    if (pc.statusAdd) { out.statusAdd = {}; Object.keys(pc.statusAdd).forEach(function (s) { out.statusAdd[s] = up(pc.statusAdd[s]); }); }
+    if (pc.after) out.after = pc.after.map(function (e) { return Object.assign({}, e, { value: up(e.value) }); });
+    return out;
+  };
+  // 손패 미리보기: 지금 쓰면 연계가 이어지는가, 짝 연계가 발동하는가
+  P.comboPreview = function (inst) {
+    var o = inst.def.owner, ch = this.chain;
+    if (o === 'common' || o === 'none' || o === 'duo' || !this.heroById(o) || !ch.last || ch.last === o) return null;
+    var pc = (G.Data.pairCombos || []).filter(function (p) { return p.from === ch.last && p.to === o; })[0];
+    var pairOk = pc && !ch.used[ch.last + '>' + o] && (!pc.attackOnly || inst.def.type === 'attack');
+    return { count: ch.count + 1, pair: pairOk ? pc : null };
+  };
+
+  // ================= 특성(9단계) =================
+  P.traitTurnStart = async function () {
+    var self = this, heroes = this.alive('ally');
+    if (heroes.some(function (h) { return h.tm.burnVuln; })) {
+      var src = heroes.filter(function (h) { return h.tm.burnVuln; })[0];
+      this.alive('enemy').forEach(function (m) { if (S.has(m, 'burn')) S.add(self, m, 'vulnerable', src.tm.burnVuln, null); });
+    }
+    for (var i = 0; i < heroes.length && !this.over(); i++) {
+      var h = heroes[i];
+      if (h.tm.turnStartHealLowest && !h.dead) {
+        var low = this.targets('lowestAlly', {})[0];
+        if (low) await this.heal(low, h.tm.turnStartHealLowest);
+      }
+    }
+  };
+  P.traitAfterCard = async function (def, caster) {
+    // 한 턴의 3·6·9번째 공격 카드마다 카드 1장(카이 특성)
+    if (def.type === 'attack' && this.attacksThisTurn % 3 === 0) {
+      var n = 0;
+      this.alive('ally').forEach(function (h) { n += h.tm.thirdAttackDraw || 0; });
+      if (n) this.drawCards(n);
+    }
+    // 세라의 공격 카드: 체력이 가장 낮은 아군 회복
+    if (def.type === 'attack' && caster && !caster.dead && caster.tm.attackHealLowest) {
+      var low = this.targets('lowestAlly', {})[0];
+      if (low) await this.heal(low, caster.tm.attackHealLowest);
+    }
+  };
+  // 적이 빙결되면(리라 특성) 카드 뽑기 — status.js 가 부른다
+  P.onEnemyFrozen = function () {
+    var n = 0;
+    this.alive('ally').forEach(function (h) { n += h.tm.onFreezeDraw || 0; });
+    if (n && this.phase === 'player') this.drawCards(n);
   };
 
   P.drawCards = function (n) {
@@ -395,6 +547,7 @@
       case 'downedAlly': return t && t.dead ? [t] : [];
       case 'allDowned': return this.heroes.filter(function (h) { return h.dead; });
       case 'healed': return ctx.healed && !ctx.healed.dead ? [ctx.healed] : [];
+      case 'prevCaster': return ctx.prevCaster && !ctx.prevCaster.dead ? [ctx.prevCaster] : [];
       default: return [];
     }
   };
@@ -406,7 +559,7 @@
     if (Array.isArray(v)) return G.rng.int(v[0], v[1]);
     var p = 0, src = ctx.src;
     switch (v.per) {
-      case 'selfBlock': p = src ? src.block : 0; break;
+      case 'selfBlock': p = src ? src.block * (src.tm && src.tm.selfBlockDmgMult || 1) : 0; break;
       case 'targetStatus': p = tgt ? S.get(tgt, v.status) : 0; break;
       case 'targetDebuffKinds': p = tgt ? S.debuffKinds(tgt) : 0; break;
       case 'selfLostHp': p = src ? src.maxHp - src.hp : 0; break;
@@ -459,9 +612,12 @@
 
       case 'block':
         list = this.targets(spec, ctx);
+        var bAdd = ctx.isCard ? (ctx.pair && ctx.pair.blockAdd || 0) + (ctx.src && ctx.src.tm && ctx.src.tm.blockAdd || 0) : 0;
         for (i = 0; i < list.length; i++) {
-          this.addBlock(list[i], this.num(e.value, ctx, list[i]));
+          this.addBlock(list[i], this.num(e.value, ctx, list[i]) + bAdd);
           if (e.keep) S.set(list[i], 'hold', Math.max(1, S.get(list[i], 'hold')));
+          // 특성: 다른 아군에게 보호막을 주면 자신도
+          if (ctx.isCard && ctx.src && ctx.src.tm && ctx.src.tm.shareBlock && list[i] !== ctx.src && !ctx.src.dead) this.addBlock(ctx.src, ctx.src.tm.shareBlock);
         }
         return;
 
@@ -469,25 +625,37 @@
         list = this.targets(spec, ctx);
         for (i = 0; i < list.length; i++) {
           n = e.pct ? Math.floor(list[i].maxHp * e.pct) : this.num(e.value, ctx, list[i]);
-          await this.heal(list[i], n, { overflowToBlock: e.overflowToBlock });
+          var stm = ctx.isCard && ctx.src && ctx.src.tm;
+          if (ctx.isCard) n += (ctx.pair && ctx.pair.healAdd || 0) + (stm && stm.healAdd || 0);
+          await this.heal(list[i], n, { overflowToBlock: e.overflowToBlock || !!(stm && stm.overhealBlock) });
         }
         return;
 
       case 'status':
         list = this.targets(spec, ctx);
-        list.forEach(function (u) { S.add(self, u, e.status, self.num(e.value, ctx, u), ctx.src); });
+        list.forEach(function (u) {
+          var sv = self.num(e.value, ctx, u);
+          if (ctx.pair && ctx.pair.statusAdd && ctx.pair.statusAdd[e.status] && u.side === 'enemy') sv += ctx.pair.statusAdd[e.status];
+          S.add(self, u, e.status, sv, ctx.src);
+        });
         this.update();
         return;
 
       case 'cleanse':
         list = this.targets(spec, ctx);
-        list.forEach(function (u) { if (S.cleanse(u, e.all ? 'all' : e.count || 1)) self.emit('fx:cleanse', { unit: u }); });
+        list.forEach(function (u) {
+          if (S.cleanse(u, e.all ? 'all' : e.count || 1)) {
+            self.emit('fx:cleanse', { unit: u });
+            if (ctx.isCard && ctx.src && ctx.src.tm && ctx.src.tm.cleanseBlock) self.addBlock(u, ctx.src.tm.cleanseBlock);
+          }
+        });
         return;
 
       case 'revive':
         list = this.targets(e.target || 'downedAlly', ctx);
         list.forEach(function (u) {
-          u.dead = false; u.hp = Math.max(1, Math.floor(u.maxHp * e.pct)); u.block = 0; u.status = {};
+          var rp = e.pct + (ctx.isCard && ctx.src && ctx.src.tm && ctx.src.tm.revivePct || 0);
+          u.dead = false; u.hp = Math.max(1, Math.floor(u.maxHp * Math.min(1, rp))); u.block = 0; u.status = {};
           self.emit('fx:revive', { unit: u });
         });
         this.retarget();
@@ -597,12 +765,24 @@
     var m = this.mods;
     var cardAttack = ctx.isCard && ctx.card && ctx.card.type === 'attack' && tgt.side === 'enemy';
     if (cardAttack && ctx.firstAttackOfBattle && m.firstAttackBonus) d += m.firstAttackBonus;
+    if (cardAttack) {
+      d += ctx.comboBonus || 0;                                      // 연계
+      if (ctx.pair && ctx.pair.dmgAdd) d += ctx.pair.dmgAdd;         // 짝 연계
+      var tm = src && src.tm;
+      if (tm) {                                                      // 특성
+        if (ctx.heroFirstAttack && tm.firstAttackBonus) d += tm.firstAttackBonus;
+        if (tm.lowHpDamage && src.hp <= src.maxHp / 2) d += tm.lowHpDamage;
+        if (tm.aoeDamage && ctx.card.target === 'allEnemies') d += tm.aoeDamage;
+        if (tm.singleDamage && (ctx.card.target === 'enemy' || ctx.card.target === 'randomEnemy')) d += tm.singleDamage;
+      }
+    }
     if (src) d += S.get(src, 'strength') + S.get(src, 'tempStr');
     if (src && S.has(src, 'weak')) d *= 0.75;
     if (S.has(tgt, 'vulnerable')) d *= 1.5;
     var crit = false;
     if (ctx.isCard && tgt.side === 'enemy') {
-      if (e.forceCrit || (cardAttack && m.turnFirstAttackCrit && ctx.firstAttackOfTurn)) crit = true;
+      if (cardAttack && ctx.pair && ctx.pair.forceCrit && !ctx.pair._critUsed) { crit = true; ctx.pair._critUsed = true; }
+      else if (e.forceCrit || (cardAttack && m.turnFirstAttackCrit && ctx.firstAttackOfTurn)) crit = true;
       else if (src && S.has(src, 'focus')) { crit = true; S.dec(src, 'focus'); }
       else {
         var p = src ? src.crit + S.get(src, 'keen') * 0.1 : G.Data.COMMON_CRIT;
@@ -610,6 +790,7 @@
       }
     }
     if (crit) d *= 2 + (src ? S.get(src, 'critUp') * 0.5 : 0);
+    if (src && src.tm && src.tm.frozenDmgMult && S.has(tgt, 'frozen')) d *= src.tm.frozenDmgMult;
     d = Math.max(0, Math.floor(d));
     d = Math.max(0, d - S.get(tgt, 'reduce'));
     if (e.breakBlock && tgt.block > 0) {
@@ -639,6 +820,13 @@
     if (src && !src.dead && loss > 0) {
       if (e.lifesteal) await this.heal(src, loss);
       if (e.leech) await this.heal(src, Math.floor(loss * e.leech));
+    }
+    // 특성: 공격받으면 보호막 / 처치하면 보호막·회복·에너지
+    if (tgt.side === 'ally' && !tgt.dead && src && src.side === 'enemy' && tgt.tm.onHitBlock) this.addBlock(tgt, tgt.tm.onHitBlock);
+    if (tgt.dead && src && src.side === 'ally' && !src.dead && ctx.isCard) {
+      if (src.tm.onKillBlock) this.addBlock(src, src.tm.onKillBlock);
+      if (src.tm.onKillHeal) await this.heal(src, src.tm.onKillHeal);
+      if (src.tm.onKillEnergy) { this.energy += src.tm.onKillEnergy; this.emit('fx:energy', { n: src.tm.onKillEnergy }); }
     }
     this.update();
     await G.wait(T.hit);
@@ -676,6 +864,19 @@
       this.relicFx(this.relicWith('phoenix'));
       this.emit('fx:revive', { unit: u });
       this.emit('fx:text', { unit: u, text: '불사조 깃털!', kind: 'good' });
+      return;
+    }
+    if (u.side === 'ally' && u.tm.undyingOnce && !u._undyingUsed) {
+      u._undyingUsed = true;
+      u.hp = 1;
+      this.emit('fx:text', { unit: u, text: '불굴!', kind: 'good' });
+      return;
+    }
+    if (u.side === 'ally' && u.tm.selfRevive && !u._selfRevived) {
+      u._selfRevived = true;
+      u.hp = Math.max(1, Math.floor(u.maxHp * u.tm.selfRevive));
+      this.emit('fx:revive', { unit: u });
+      this.emit('fx:text', { unit: u, text: '수호 천사!', kind: 'good' });
       return;
     }
     if (u.side === 'ally' && this.teamUndying > 0) {
