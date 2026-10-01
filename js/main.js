@@ -102,9 +102,10 @@
   G.TestMenu = { open: function () { UI.show('test'); renderMenu(); } };
 
   window.addEventListener('DOMContentLoaded', function () {
-    var settings = G.Save.loadSettings();
-    G.speed = settings.speed || 1;
+    G.Extra.applySettings(G.Save.loadSettings());
+    G.FX.init();
     G.BattleUI.init();
+    G.Extra.initMenu();
     G.Meta.title();
     // 나머지 카드 그림은 뒤에서 미리 변환해 둔다
     setTimeout(function () { G.ArtCards.preload(G.Data.cards); }, 300);

@@ -111,7 +111,7 @@
       var width = spec.rows ? spec.rows[0].length : spec.half[0].length * 2;
       var frac = function (p) { return p ? { x: (p.x - b.x0 + 0.5) / b.w, y: (p.y - b.y0 + 0.5) / b.h } : null; };
       return (sheets[id] = {
-        url: c.toDataURL(), w: b.w, h: b.h,
+        url: c.toDataURL(), canvas: c, w: b.w, h: b.h,
         anchor: (width / 2 - b.x0) / b.w, // 몸 중심의 가로 위치(0~1)
         tip: frac(spec.tip), tipAttack: frac(spec.tipAttack || spec.tip)
       });

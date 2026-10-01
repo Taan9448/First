@@ -244,6 +244,22 @@
   list.push({ id: 'SAND', name: '모래', owner: 'none', type: 'curse', rarity: 'common', cost: null,
     target: 'none', effects: [], text: '사용할 수 없다. 전투가 끝나면 사라진다.', unplayable: true, art: 'sand', el: 'earth', tags: '' });
 
+  // 희귀 이상 카드의 사용 순간 고유 이펙트 (js/effects.js 의 FX.SFX). 성격이 같은 카드끼리 공유한다
+  var SFX = {
+    K17: 'slashX', K18: 'storm', K19: 'rage', K20: 'thousand', K21: 'curse', K22: 'slashX', K23: 'aura', K24: 'thousand',
+    K25: 'dragon', K26: 'slashX', K27: 'thousand', K28: 'rage', K29: 'storm', K32: 'coin',
+    B17: 'shield', B18: 'aura', B19: 'quake', B20: 'shield', B21: 'shield', B22: 'shield', B23: 'aura', B24: 'quake',
+    B25: 'wings', B26: 'shield', B27: 'slashX', B28: 'rage', B29: 'shield', B32: 'dice',
+    L17: 'blizzard', L18: 'explosion', L19: 'aura', L20: 'ice', L21: 'aura', L22: 'meteor', L23: 'blizzard', L24: 'aura',
+    L25: 'explosion', L26: 'ice', L27: 'aura', L28: 'aura', L29: 'chaos', L32: 'cards',
+    S17: 'revive', S18: 'pillar', S19: 'heal', S20: 'shield', S21: 'heal', S22: 'heal', S23: 'pillar', S24: 'wings',
+    S25: 'miracle', S26: 'heal', S27: 'pillar', S28: 'aura', S29: 'wings', S32: 'dice',
+    N17: 'poisonCloud', N18: 'cards', N19: 'shadow', N20: 'clock', N21: 'curse', N22: 'poisonCloud', N23: 'flag', N24: 'shadow',
+    N25: 'cards', N26: 'thousand', N27: 'shadow', N28: 'aura', N29: 'dice', N32: 'cards',
+    C21: 'coin', C22: 'shield', C23: 'cards', C24: 'flag', C25: 'clock', C26: 'cards', C27: 'flag', C32: 'chaos'
+  };
+  list.forEach(function (c) { if (SFX[c.id]) c.sfx = SFX[c.id]; });
+
   Game.Data.cards = list;
   Game.Data.cardById = Game.util.byId(list);
 })();

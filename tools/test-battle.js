@@ -8,7 +8,7 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 global.window = global;
 ['js/core.js', 'data/keywords.js', 'data/characters.js', 'data/cards.js', 'data/monsters.js',
- 'js/status.js', 'js/deck.js', 'js/battle.js'].forEach(f => {
+ 'js/status.js', 'js/deck.js', 'js/battle.js', 'js/effects.js'].forEach(f => {
   vm.runInThisContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), { filename: f });
 });
 const G = global.Game;
@@ -48,6 +48,13 @@ G.Data.monsters.forEach(m => {
   if (m.onDeath) walk(m.onDeath, m.id + ' onDeath');
 });
 check(G.Data.monsters.length === 36, '몬스터 36종 (현재 ' + G.Data.monsters.length + ')');
+
+// 희귀 이상 카드는 모두 고유 이펙트(sfx)를 가지고, 그 키가 effects.js 에 있다
+cards.forEach(c => {
+  const rare = ['rare', 'epic', 'legendary'].includes(c.rarity);
+  if (rare) check(c.sfx && G.FX.SFX[c.sfx], c.id + ': 희귀 이상인데 고유 이펙트 없음 (' + c.sfx + ')');
+  else check(!c.sfx, c.id + ': 일반·고급인데 고유 이펙트가 있음');
+});
 
 // 설명의 {dN} 자리표시자가 damage 효과 수를 넘지 않는지
 cards.forEach(c => {

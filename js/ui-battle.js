@@ -44,6 +44,7 @@
     $('.debug-kill').style.display = G.debug ? '' : 'none';
     UI.show('battle');
     B = G.Battle.create(battleOpts);
+    if (G.Extra) G.Extra.refreshMenu();
     renderAll();
     B.start();
   };
@@ -303,11 +304,12 @@
   function clearAim() { if (aimEl) aimEl.innerHTML = ''; }
 
   // ================= 연출 =================
-  function center(u) {
+  // 스프라이트의 위치. fy: 세로 비율(0 = 머리 위, 0.5 = 가운데)
+  function center(u, fy) {
     var e = unitEls[u.uid];
     if (!e) return { x: 0, y: 0 };
     var r = e._sprite.getBoundingClientRect(), f = fxEl.getBoundingClientRect();
-    return { x: r.left + r.width / 2 - f.left, y: r.top - f.top };
+    return { x: r.left + r.width / 2 - f.left, y: r.top + r.height * (fy || 0) - f.top };
   }
 
   function float(u, text, cls) {
@@ -333,14 +335,37 @@
     setTimeout(function () { if (e.parentNode) e.parentNode.removeChild(e); }, 950);
   }
 
+  // ---------------- 이펙트 도우미 ----------------
+  var cur = null; // 지금 쓰는 카드 { def, caster, el }
+  var SND = G.Audio, FX = G.FX;
+
+  function spritePt(u) { return center(u, 0.5); }
+  function tipPt(u) {
+    var e = unitEls[u.uid];
+    if (!e) return spritePt(u);
+    var sh = e._sprite._sheet, r = e._sprite.getBoundingClientRect(), f = fxEl.getBoundingClientRect();
+    var t = sh.tipAttack || { x: 0.7, y: 0.4 };
+    return { x: r.left + t.x * r.width - f.left, y: r.top + t.y * r.height - f.top };
+  }
+  function fieldCenter() {
+    var r = field.getBoundingClientRect(), f = fxEl.getBoundingClientRect();
+    return { x: r.left + r.width / 2 - f.left, y: r.top + r.height / 2 - f.top };
+  }
+  function pts(list) { return list.filter(function (u) { return !u.dead; }).map(spritePt); }
+
   function bindBus() {
     var on = G.bus.on;
     on('battle:update', function () { renderAll(); });
     on('battle:turn', function (d) {
       banner(d.side === 'ally' ? '내 턴' : '적의 턴', d.side === 'ally' ? '' : 'enemy');
+      SND.play('turn');
       handSig = '';
     });
+    on('cards:draw', function () { SND.play('draw'); });
     on('card:play', function (d) {
+      var def = d.inst.def;
+      cur = { def: def, caster: d.caster, el: G.ArtCards.elementOf(def) };
+      SND.play('play');
       var el = cardEls[d.inst.uid];
       if (el) {
         var hr = handEl.getBoundingClientRect(), tx, ty;
@@ -356,38 +381,109 @@
         el.style.top = ty - el.offsetHeight / 2 + 'px';
         el.style.transform = 'scale(0.4)';
       }
+      pulseClass($('.energy'), 'pulse', 400);
       if (d.caster) {
         var ce = unitEls[d.caster.uid];
         pulseClass(ce && ce._sprite, 'pose', 380);
-        pulseClass(ce, d.inst.def.type === 'attack' ? 'lunge-r' : 'hop', 330);
+        var magic = FX.MAGIC[cur.el];
+        pulseClass(ce, def.type === 'attack' && !magic ? 'lunge-r' : 'hop', 330);
+        // 마법 공격: 무기 끝에서 탄이 포물선으로 날아간다
+        if (def.type === 'attack' && magic) {
+          var from = tipPt(d.caster), colors = FX.colors(cur.el);
+          var to = d.target ? [spritePt(d.target)] : def.target === 'allEnemies' ? pts(B.monsters) : [fieldCenter()];
+          to.forEach(function (t) { FX.projectile(from, t, colors[0], null, { trail: colors[1], frames: 12 }); });
+          FX.burst(from, { colors: colors, n: 8, speed: 1.2 });
+        }
+      }
+      if (def.sfx) {
+        var ctx = { from: d.caster ? tipPt(d.caster) : fieldCenter(), targets: d.target ? [spritePt(d.target)] : [],
+          enemies: pts(B.monsters), allies: pts(B.heroes), center: fieldCenter(), el: cur.el };
+        setTimeout(function () { FX.play(def.sfx, ctx); }, 140);
+        SND.play(/dragon|explosion|meteor|quake|miracle/.test(def.sfx) ? 'big' : 'magic');
       }
     });
+    on('card:done', function () { cur = null; });
     on('monster:act', function (d) { pulseClass(unitEls[d.unit.uid], 'lunge-l', 330); });
-    on('monster:summon', function (d) { renderUnit(d.unit); pulseClass(unitEls[d.unit.uid], 'summoned', 420); });
+    on('monster:summon', function (d) {
+      renderUnit(d.unit); pulseClass(unitEls[d.unit.uid], 'summoned', 420);
+      FX.burst(spritePt(d.unit), { colors: ['#c9a0ff', '#ffffff'], n: 16, speed: 2 });
+    });
+    on('monster:trigger', function () { FX.flash('#ff8a8a'); FX.shake(true); SND.play('big'); });
     on('fx:hit', function (d) {
       var e = unitEls[d.unit.uid];
+      if (!e) return;
+      var p = spritePt(d.unit);
+      var el = d.kind === 'poison' ? 'poison' : d.kind === 'burn' ? 'fire' : d.kind === 'thorns' ? 'nature' :
+        d.kind === 'lose' ? 'shadow' : d.src && d.src.side === 'enemy' ? 'monster' : cur ? cur.el : 'neutral';
       if (d.amount > 0) {
         var cls = d.crit ? 'crit' : d.kind === 'poison' ? 'poison' : d.kind === 'burn' ? 'burn' : '';
         float(d.unit, (d.crit ? '치명타! ' : '') + d.amount, cls);
-        pulseClass(e && e._sprite, 'hit', 120);
-        pulseClass(e, 'shake', 300);
+        pulseClass(e._sprite, 'hit', 120);
+        pulseClass(e._sprite, 'stop', 90);
+        pulseClass(e, d.unit.side === 'enemy' ? 'knock-r' : 'knock-l', 240);
+        FX.impact(p, el, d.crit);
+        if (d.amount >= 15 && !d.crit) FX.shake();
+        SND.play(d.crit ? 'crit' : el === 'monster' ? 'hit' : el === 'neutral' || el === 'steel' || el === 'guard' ? 'slash' : SND.forElement(el));
       } else if (d.blocked > 0) {
         float(d.unit, '막음 ' + d.blocked, 'block');
+        FX.ring(p, '#8fc6ff', 30);
+        SND.play('block');
       }
     });
-    on('fx:block', function (d) { float(d.unit, '+' + d.n, 'block'); pulseClass(unitEls[d.unit.uid] && unitEls[d.unit.uid]._sprite, 'tint-block', 300); });
-    on('fx:heal', function (d) { if (d.n > 0) { float(d.unit, '+' + d.n, 'heal'); pulseClass(unitEls[d.unit.uid] && unitEls[d.unit.uid]._sprite, 'tint-heal', 300); } });
+    on('fx:block', function (d) {
+      float(d.unit, '+' + d.n, 'block');
+      pulseClass(unitEls[d.unit.uid] && unitEls[d.unit.uid]._sprite, 'tint-block', 300);
+      FX.ring(spritePt(d.unit), '#8fc6ff', 36, { size: 2 });
+      SND.play('block');
+    });
+    on('fx:heal', function (d) {
+      if (d.n <= 0) return;
+      float(d.unit, '+' + d.n, 'heal');
+      pulseClass(unitEls[d.unit.uid] && unitEls[d.unit.uid]._sprite, 'tint-heal', 300);
+      FX.rise(spritePt(d.unit), { colors: FX.colors('nature'), n: 10 });
+      SND.play('heal');
+    });
+    on('fx:status', function (d) {
+      if (!unitEls[d.unit.uid] || d.unit.dead) return;
+      var def = G.Data.statuses[d.key] || {};
+      var p = spritePt(d.unit);
+      if (def.kind === 'debuff') {
+        var col = d.key === 'burn' ? 'fire' : d.key === 'poison' ? 'poison' : d.key === 'chill' || d.key === 'frozen' ? 'ice' : 'shadow';
+        FX.rise(p, { colors: FX.colors(col), n: 6, down: true });
+        SND.play('debuff');
+      } else if (def.kind === 'buff') {
+        FX.rise(p, { colors: ['#7cf27c', '#ffe066'], n: 6 });
+        SND.play('buff');
+      }
+    });
+    on('fx:cleanse', function (d) { FX.rise(spritePt(d.unit), { colors: ['#ffffff', '#9fe6ff'], n: 10 }); });
     on('fx:text', function (d) { float(d.unit || B.heroes[0], d.text, 'text ' + (d.kind || '')); });
-    on('fx:gold', function (d) { float(d.unit || B.heroes[0], (d.n > 0 ? '+' : '') + d.n + ' 골드', 'text good'); });
+    on('fx:gold', function (d) {
+      var u = d.unit || B.heroes[0];
+      float(u, (d.n > 0 ? '+' : '') + d.n + ' 골드', 'text good');
+      FX.burst(spritePt(u), { colors: FX.colors('gold'), n: 10 });
+      SND.play('coin');
+    });
     on('fx:energy', function () { pulseClass($('.energy'), 'pulse', 400); });
-    on('fx:death', function (d) { renderUnit(d.unit); });
-    on('fx:revive', function (d) { renderUnit(d.unit); float(d.unit, '부활', 'text good'); });
+    on('fx:death', function (d) {
+      var e = unitEls[d.unit.uid];
+      if (e && d.unit.side === 'enemy') FX.shatter(e._sprite);
+      if (d.unit.boss) { FX.flash('#ffffff'); FX.shake(true); SND.play('big'); } else SND.play('death');
+      renderUnit(d.unit);
+    });
+    on('fx:revive', function (d) {
+      renderUnit(d.unit); float(d.unit, '부활', 'text good');
+      FX.play('revive', { targets: [spritePt(d.unit)], allies: [] });
+    });
     on('battle:end', function (d) {
       var ended = B;
+      if (G.Extra) G.Extra.refreshMenu();
+      if (d.result === 'win') { setTimeout(function () { FX.confetti(); }, 300); SND.play('win'); }
+      else SND.play('lose');
       setTimeout(function () {
         if (B !== ended) return;
         if (onEnd) onEnd(d.result, ended); else showResult(d.result);
-      }, d.result === 'win' ? 900 : 1300);
+      }, d.result === 'win' ? 1300 : 1500);
     });
   }
 

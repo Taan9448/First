@@ -15,6 +15,8 @@
     show: function (id) {
       UI.$$('.screen').forEach(function (s) { s.classList.toggle('on', s.id === 'screen-' + id); });
       UI.hideTip();
+      if (id !== 'battle') UI.$$('.tut-layer').forEach(function (e) { e.parentNode.removeChild(e); });
+      if (G.Extra) G.Extra.refreshMenu();
     },
     iconStyle: function (id) { return 'background-image:url(' + G.Pixel.icon(id) + ')'; },
     icon: function (id, cls) { return '<i class="ico ' + (cls || '') + '" style="' + UI.iconStyle(id) + '"></i>'; }

@@ -49,7 +49,6 @@
   // ================= 스테이지 맵 =================
   Meta.map = function () {
     var d = St.data, r = d.run, el = screen('map');
-    var debugBtns = G.debug ? '<button class="btn small dbg-gold">골드 +500</button><button class="btn small dbg-heal">전원 회복</button>' : '';
     var cols = ['forest', 'desert', 'snow', 'volcano', 'castle'].map(function (theme, ti) {
       var nodes = [ti * 2 + 1, ti * 2 + 2].map(function (n) {
         var cleared = n <= d.clearedStage, open = St.canEnter(n), cur = r && r.stage === n;
@@ -66,7 +65,7 @@
       return '<div class="theme-col" data-theme="' + theme + '"><div class="theme-name">' + D.THEME_NAME[theme] + '</div>' + nodes + '</div>';
     }).join('');
 
-    el.innerHTML = topbar('스테이지 맵', debugBtns + '<button class="btn small to-title">타이틀</button>') +
+    el.innerHTML = topbar('스테이지 맵', '<button class="btn small to-title">타이틀</button>') +
       '<div class="map-body"><div class="map-cols">' + cols + '</div><div class="run-panel pix"></div></div>';
     // 테마 배경
     UI.$$('.theme-col', el).forEach(function (c) {
@@ -84,10 +83,6 @@
       };
     });
     el.querySelector('.to-title').onclick = function () { Meta.title(); };
-    if (G.debug) {
-      el.querySelector('.dbg-gold').onclick = function () { St.debugGold(500); Meta.map(); };
-      el.querySelector('.dbg-heal').onclick = function () { St.debugHealAll(); Meta.map(); };
-    }
     renderRunPanel(el.querySelector('.run-panel'));
     UI.show('map');
   };
@@ -140,6 +135,7 @@
         onExit: function () { Meta.map(); },
         onEnd: onBattleEnd
       });
+      setTimeout(G.Extra.maybeTutorial, 1100);
     });
   };
 
