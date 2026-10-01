@@ -14,7 +14,7 @@ const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
 global.window = global;
-['js/core.js', 'data/keywords.js', 'data/characters.js', 'data/cards.js', 'data/monsters.js', 'data/stages.js',
+['js/core.js', 'data/keywords.js', 'data/characters.js', 'data/cards.js', 'data/monsters.js', 'data/stages.js', 'data/relics.js',
  'js/status.js', 'js/deck.js', 'js/battle.js', 'js/save.js', 'js/stage.js'].forEach(f => {
   vm.runInThisContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), { filename: f });
 });

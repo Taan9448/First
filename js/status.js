@@ -30,6 +30,8 @@
       if (!DEF[key]) throw new Error('알 수 없는 상태: ' + key);
       // 원소 친화: 부여자가 가진 만큼 화상·한기 증가
       if (src && (key === 'burn' || key === 'chill')) n += S.get(src, 'affinity');
+      // 유물 보정 (아군이 적에게 거는 상태)
+      if (battle.statusMod) n = battle.statusMod(u, key, n, src);
       if (key === 'chill' && S.has(u, 'freezeImmune')) {
         battle.emit('fx:text', { unit: u, text: '면역', kind: 'info' });
         return 0;
@@ -45,7 +47,10 @@
         S.set(u, 'chill', 0);
         S.freeze(battle, u);
       }
-      if (key === 'frozen' && u.side === 'enemy' && u.boss) S.set(u, 'freezeImmune', 3);
+      if (key === 'frozen' && u.side === 'enemy') {
+        if (u.boss) S.set(u, 'freezeImmune', 3);
+        S.frozeEnemy(battle, u);
+      }
       if (key === 'taunt' || key === 'guardian') battle.retarget();
       return n;
     },
@@ -55,6 +60,14 @@
       if (u.side === 'enemy' && u.boss) S.set(u, 'freezeImmune', 3);
       battle.emit('fx:status', { unit: u, key: 'frozen', n: 1 });
       battle.emit('fx:text', { unit: u, text: '빙결!', kind: 'ice' });
+      if (u.side === 'enemy') S.frozeEnemy(battle, u);
+    },
+    // 적이 빙결된 순간 (얼음 왕관 유물)
+    frozeEnemy: function (battle, u) {
+      var v = battle.mods && battle.mods.freezeVuln;
+      if (!v) return;
+      battle.relicFx(battle.relicWith('freezeVuln'));
+      S.set(u, 'vulnerable', S.get(u, 'vulnerable') + v);
     },
 
     // 디버프 제거. 반환값: 제거한 종류 수

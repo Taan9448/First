@@ -18,19 +18,53 @@
       block: 0, status: {}, dead: cur <= 0, crit: c.crit };
   }
 
-  function makeMonster(id) {
+  function makeMonster(id, affix) {
     var d = G.Data.monsterById[id];
     if (!d) throw new Error('알 수 없는 몬스터: ' + id);
-    var m = { uid: uidSeq++, side: 'enemy', id: id, name: d.name, def: d, maxHp: d.hp, hp: d.hp, block: 0,
+    var m = { uid: uidSeq++, side: 'enemy', id: id, name: d.name, def: d, maxHp: d.hp, hp: d.hp, block: 0, size: d.size,
       status: Object.assign({}, d.startStatus || {}), dead: false, boss: d.rank === 'boss' || d.rank === 'final',
-      pattern: d.pattern.slice(), pIndex: 0, intent: null, intentTarget: null, fired: {}, everyTurn: [], revived: false };
+      pattern: d.pattern.slice(), pIndex: 0, intent: null, intentTarget: null, fired: {}, everyTurn: [], revived: false, affix: null };
+    var a = affix && G.Data.affixes[affix];
+    if (a) {
+      m.affix = affix;
+      m.name = a.name + ' ' + d.name;
+      if (a.hpMult) m.maxHp = m.hp = Math.round(d.hp * a.hpMult);
+      if (a.sizeMult) m.size = d.size * a.sizeMult;
+      Object.keys(a.startStatus || {}).forEach(function (k) { m.status[k] = (m.status[k] || 0) + a.startStatus[k]; });
+      if (a.everyTurn) m.everyTurn = a.everyTurn.slice();
+    }
+    return m;
+  }
+
+  // 유물 보정값을 하나로 합친다: 숫자는 더하고, statusMult·배율은 곱하고, 참/거짓은 OR
+  function mergeMods(relics) {
+    var m = { statusAdd: {}, statusMult: {}, everyN: [] };
+    relics.forEach(function (r) {
+      var x = r.mods || {};
+      Object.keys(x).forEach(function (k) {
+        var v = x[k];
+        if (k === 'statusAdd') Object.keys(v).forEach(function (s) { m.statusAdd[s] = (m.statusAdd[s] || 0) + v[s]; });
+        else if (k === 'statusMult') Object.keys(v).forEach(function (s) { m.statusMult[s] = (m.statusMult[s] || 1) * v[s]; });
+        else if (k === 'everyN') m.everyN.push(v);
+        else if (k === 'goldMult' || k === 'shopPriceMult') m[k] = (m[k] || 1) * v;
+        else if (k === 'downedPct' || k === 'phoenix') m[k] = Math.max(m[k] || 0, v);
+        else if (typeof v === 'boolean') m[k] = m[k] || v;
+        else m[k] = (m[k] || 0) + v;
+      });
+    });
     return m;
   }
 
   function Battle(opts) {
     this.opts = opts;
     this.heroes = opts.party.map(function (p) { return makeHero(p.id, p.hp); });
-    this.monsters = opts.monsters.map(makeMonster);
+    var affixes = opts.affixes || [];
+    this.monsters = opts.monsters.map(function (id, i) { return makeMonster(id, affixes[i]); });
+    this.relics = (opts.relics || []).map(function (id) { return G.Data.relicById[id]; }).filter(Boolean);
+    this.mods = mergeMods(this.relics);
+    this.phoenixUsed = false;
+    this.firstAttackDone = false;
+    this.nextDraw = 0;
     this.piles = D.create(opts.deck);
     this.gold = opts.gold || 0;
     this.goldDelta = 0;
@@ -66,7 +100,34 @@
     this.emit('battle:start', this);
     var self = this;
     this.monsters.forEach(function (m) { self.predict(m); });
+    await this.relicHooks('battleStart');
     await this.startPlayerTurn();
+  };
+
+  // 유물의 반복 효과
+  P.relicHooks = async function (on) {
+    for (var i = 0; i < this.relics.length && !this.over(); i++) {
+      var r = this.relics[i];
+      var hooks = (r.hooks || []).filter(function (h) { return h.on === on; });
+      for (var j = 0; j < hooks.length; j++) {
+        this.relicFx(r.id);
+        await this.run(hooks[j].effects, { src: null, target: null, isCard: false, defTarget: 'none', pre: {} });
+      }
+    }
+  };
+  P.relicFx = function (id) { this.emit('relic:trigger', { id: id }); };
+  P.relicWith = function (mod) {
+    var r = this.relics.filter(function (x) { return x.mods && x.mods[mod] != null; })[0];
+    return r ? r.id : null;
+  };
+
+  // 아군이 적에게 거는 상태의 유물 보정 (status.js 가 부른다)
+  P.statusMod = function (u, key, n, src) {
+    if (u.side !== 'enemy' || (src && src.side === 'enemy')) return n;
+    var m = this.mods;
+    if (m.statusAdd[key]) n += m.statusAdd[key];
+    if (m.statusMult[key]) n = Math.floor(n * m.statusMult[key]);
+    return n;
   };
 
   P.startPlayerTurn = async function () {
@@ -84,15 +145,20 @@
       var h = this.heroes[i];
       if (h.dead) continue;
       if (S.has(h, 'hold')) S.dec(h, 'hold');
-      else if (!S.has(h, 'fortress')) h.block = 0;
+      else if (!S.has(h, 'fortress') && this.turn > 1) h.block = 0; // 첫 턴에는 전투 시작 효과의 보호막을 남긴다
       S.turnStart(h);
       var r = S.get(h, 'regen');
       if (r > 0) { await this.heal(h, r); S.dec(h, 'regen'); }
     }
-    this.energy = ENERGY + this.nextEnergy;
+    var m = this.mods, turn = this.turn;
+    var energy = ENERGY + this.nextEnergy + (m.turnEnergy || 0) + (turn === 1 ? m.firstTurnEnergy || 0 : 0);
+    m.everyN.forEach(function (e) { if (turn % e.n === 0) energy += e.v; });
+    this.energy = energy;
     this.nextEnergy = 0;
-    this.drawCards(DRAW);
+    this.drawCards(Math.max(0, DRAW + this.nextDraw + (m.turnDraw || 0) + (turn === 1 ? m.firstTurnDraw || 0 : 0)));
+    this.nextDraw = 0;
     await this.runHooks('turnStart');
+    await this.relicHooks('turnStart');
     this.retarget();
     this.update();
     this.checkEnd();
@@ -103,6 +169,7 @@
     this.busy = true;
     // 손패 버림 (그 턴 한정 카드는 사라짐)
     var piles = this.piles;
+    if (this.mods.emptyHandDraw && !piles.hand.length) { this.nextDraw += this.mods.emptyHandDraw; this.relicFx(this.relicWith('emptyHandDraw')); }
     piles.hand.forEach(function (c) {
       D.resetTurn(c);
       if (!c.temp) piles.discard.push(c);
@@ -110,6 +177,11 @@
     piles.hand = [];
     this.emit('cards:discardHand', null);
     await this.runHooks('turnEnd');
+    if (this.mods.turnEndBlockIfNone) {
+      var bare = this.alive('ally').filter(function (h) { return h.block === 0; });
+      if (bare.length) this.relicFx(this.relicWith('turnEndBlockIfNone'));
+      for (var b = 0; b < bare.length; b++) this.addBlock(bare[b], this.mods.turnEndBlockIfNone);
+    }
     var heroes = this.alive('ally');
     for (var i = 0; i < heroes.length && !this.over(); i++) await this.tickDots(heroes[i]);
     this.heroes.forEach(function (h) { S.turnEnd(h); });
@@ -224,8 +296,11 @@
     var ctx = {
       card: def, inst: inst, src: caster, target: target, x: x, isCard: true, defTarget: def.target,
       cardsBefore: this.cardsThisTurn, attacksBefore: this.attacksThisTurn, lastType: this.lastType,
-      pre: target ? Object.assign({}, target.status) : {}
+      pre: target ? Object.assign({}, target.status) : {},
+      firstAttackOfBattle: def.type === 'attack' && !this.firstAttackDone,
+      firstAttackOfTurn: def.type === 'attack' && this.attacksThisTurn === 0
     };
+    if (def.type === 'attack') this.firstAttackDone = true;
     this.emit('card:play', { inst: inst, caster: caster, target: target });
     this.update();
     await G.wait(T.card);
@@ -238,6 +313,14 @@
     this.cardsThisTurn++;
     if (def.type === 'attack') this.attacksThisTurn++;
     this.lastType = def.type;
+    if (!this.over()) {
+      if (this.mods.thirdCardBlock && this.cardsThisTurn === 3) {
+        this.relicFx(this.relicWith('thirdCardBlock'));
+        var al = this.alive('ally');
+        for (var k = 0; k < al.length; k++) this.addBlock(al[k], this.mods.thirdCardBlock);
+      }
+      if (this.mods.onPowerDraw && def.type === 'power') { this.relicFx(this.relicWith('onPowerDraw')); this.drawCards(this.mods.onPowerDraw); }
+    }
     D.resetTurn(inst);
     if (inst.temp) { /* 사라짐 */ }
     else if (def.exhaust) this.piles.exhaust.push(inst);
@@ -498,12 +581,15 @@
   P.hit = async function (src, tgt, base, e, ctx) {
     if (!tgt || tgt.dead) return null;
     var d = base;
+    var m = this.mods;
+    var cardAttack = ctx.isCard && ctx.card && ctx.card.type === 'attack' && tgt.side === 'enemy';
+    if (cardAttack && ctx.firstAttackOfBattle && m.firstAttackBonus) d += m.firstAttackBonus;
     if (src) d += S.get(src, 'strength') + S.get(src, 'tempStr');
     if (src && S.has(src, 'weak')) d *= 0.75;
     if (S.has(tgt, 'vulnerable')) d *= 1.5;
     var crit = false;
     if (ctx.isCard && tgt.side === 'enemy') {
-      if (e.forceCrit) crit = true;
+      if (e.forceCrit || (cardAttack && m.turnFirstAttackCrit && ctx.firstAttackOfTurn)) crit = true;
       else if (src && S.has(src, 'focus')) { crit = true; S.dec(src, 'focus'); }
       else {
         var p = src ? src.crit + S.get(src, 'keen') * 0.1 : G.Data.COMMON_CRIT;
@@ -521,7 +607,9 @@
     var blocked = Math.min(tgt.block, d);
     tgt.block -= blocked;
     var loss = d - blocked;
-    this.emit('fx:hit', { src: src, unit: tgt, amount: loss, blocked: blocked, crit: crit });
+    var overkill = loss > tgt.hp && !(tgt.def.revive && !tgt.revived) ? loss - tgt.hp : 0;
+    this.emit('fx:hit', { src: src, unit: tgt, amount: loss, blocked: blocked, crit: crit, overkill: overkill });
+    if (crit && src && src.side === 'ally' && m.onCritBlock) { this.relicFx(this.relicWith('onCritBlock')); this.addBlock(src, m.onCritBlock); }
     if (hadBlock && tgt.block === 0 && S.has(tgt, 'charge')) this.cancelCharge(tgt);
     // 반격 수치는 쓰러지면 상태가 지워지므로 먼저 읽는다
     var thorns = S.get(tgt, 'thorns') + S.get(tgt, 'thornsTemp');
@@ -530,6 +618,10 @@
     if (src && !src.dead) {
       if (thorns > 0) await this.takeDamage(src, thorns, { kind: 'thorns' });
       if (lava > 0 && !src.dead) S.add(this, src, 'burn', lava, null);
+    }
+    if (src && src.affix && loss > 0 && !tgt.dead) {
+      var oh = G.Data.affixes[src.affix].onHitStatus || {};
+      for (var key in oh) S.add(this, tgt, key, oh[key], src);
     }
     if (src && !src.dead && loss > 0) {
       if (e.lifesteal) await this.heal(src, loss);
@@ -565,6 +657,14 @@
       if (u.side === 'enemy') await this.checkTriggers(u);
       return;
     }
+    if (u.side === 'ally' && this.mods.phoenix && !this.phoenixUsed) {
+      this.phoenixUsed = true;
+      u.hp = Math.max(1, Math.floor(u.maxHp * this.mods.phoenix));
+      this.relicFx(this.relicWith('phoenix'));
+      this.emit('fx:revive', { unit: u });
+      this.emit('fx:text', { unit: u, text: '불사조 깃털!', kind: 'good' });
+      return;
+    }
     if (u.side === 'ally' && this.teamUndying > 0) {
       this.teamUndying--;
       u.hp = 1;
@@ -588,7 +688,9 @@
     this.emit('fx:death', { unit: u });
     if (u.side === 'enemy') {
       this.kills.push(u.id);
+      if (u.affix) this.affixKills = (this.affixKills || 0) + 1;
       if (u.def.onDeath) await this.run(u.def.onDeath, this.monsterCtx(u));
+      if (this.mods.onKillDraw && this.alive('enemy').length) { this.relicFx(this.relicWith('onKillDraw')); this.drawCards(this.mods.onKillDraw); }
     } else {
       this.retarget();
     }
@@ -604,6 +706,7 @@
 
   P.heal = async function (u, n, opts) {
     if (u.dead || n <= 0) return 0;
+    if (u.side === 'ally' && this.mods.healBonus) n += this.mods.healBonus;
     var real = Math.min(n, u.maxHp - u.hp);
     u.hp += real;
     var over = n - real;
@@ -826,6 +929,7 @@
 
   G.Battle = {
     current: null,
+    mergeMods: mergeMods,
     create: function (opts) { return (G.Battle.current = new Battle(opts)); },
     Battle: Battle
   };

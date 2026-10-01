@@ -437,7 +437,39 @@
     lock: { pal: { a: '#8a93b8', A: '#5a6080', k: '#1a1028' }, rows: [
       '.aaa.', 'a...a', 'a...a', 'AAAAA', 'AAkAA', 'AAkAA', 'AAAAA'] },
     check: { pal: { g: '#7cf27c' }, rows: [
-      '......g', '.....gg', 'g...gg.', 'gg.gg..', '.ggg...', '..g....'] }
+      '......g', '.....gg', 'g...gg.', 'gg.gg..', '.ggg...', '..g....'] },
+
+    // 유물
+    r_hourglass: { pal: { y: '#f0c75e', w: '#cfefff', s: '#e0c27a' }, rows: ['yyyyyyy', '.wsssw.', '..wsw..', '...s...', '..w.w..', '.wsssw.', 'yyyyyyy'] },
+    r_whetstone: { pal: { a: '#9aa7b8', A: '#5a6070', y: '#fff27a' }, rows: ['......y', '.....y.', '.aaaa..', 'aAAAAa.', 'aAAAAAa', '.aaaaa.'] },
+    r_amulet: { pal: { g: '#f0c75e', b: '#5b8fd9', B: '#35589a', w: '#cfe3ff' }, rows: ['..g.g..', '...g...', '.bbbbb.', 'bbwbbbb', 'bbbbbbB', '.bbbbB.', '..bbB..'] },
+    r_herbs: { pal: { b: '#8a5a35', B: '#5a3a20', g: '#7cd65a', G: '#3f8f2a' }, rows: ['..g.g..', '.gGgG..', '..bbb..', '.bbbbb.', 'bbBbbbb', 'bbbbbBb', '.bbbbb.'] },
+    r_coin: { pal: { y: '#ffd23f', Y: '#c99a20', g: '#4fbf4f' }, rows: ['.yyyyy.', 'yyyyyyY', 'yyg.gyY', 'yy.g.yY', 'yyg.gyY', 'yyyyyyY', '.YYYYY.'] },
+    r_powder: { pal: { k: '#3b3557', K: '#24203a', b: '#8a5a35', y: '#ffe066', r: '#ff7a2a' }, rows: ['.....yr', '....b..', '..kkb..', '.kkkkk.', 'kkKkkkk', 'kkkkkKk', '.kkkkk.'] },
+    r_glove: { pal: { b: '#a8683a', B: '#6a3a1a', g: '#f0c75e' }, rows: ['.b.b.b.', '.b.b.b.', 'bbbbbb.', 'bbbbbbb', 'bBbbbbb', '.gggggg', '.bbbbb.'] },
+    r_bell: { pal: { s: '#dfe7f2', S: '#9aa7b8', y: '#f0c75e' }, rows: ['...y...', '..sss..', '.sssss.', '.sssss.', 'ssssssS', 'SSSSSSS', '...y...'] },
+    r_needle: { pal: { s: '#dfe7f2', g: '#8be04a', G: '#3f8f2a' }, rows: ['......s', '.....s.', '....s..', '...s...', '..s....', '.g.....', 'gG.....'] },
+    r_flint: { pal: { a: '#8a8f99', A: '#4f535c', r: '#ff7a2a', y: '#ffe066' }, rows: ['....y.r', '...r.y.', '.aaaa..', 'aAaaaa.', 'aaAaaaa', '.aaaAa.'] },
+    r_frost: { pal: { b: '#9fe6ff', B: '#4fa8d9', w: '#ffffff' }, rows: ['...b...', '..bwb..', '.bbwbb.', 'bbbbbbb', '.bbBbb.', '..bBb..', '...b...'] },
+    r_bandage: { pal: { w: '#f4f1ea', W: '#c9c3b6', r: '#d94a4a' }, rows: ['.wwwww.', 'wWwwwWw', 'ww.r.ww', 'w.rrr.w', 'ww.r.ww', 'wWwwwWw', '.wwwww.'] },
+    r_crest: { pal: { b: '#d94a4a', B: '#8a2a2a', s: '#dfe7f2', y: '#f0c75e' }, rows: ['bbbsbbb', 'bbbsbbB', 'bysssyB', 'bbbsbbB', '.bbsbB.', '..bbB..', '...B...'] },
+    r_feather: { pal: { r: '#ff5a2a', y: '#ffe066', o: '#ff9a3a' }, rows: ['.....yr', '....yor', '...yor.', '..yor..', '.yor...', '.or....', 'r......'] },
+    r_mana: { pal: { b: '#4fd8ff', B: '#1f8fb8', w: '#ffffff' }, rows: ['...b...', '..bwb..', '.bwbbb.', 'bbbbbbB', '.bbbbB.', '..bbB..', '...B...'] },
+    r_thorn: { pal: { g: '#7cb84a', G: '#3f6a2a', w: '#ffffff' }, rows: ['.w.w.w.', 'ggggggg', 'g.....g', 'g.....G', 'g.....G', 'GGGGGGG', '.w.w.w.'] },
+    r_flask: { pal: { g: '#e6fff0', p: '#c96aff', P: '#7a3aa8' }, rows: ['..ggg..', '..g.g..', '.g...g.', 'gpppppg', 'gpPpppg', 'gppppPg', '.ggggg.'] },
+    r_mark: { pal: { r: '#ff5a5a', w: '#ffffff' }, rows: ['...r...', '.rrrrr.', '.r...r.', 'rr.w.rr', '.r...r.', '.rrrrr.', '...r...'] },
+    r_boots: { pal: { a: '#9aa7b8', A: '#5a6070', b: '#6a4a2a' }, rows: ['.aa.aa.', '.aa.aa.', '.aa.aa.', '.Aa.Aa.', 'aaa.aaa', 'aaa.aaa', 'bbb.bbb'] },
+    r_horn: { pal: { y: '#f0c75e', Y: '#a8792a', w: '#fff3c0' }, rows: ['y......', 'yy.....', '.yyy...', '..yyyy.', '...yyyw', '....Yyw', '......w'] },
+    r_heart: { pal: { r: '#d9334a', R: '#8a1a2a', y: '#ffd23f', o: '#ff7a2a' }, rows: ['.o...o.', 'rroyrr.', 'rrrrrrR', 'rrrrrrR', '.rrrrR.', '..rrR..', '...R...'] },
+    r_book: { pal: { p: '#7c4dbd', P: '#4f2c86', y: '#f0c75e', w: '#f4f1ea' }, rows: ['.ppppp.', 'pyyyyyp', 'pwwwwwp', 'pw.y.wp', 'pwwwwwp', 'pyyyyyP', '.PPPPP.'] },
+    r_dagger: { pal: { k: '#3b3557', s: '#9a8fbf', w: '#e6e0ff', g: '#c9a0ff' }, rows: ['......w', '.....ws', '....ws.', '...ws..', 'k.ws...', '.kk....', 'kgk....'] },
+    r_seed: { pal: { g: '#7cd65a', G: '#3f8f2a', b: '#8a5a35' }, rows: ['..g.g..', '.ggGgg.', '...G...', '...G...', '..bbb..', '.bbbbb.', '..bbb..'] },
+    r_icecrown: { pal: { i: '#9fe6ff', I: '#4fa8d9', w: '#ffffff' }, rows: ['i..i..i', 'ii.i.ii', 'iiiwiii', 'iwiiiwi', 'IIIIIII'] },
+    r_scales: { pal: { y: '#f0c75e', Y: '#a8792a' }, rows: ['...y...', 'yyyyyyy', 'y..y..y', 'y..y..y', 'YY.y.YY', '...y...', '.yyyyy.'] },
+    r_demoncrown: { pal: { k: '#3a2852', r: '#ff3a5a', y: '#f0c75e' }, rows: ['k..k..k', 'kk.k.kk', 'kkkkkkk', 'kykrkyk', 'yyyyyyy'] },
+    r_gear: { pal: { a: '#c9ccd4', A: '#7a8090', k: '#1a1028' }, rows: ['.a.a.a.', 'aaaaaaa', '.aakaa.', 'aakkkaA', '.aakaA.', 'aaaaaaA', '.A.A.A.'] },
+    r_contract: { pal: { w: '#f4e6c0', r: '#d9334a', b: '#8a5a35' }, rows: ['bwwwwwb', '.w.r.w.', '.wwwww.', '.w.r.w.', '.wwwrr.', '.wwwrr.', 'bwwwwwb'] },
+    r_stone: { pal: { r: '#ff3a5a', R: '#a3203a', w: '#ffd0d6' }, rows: ['..rrr..', '.rwrrr.', 'rwrrrrR', 'rrrrrrR', 'rrrrrRR', '.rrRRR.', '..RRR..'] }
   };
   P.ICONS = ICONS;
 })();

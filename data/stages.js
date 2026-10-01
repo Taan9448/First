@@ -34,6 +34,18 @@ Game.Data.stages = [
     hard: [['skeleton', 'dark_mage'], ['gargoyle', 'skeleton'], ['vampire', 'skeleton']] }
 ];
 
+// 월드맵 위 스테이지 위치(1000×560 지도 좌표)와 지역 이름표 위치
+Game.Data.mapPos = [[96, 418], [196, 318], [300, 430], [396, 330], [486, 232], [574, 142], [662, 268], [748, 172], [846, 318], [924, 196]];
+Game.Data.regions = [
+  { theme: 'forest', label: [140, 520], box: [0, 200, 250, 560] },
+  { theme: 'desert', label: [350, 520], box: [240, 250, 450, 560] },
+  { theme: 'snow', label: [470, 56], box: [420, 30, 630, 300] },
+  { theme: 'volcano', label: [700, 56], box: [610, 60, 800, 360] },
+  { theme: 'castle', label: [910, 56], box: [790, 60, 1000, 420] }
+];
+Game.Data.STAGE_NAME = ['숲 입구', '고목의 심장', '모래 바다', '파라오의 무덤', '눈보라 고개', '서리 궁전', '불타는 협곡', '화룡의 둥지', '마왕성 외곽', '마왕의 옥좌'];
+Game.Data.THEME_COLOR = { forest: '#4fae4a', desert: '#e0a84a', snow: '#9fd6f2', volcano: '#e0584a', castle: '#a274dc' };
+
 Game.Data.THEME_NAME = { forest: '속삭이는 숲', desert: '타오르는 사막', snow: '얼어붙은 설원', volcano: '용암 화산', castle: '마왕성' };
 Game.Data.NODE_NAME = { battle: '전투', elite: '정예', boss: '보스', midboss: '중간 보스', final: '최종 보스', rest: '휴식/상점' };
 
@@ -58,5 +70,6 @@ Game.Data.economy = {
   restPct: 0.35,
   downedPct: 0.25,        // 쓰러진 캐릭터는 전투 승리 후 이 비율로 복귀
   shopSize: 5,
-  deckMin: 6, deckMax: 10
+  deckMin: 6, deckMax: 20,
+  autoBuildSize: 15      // 자동 구성은 등급 순으로 이만큼
 };

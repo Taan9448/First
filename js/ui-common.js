@@ -16,10 +16,41 @@
       UI.$$('.screen').forEach(function (s) { s.classList.toggle('on', s.id === 'screen-' + id); });
       UI.hideTip();
       if (id !== 'battle') UI.$$('.tut-layer').forEach(function (e) { e.parentNode.removeChild(e); });
+      if (id !== 'reward' && id !== 'clear' && G.FX && G.FX.clear) G.FX.clear();
       if (G.Extra) G.Extra.refreshMenu();
     },
     iconStyle: function (id) { return 'background-image:url(' + G.Pixel.icon(id) + ')'; },
     icon: function (id, cls) { return '<i class="ico ' + (cls || '') + '" style="' + UI.iconStyle(id) + '"></i>'; }
+  };
+
+  // 색을 밝게(k>0)·어둡게(k<0)
+  UI.shade = function (hex, k) {
+    var n = parseInt(hex.slice(1), 16), c = [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+    c = c.map(function (v) { return Math.round(k > 0 ? v + (255 - v) * k : v * (1 + k)); });
+    return '#' + c.map(function (v) { return (v < 16 ? '0' : '') + v.toString(16); }).join('');
+  };
+
+  // ---------------- 유물 ----------------
+  UI.relicTip = function (r) {
+    return '<b>' + U.esc(r.name) + '</b> · ' + G.Data.RELIC_RARITY[r.rarity] + ' 유물<br>' + U.esc(r.desc);
+  };
+  UI.relicBar = function (ids) {
+    return (ids || []).map(function (id) {
+      var r = G.Data.relicById[id];
+      if (!r) return '';
+      return '<span class="relic r-' + r.rarity + '" data-relic="' + id + '" data-tip="' + UI.relicTip(r) + '"><i class="ico" style="' + UI.iconStyle(r.icon) + '"></i></span>';
+    }).join('');
+  };
+  UI.relicTile = function (id, cls) {
+    var r = G.Data.relicById[id];
+    return '<button class="relic-tile ' + (r.rarity === 'boss' ? 'boss ' : '') + (cls || '') + '" data-id="' + id + '">' +
+      '<i class="ico" style="' + UI.iconStyle(r.icon) + '"></i><div><b>' + U.esc(r.name) + '</b><small>' + G.Data.RELIC_RARITY[r.rarity] + ' 유물</small>' +
+      '<span>' + U.esc(r.desc) + '</span></div></button>';
+  };
+  UI.flashRelic = function (id) {
+    UI.$$('[data-relic="' + id + '"]').forEach(function (e) {
+      e.classList.remove('flash'); void e.offsetWidth; e.classList.add('flash');
+    });
   };
 
   // ---------------- 툴팁 ----------------

@@ -101,7 +101,16 @@
 
   G.TestMenu = { open: function () { UI.show('test'); renderMenu(); } };
 
+  // 갈무리 폰트가 들어오면 도트 글꼴 크기 체계로 바꾼다
+  function detectFont() {
+    if (!document.fonts || !document.fonts.load) return;
+    document.fonts.load('12px Galmuri11').then(function () {
+      if (document.fonts.check('12px Galmuri11')) document.body.classList.add('pixel-font');
+    }).catch(function () {});
+  }
+
   window.addEventListener('DOMContentLoaded', function () {
+    detectFont();
     G.Extra.applySettings(G.Save.loadSettings());
     G.FX.init();
     G.BattleUI.init();

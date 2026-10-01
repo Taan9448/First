@@ -18,7 +18,7 @@
     newGame: function () {
       var d = {
         version: G.Save.VERSION, gold: 0, clearedStage: 0, run: null,
-        characters: ['kai'], party: ['kai'], cards: [], decks: {},
+        characters: ['kai'], party: ['kai'], cards: [], decks: {}, relics: [],
         codex: { monsters: {} }, flags: { tutorialDone: false }
       };
       St.data = d;
@@ -35,6 +35,49 @@
       }
       St.save();
       return d;
+    },
+
+    // ================= 유물 =================
+    mods: function () {
+      return G.Battle.mergeMods((St.data.relics || []).map(function (id) { return D.relicById[id]; }).filter(Boolean));
+    },
+    hasRelic: function (id) { return St.data.relics.indexOf(id) >= 0; },
+    addRelic: function (id) {
+      if (!id || St.hasRelic(id)) return false;
+      St.data.relics.push(id);
+      return true;
+    },
+    // kind: elite · shop · choice(보스 보상, 희귀·고급) · boss(보스 유물)
+    rollRelic: function (kind, exclude) {
+      exclude = exclude || [];
+      var free = D.relics.filter(function (r) { return !St.hasRelic(r.id) && exclude.indexOf(r.id) < 0; });
+      if (kind === 'boss') return G.rng.pick(free.filter(function (r) { return r.rarity === 'boss'; })) || null;
+      free = free.filter(function (r) { return r.rarity !== 'boss'; });
+      var e = D.relicEconomy, stage = St.data.run ? St.data.run.stage : 1;
+      var w = kind === 'shop' ? [50, 35, 15] : kind === 'choice' ? [0, 50, 50] : e.elite[stage <= 4 ? 0 : 1];
+      var names = ['common', 'uncommon', 'rare'], total = w[0] + w[1] + w[2], roll = G.rng.next() * total, k = 0;
+      while (k < 2 && roll >= w[k]) { roll -= w[k]; k++; }
+      for (var step = 0; step < 3; step++) {
+        var at = free.filter(function (r) { return r.rarity === names[(k + step) % 3]; });
+        if (at.length) return G.rng.pick(at).id;
+      }
+      return null;
+    },
+    rollRelicChoice: function (stage) {
+      var boss = D.relicEconomy.bossActs.indexOf(stage) >= 0, out = [];
+      for (var i = 0; i < 3; i++) {
+        var id = St.rollRelic(boss ? 'boss' : 'choice', out) || St.rollRelic('choice', out);
+        if (id) out.push(id);
+      }
+      return out;
+    },
+    takeRelic: function (id) {
+      var p = St.data.run && St.data.run.pending;
+      if (!p || !p.relicChoice) return false;
+      if (id && p.relicChoice.indexOf(id) >= 0) St.addRelic(id);
+      p.relicChoice = null;
+      St.save();
+      return true;
     },
 
     // ================= 카드·덱 =================
@@ -54,12 +97,12 @@
       return true;
     },
 
-    // 자동 구성: 등급이 높은 카드부터 10장, 공격 카드는 최소 3장
+    // 자동 구성: 등급이 높은 카드부터 최대 autoBuildSize장, 공격 카드는 최소 3장
     autoBuild: function (owner) {
       var list = St.ownedOf(owner).map(function (id) { return D.cardById[id]; });
       list.sort(function (a, b) { return rarityIdx(b.rarity) - rarityIdx(a.rarity) || (a.id < b.id ? -1 : 1); });
-      var pick = list.slice(0, eco().deckMax);
-      var rest = list.slice(eco().deckMax);
+      var pick = list.slice(0, eco().autoBuildSize);
+      var rest = list.slice(eco().autoBuildSize);
       var attacks = function () { return pick.filter(function (c) { return c.type === 'attack'; }).length; };
       while (attacks() < 3) {
         var a = rest.filter(function (c) { return c.type === 'attack'; })[0];
@@ -114,10 +157,23 @@
     battleOptions: function () {
       var d = St.data, r = d.run, node = St.node();
       var party = d.party.filter(function (id) { return r.hp[id] != null; });
+      // 적 변이: 일반 전투의 몬스터마다 확률로 접두어. 처음 들어갈 때 정해 저장한다(다시 해도 같음)
+      if (!node.affixes) {
+        var ac = D.affixChance, chance = ac.from + (ac.to - ac.from) * (r.stage - 1) / 9;
+        var keys = Object.keys(D.affixes);
+        node.affixes = node.monsters.map(function (id) {
+          return node.type === 'battle' && D.monsterById[id].rank === 'normal' && G.rng.chance(chance) ? G.rng.pick(keys) : null;
+        });
+        St.save();
+      }
+      var affixes = node.affixes.map(function (a) { return D.affixes[a] ? a : null; });
       return {
         title: '스테이지 ' + r.stage + ' · ' + D.NODE_NAME[node.type],
+        stage: r.stage, nodeType: node.type,
         party: party.map(function (id) { return { id: id, hp: Math.max(1, r.hp[id]) }; }),
         monsters: node.monsters.slice(),
+        affixes: affixes,
+        relics: (d.relics || []).slice(),
         deck: St.battleDeck(party),
         gold: d.gold,
         boss: node.type !== 'battle'
@@ -131,9 +187,12 @@
 
     // 승리: 체력 반영, 처치 기록, 골드. 반환: { ending } 또는 { reward }
     battleWon: function (battle) {
-      var d = St.data, r = d.run, node = St.node();
+      var d = St.data, r = d.run, node = St.node(), mods = St.mods();
+      var downed = Math.max(eco().downedPct, mods.downedPct || 0);
       battle.heroes.forEach(function (h) {
-        r.hp[h.id] = h.dead ? Math.max(1, Math.floor(h.maxHp * eco().downedPct)) : h.hp;
+        var hp = h.dead ? Math.max(1, Math.floor(h.maxHp * downed)) : h.hp;
+        if (mods.winHeal) hp = Math.min(h.maxHp, hp + mods.winHeal);
+        r.hp[h.id] = hp;
       });
       battle.monsters.forEach(function (m) { St.markSeen([m.id]); });
       battle.kills.forEach(function (id) { d.codex.monsters[id].kills++; });
@@ -146,7 +205,11 @@
       }
       var kind = node.type === 'battle' ? 'battle' : node.type === 'elite' ? 'elite' : 'boss';
       r.pending = St.rollReward(kind);
-      d.gold += r.pending.gold + r.pending.fill * eco().fillGold;
+      var p = r.pending;
+      p.gold = Math.round(p.gold * (mods.goldMult || 1)) + (battle.affixKills || 0) * 5;
+      if (node.type === 'elite') { p.relic = St.rollRelic('elite'); St.addRelic(p.relic); }
+      if (kind === 'boss') p.relicChoice = St.rollRelicChoice(r.stage);
+      d.gold += p.gold + p.fill * eco().fillGold;
       St.save();
       return { reward: r.pending };
     },
@@ -229,6 +292,7 @@
     // ================= 휴식·상점 =================
     rest: function () {
       var r = St.data.run;
+      if (St.mods().noRestHeal) return St.advance();
       St.data.characters.forEach(function (id) {
         var max = charDef(id).hp;
         r.hp[id] = Math.min(max, r.hp[id] + Math.floor(max * eco().restPct));
@@ -239,12 +303,26 @@
     openShop: function () {
       var r = St.data.run;
       if (!r.shop) {
-        r.shop = { cards: St.rollCards(eco().shopSize, 'shop', r.stage), sold: [], healed: false };
+        r.shop = { cards: St.rollCards(eco().shopSize, 'shop', r.stage), sold: [], healed: false, relic: St.rollRelic('shop'), relicSold: false };
         St.save();
       }
       return r.shop;
     },
-    price: function (id) { return eco().price[D.cardById[id].rarity]; },
+    price: function (id) {
+      var base = D.relicById[id] ? D.relicEconomy.price[D.relicById[id].rarity] : eco().price[D.cardById[id].rarity];
+      return Math.round(base * (St.mods().shopPriceMult || 1));
+    },
+    buyRelic: function () {
+      var d = St.data, s = d.run.shop;
+      if (!s || !s.relic || s.relicSold) return false;
+      var p = St.price(s.relic);
+      if (d.gold < p) return false;
+      d.gold -= p;
+      s.relicSold = true;
+      St.addRelic(s.relic);
+      St.save();
+      return true;
+    },
     buy: function (id) {
       var d = St.data, s = d.run.shop, p = St.price(id);
       if (!s || s.cards.indexOf(id) < 0 || s.sold.indexOf(id) >= 0 || d.gold < p || St.owns(id)) return false;
@@ -272,6 +350,7 @@
       d.gold -= eco().refreshCost;
       s.cards = St.rollCards(eco().shopSize, 'shop', d.run.stage);
       s.sold = [];
+      if (!s.relicSold) s.relic = St.rollRelic('shop');
       St.save();
       return true;
     },

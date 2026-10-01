@@ -66,7 +66,7 @@
 
   function renderCodex(m) {
     var body = m.querySelector('.codex-body'), d = St().data, cs = codexState;
-    var html = tabs([['cards', '카드'], ['monsters', '몬스터'], ['heroes', '캐릭터']], cs.tab);
+    var html = tabs([['cards', '카드'], ['monsters', '몬스터'], ['heroes', '캐릭터'], ['relics', '유물']], cs.tab);
     if (cs.tab === 'cards') {
       var all = D.cards.filter(function (c) { return c.owner !== 'none'; });
       var owned = all.filter(function (c) { return d.cards.indexOf(c.id) >= 0; }).length;
@@ -123,6 +123,21 @@
             '<div>' + U.esc(moves) + (mo.triggers ? ' <span class="dim">(체력이 줄면 행동이 바뀐다)</span>' : '') + '</div><div class="dim">' + U.esc(mo.desc || '') + '</div>' :
             '<b>???</b> <span class="dim">' + RANK[mo.rank] + ' · 아직 만나지 못했다</span>'));
           list.appendChild(row);
+        });
+      });
+    } else if (cs.tab === 'relics') {
+      var have = d.relics || [];
+      html += '<div class="codex-sum">모은 유물 <b>' + have.length + '/' + D.relics.length + '</b> <span class="dim">· 정예·보스 처치, 상점에서 얻는다</span></div><div class="relic-list"></div>';
+      body.innerHTML = html;
+      var rl = body.querySelector('.relic-list');
+      ['common', 'uncommon', 'rare', 'boss'].forEach(function (rar) {
+        rl.appendChild(UI.el('div', 'theme-title', D.RELIC_RARITY[rar] + ' 유물'));
+        D.relics.filter(function (r) { return r.rarity === rar; }).forEach(function (r) {
+          var own = have.indexOf(r.id) >= 0;
+          var row = UI.el('div', 'mon-row');
+          row.innerHTML = '<div class="sp relic-sp"><i class="ico" style="' + UI.iconStyle(r.icon) + (own ? '' : ';filter:brightness(0)') + '"></i></div>' +
+            '<div class="info">' + (own ? '<b>' + U.esc(r.name) + '</b><div>' + U.esc(r.desc) + '</div>' : '<b>???</b><div class="dim">아직 얻지 못한 유물</div>') + '</div>';
+          rl.appendChild(row);
         });
       });
     } else {
@@ -206,7 +221,7 @@
     var s = X.settings, debug = '';
     if (G.debug) {
       debug = '<div class="set-row"><span>디버그</span><div class="row"><button class="btn small dbg-gold">골드 +500</button>' +
-        '<button class="btn small dbg-heal">전원 회복</button><button class="btn small dbg-test">전투 테스트 메뉴</button></div></div>';
+        '<button class="btn small dbg-heal">전원 회복</button><button class="btn small dbg-relic">무작위 유물 +1</button><button class="btn small dbg-test">전투 테스트 메뉴</button></div></div>';
     }
     var m = win('설정',
       '<div class="settings">' +
@@ -251,6 +266,12 @@
         UI.closeModal(m); X.refreshScreen();
       };
       m.querySelector('.dbg-test').onclick = function () { UI.closeModal(m); G.TestMenu.open(); };
+      m.querySelector('.dbg-relic').onclick = function () {
+        if (!St().data) return;
+        var free = D.relics.filter(function (r) { return St().data.relics.indexOf(r.id) < 0; });
+        if (free.length) { St().addRelic(G.rng.pick(free).id); St().save(); }
+        UI.closeModal(m); X.refreshScreen();
+      };
     }
   };
 

@@ -41,13 +41,45 @@
     var theme = (G.Data.monsterById[battleOpts.monsters[0]] || {}).theme || 'forest';
     G.Art.scene(theme).then(function (url) { if (url) field.style.backgroundImage = 'url(' + url + ')'; });
     $('.title').textContent = battleOpts.title || '전투';
+    $('.stage-chip .chip').style.background = (G.Data.THEME_COLOR || {})[theme] || '#5ee0ff';
+    $('.relic-bar').innerHTML = UI.relicBar(battleOpts.relics);
     $('.debug-kill').style.display = G.debug ? '' : 'none';
+    hits = 0; showHits();
+    field.classList.remove('zoom'); field.style.transform = '';
     UI.show('battle');
     B = G.Battle.create(battleOpts);
     if (G.Extra) G.Extra.refreshMenu();
     renderAll();
-    B.start();
+    var mine = B;
+    var go = function () { if (B === mine) B.start(); };
+    if (battleOpts.boss) cutIn(B.monsters[0], go); else go();
   };
+
+  // 정예·보스 등장 컷인 (클릭하면 넘긴다)
+  function cutIn(m, done) {
+    var rankName = { elite: '정예', boss: '보스', final: '최종 보스' }[m.def.rank] || '보스';
+    var c = UI.el('div', 'cutin', '<div class="band"><div class="portrait"></div><div class="who"><small>' + (m.def.rank === 'final' ? 'FINAL BOSS' : m.def.rank === 'elite' ? 'ELITE' : 'BOSS') +
+      '</small><b>' + U.esc(m.name) + '</b><span class="dim">' + rankName + ' · ' + U.esc(m.def.desc || '') + '</span></div></div>');
+    var sp = UI.spriteEl(m.def.sprite, 2.2 / Math.max(1, m.def.size));
+    c.querySelector('.portrait').appendChild(sp);
+    if (FX.low) c.style.animationDuration = '0.8s';
+    field.appendChild(c);
+    SND.play('big');
+    var finished = false;
+    var end = function () { if (finished) return; finished = true; if (c.parentNode) c.parentNode.removeChild(c); done(); };
+    c.onclick = end;
+    setTimeout(end, FX.low ? 800 : 1600);
+  }
+
+  // 연타 카운터
+  var hits = 0;
+  function showHits() {
+    var h = root && root.querySelector('.hitcount');
+    if (!h) return;
+    h.classList.toggle('on', hits >= 2);
+    h.querySelector('b').textContent = hits;
+    if (hits >= 2) pulseClass(h, 'bump', 180);
+  }
 
   // ================= 렌더링 =================
   function renderAll() {
@@ -61,10 +93,12 @@
     $('.cnt-draw').textContent = B.piles.draw.length;
     $('.cnt-discard').textContent = B.piles.discard.length;
     $('.cnt-exhaust').textContent = B.piles.exhaust.length;
-    $('.turn').textContent = '턴 ' + B.turn;
+    $('.turn').textContent = B.turn;
     var gold = B.gold + B.goldDelta;
     $('.goldv').textContent = gold;
     $('.endturn').disabled = B.phase !== 'player' || B.busy;
+    var canAny = B.phase === 'player' && B.piles.hand.some(function (c) { return B.canPlay(c).ok; });
+    $('.endturn').classList.toggle('ready', B.phase === 'player' && !B.busy && !canAny);
   }
 
   // 양쪽 진영이 겹치면 도트 크기와 유닛 폭을 줄인다
@@ -89,7 +123,13 @@
     var e = UI.el('div', 'unit ' + u.side);
     e.innerHTML = '<div class="intent"></div><div class="sprite-wrap"><div class="shadow"></div></div>' +
       '<div class="hpbar pix"><i></i><span></span><div class="blockbadge"></div></div><div class="sts"></div><div class="uname"></div>';
-    var sp = UI.spriteEl(u.side === 'ally' ? u.id : u.def.sprite, u.side === 'enemy' ? u.def.size : 1);
+    var sp = UI.spriteEl(u.side === 'ally' ? u.id : u.def.sprite, u.side === 'enemy' ? u.size || u.def.size : 1);
+    if (u.affix) {
+      var ax = G.Data.affixes[u.affix];
+      e.classList.add('affixed');
+      e.style.setProperty('--affix', ax.color);
+      e.querySelector('.uname').setAttribute('data-tip', '<b>' + ax.name + '</b> 변이<br>' + ax.desc);
+    }
     e.querySelector('.sprite-wrap').appendChild(sp);
     e._sprite = sp;
     e._unit = u;
@@ -358,6 +398,7 @@
     on('battle:update', function () { renderAll(); });
     on('battle:turn', function (d) {
       banner(d.side === 'ally' ? '내 턴' : '적의 턴', d.side === 'ally' ? '' : 'enemy');
+      if (d.side === 'ally') { hits = 0; showHits(); }
       SND.play('turn');
       handSig = '';
     });
@@ -408,7 +449,15 @@
       renderUnit(d.unit); pulseClass(unitEls[d.unit.uid], 'summoned', 420);
       FX.burst(spritePt(d.unit), { colors: ['#c9a0ff', '#ffffff'], n: 16, speed: 2 });
     });
-    on('monster:trigger', function () { FX.flash('#ff8a8a'); FX.shake(true); SND.play('big'); });
+    on('monster:trigger', function (d) {
+      FX.flash('#ff8a8a'); FX.shake(true); SND.play('big');
+      var e = unitEls[d.unit.uid];
+      pulseClass(e, 'phase', 700);
+      var band = UI.el('div', 'phase-band', U.esc(d.name));
+      field.appendChild(band);
+      setTimeout(function () { if (band.parentNode) band.parentNode.removeChild(band); }, 1450);
+    });
+    on('relic:trigger', function (d) { if (d.id) UI.flashRelic(d.id); });
     on('fx:hit', function (d) {
       var e = unitEls[d.unit.uid];
       if (!e) return;
@@ -418,6 +467,8 @@
       if (d.amount > 0) {
         var cls = d.crit ? 'crit' : d.kind === 'poison' ? 'poison' : d.kind === 'burn' ? 'burn' : '';
         float(d.unit, (d.crit ? '치명타! ' : '') + d.amount, cls);
+        if (d.overkill > 0) setTimeout(function () { float(d.unit, '과잉 +' + d.overkill, 'over'); }, 120);
+        if (d.unit.side === 'enemy' && !d.kind && (!d.src || d.src.side === 'ally')) { hits++; showHits(); }
         pulseClass(e._sprite, 'hit', 120);
         pulseClass(e._sprite, 'stop', 90);
         pulseClass(e, d.unit.side === 'enemy' ? 'knock-r' : 'knock-l', 240);
@@ -467,6 +518,15 @@
     on('fx:energy', function () { pulseClass($('.energy'), 'pulse', 400); });
     on('fx:death', function (d) {
       var e = unitEls[d.unit.uid];
+      // 마지막 일격: 느려지며 그 적을 향해 확대
+      if (d.unit.side === 'enemy' && B && !B.alive('enemy').length && e && !FX.low) {
+        var r = e._sprite.getBoundingClientRect(), fr = field.getBoundingClientRect();
+        field.style.transformOrigin = (r.left + r.width / 2 - fr.left) + 'px ' + (r.top + r.height / 2 - fr.top) + 'px';
+        field.classList.add('zoom');
+        field.style.transform = 'scale(1.12)';
+        FX.slow(700);
+        setTimeout(function () { field.style.transform = ''; }, 750);
+      }
       if (e && d.unit.side === 'enemy') FX.shatter(e._sprite);
       if (d.unit.boss) { FX.flash('#ffffff'); FX.shake(true); SND.play('big'); } else SND.play('death');
       renderUnit(d.unit);

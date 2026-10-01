@@ -7,7 +7,7 @@ const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
 global.window = global;
-['js/core.js', 'data/keywords.js', 'data/characters.js', 'data/cards.js', 'data/monsters.js',
+['js/core.js', 'data/keywords.js', 'data/characters.js', 'data/cards.js', 'data/monsters.js', 'data/relics.js',
  'js/status.js', 'js/deck.js', 'js/battle.js', 'js/effects.js'].forEach(f => {
   vm.runInThisContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), { filename: f });
 });
@@ -94,9 +94,9 @@ check(docRows === 192, '기획서 카드 표 192행 (현재 ' + docRows + ')');
 
 // ---------------------------------------------------------------- 규칙 단위 테스트
 section('규칙');
-async function newBattle(party, monsters, deck) {
+async function newBattle(party, monsters, deck, extra) {
   G.rng.seed(42);
-  const b = G.Battle.create({ party: party.map(id => ({ id })), monsters, deck: deck || ['C01'], gold: 50 });
+  const b = G.Battle.create(Object.assign({ party: party.map(id => ({ id })), monsters, deck: deck || ['C01'], gold: 50 }, extra));
   await b.start();
   return b;
 }
@@ -255,6 +255,43 @@ function handCard(b, id) {
   await b.play(handCard(b, 'S17'), b.heroes[1]);
   check(!b.heroes[1].dead && b.heroes[1].hp === 28, '부활 → 카이 체력 40% = 28');
 
+  // ---------------------------------------------------------------- 유물·변이
+  check(G.Data.relics.length === 30, '유물 30종');
+  G.Data.relics.forEach(r => (r.hooks || []).forEach(h => walk(h.effects, r.id)));
+  b = await newBattle(['kai'], ['treant'], ['C01'], { relics: ['R01', 'R03', 'R08'] });
+  check(b.energy === 4, '여명의 모래시계: 첫 턴 에너지 4 (실제 ' + b.energy + ')');
+  check(b.heroes[0].block === 6, '수호 부적: 보호막 6');
+  check(b.piles.hand.length === 1, '은방울: 덱이 1장뿐이라 손패 1장 (드로우 시도 7)');
+  await b.endTurn();
+  check(b.energy === 3, '둘째 턴 에너지 3');
+
+  b = await newBattle(['lyra'], ['treant'], ['C01'], { relics: ['R10', 'R21'] });
+  b.energy = 3;
+  await b.play(handCard(b, 'L01'), b.monsters[0]);
+  check(b.monsters[0].status.burn === 6, '부싯돌+용의 심장: 화상 (2+1)×2 = 6 (실제 ' + b.monsters[0].status.burn + ')');
+
+  b = await newBattle(['kai'], ['treant'], ['C01'], { relics: ['R07'] });
+  b.heroes[0].crit = 0; b.energy = 3; hp0 = b.monsters[0].hp;
+  await b.play(handCard(b, 'K01'), b.monsters[0]);
+  check(hp0 - b.monsters[0].hp === 11, '가죽 장갑: 첫 공격 6+5 = 11');
+  hp0 = b.monsters[0].hp;
+  await b.play(handCard(b, 'K01'), b.monsters[0]);
+  check(hp0 - b.monsters[0].hp === 6, '두 번째 공격은 보너스 없음');
+
+  b = await newBattle(['kai'], ['treant'], ['C01'], { relics: ['R14'] });
+  await b.loseHp(b.heroes[0], 999);
+  check(!b.heroes[0].dead && b.heroes[0].hp === 14, '불사조 깃털: 체력 20% = 14로 일어남');
+  await b.loseHp(b.heroes[0], 999);
+  check(b.heroes[0].dead, '불사조 깃털은 전투당 한 번');
+
+  b = await newBattle(['lyra'], ['slime'], ['C01'], { relics: ['R25'] });
+  G.Status.add(b, b.monsters[0], 'chill', 3, null);
+  check(b.monsters[0].status.vulnerable === 2, '얼음 왕관: 빙결 → 취약 2');
+
+  b = await newBattle(['kai'], ['slime', 'slime'], ['C01'], { affixes: ['giant', 'angry'] });
+  check(b.monsters[0].maxHp === 27 && b.monsters[0].name === '거대한 슬라임', '거대한: 체력 1.5배·이름');
+  check(b.monsters[1].status.strength === 2, '분노한: 힘 2');
+
   // ---------------------------------------------------------------- 무작위 전투
   const N = +(process.argv[2] || 3000);
   section('무작위 전투 ' + N + '회');
@@ -275,8 +312,10 @@ function handCard(b, id) {
     if (roll < 0.15) enc = [G.rng.pick(themed.filter(m => m.rank !== 'normal')).id];
     else enc = G.rng.shuffle(themed.filter(m => m.rank === 'normal').map(m => m.id)).slice(0, G.rng.int(1, 3));
     enc.forEach(id => seenMonsters.add(id));
+    const relics = G.rng.shuffle(G.Data.relics.map(r => r.id)).slice(0, G.rng.int(0, 6));
+    const affixes = enc.map(() => G.rng.chance(0.3) ? G.rng.pick(Object.keys(G.Data.affixes)) : null);
     try {
-      const b = G.Battle.create({ party: party.map(id => ({ id })), monsters: enc, deck, gold: 30 });
+      const b = G.Battle.create({ party: party.map(id => ({ id })), monsters: enc, deck, gold: 30, relics, affixes });
       await b.start();
       let guard = 0;
       while (!b.over() && b.turn < 80 && guard++ < 5000) {

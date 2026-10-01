@@ -37,11 +37,18 @@
     if (!running) { running = true; requestAnimationFrame(tick); }
   }
 
+  var frame = 0, slowUntil = 0;
+  // 슬로모션: 그동안은 두 프레임에 한 번만 움직인다
+  FX.slow = function (ms) { slowUntil = performance.now() + (FX.low ? 0 : ms); };
+
   function tick() {
     ctx.clearRect(0, 0, cv.width, cv.height);
+    frame++;
+    var still = performance.now() < slowUntil && frame % 3 !== 0;
     var next = [];
     for (var i = 0; i < parts.length; i++) {
       var p = parts[i];
+      if (still) { draw(p); next.push(p); continue; }
       if (p.delay > 0) { p.delay--; next.push(p); continue; }
       p.life--;
       if (p.life <= 0) continue;
@@ -86,6 +93,8 @@
 
   // ================= 기본 도구 =================
   FX.init = function () { ensure(); };
+  // 남은 입자를 모두 지운다(화면을 옮길 때 축포가 따라오지 않게)
+  FX.clear = function () { parts.length = 0; if (ctx) ctx.clearRect(0, 0, cv.width, cv.height); };
 
   FX.burst = function (pt, o) {
     ensure();

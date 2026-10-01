@@ -167,5 +167,17 @@
   ];
 
   Game.Data.monsters = list;
+
+  // 적 변이(접두어): 일반 몬스터에만 확률로 붙는다 (GAME_DESIGN.md 19.5절)
+  Game.Data.affixes = {
+    angry: { name: '분노한', color: '#ff5a5a', desc: '시작 시 힘 2.', startStatus: { strength: 2 } },
+    spiky: { name: '가시 돋친', color: '#9be36a', desc: '시작 시 가시 3.', startStatus: { thorns: 3 } },
+    regen: { name: '재생하는', color: '#7cf27c', desc: '매 턴 시작 시 체력 4 회복.', everyTurn: [{ op: 'heal', value: 4, target: 'self' }] },
+    giant: { name: '거대한', color: '#ffd23f', desc: '체력 1.5배, 크기 1.3배.', hpMult: 1.5, sizeMult: 1.3 },
+    tough: { name: '단단한', color: '#a9c8ff', desc: '공격 1회당 받는 피해 -1.', startStatus: { reduce: 1 } },
+    venom: { name: '맹독의', color: '#c96aff', desc: '공격으로 피해를 줄 때마다 중독 1.', onHitStatus: { poison: 1 } }
+  };
+  // 변이 확률: 스테이지 1 → 10 사이 선형
+  Game.Data.affixChance = { from: 0.10, to: 0.35 };
   Game.Data.monsterById = Game.util.byId(list);
 })();

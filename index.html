@@ -4,6 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>다섯 영웅의 원정</title>
+  <!-- 도트 한글 폰트 갈무리(OFL). 인터넷이 없으면 시스템 글꼴로 보인다 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/galmuri/dist/galmuri.css">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -19,14 +21,16 @@
 
     <div class="screen" id="screen-battle">
       <div class="topbar">
-        <span class="title">전투</span>
-        <span class="turn">턴 1</span>
+        <div class="stage-chip"><i class="chip"></i><span class="title">전투</span></div>
+        <div class="turn-badge"><small>TURN</small><b class="turn">1</b></div>
         <span class="spacer"></span>
-        <span class="gold"><i class="ico ico-gold"></i><b class="goldv">0</b></span>
+        <div class="relic-bar"></div>
+        <span class="gold"><i class="ico ico-gold"></i><span class="goldv">0</span></span>
         <button class="btn small debug-kill">적 즉사</button>
         <button class="btn small to-menu">메뉴로</button>
       </div>
       <div class="field">
+        <div class="hitcount"><b>0</b><small>HIT</small></div>
         <div class="side heroes"></div>
         <div class="side monsters"></div>
       </div>
@@ -56,10 +60,12 @@
   <script src="data/cards.js"></script>
   <script src="data/monsters.js"></script>
   <script src="data/stages.js"></script>
+  <script src="data/relics.js"></script>
   <script src="js/pixel.js"></script>
   <script src="js/pixel-monsters.js"></script>
   <script src="js/art.js"></script>
   <script src="js/art-cards.js"></script>
+  <script src="js/art-map.js"></script>
   <script src="js/status.js"></script>
   <script src="js/deck.js"></script>
   <script src="js/battle.js"></script>

@@ -63,6 +63,7 @@
       Object.keys(d.decks).forEach(function (k) {
         d.decks[k] = d.decks[k].filter(function (id) { return okCard(id) && d.cards.indexOf(id) >= 0; });
       });
+      d.relics = (d.relics || []).filter(function (id) { return G.Data.relicById && G.Data.relicById[id]; });
       d.codex = d.codex || { monsters: {} };
       d.codex.monsters = d.codex.monsters || {};
       d.flags = d.flags || {};
