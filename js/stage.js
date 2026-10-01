@@ -20,7 +20,7 @@
         version: G.Save.VERSION, gold: 0, clearedStage: 0, run: null,
         characters: ['kai'], party: ['kai'], cards: [], decks: {}, relics: [], upgraded: [],
         growth: {}, bonds: {}, talks: {}, ascension: { current: 0, best: 0 }, eventsSeen: [], buffs: [],
-        codex: { monsters: {} }, flags: { tutorialDone: false }
+        codex: { monsters: {} }, flags: { tutorialDone: false }, story: { seen: [] }
       };
       St.data = d;
       D.cards.forEach(function (c) { if (c.basic && (c.owner === 'kai' || c.owner === 'common')) d.cards.push(c.id); });
@@ -770,6 +770,28 @@
       d.run = null;
       St.save();
       return { stage: n, first: first, joined: joined, ending: ending, ascension: St.ascLevel() };
+    },
+
+    // ================= 스토리(13단계) =================
+    storySeen: function (id) { return !!St.data && (St.data.story.seen || []).indexOf(id) >= 0; },
+    markStory: function (id) {
+      var sv = St.data.story;
+      if (sv.seen.indexOf(id) < 0) { sv.seen.push(id); St.save(); }
+    },
+    // n 장의 kind 장면 중 아직 보지 않은 것(승천 장면은 매번 보여 준다)
+    sceneFor: function (kind, n) {
+      var ch = (D.story || []).filter(function (c) { return c.n === n; })[0];
+      if (!ch && kind === 'ascend') ch = (D.story || [])[(D.story || []).length - 1];
+      if (!ch) return null;
+      var sc = ch.scenes.filter(function (x) { return x.kind === kind; })[0];
+      if (!sc || (kind !== 'ascend' && St.storySeen(sc.id))) return null;
+      return sc;
+    },
+    storyProgress: function () {
+      var all = [];
+      (D.story || []).forEach(function (c) { c.scenes.forEach(function (x) { if (x.kind !== 'ascend') all.push(x.id); }); });
+      var seen = all.filter(function (id) { return St.storySeen(id); }).length;
+      return { seen: seen, total: all.length, pct: all.length ? Math.round(seen / all.length * 100) : 0 };
     },
 
     // ================= 디버그 =================

@@ -9,7 +9,7 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 global.window = global;
 ['js/core.js', 'data/keywords.js', 'data/characters.js', 'data/cards.js', 'data/monsters.js', 'data/stages.js', 'data/relics.js',
- 'data/upgrades.js', 'data/events.js', 'data/bonds.js', 'data/traits.js', 'data/ascension.js', 'js/status.js', 'js/deck.js', 'js/upgrade.js', 'js/battle.js', 'js/save.js', 'js/stage.js'].forEach(f => {
+ 'data/upgrades.js', 'data/events.js', 'data/bonds.js', 'data/traits.js', 'data/ascension.js', 'data/story.js', 'js/status.js', 'js/deck.js', 'js/upgrade.js', 'js/battle.js', 'js/save.js', 'js/stage.js'].forEach(f => {
   vm.runInThisContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), { filename: f });
 });
 const G = global.Game, St = G.Stage, D = G.Data;
@@ -282,6 +282,35 @@ function invariants(where) {
   const m2 = G.Save.sanitize(G.Save.migrate(JSON.parse(JSON.stringify(v1))));
   check(m2.version === 2 && m2.run === null && m2.gold === 77 && m2.cards.length === 2 && m2.relics[0] === 'R01', 'v1 → v2 마이그레이션');
   check(Array.isArray(m2.upgraded) && m2.growth && m2.bonds && m2.ascension && Array.isArray(m2.buffs), 'v2 기본값');
+
+  // 스토리(13단계): 데이터 검사
+  const heroIds = D.characters.map(c => c.id), themes = ['forest', 'desert', 'snow', 'volcano', 'castle'];
+  D.story.forEach(ch => ch.scenes.forEach(sc => {
+    check(themes.includes(sc.bg), '장면 배경 테마: ' + sc.id);
+    check(!sc.right || heroIds.includes(sc.right) || D.monsterById[sc.right], '장면 상대: ' + sc.id);
+    sc.lines.forEach(l => check(l[0] === 'narr' || heroIds.includes(l[0]) || l[0] === sc.right, '장면 화자: ' + sc.id + ' ' + l[0]));
+    check(sc.lines.every(l => l[1] && l[1].length < 90), '대사 길이: ' + sc.id);
+  }));
+  for (let n = 1; n <= D.stages.length; n++) {
+    const kinds = D.story.find(c => c.n === n).scenes.map(s => s.kind);
+    check(kinds.includes('intro') && kinds.includes('boss') && (n === D.stages.length || kinds.includes('outro')), n + '장 도입·결전·결말');
+  }
+  check(D.storyById['c10-mid'] && D.storyById['c10-midout'] && D.storyById.epilogue && D.storyById.prologue, '중간 보스·에필로그·프롤로그 장면');
+  // 스토리: 처음 한 번만 나오고, 본 장면은 저장된다(승천 장면은 매번)
+  St.newGame();
+  check(St.data.story && St.data.story.seen.length === 0, '새 게임 스토리 기록 비어 있음');
+  check(St.sceneFor('intro', 1).id === 'c1-intro' && St.sceneFor('prologue', 0).id === 'prologue', '장면 찾기');
+  St.markStory('c1-intro');
+  check(!St.sceneFor('intro', 1) && St.sceneFor('boss', 1), '본 장면은 다시 나오지 않는다');
+  check(St.sceneFor('ascend', 11) && (St.markStory('ascend'), St.sceneFor('ascend', 11)), '승천 장면은 매번');
+  const sp = St.storyProgress();
+  check(sp.seen === 1 && sp.total > 30, '스토리 진행률 (' + sp.seen + '/' + sp.total + ')');
+  St.save();
+  check(G.Save.load().story.seen.includes('c1-intro'), '스토리 기록 저장');
+  // 스토리 이전 저장: 클리어한 장까지 본 것으로 친다
+  const old = { version: 2, gold: 5, clearedStage: 4, characters: ['kai', 'bram'], party: ['kai'], cards: ['K01'], decks: {}, relics: [], codex: { monsters: {} }, flags: {} };
+  const ms = G.Save.sanitize(JSON.parse(JSON.stringify(old)));
+  check(ms.story.seen.includes('prologue') && ms.story.seen.includes('c4-outro') && !ms.story.seen.includes('c5-intro'), '예전 저장의 스토리 기본값');
 
   // 마이그레이션·정리: 알 수 없는 카드 ID 는 버린다
   St.data.cards.push('ZZZ99');

@@ -46,7 +46,7 @@
   X.refreshMenu = function () {
     var m = document.getElementById('gmenu');
     if (!m) return;
-    var title = ['title', 'test', 'lobby'].some(function (k) { var e = document.getElementById('screen-' + k); return e && e.classList.contains('on'); });
+    var title = ['title', 'test', 'lobby', 'story'].some(function (k) { var e = document.getElementById('screen-' + k); return e && e.classList.contains('on'); });
     m.style.display = !St().data || title ? 'none' : '';
     var deck = m.querySelector('.deck');
     deck.disabled = inBattle();

@@ -73,7 +73,7 @@
     D.characters.forEach(function (c) { var w = UI.el('div', 'slot'); w.appendChild(UI.spriteEl(c.id, 1.1)); line.appendChild(w); });
     el.querySelector('.cont').onclick = function () { if (St.load()) Meta.lobby(); else Meta.title(); };
     el.querySelector('.new').onclick = function () {
-      var start = function () { St.newGame(); Meta.lobby(); };
+      var start = function () { St.newGame(); Meta.scene('prologue', Meta.lobby); };
       if (has) confirmBox('저장된 진행을 지우고 새로 시작할까요?', '새 게임', start); else start();
     };
     if (G.debug) el.querySelector('.test').onclick = function () { G.TestMenu.open(); };
@@ -234,7 +234,7 @@
     var r = St.data.run;
     if (r) { if (r.stage === n) Meta.continueRun(); return; }
     if (!St.canEnter(n)) return;
-    Meta.party(function () { St.startStage(n); Meta.map(n); }, '스테이지 ' + n + ' 출발', function () { Meta.map(n); });
+    Meta.party(function () { St.startStage(n); Meta.stageIntro(n, function () { Meta.map(n); }); }, '스테이지 ' + n + ' 출발', function () { Meta.map(n); });
   }
 
   // 진행 중인 스테이지의 현재 노드로
@@ -249,6 +249,10 @@
     if (node.type === 'rest') return r.upgrades ? Meta.upgrade() : Meta.rest();
     if (node.type === 'shop') return Meta.shop();
     if (node.type === 'event' && !(node.result && node.result.fight && !node.result.cards && !r.upgrades)) return Meta.event();
+    // 스토리(13단계): 중간 보스·마지막 전투 직전 장면(처음 한 번)
+    var kind = node.type === 'midboss' ? 'mid' : r.col === r.map.length - 1 ? 'boss' : null;
+    var sc = kind && St.sceneFor(kind, r.stage);
+    if (sc) return Meta.scene(sc, Meta.continueRun);
     var opts = St.battleOptions();
     var defs = opts.deck.map(function (id) { return D.cardById[id]; });
     starting = true;
@@ -265,8 +269,13 @@
 
   function onBattleEnd(result, battle) {
     if (result === 'win') {
+      var cur = St.node(), stage = St.data.run.stage;
       var res = St.battleWon(battle);
-      var next = function () { if (res.ending) Meta.clear(res.clear); else Meta.reward(); };
+      var next = function () {
+        if (res.ending) return Meta.clear(res.clear);
+        var sc = cur && cur.type === 'midboss' && St.sceneFor('midout', stage);
+        if (sc) Meta.scene(sc, Meta.reward); else Meta.reward();
+      };
       return Meta.traits(next);
     }
     St.battleLost(battle);
@@ -648,7 +657,11 @@
     el.querySelector('.back').onclick = function () { Meta.map(); };
     el.querySelector('.go').onclick = function () {
       confirmBox((lv ? '승천 ' + lv : '기본') + ' 원정을 시작할까요? 스테이지 진행이 처음부터 시작된다.', '원정 시작', function () {
-        if (St.newExpedition(lv)) { UI.wipe(); Meta.map(1); }
+        if (St.newExpedition(lv)) {
+          UI.wipe();
+          var sc = lv > 0 && St.sceneFor('ascend', 11);
+          if (sc) Meta.scene(sc, function () { Meta.map(1); }); else Meta.map(1);
+        }
       });
     };
     UI.show('camp');
@@ -656,6 +669,9 @@
 
   // ================= 스테이지 클리어 · 엔딩 =================
   Meta.clear = function (info) {
+    // 스토리(13단계): 처음 클리어하면 결말 장면부터
+    var sc = info.first && St.sceneFor('outro', info.stage);
+    if (sc) return Meta.scene(sc, function () { Meta.clear(info); });
     var el = screen('clear');
     var join = '';
     if (info.joined) {
@@ -675,12 +691,13 @@
   };
 
   Meta.ending = function () {
+    var ep = St.sceneFor('epilogue', 11);
+    if (ep) return Meta.scene(ep, Meta.ending);
     var el = screen('ending');
     el.innerHTML = '<div class="title-bg"></div><div class="title-shade"></div>' +
       '<div class="title-wrap"><div class="logo-sub">THE END</div><h1 class="logo">원정 완료</h1><div class="logo-line"></div><div class="lineup"></div>' +
-      '<div class="story frame gold"><p>마왕 아스타로트가 쓰러지자 마왕성을 덮고 있던 어둠이 걷혔다.</p>' +
-      '<p>카이는 되찾은 고향의 언덕에 섰고, 브리아는 다시 숲으로, 리라는 새로운 유적으로, 세라는 수도원으로, 녹스는 어딘가로 길을 떠났다.</p>' +
-      '<p>다섯 영웅의 원정은 이렇게 끝났다.</p>' + (St.ascLevel() ? '<p class="asc-done">승천 ' + St.ascLevel() + ' 원정 완료!</p>' : '') +
+      '<div class="story frame gold"><p>다섯 땅 위로 아침이 밝았다. 다섯 영웅의 원정은 이렇게 끝났다.</p>' +
+      '<p class="dim">로비의 \'스토리\'에서 지나온 장면을 다시 볼 수 있다.</p>' + (St.ascLevel() ? '<p class="asc-done">승천 ' + St.ascLevel() + ' 원정 완료!</p>' : '') +
       '<p class="dim">플레이해 주셔서 감사합니다. 카드·유물·성장을 그대로 가지고 더 어려운 <b>승천</b> 원정을 떠날 수 있다.</p></div>' +
       '<div class="menu"><button class="btn gold big asc">새 원정 (승천)</button><button class="btn big ok">로비로</button></div></div>';
     G.Art.scene('forest').then(function (u) { if (u) el.querySelector('.title-bg').style.backgroundImage = 'url(' + u + ')'; });

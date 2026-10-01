@@ -48,7 +48,7 @@
     var n = focusStage(), def = St.stageDef(n), r = d.run, asc = St.ascLevel();
     var allCards = D.cards.filter(function (c) { return c.owner !== 'none'; });
     var owned = allCards.filter(function (c) { return d.cards.indexOf(c.id) >= 0; }).length;
-    var pct = Math.round(d.clearedStage / D.stages.length * 100);
+    var sp = St.storyProgress();
     var deckN = St.battleDeck(d.party).length;
     var canParty = !r || (r.col === 0 && !r.pending);
     var hc = charDef(heroPick);
@@ -79,8 +79,8 @@
         tile('heroes', 't-wide', '동료', 'HEROES', '<div class="ti"><span>합류 ' + heroes.length + '/' + D.characters.length + ' · 최고 Lv ' + maxLevel() + '</span></div>') +
         tile('party', 't-small', '편성', 'SQUAD', '<div class="ti"><span>' + d.party.map(function (id) { return charDef(id).name; }).join(' · ') + '</span></div>' + UI.icon('party', 'ticon'), !canParty) +
         tile('deck', 't-small', '덱', 'DECK', '<span class="badge">' + deckN + '</span><div class="ti"><span>전투 덱 ' + deckN + '장</span></div>' + UI.icon('deck', 'ticon')) +
-        tile('story', 't-wide', '스토리', 'STORY', '<div class="ti"><span>' + (d.clearedStage >= D.stages.length ? '모든 장을 보았다' : '제 ' + n + '장 · ' + D.STAGE_NAME[n - 1]) + '</span>' +
-          '<div class="bar"><i style="width:calc(' + pct + '% - 4px)"></i></div></div><span class="pct ti-pct">' + pct + '<small>%</small></span>', !Meta.story) +
+        tile('story', 't-wide', '스토리', 'STORY', '<div class="ti"><span>' + (sp.seen >= sp.total ? '모든 장면을 보았다' : '제' + n + '장 · ' + D.STAGE_NAME[n - 1] + ' · 본 장면 ' + sp.seen + '/' + sp.total) + '</span>' +
+          '<div class="bar"><i style="width:calc(' + sp.pct + '% - 4px)"></i></div></div><span class="pct">' + sp.pct + '<small>%</small></span>', !Meta.story) +
       '</section>' +
       '<div class="lb-banner"><div class="bn"></div><div class="lb-dots"></div></div>' +
       '<nav class="lb-bottom">' +

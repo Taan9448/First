@@ -94,6 +94,17 @@
       d.codex = d.codex || { monsters: {} };
       d.codex.monsters = d.codex.monsters || {};
       d.flags = d.flags || {};
+      // 스토리(13단계): 예전 저장은 이미 지나온 장(클리어한 스테이지까지)과 프롤로그를 본 것으로 친다
+      var byId = G.Data.storyById || {};
+      if (!d.story || !Array.isArray(d.story.seen)) {
+        var seen = ['prologue'];
+        (G.Data.story || []).forEach(function (ch) {
+          if (ch.n >= 1 && ch.n <= (d.clearedStage | 0)) ch.scenes.forEach(function (sc) { seen.push(sc.id); });
+        });
+        if (d.flags.ended) seen.push('epilogue');
+        d.story = { seen: seen };
+      }
+      d.story.seen = d.story.seen.filter(function (id, i, a) { return byId[id] && a.indexOf(id) === i; });
       d.gold = Math.max(0, d.gold | 0);
       d.clearedStage = d.clearedStage | 0;
       return d;

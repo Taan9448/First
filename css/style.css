@@ -941,6 +941,58 @@ span.gold.bump { animation: popIn 0.4s steps(4); }
 .asc-rules li b { display: inline-block; width: 26px; color: var(--violet); font-family: var(--font-title); }
 .asc-rules li.new { color: var(--gold2); animation: fadeUp 0.4s var(--ease); }
 
+/* ================= 스토리(13단계) ================= */
+#screen-story { overflow: hidden; flex-direction: column; }
+.st-bg { position: absolute; inset: -2%; background-size: cover; background-position: center bottom; image-rendering: pixelated; filter: saturate(0.8) brightness(0.7); animation: kenburns 30s ease-in-out infinite alternate; }
+.st-shade { position: absolute; inset: 0; pointer-events: none; background: var(--scan), linear-gradient(180deg, rgba(5, 9, 19, 0.4), transparent 30%, transparent 55%, rgba(5, 9, 19, 0.92)); }
+#screen-story.narrating .st-shade { background: var(--scan), rgba(5, 9, 19, 0.55); }
+.st-bar { position: absolute; left: 0; right: 0; height: 46px; background: #050913; z-index: 2; animation: barIn 0.5s steps(5); }
+.st-bar.top { top: 0; box-shadow: 0 2px 0 rgba(94, 230, 255, 0.35); }
+.st-bar.bot { bottom: 0; box-shadow: 0 -2px 0 rgba(94, 230, 255, 0.35); }
+@keyframes barIn { from { height: 0; } }
+.st-head { position: absolute; left: 22px; top: 6px; z-index: 3; display: flex; flex-direction: column; line-height: 1.15; padding-left: 10px; box-shadow: inset 3px 0 0 var(--cyan); }
+.st-head small { font-size: 0.7em; letter-spacing: 3px; color: var(--cyan); }
+.st-head b { font-family: var(--font-title); color: #fff; font-size: 1.05em; }
+.st-ctrl { position: absolute; right: 18px; top: 6px; z-index: 4; display: flex; gap: 8px; }
+.st-left, .st-right { position: absolute; bottom: 196px; z-index: 2; display: flex; align-items: flex-end; justify-content: center; width: 40%; transition: filter 0.2s steps(2), transform 0.2s steps(2);
+  filter: brightness(0.4) saturate(0.6); transform: translateY(8px); }
+.st-left { left: 4%; }
+.st-right { right: 4%; }
+.st-left.speak, .st-right.speak { filter: drop-shadow(6px 6px 0 rgba(0, 0, 0, 0.35)); transform: none; }
+.st-left.in .sprite { animation: idle 1.2s steps(8) infinite, heroIn 0.35s steps(4); }
+.st-box { position: absolute; left: 50%; bottom: 60px; transform: translateX(-50%); width: min(880px, 92%); min-height: 124px; z-index: 5; padding: 22px 26px 18px; cursor: pointer; }
+.st-name { position: absolute; left: 18px; top: -16px; padding: 3px 16px 3px 12px; font-family: var(--font-title); font-size: 1.1em; color: #04202e;
+  background: var(--nc, var(--cyan)); clip-path: polygon(0 0, 100% 0, calc(100% - 8px) 100%, 0 100%); }
+.st-text { margin: 4px 0 0; font-size: 1.18em; line-height: 1.75; min-height: 3.5em; text-shadow: 2px 2px 0 #050913; }
+.st-box.narr .st-text { color: #cfe0ff; text-align: center; }
+.st-more { position: absolute; right: 20px; bottom: 14px; width: 10px; height: 8px; background: var(--cyan); clip-path: polygon(0 0, 100% 0, 50% 100%); opacity: 0; }
+.st-box.done .st-more { opacity: 1; animation: bob 0.8s steps(2) infinite; }
+.st-count { position: absolute; right: 40px; bottom: 10px; font-size: 0.75em; color: var(--dim); }
+.chapter-card { position: absolute; inset: 0; z-index: 800; display: flex; align-items: center; cursor: pointer; background: var(--scan), rgba(5, 9, 19, 0.55); animation: cutBg 1.7s var(--ease) forwards; }
+.cc-band { width: 100%; padding: 22px 0; display: flex; flex-direction: column; align-items: center; gap: 4px; background: var(--scan), linear-gradient(90deg, transparent, rgba(10, 30, 56, 0.96) 18%, rgba(10, 30, 56, 0.96) 82%, transparent);
+  box-shadow: 0 -2px 0 rgba(94, 230, 255, 0.6), 0 2px 0 rgba(94, 230, 255, 0.6); animation: ccIn 1.7s var(--ease) forwards; }
+.cc-band small { color: var(--cyan); letter-spacing: 6px; font-size: 0.85em; }
+.cc-band b { font-family: var(--font-title); font-size: 48px; color: #fff; text-shadow: 4px 4px 0 #1f7fa8, 8px 8px 0 #071a2a; letter-spacing: 4px; }
+.cc-band span { color: var(--dim); letter-spacing: 5px; font-size: 0.8em; }
+@keyframes ccIn { 0% { transform: scaleY(0.1); opacity: 0; letter-spacing: 20px; } 18% { transform: none; opacity: 1; } 82% { opacity: 1; } 100% { opacity: 0; transform: translateX(-30px); } }
+.story-list { padding-top: 10px; }
+.sc-prog { display: flex; align-items: center; gap: 14px; width: min(900px, 100%); }
+.sc-prog .bar { flex: 1; height: 12px; background: rgba(5, 9, 19, 0.85); clip-path: var(--pxs); position: relative; }
+.sc-prog .bar i { position: absolute; left: 2px; top: 2px; bottom: 2px; background: linear-gradient(180deg, #c8f8ff 0 2px, var(--cyan) 2px); }
+.sc-prog .pct { font-family: var(--font-title); font-size: 1.4em; color: #fff; }
+.sc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; width: min(1180px, 100%); }
+.sc-card { position: relative; isolation: isolate; min-height: 150px; padding: 14px 16px; display: flex; flex-direction: column; justify-content: space-between; gap: 10px;
+  filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.5)); }
+.sc-card::before { content: ''; position: absolute; inset: 0; z-index: -2; clip-path: var(--cut); background: var(--scan), linear-gradient(160deg, #2a4068, #111b31); box-shadow: inset 0 0 0 2px rgba(150, 190, 240, 0.35); }
+.sc-art { position: absolute; inset: 2px; z-index: -1; clip-path: var(--cut); background-size: cover; background-position: center; image-rendering: pixelated; opacity: 0.45; }
+.sc-art::after { content: ''; position: absolute; inset: 0; background: linear-gradient(100deg, rgba(10, 16, 31, 0.92) 20%, rgba(10, 16, 31, 0.35)); }
+.sc-card.locked .sc-art { opacity: 0.12; filter: grayscale(1); }
+.sc-head { display: flex; flex-direction: column; padding-left: 10px; box-shadow: inset 3px 0 0 var(--cyan); }
+.sc-head small { font-size: 0.7em; letter-spacing: 3px; color: var(--cyan); }
+.sc-head b { font-family: var(--font-title); font-size: 1.35em; color: #fff; text-shadow: 2px 2px 0 #050913; }
+.sc-card.locked .sc-head b { color: var(--dim); }
+.sc-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+
 /* ================= 테스트 메뉴(디버그) ================= */
 #screen-test { flex-direction: column; align-items: center; justify-content: flex-start; padding: 28px 16px; overflow: auto; gap: 18px; }
 #screen-test h1 { margin: 0; color: #fff; font-family: var(--font-title); font-size: 30px; }
