@@ -9,7 +9,7 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 global.window = global;
 ['js/core.js', 'data/keywords.js', 'data/characters.js', 'data/cards.js', 'data/monsters.js', 'data/stages.js', 'data/relics.js',
- 'data/upgrades.js', 'data/events.js', 'data/bonds.js', 'data/traits.js', 'js/status.js', 'js/deck.js', 'js/upgrade.js', 'js/battle.js', 'js/save.js', 'js/stage.js'].forEach(f => {
+ 'data/upgrades.js', 'data/events.js', 'data/bonds.js', 'data/traits.js', 'data/ascension.js', 'js/status.js', 'js/deck.js', 'js/upgrade.js', 'js/battle.js', 'js/save.js', 'js/stage.js'].forEach(f => {
   vm.runInThisContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), { filename: f });
 });
 const G = global.Game, St = G.Stage, D = G.Data;
@@ -174,7 +174,7 @@ function invariants(where) {
             break;
           }
           const p = St.data.run.pending;
-          check(p && p.cards.length + p.fill === 3, '보상 후보 3자리');
+          check(p && p.cards.length + p.fill === St.rewardCount(), '보상 후보 자리 수');
           p.cards.forEach(id => check(!St.owns(id), '보상에 이미 가진 카드 ' + id));
           if (p.kind === 'boss') p.cards.forEach(id => check(['rare', 'epic', 'legendary'].includes(D.cardById[id].rarity), '보스 보상은 희귀 이상 (' + id + ')'));
           if (p.kind === 'elite') p.cards.forEach(id => check(D.cardById[id].rarity !== 'common', '정예 보상은 고급 이상 (' + id + ')'));
@@ -220,6 +220,48 @@ function invariants(where) {
   if (N >= 3) {
     check(eventsSeen.size === 15, '이벤트 15종 모두 등장 (' + eventsSeen.size + ')');
     ['battle', 'elite', 'event', 'rest', 'shop', 'boss', 'midboss', 'final'].forEach(t => check(typesSeen.has(t), '노드 종류 등장: ' + t));
+  }
+
+  // 승천: 엔딩 뒤 새 원정. 스테이지 진행만 초기화되고 나머지는 그대로
+  {
+    const d = St.data;
+    check(d.flags.ended && St.maxAscension() === 1, '엔딩 뒤 승천 1 열림');
+    check(!St.newExpedition(2), '아직 열리지 않은 단계는 시작할 수 없음');
+    const keep = JSON.stringify([d.cards, d.relics, d.gold, d.characters, d.growth, d.upgraded, d.codex]);
+    check(St.newExpedition(1), '승천 1 원정 시작');
+    check(d.clearedStage === 0 && !d.run && !d.flags.ended && d.ascension.current === 1, '스테이지 진행만 처음부터');
+    check(JSON.stringify([d.cards, d.relics, d.gold, d.characters, d.growth, d.upgraded, d.codex]) === keep, '카드·유물·골드·동료·성장·강화·도감 유지');
+    const m = St.ascMods(10);
+    check(m.restPct === 0.25 && m.downedPct === 0.1 && m.rewardCards === 2 && m.affixMult === 2 && m.doomMult === 2 && m.triggerStr === 2, '승천 10 규칙 누적');
+    check(St.enemyMods(1).hpMult > St.enemyMods(1).dmgMult && St.enemyMods(10).hpMult > St.enemyMods(1).hpMult, '승천 적 보정은 스테이지가 오를수록 큼');
+    // 승천 1 원정을 빠르게(전투는 즉시 승리) 끝까지
+    for (let n = 1; n <= 10; n++) {
+      St.startStage(n);
+      let guard = 0, end = null;
+      while (!end && guard++ < 60) {
+        if (!St.node()) { St.choose(0); continue; }
+        const node = St.node();
+        if (node.type === 'rest') { const t = St.pendingTalk(); if (t) St.finishTalk(t.key); end = St.rest(); continue; }
+        if (node.type === 'shop') { St.openShop(); end = St.leaveShop(); continue; }
+        if (node.type === 'event' && !(node.result && node.result.fight)) {
+          const ev = St.eventDef(); const res = St.eventChoose(ev.choices.findIndex(c => St.canChoose(c)));
+          if (res.cards) St.eventTakeCard(null);
+          St.skipUpgrade();
+          if (!res.fight) end = St.eventFinish();
+          continue;
+        }
+        const b = G.Battle.create(St.battleOptions());
+        await b.start(); await b.debugKillAll();
+        const res = St.battleWon(b);
+        while (St.pendingTrait()) St.chooseTrait(St.pendingTrait().id, 0);
+        if (res.ending) { end = res.clear; break; }
+        check(St.data.run.pending.cards.length + St.data.run.pending.fill === St.rewardCount(), '승천 보상 후보 수');
+        end = St.takeReward(null);
+      }
+      check(end && end.stage === n, '승천 1 · ' + n + ' 스테이지 클리어');
+    }
+    check(d.flags.ended && d.ascension.best === 1 && St.maxAscension() === 2, '승천 1 클리어 → 최고 기록 1, 승천 2 열림');
+    invariants('승천 1 뒤');
   }
 
   // 성장·친밀도·합동기

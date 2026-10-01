@@ -8,7 +8,7 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 global.window = global;
 ['js/core.js', 'data/keywords.js', 'data/characters.js', 'data/cards.js', 'data/monsters.js', 'data/relics.js',
- 'data/upgrades.js', 'data/events.js', 'data/bonds.js', 'data/traits.js', 'js/status.js', 'js/deck.js', 'js/upgrade.js', 'js/battle.js', 'js/effects.js'].forEach(f => {
+ 'data/upgrades.js', 'data/events.js', 'data/bonds.js', 'data/traits.js', 'data/ascension.js', 'js/status.js', 'js/deck.js', 'js/upgrade.js', 'js/battle.js', 'js/effects.js'].forEach(f => {
   vm.runInThisContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), { filename: f });
 });
 const G = global.Game;
@@ -440,6 +440,23 @@ function handCard(b, id) {
   b = await newBattle(['lyra'], ['treant'], ['C01'], { party: [{ id: 'lyra', traits: [{ statusAdd: { burn: 1 } }] }] });
   b.energy = 3; await b.play(handCard(b, 'L01'), b.monsters[0]);
   check(b.monsters[0].status.burn === 3, '특성: 리라가 거는 화상 +1');
+
+  // ---------------------------------------------------------------- 10단계: 적 강화 보정(난이도·승천)
+  check(G.Data.ascension.length === 10 && G.Data.ascension.every((x, i) => x.n === i + 1 && x.desc), '승천 10단계');
+  b = await newBattle(['kai'], ['slime', 'treant'], ['C01'], { enemy: { hpMult: 0.5, bossHpMult: 0.5 } });
+  check(b.monsters[0].maxHp === 27 && b.monsters[1].maxHp === Math.round(G.Data.monsterById.treant.hp * 2), '적 체력 보정(일반 ×1.5, 보스 ×2)');
+  b = await newBattle(['kai'], ['slime'], ['C01'], { enemy: { dmgMult: 0.5 } });
+  b.monsters[0].intent = 'slam'; b.monsters[0].intentTarget = b.heroes[0];
+  check(b.intentInfo(b.monsters[0]).dmg === Math.floor(5 * 1.5), '적 공격 보정이 행동 예고에도 반영 (' + b.intentInfo(b.monsters[0]).dmg + ')');
+  hp0 = b.heroes[0].hp;
+  await b.endTurn();
+  check(hp0 - b.heroes[0].hp === 7, '적 공격 피해 ×1.5 = 7 (실제 ' + (hp0 - b.heroes[0].hp) + ')');
+  b = await newBattle(['kai'], ['astaroth'], ['C01'], { enemy: { doomMult: 2 } });
+  b.monsters[0].intent = 'doom'; b.monsters[0].intentTarget = b.heroes[0];
+  check(b.intentInfo(b.monsters[0]).dmg === 60, '종말 피해 2배 = 60');
+  b = await newBattle(['kai'], ['baltar'], ['C01'], { enemy: { triggerStr: 2 } });
+  await b.loseHp(b.monsters[0], Math.ceil(b.monsters[0].maxHp * 0.6));
+  check(b.monsters[0].status.strength === 2, '광폭화: 체력 조건 발동 때 힘 +2');
 
   b = await newBattle(['kai'], ['slime', 'slime'], ['C01'], { affixes: ['giant', 'angry'] });
   check(b.monsters[0].maxHp === 27 && b.monsters[0].name === '거대한 슬라임', '거대한: 체력 1.5배·이름');

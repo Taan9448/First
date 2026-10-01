@@ -81,7 +81,9 @@
   Meta.map = function (sel) {
     var d = St.data, r = d.run, el = screen('map');
     mapSel = sel || (r ? r.stage : mapSel) || Math.min(D.stages.length, d.clearedStage + 1);
-    el.innerHTML = topbar('원정 지도', '<button class="btn small to-title">타이틀</button>') +
+    var asc = St.ascLevel();
+    el.innerHTML = topbar('원정 지도' + (asc ? ' <span class="asc-chip">승천 ' + asc + '</span>' : ''),
+      (d.flags.ended ? '<button class="btn small cyan ascend">새 원정</button>' : '') + '<button class="btn small ghost to-title">타이틀</button>') +
       '<div class="map-layout"><div class="map-frame"><div class="map-canvas"></div></div><aside class="map-side frame"></aside></div>' +
       '<div class="map-bottom"><div class="party-row"></div><div class="relic-bar"></div></div>';
     var canvas = el.querySelector('.map-canvas');
@@ -138,6 +140,7 @@
     fillSprites(el.querySelector('.party-row'), 0.6);
     el.querySelector('.map-bottom .relic-bar').innerHTML = UI.relicBar(d.relics);
     el.querySelector('.to-title').onclick = function () { Meta.title(); };
+    if (el.querySelector('.ascend')) el.querySelector('.ascend').onclick = function () { Meta.ascend(); };
     UI.show('map');
     fitMap();
     if (!resizeBound) { resizeBound = true; window.addEventListener('resize', fitMap); }
@@ -605,6 +608,46 @@
     UI.show('camp');
   };
 
+  // ================= 새 원정 · 승천(10단계) =================
+  var ascSel = null;
+  Meta.ascend = function () {
+    var d = St.data, el = screen('camp'), max = St.maxAscension();
+    if (ascSel == null || ascSel > max) ascSel = max;
+    var lv = ascSel, em = St.enemyMods.bind(St);
+    // 고른 단계로 바꿔 계산해 본다(1 스테이지와 10 스테이지 적 보정)
+    var cur = d.ascension.current;
+    d.ascension.current = lv;
+    var e1 = em(1), e10 = em(10);
+    d.ascension.current = cur;
+    var levels = '';
+    for (var i = 0; i <= D.ascension.length; i++) {
+      var locked = i > max;
+      levels += '<button class="asc-lv' + (i === lv ? ' on' : '') + (locked ? ' locked' : '') + (i <= (d.ascension.best || 0) && i > 0 ? ' done' : '') + '" data-lv="' + i + '" ' + (locked ? 'disabled' : '') + '>' + (i || '기본') + '</button>';
+    }
+    var rules = D.ascension.filter(function (a) { return a.n <= lv; }).map(function (a) {
+      return '<li class="' + (a.n === lv ? 'new' : '') + '"><b>' + a.n + '</b> ' + U.esc(a.name) + ' <span class="dim">— ' + U.esc(a.desc) + '</span></li>';
+    }).join('');
+    el.innerHTML = topbar('새 원정') + '<div class="meta-body">' +
+      '<h1 class="big-title">새 원정</h1>' +
+      '<p class="dim">카드·강화·유물·골드·동료·성장·친밀도·도감은 그대로, <b>스테이지 진행만</b> 처음부터 다시 시작한다.</p>' +
+      '<div class="asc-levels">' + levels + '</div>' +
+      '<div class="asc-panel frame"><h2>' + (lv ? '승천 ' + lv : '기본 원정') + '</h2>' +
+      (lv ? '<div class="asc-scale"><span>적 체력 <b>×' + (1 + e1.hpMult).toFixed(1) + '</b> ~ <b>×' + (1 + e10.hpMult).toFixed(1) + '</b></span>' +
+        '<span>적 공격 <b>×' + (1 + e1.dmgMult).toFixed(1) + '</b> ~ <b>×' + (1 + e10.dmgMult).toFixed(1) + '</b></span></div>' +
+        '<ul class="asc-rules">' + rules + '</ul>' : '<p class="dim">승천 규칙 없이 처음 원정과 같은 난이도로 떠난다.</p>') +
+      '<p class="dim">최고 기록: ' + (d.ascension.best ? '승천 ' + d.ascension.best : '기본 원정') + ' · 그 단계를 깨면 다음 단계가 열린다</p></div>' +
+      '<div class="row"><button class="btn ghost back">돌아가기</button><button class="btn gold big go">원정 시작</button></div></div>';
+    backdrop(el, 'castle');
+    UI.$$('.asc-lv:not(.locked)', el).forEach(function (b) { b.onclick = function () { ascSel = +b.getAttribute('data-lv'); Meta.ascend(); }; });
+    el.querySelector('.back').onclick = function () { Meta.map(); };
+    el.querySelector('.go').onclick = function () {
+      confirmBox((lv ? '승천 ' + lv : '기본') + ' 원정을 시작할까요? 스테이지 진행이 처음부터 시작된다.', '원정 시작', function () {
+        if (St.newExpedition(lv)) { UI.wipe(); Meta.map(1); }
+      });
+    };
+    UI.show('camp');
+  };
+
   // ================= 스테이지 클리어 · 엔딩 =================
   Meta.clear = function (info) {
     var el = screen('clear');
@@ -631,12 +674,14 @@
       '<div class="title-wrap"><div class="logo-sub">THE END</div><h1 class="logo">원정 완료</h1><div class="logo-line"></div><div class="lineup"></div>' +
       '<div class="story frame gold"><p>마왕 아스타로트가 쓰러지자 마왕성을 덮고 있던 어둠이 걷혔다.</p>' +
       '<p>카이는 되찾은 고향의 언덕에 섰고, 브리아는 다시 숲으로, 리라는 새로운 유적으로, 세라는 수도원으로, 녹스는 어딘가로 길을 떠났다.</p>' +
-      '<p>다섯 영웅의 원정은 이렇게 끝났다.</p><p class="dim">플레이해 주셔서 감사합니다. 클리어한 스테이지는 맵에서 다시 도전할 수 있다.</p></div>' +
-      '<div class="menu"><button class="btn gold big ok">맵으로</button></div></div>';
+      '<p>다섯 영웅의 원정은 이렇게 끝났다.</p>' + (St.ascLevel() ? '<p class="asc-done">승천 ' + St.ascLevel() + ' 원정 완료!</p>' : '') +
+      '<p class="dim">플레이해 주셔서 감사합니다. 카드·유물·성장을 그대로 가지고 더 어려운 <b>승천</b> 원정을 떠날 수 있다.</p></div>' +
+      '<div class="menu"><button class="btn gold big asc">새 원정 (승천)</button><button class="btn big ok">맵으로</button></div></div>';
     G.Art.scene('forest').then(function (u) { if (u) el.querySelector('.title-bg').style.backgroundImage = 'url(' + u + ')'; });
     var line = el.querySelector('.lineup');
     D.characters.forEach(function (c) { var w = UI.el('div', 'slot'); w.appendChild(UI.spriteEl(c.id, 1.1)); line.appendChild(w); });
     el.querySelector('.ok').onclick = function () { Meta.map(); };
+    el.querySelector('.asc').onclick = function () { Meta.ascend(); };
     UI.show('ending');
   };
 })();

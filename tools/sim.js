@@ -1,6 +1,6 @@
 // tools/sim.js — 밸런스 시뮬레이터 (개발 전용, 게임에서 로드하지 않음)
 // 간단한 판단 규칙 AI가 캠페인 전체를 반복 플레이하고 스테이지별 시도 횟수와 실패 지점을 보고한다.
-// 실행: node tools/sim.js [캠페인 횟수=12] [시드=1]
+// 실행: node tools/sim.js [캠페인 횟수=12] [시드=1] [승천 최고 단계=0] (승천은 기본 원정 뒤 1단계부터 차례로, 진행 상태를 이어서)
 //
 // AI 규칙
 //  - 카드 점수 = 예상 피해(처치 보너스) + 막아야 할 만큼의 보호막 + 잃은 체력만큼의 회복 + 드로우·에너지·상태 가치
@@ -17,7 +17,7 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 global.window = global;
 ['js/core.js', 'data/keywords.js', 'data/characters.js', 'data/cards.js', 'data/monsters.js', 'data/stages.js', 'data/relics.js',
- 'data/upgrades.js', 'data/events.js', 'data/bonds.js', 'data/traits.js', 'js/status.js', 'js/deck.js', 'js/upgrade.js', 'js/battle.js', 'js/save.js', 'js/stage.js'].forEach(f => {
+ 'data/upgrades.js', 'data/events.js', 'data/bonds.js', 'data/traits.js', 'data/ascension.js', 'js/status.js', 'js/deck.js', 'js/upgrade.js', 'js/battle.js', 'js/save.js', 'js/stage.js'].forEach(f => {
   vm.runInThisContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), { filename: f });
 });
 const G = global.Game, St = G.Stage, D = G.Data, S = G.Status;
@@ -175,10 +175,8 @@ function useUpgrades() {
   }
 }
 
-async function campaign(seed, order) {
-  G.rng.seed(seed);
-  G.Save.clear();
-  St.newGame();
+// 한 원정(스테이지 1~10). 진행 상태는 이어진다
+async function expedition(order) {
   const out = [];
   for (let n = 1; n <= 10; n++) {
     const rec = { stage: n, tries: 0, lostAt: [], turns: [], forced: false };
@@ -249,17 +247,31 @@ async function campaign(seed, order) {
   return out;
 }
 
+// 새 게임 → 기본 원정 → 승천 1~ascMax 를 차례로(카드·유물·성장은 이어짐). 반환: [단계별 기록]
+async function campaign(seed, order, ascMax) {
+  G.rng.seed(seed);
+  G.Save.clear();
+  St.newGame();
+  const runs = [await expedition(order)];
+  for (let lv = 1; lv <= ascMax; lv++) {
+    if (!St.newExpedition(lv)) throw new Error('새 원정 실패 ' + lv);
+    runs.push(await expedition(order));
+  }
+  return runs;
+}
+
 (async () => {
-  const N = +(process.argv[2] || 12), seed0 = +(process.argv[3] || 1);
-  const stats = [];
-  for (let n = 1; n <= 10; n++) stats.push({ attempts: 0, first: 0, within3: 0, forced: 0, lost: {}, turns: [], left: [], lostTurn: [] });
+  // node tools/sim.js [캠페인 수] [시드] [승천 최고 단계]
+  const N = +(process.argv[2] || 12), seed0 = +(process.argv[3] || 1), ascMax = +(process.argv[4] || 0);
+  const mk = () => { const a = []; for (let n = 1; n <= 10; n++) a.push({ attempts: 0, first: 0, within3: 0, forced: 0, lost: {}, turns: [], left: [], lostTurn: [] }); return a; };
+  const byAsc = []; for (let lv = 0; lv <= ascMax; lv++) byAsc.push(mk());
   const byOrder = PARTY_ORDERS.map(() => ({ runs: 0, fails: 0 }));
   for (let i = 0; i < N; i++) {
     const oi = i % PARTY_ORDERS.length;
-    const res = await campaign(seed0 * 1000 + i, PARTY_ORDERS[oi]);
+    const runs = await campaign(seed0 * 1000 + i, PARTY_ORDERS[oi], ascMax);
     byOrder[oi].runs++;
-    res.forEach((r, k) => {
-      const s = stats[k];
+    runs.forEach((res, lv) => res.forEach((r, k) => {
+      const s = byAsc[lv][k];
       s.attempts += r.tries + 1;
       if (r.tries === 0) s.first++;
       if (r.tries <= 2) s.within3++;
@@ -269,18 +281,21 @@ async function campaign(seed, order) {
       s.left = s.left.concat(r.left || []);
       s.lostTurn = s.lostTurn.concat(r.lostTurn || []);
       byOrder[oi].fails += r.tries;
-    });
+    }));
   }
   const pad = (v, w) => String(v).padStart(w);
-  console.log('캠페인 ' + N + '회 (AI 기준, 시드 ' + seed0 + ')');
-  console.log('스테이지 | 평균 시도 | 첫 시도 클리어 | 3번 안에 | 강제 | 평균 턴 | 진 곳');
-  stats.forEach((s, k) => {
-    const lost = Object.keys(s.lost).map(t => t + ' ' + s.lost[t]).join(', ') || '-';
-    const turns = s.turns.length ? (s.turns.reduce((a, b) => a + b, 0) / s.turns.length).toFixed(1) : '-';
-    const left = s.left.length ? ' (질 때 적 체력 평균 ' + Math.round(s.left.reduce((a, b) => a + b, 0) / s.left.length * 100) + '%, ' +
-      (s.lostTurn.reduce((a, b) => a + b, 0) / s.lostTurn.length).toFixed(1) + '턴)' : '';
-    console.log(pad(k + 1, 6) + '   | ' + pad((s.attempts / N).toFixed(2), 8) + ' | ' + pad(Math.round(s.first / N * 100) + '%', 13) +
-      ' | ' + pad(Math.round(s.within3 / N * 100) + '%', 7) + ' | ' + pad(s.forced, 4) + ' | ' + pad(turns, 6) + ' | ' + lost + left);
+  console.log('캠페인 ' + N + '회 (AI 기준, 시드 ' + seed0 + (ascMax ? ', 승천 1~' + ascMax + ' 연속' : '') + ')');
+  byAsc.forEach((stats, lv) => {
+    console.log('\n' + (lv ? '승천 ' + lv : '기본 원정'));
+    console.log('스테이지 | 평균 시도 | 첫 시도 클리어 | 3번 안에 | 강제 | 평균 턴 | 진 곳');
+    stats.forEach((s, k) => {
+      const lost = Object.keys(s.lost).map(t => t + ' ' + s.lost[t]).join(', ') || '-';
+      const turns = s.turns.length ? (s.turns.reduce((a, b) => a + b, 0) / s.turns.length).toFixed(1) : '-';
+      const left = s.left.length ? ' (질 때 적 체력 평균 ' + Math.round(s.left.reduce((a, b) => a + b, 0) / s.left.length * 100) + '%, ' +
+        (s.lostTurn.reduce((a, b) => a + b, 0) / s.lostTurn.length).toFixed(1) + '턴)' : '';
+      console.log(pad(k + 1, 6) + '   | ' + pad((s.attempts / N).toFixed(2), 8) + ' | ' + pad(Math.round(s.first / N * 100) + '%', 13) +
+        ' | ' + pad(Math.round(s.within3 / N * 100) + '%', 7) + ' | ' + pad(s.forced, 4) + ' | ' + pad(turns, 6) + ' | ' + lost + left);
+    });
   });
   console.log('\n파티 선호 순서별 총 패배 수');
   byOrder.forEach((o, i) => console.log('  ' + PARTY_ORDERS[i].slice(0, 3).join('/') + ' 우선: 캠페인 ' + o.runs + '회, 패배 ' + o.fails));

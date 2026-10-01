@@ -57,6 +57,12 @@ Game.Data.THEME_COLOR = { forest: '#4fae4a', desert: '#e0a84a', snow: '#9fd6f2',
 Game.Data.THEME_NAME = { forest: '속삭이는 숲', desert: '타오르는 사막', snow: '얼어붙은 설원', volcano: '용암 화산', castle: '마왕성', mirror: '거울의 방' };
 Game.Data.NODE_NAME = { battle: '전투', elite: '정예', event: '이벤트', rest: '휴식', shop: '상점', boss: '보스', midboss: '중간 보스', final: '최종 보스' };
 
+// 스테이지 난이도(10단계 재조정): 그 스테이지 적의 체력·공격 피해 배율. 승천 보정과 더해진다
+Game.Data.difficulty = {
+  hp: [1, 1.05, 1.15, 1.25, 1.4, 1.6, 1.8, 2.0, 2.2, 2.5],
+  dmg: [1, 1, 1.1, 1.15, 1.25, 1.35, 1.5, 1.6, 1.7, 1.8]
+};
+
 Game.Data.economy = {
   // 일반 전투 카드 등급 확률(%) — 스테이지 1–2, 3–4, 5–6, 7–8, 9–10
   rarity: [

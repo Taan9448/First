@@ -36,7 +36,8 @@
       block: 0, status: {}, dead: cur <= 0, crit: c.crit + (tm.critAdd || 0), tm: tm };
   }
 
-  function makeMonster(id, affix, stage) {
+  // em: 적 강화 보정(스테이지 난이도 + 승천). hpMult · bossHpMult · finalHpMult
+  function makeMonster(id, affix, stage, em) {
     var d = G.Data.monsterById[id];
     if (!d) throw new Error('알 수 없는 몬스터: ' + id);
     var m = { uid: uidSeq++, side: 'enemy', id: id, name: d.name, def: d, maxHp: d.hp, hp: d.hp, block: 0, size: d.size,
@@ -48,6 +49,10 @@
       m.maxHp = m.hp = Math.round(d.hp * (sc.hpBase + sc.hpPer * stage));
       var str = Math.max(0, Math.floor((stage - sc.strFrom) * sc.strPer));
       if (str) m.status.strength = (m.status.strength || 0) + str;
+    }
+    if (em) {
+      var k = 1 + (em.hpMult || 0) + (d.rank !== 'normal' ? em.bossHpMult || 0 : 0) + (d.rank === 'final' ? em.finalHpMult || 0 : 0);
+      if (k !== 1) m.maxHp = m.hp = Math.max(1, Math.round(m.maxHp * k));
     }
     var a = affix && G.Data.affixes[affix];
     if (a) {
@@ -84,7 +89,9 @@
     this.opts = opts;
     this.heroes = opts.party.map(function (p) { return makeHero(p.id, p.hp, p.traits); });
     var affixes = opts.affixes || [];
-    this.monsters = opts.monsters.map(function (id, i) { return makeMonster(id, affixes[i], opts.stage); });
+    this.em = opts.enemy || {};   // 적 강화 보정(스테이지 난이도 + 승천)
+    var em = this.em;
+    this.monsters = opts.monsters.map(function (id, i) { return makeMonster(id, affixes[i], opts.stage, em); });
     this.startEffects = opts.startEffects || [];  // 이벤트가 남긴 전투 시작 효과 [{ name, effects }]
     this.relics = (opts.relics || []).map(function (id) { return G.Data.relicById[id]; }).filter(Boolean);
     this.mods = mergeMods(this.relics);
@@ -779,6 +786,7 @@
     if (src) d += S.get(src, 'strength') + S.get(src, 'tempStr');
     if (src && S.has(src, 'weak')) d *= 0.75;
     if (S.has(tgt, 'vulnerable')) d *= 1.5;
+    if (src && src.side === 'enemy') d *= (1 + (this.em.dmgMult || 0)) * (ctx.dmgMult || 1);
     var crit = false;
     if (ctx.isCard && tgt.side === 'enemy') {
       if (cardAttack && ctx.pair && ctx.pair.forceCrit && !ctx.pair._critUsed) { crit = true; ctx.pair._critUsed = true; }
@@ -1052,6 +1060,7 @@
         case 'damage':
           var d = self.num(e.value, {}, null) + S.get(m, 'strength');
           if (S.has(m, 'weak')) d *= 0.75;
+          d *= (1 + (self.em.dmgMult || 0)) * (m.intent === 'doom' && self.em.doomMult ? self.em.doomMult : 1);
           if (!allT && m.intentTarget && S.has(m.intentTarget, 'vulnerable')) d *= 1.5;
           info.dmg = Math.floor(d);
           info.times = self.num(e.times || 1, {}, null);
@@ -1090,7 +1099,9 @@
     if (m.intentTarget && m.intentTarget.dead && needsSingleTarget(move)) m.intentTarget = this.pickHeroTarget();
     this.emit('monster:act', { unit: m, move: move, info: this.intentInfo(m) });
     await G.wait(T.act);
-    await this.run(move.effects, this.monsterCtx(m));
+    var mctx = this.monsterCtx(m);
+    if (m.intent === 'doom' && this.em.doomMult) mctx.dmgMult = this.em.doomMult;
+    await this.run(move.effects, mctx);
     if (move.requiresCharge) delete m.status.charge;
     advance();
   };
@@ -1116,6 +1127,7 @@
       this.emit('fx:text', { unit: m, text: t.name, kind: 'bad' });
       await G.wait(T.act);
       if (t.effects) await this.run(t.effects, this.monsterCtx(m));
+      if (this.em.triggerStr && m.def.rank !== 'normal') S.add(this, m, 'strength', this.em.triggerStr, m);
       if (t.pattern) { m.pattern = t.pattern.slice(); m.pIndex = 0; this.predict(m); }
       if (t.everyTurn) m.everyTurn = m.everyTurn.concat(t.everyTurn);
       this.update();
@@ -1127,7 +1139,7 @@
       if (by) this.addBlock(by, 8);
       return;
     }
-    var m = makeMonster(id);
+    var m = makeMonster(id, null, this.opts.stage, this.em);
     this.monsters.push(m);
     this.predict(m);
     this.emit('monster:summon', { unit: m, by: by });

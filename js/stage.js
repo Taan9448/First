@@ -38,6 +38,53 @@
       return d;
     },
 
+    // ================= 승천(10단계) =================
+    ascLevel: function () { var a = St.data && St.data.ascension; return a ? a.current || 0 : 0; },
+    // 1단계부터 lv 단계까지의 규칙을 합친다: 비율은 더하고, 배율은 곱하고, 나머지는 높은 단계 값
+    ascMods: function (lv) {
+      if (lv == null) lv = St.ascLevel();
+      var m = { hpMult: 0, bossHpMult: 0, finalHpMult: 0, dmgMult: 0, triggerStr: 0, affixMult: 1, shopPriceMult: 1, goldMult: 1, doomMult: 1 };
+      var ADD = { hpMult: 1, bossHpMult: 1, finalHpMult: 1, dmgMult: 1, triggerStr: 1 }, MUL = { affixMult: 1, shopPriceMult: 1, goldMult: 1, doomMult: 1 };
+      var per = D.ascensionScale || {};
+      m.hpMult += (per.hpMult || 0) * lv;
+      m.dmgMult += (per.dmgMult || 0) * lv;
+      (D.ascension || []).forEach(function (a) {
+        if (a.n > lv) return;
+        Object.keys(a.mods).forEach(function (k) {
+          var v = a.mods[k];
+          if (ADD[k]) m[k] += v; else if (MUL[k]) m[k] *= v; else m[k] = v;
+        });
+      });
+      return m;
+    },
+    // 전투에 넘길 적 강화 보정: 스테이지 난이도(data/stages.js 의 difficulty) + 승천
+    enemyMods: function (stage) {
+      var a = St.ascMods(), dif = D.difficulty || {}, curve = D.ascensionCurve;
+      var hp = dif.hp ? dif.hp[stage - 1] || 1 : 1, dmg = dif.dmg ? dif.dmg[stage - 1] || 1 : 1;
+      if (St.ascLevel() > 0 && curve) {
+        hp = curve.hp * (1 + curve.hpPerStage * (stage - 1));
+        dmg = curve.dmg * (1 + curve.dmgPerStage * (stage - 1));
+      }
+      return { hpMult: a.hpMult + hp - 1, bossHpMult: a.bossHpMult, finalHpMult: a.finalHpMult, dmgMult: a.dmgMult + dmg - 1,
+        triggerStr: a.triggerStr, doomMult: a.doomMult };
+    },
+    maxAscension: function () { return Math.min((D.ascension || []).length, ((St.data.ascension || {}).best || 0) + 1); },
+    // 새 원정: 엔딩을 본 뒤 승천 단계를 골라 1 스테이지부터. 카드·강화·유물·골드·동료·성장·친밀도·도감은 그대로
+    newExpedition: function (level) {
+      var d = St.data;
+      if (!d.flags.ended || level < 0 || level > St.maxAscension()) return false;
+      d.ascension = d.ascension || { current: 0, best: 0 };
+      d.ascension.current = level;
+      d.clearedStage = 0;
+      d.run = null;
+      d.eventsSeen = [];
+      d.buffs = [];
+      d.flags.ended = false;
+      d.expeditions = (d.expeditions || 1) + 1;
+      St.save();
+      return true;
+    },
+
     // ================= 유물 =================
     mods: function () {
       return G.Battle.mergeMods((St.data.relics || []).map(function (id) { return D.relicById[id]; }).filter(Boolean));
@@ -231,7 +278,7 @@
       var fight = node.fight || node;
       // 적 변이: 일반 전투의 몬스터마다 확률로 접두어. 처음 들어갈 때 정해 저장한다(다시 해도 같음)
       if (!fight.affixes) {
-        var ac = D.affixChance, chance = ac.from + (ac.to - ac.from) * (r.stage - 1) / 9;
+        var ac = D.affixChance, chance = Math.min(0.9, (ac.from + (ac.to - ac.from) * (r.stage - 1) / 9) * St.ascMods().affixMult);
         var keys = Object.keys(D.affixes);
         fight.affixes = fight.monsters.map(function (id) {
           return node.type === 'battle' && D.monsterById[id].rank === 'normal' && G.rng.chance(chance) ? G.rng.pick(keys) : null;
@@ -249,7 +296,8 @@
       });
       var type = node.fight ? node.fight.kind : node.type;
       return {
-        title: '스테이지 ' + r.stage + ' · ' + D.NODE_NAME[type],
+        title: '스테이지 ' + r.stage + ' · ' + D.NODE_NAME[type] + (St.ascLevel() ? ' · 승천 ' + St.ascLevel() : ''),
+        enemy: St.enemyMods(r.stage),
         stage: r.stage, nodeType: type, theme: def.theme,
         party: party.map(function (id) { return { id: id, hp: Math.max(1, r.hp[id]), traits: St.traitMods(id) }; }),
         bonds: Object.assign({}, d.bonds),
@@ -271,7 +319,8 @@
     // 승리: 체력 반영, 처치 기록, 골드. 반환: { ending } 또는 { reward }
     battleWon: function (battle) {
       var d = St.data, r = d.run, node = St.node(), mods = St.mods();
-      var downed = Math.max(eco().downedPct, mods.downedPct || 0);
+      var asc = St.ascMods();
+      var downed = Math.max(asc.downedPct != null ? asc.downedPct : eco().downedPct, mods.downedPct || 0);
       var winHeal = (mods.winHeal || 0);
       battle.heroes.forEach(function (h) { winHeal += h.tm && h.tm.winHeal || 0; });
       battle.heroes.forEach(function (h) {
@@ -301,7 +350,7 @@
       r.pending = St.rollReward(kind);
       var p = r.pending;
       var mirrors = battle.kills.filter(function (id) { return D.monsterById[id].mirror; }).length;
-      p.gold = Math.round(p.gold * (mods.goldMult || 1)) + (battle.affixKills || 0) * 5 + mirrors * eco().mirrorGold;
+      p.gold = Math.round(p.gold * (mods.goldMult || 1) * asc.goldMult) + (battle.affixKills || 0) * 5 + mirrors * eco().mirrorGold;
       if (kind === 'elite') { p.relic = St.rollRelic('elite'); St.addRelic(p.relic); }
       if (kind === 'boss') p.relicChoice = St.rollRelicChoice(r.stage);
       d.gold += p.gold + p.fill * eco().fillGold;
@@ -359,10 +408,12 @@
       return out;
     },
 
+    rewardCount: function () { return St.ascMods().rewardCards || 3; },
     rollReward: function (kind) {
       var g = eco().gold[kind], stage = St.data.run.stage;
-      var cards = St.rollCards(3, kind, stage);
-      return { kind: kind, gold: G.rng.int(g[0], g[1]), cards: cards, fill: 3 - cards.length };
+      var count = St.rewardCount();
+      var cards = St.rollCards(count, kind, stage);
+      return { kind: kind, gold: G.rng.int(g[0], g[1]), cards: cards, fill: count - cards.length };
     },
 
     // 보상 선택(cardId) 또는 건너뛰기(null). 반환: 스테이지가 끝났으면 클리어 정보
@@ -392,9 +443,10 @@
     rest: function () {
       var r = St.data.run;
       if (St.mods().noRestHeal) return St.advance();
-      St.healAll(eco().restPct);
+      St.healAll(St.restPct());
       return St.advance();
     },
+    restPct: function () { var a = St.ascMods(); return a.restPct != null ? a.restPct : eco().restPct; },
     restUpgrade: function () {
       St.data.run.upgrades = 1;
       St.save();
@@ -417,7 +469,7 @@
     },
     price: function (id) {
       var base = D.relicById[id] ? D.relicEconomy.price[D.relicById[id].rarity] : eco().price[D.cardById[id].rarity];
-      return Math.round(base * (St.mods().shopPriceMult || 1));
+      return Math.round(base * (St.mods().shopPriceMult || 1) * St.ascMods().shopPriceMult);
     },
     buyRelic: function () {
       var d = St.data, s = d.run.shop;
@@ -710,9 +762,14 @@
         d.decks[def.join] = St.ownedOf(def.join);
         if (d.party.length < 3) d.party.push(def.join);
       }
+      var ending = n === D.stages.length;
+      if (ending) {
+        d.ascension = d.ascension || { current: 0, best: 0 };
+        d.ascension.best = Math.max(d.ascension.best || 0, d.ascension.current || 0);
+      }
       d.run = null;
       St.save();
-      return { stage: n, first: first, joined: joined, ending: n === D.stages.length };
+      return { stage: n, first: first, joined: joined, ending: ending, ascension: St.ascLevel() };
     },
 
     // ================= 디버그 =================
