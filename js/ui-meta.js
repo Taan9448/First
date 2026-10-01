@@ -4,7 +4,8 @@
   var G = Game, UI = G.UI, D = G.Data, St = G.Stage, U = G.util;
 
   var Meta = G.Meta = {};
-  var NODE_ICON = { battle: 'attack', elite: 'elite', boss: 'crown', midboss: 'crown', final: 'crown', rest: 'campfire' };
+  var NODE_ICON = { battle: 'attack', elite: 'elite', event: 'event', rest: 'campfire', shop: 'shop', boss: 'crown', midboss: 'crown', final: 'crown' };
+  function lastType(def) { return def.cols[def.cols.length - 1][0]; }
   var THEMES = ['forest', 'desert', 'snow', 'volcano', 'castle'];
 
   function charDef(id) { return D.characters.filter(function (c) { return c.id === id; })[0]; }
@@ -111,7 +112,7 @@
     D.stages.forEach(function (def) {
       var n = def.n, p = D.mapPos[n - 1];
       var cleared = n <= d.clearedStage, open = St.canEnter(n), cur = r && r.stage === n;
-      var last = def.nodes[def.nodes.length - 1];
+      var last = lastType(def);
       var big = last !== 'elite';
       var cls = cur ? 'current' : cleared ? 'cleared' : open ? 'open' : 'locked';
       var icon = cleared ? 'check' : open || cur ? NODE_ICON[last] : 'lock';
@@ -155,18 +156,24 @@
     canvas.classList.toggle('compact', cw < 760);
   }
 
-  function routeHTML(nodes, cur) {
-    return '<div class="route">' + nodes.map(function (n, i) {
-      var type = typeof n === 'string' ? n : n.type;
-      var cls = cur == null ? '' : i < cur ? 'done' : i === cur ? 'now' : '';
-      return '<div class="rnode ' + cls + '" data-tip="' + D.NODE_NAME[type] + '"><i class="ico" style="' + UI.iconStyle(cur != null && i < cur ? 'check' : NODE_ICON[type]) + '"></i></div>';
+  // 노드 트랙: 열마다 노드 1~2개를 세로로 쌓는다. r 이 있으면 지나온 길·고를 길을 표시한다
+  function routeHTML(cols, r) {
+    return '<div class="route">' + cols.map(function (col, ci) {
+      var chosen = r ? r.path[ci] : null;
+      return '<div class="rcol">' + col.map(function (nd, ni) {
+        var type = typeof nd === 'string' ? nd : nd.type, cls = 'rnode';
+        if (r && ci < r.col) cls += ni === chosen ? ' done' : ' skip';
+        else if (r && ci === r.col) cls += chosen == null ? ' pick' : ni === chosen ? ' now' : ' skip';
+        var icon = r && ci < r.col && ni === chosen ? 'check' : NODE_ICON[type];
+        return '<div class="' + cls + '" data-tip="' + D.NODE_NAME[type] + '"><i class="ico" style="' + UI.iconStyle(icon) + '"></i></div>';
+      }).join('') + '</div>';
     }).join('<div class="rlink"></div>') + '</div>';
   }
 
   function renderSide(side, n) {
     var d = St.data, r = d.run, def = St.stageDef(n);
     var cleared = n <= d.clearedStage, open = St.canEnter(n), cur = r && r.stage === n;
-    var last = def.nodes[def.nodes.length - 1];
+    var last = lastType(def);
     var bossId = def.boss, seen = cleared || !!d.codex.monsters[bossId];
     var tag = last === 'final' ? '최종 보스' : last === 'boss' ? '보스' : '정예';
     var tc = UI.shade(D.THEME_COLOR[def.theme], -0.55);
@@ -177,12 +184,20 @@
       '<div class="name">' + (seen ? D.monsterById[bossId].name : '???') + '</div></div>' +
       '<div class="info-line"><span>상태</span><span>' + state + '</span></div>' +
       '<div class="info-line"><span>보상</span><span>' + join + '</span></div>' +
-      '<div><span class="dim">경로</span>' + routeHTML(cur ? r.nodes : def.nodes, cur ? r.node : null) + '</div>';
+      '<div><span class="dim">경로</span>' + routeHTML(cur ? r.map : def.cols, cur ? r : null) + '</div>';
     if (cur) {
       var node = St.node();
-      var label = r.pending ? '보상 받기' : node.type === 'rest' ? '야영지로' : D.NODE_NAME[node.type] + ' 시작';
-      html += '<button class="btn gold go">' + label + '</button>' +
-        (r.node === 0 && !r.pending ? '<button class="btn party">파티 편성</button>' : '') +
+      if (!node && !r.pending) {
+        // 갈림길: 갈 길을 고른다
+        html += '<div class="fork"><span class="dim">갈림길 — 한 길만 갈 수 있다</span><div class="fork-btns">' + St.choices().map(function (nd, i) {
+          return '<button class="btn fork-btn" data-i="' + i + '"><i class="ico" style="' + UI.iconStyle(NODE_ICON[nd.type]) + '"></i>' + D.NODE_NAME[nd.type] + '</button>';
+        }).join('') + '</div></div>';
+      } else {
+        var label = r.pending ? '보상 받기' : r.upgrades ? '카드 강화하기' : node.type === 'rest' ? '휴식처로' : node.type === 'shop' ? '상점으로' :
+          node.type === 'event' ? (node.result && node.result.fight ? '전투 시작' : '이벤트 보기') : D.NODE_NAME[node.type] + ' 시작';
+        html += '<button class="btn gold go">' + label + '</button>';
+      }
+      html += (r.col === 0 && !r.pending ? '<button class="btn party">파티 편성</button>' : '') +
         '<button class="btn small danger quit">스테이지 포기</button>';
     } else if (r) {
       html += '<p class="dim">스테이지 ' + r.stage + '을(를) 진행 중이다.</p><button class="btn goto">진행 중인 스테이지 보기</button>';
@@ -196,6 +211,9 @@
     side.querySelector('.boss-sp').appendChild(sp);
     var go = side.querySelector('.go');
     if (go) go.onclick = function () { startOrContinue(n); };
+    UI.$$('.fork-btn', side).forEach(function (b) {
+      b.onclick = function () { if (St.choose(+b.getAttribute('data-i'))) Meta.continueRun(); };
+    });
     if (side.querySelector('.party')) side.querySelector('.party').onclick = function () { Meta.party(Meta.map, '확인', Meta.map); };
     if (side.querySelector('.quit')) side.querySelector('.quit').onclick = function () {
       confirmBox('스테이지를 포기할까요? (얻은 카드·골드·유물은 남는다)', '포기', function () { St.abandon(); Meta.map(); });
@@ -218,7 +236,10 @@
     if (!r) return Meta.map();
     if (r.pending) return Meta.reward();
     var node = St.node();
-    if (node.type === 'rest') return r.shop ? Meta.shop() : Meta.camp();
+    if (!node) return Meta.map();
+    if (node.type === 'rest') return r.upgrades ? Meta.upgrade() : Meta.rest();
+    if (node.type === 'shop') return Meta.shop();
+    if (node.type === 'event' && !(node.result && node.result.fight && !node.result.cards && !r.upgrades)) return Meta.event();
     var opts = St.battleOptions();
     var defs = opts.deck.map(function (id) { return D.cardById[id]; });
     starting = true;
@@ -335,38 +356,147 @@
     function finish(id) {
       if (St.data.run.pending && St.data.run.pending.relicChoice) St.takeRelic(null);
       var res = St.takeReward(id);
-      if (res) Meta.clear(res); else Meta.map();
+      nodeDone(res);
     }
     el.querySelector('.take').onclick = function () { if (chosen) finish(chosen); };
     el.querySelector('.skip').onclick = function () { finish(null); };
     UI.show('reward');
   };
 
-  // ================= 야영지 =================
-  Meta.camp = function () {
+  // 노드를 마치고 다음으로(스테이지가 끝났으면 클리어 화면)
+  function nodeDone(info) { if (info) Meta.clear(info); else Meta.map(); }
+
+  // ================= 휴식 =================
+  Meta.rest = function () {
     var d = St.data, el = screen('camp'), e = D.economy, mods = St.mods();
-    el.innerHTML = topbar('야영지') + '<div class="meta-body">' +
-      '<h1 class="big-title">야영지</h1><p class="dim">하나만 고를 수 있다.</p>' +
+    el.innerHTML = topbar('휴식') + '<div class="meta-body">' +
+      '<h1 class="big-title">모닥불</h1><p class="dim">하나만 고를 수 있다.</p>' +
       '<div class="row choices">' +
-      '<button class="choice rest" ' + (mods.noRestHeal ? 'disabled' : '') + '><i class="ico" style="' + UI.iconStyle('campfire') + '"></i><span>휴식</span><small>' +
+      '<button class="choice rest" ' + (mods.noRestHeal ? 'disabled' : '') + '><i class="ico" style="' + UI.iconStyle('campfire') + '"></i><span>회복</span><small>' +
       (mods.noRestHeal ? '마왕의 왕관: 휴식으로 회복할 수 없다' : '동료 전원 체력 ' + e.restPct * 100 + '% 회복') + '</small></button>' +
-      '<button class="choice shop"><i class="ico" style="' + UI.iconStyle('gold') + '"></i><span>상점</span><small>카드·유물 구매 · 치료 · 진열 새로고침</small></button>' +
+      '<button class="choice up" ' + (St.upgradable().length ? '' : 'disabled') + '><i class="ico" style="' + UI.iconStyle('anvil') + '"></i><span>강화</span><small>' +
+      (St.upgradable().length ? '보유 카드 1장 강화' : '강화할 카드가 없다') + '</small></button>' +
       '</div><div class="frame panel-box"><div class="party-row">' + d.characters.map(miniHero).join('') + '</div></div>' +
-      '<div class="row"><button class="btn party">파티 편성</button><button class="btn back">맵으로</button>' +
-      (mods.noRestHeal ? '<button class="btn small skip-camp">그냥 지나간다</button>' : '') + '</div></div>';
+      '<div class="row"><button class="btn party">파티 편성</button><button class="btn back">맵으로</button></div></div>';
     backdrop(el, runTheme());
     fillSprites(el, 0.75);
     el.querySelector('.rest').onclick = function () {
-      St.rest();
+      var info = St.rest();
       var m = UI.modal('<h2>모닥불 곁에서 쉬었다</h2><p>동료 전원의 체력이 회복되었다.</p><div class="row" style="justify-content:center"><button class="btn gold ok">계속</button></div>');
-      m.querySelector('.ok').onclick = function () { UI.closeModal(m); Meta.map(); };
+      m.querySelector('.ok').onclick = function () { UI.closeModal(m); nodeDone(info); };
     };
-    el.querySelector('.shop').onclick = function () { St.openShop(); Meta.shop(); };
-    el.querySelector('.party').onclick = function () { Meta.party(Meta.camp, '확인', Meta.camp); };
+    el.querySelector('.up').onclick = function () { St.restUpgrade(); Meta.upgrade(); };
+    el.querySelector('.party').onclick = function () { Meta.party(Meta.rest, '확인', Meta.rest); };
     el.querySelector('.back').onclick = function () { Meta.map(); };
-    if (el.querySelector('.skip-camp')) el.querySelector('.skip-camp').onclick = function () { St.advance(); Meta.map(); };
     UI.show('camp');
   };
+
+  // ================= 카드 강화 =================
+  // 휴식·이벤트에서 받은 강화 기회(run.upgrades)를 쓴다. 끝나면 휴식은 다음 노드로, 이벤트는 결과 화면으로
+  var upFilter = 'all';
+  Meta.upgrade = function () {
+    var d = St.data, r = d.run, el = screen('camp');
+    var after = function () {
+      var node = St.node();
+      if (node && node.type === 'rest') nodeDone(St.advance()); else Meta.continueRun();
+    };
+    if (!r || !r.upgrades) return after();
+    var owners = ['all'].concat(d.characters, ['common']);
+    var list = St.upgradable().filter(function (id) { return upFilter === 'all' || D.cardById[id].owner === upFilter; });
+    var inDeck = function (id) { var o = D.cardById[id].owner; return (d.decks[o] || []).indexOf(id) >= 0; };
+    list.sort(function (a, b) { return (inDeck(b) - inDeck(a)) || (a < b ? -1 : 1); });
+    el.innerHTML = topbar('카드 강화') + '<div class="meta-body">' +
+      '<h1 class="big-title">카드 강화</h1><p class="dim">카드 1장을 골라 강화한다. 강화는 그 카드에 영구히 남는다. (남은 강화 ' + r.upgrades + ')</p>' +
+      '<div class="row up-filters">' + owners.map(function (o) {
+        return '<button class="btn small ' + (upFilter === o ? 'on' : '') + '" data-o="' + o + '">' + (o === 'all' ? '전체' : o === 'common' ? '공용' : charDef(o).name) + '</button>';
+      }).join('') + '</div>' +
+      '<div class="up-wrap"><div class="up-grid"></div><div class="up-preview frame"><p class="dim">카드를 고르면<br>강화 전·후를 보여 준다.</p></div></div>' +
+      '<div class="row"><button class="btn skip">강화하지 않기</button><button class="btn gold ok" disabled>강화</button></div></div>';
+    backdrop(el, runTheme());
+    var grid = el.querySelector('.up-grid'), prev = el.querySelector('.up-preview'), chosen = null;
+    list.forEach(function (id) {
+      var c = UI.cardEl(D.cardById[id], { static: true });
+      c.classList.add('mini');
+      if (inDeck(id)) c.appendChild(UI.el('div', 'ctemp', '<span>덱</span>'));
+      c.onclick = function () {
+        chosen = id;
+        UI.$$('.card', grid).forEach(function (x) { x.classList.toggle('selected', x === c); });
+        prev.innerHTML = '<div class="up-pair"></div>';
+        var pair = prev.querySelector('.up-pair');
+        pair.appendChild(UI.cardEl(D.cardById[id], { static: true }));
+        pair.appendChild(UI.el('div', 'up-arrow', '&#9654;'));
+        pair.appendChild(UI.cardEl(D.cardById[id + '+'], { static: true }));
+        el.querySelector('.ok').disabled = false;
+      };
+      c.ondblclick = function () { chosen = id; done(); };
+      grid.appendChild(c);
+    });
+    if (!list.length) grid.innerHTML = '<p class="dim">강화할 카드가 없다.</p>';
+    function done() {
+      if (!chosen || !St.upgradeCard(chosen)) return;
+      var name = D.cardById[chosen + '+'].name;
+      var m = UI.modal('<h2>' + U.josa(name, '이/가') + ' 되었다!</h2><div class="row" style="justify-content:center"></div><div class="row" style="justify-content:center"><button class="btn gold ok">계속</button></div>');
+      m.querySelector('.row').appendChild(UI.cardEl(D.cardById[chosen + '+'], { static: true }));
+      SND('buff');
+      m.querySelector('.ok').onclick = function () { UI.closeModal(m); if (St.data.run.upgrades) Meta.upgrade(); else after(); };
+    }
+    UI.$$('[data-o]', el).forEach(function (b) { b.onclick = function () { upFilter = b.getAttribute('data-o'); Meta.upgrade(); }; });
+    el.querySelector('.ok').onclick = done;
+    el.querySelector('.skip').onclick = function () {
+      confirmBox('강화하지 않고 넘어갈까요?', '넘어가기', function () { St.skipUpgrade(); after(); });
+    };
+    UI.show('camp');
+  };
+
+  // ================= 이벤트 =================
+  Meta.event = function () {
+    var d = St.data, r = d.run, node = St.node(), ev = St.eventDef(), el = screen('camp');
+    if (!ev) return Meta.map();
+    var res = node.result;
+    var body = '<div class="event-card frame"><div class="event-icon"><i class="ico" style="' + UI.iconStyle(ev.icon) + '"></i></div>' +
+      '<div class="event-text"><p>' + U.esc(ev.text) + '</p>';
+    if (!res) {
+      body += '<div class="event-choices">' + ev.choices.map(function (ch, i) {
+        var ok = St.canChoose(ch);
+        return '<button class="choice-line" data-i="' + i + '" ' + (ok ? '' : 'disabled') + '><b>' + U.esc(ch.label) + '</b><small>' + U.esc(ch.desc) +
+          (ok ? '' : ' (골드 ' + ch.need.gold + ' 필요)') + '</small></button>';
+      }).join('') + '</div>';
+    } else {
+      body += '<p class="event-result">' + U.esc(res.text || '') + '</p>' +
+        (res.log.length ? '<ul class="event-log">' + res.log.map(function (l) { return '<li>' + U.esc(l) + '</li>'; }).join('') + '</ul>' : '');
+    }
+    body += '</div></div>';
+    var waiting = res && (res.cards || r.upgrades);
+    el.innerHTML = topbar('이벤트') + '<div class="meta-body">' +
+      '<span class="ribbon">이벤트</span><h1 class="big-title">' + U.esc(ev.name) + '</h1>' + body +
+      (res && res.cards ? '<span class="ribbon">카드 1장을 고른다</span><div class="row reward-cards"></div><button class="btn small skip-card">받지 않기</button>' : '') +
+      (res && res.relic ? '<div class="relic-tiles">' + UI.relicTile(res.relic, 'static') + '</div>' : '') +
+      (res && res.gotCard ? '<div class="row got-card"></div>' : '') +
+      (res ? '<div class="row">' + (r.upgrades ? '<button class="btn gold up">카드 강화하기</button>' : '') +
+        '<button class="btn ' + (waiting ? '' : 'gold ') + 'next" ' + (waiting ? 'disabled' : '') + '>' + (res.fight ? '전투 시작' : '계속') + '</button></div>' :
+        '<div class="row"><button class="btn back">맵으로</button></div>') + '</div>';
+    backdrop(el, runTheme());
+    UI.$$('.choice-line', el).forEach(function (b) {
+      b.onclick = function () { if (St.eventChoose(+b.getAttribute('data-i'))) { SND('coin'); Meta.event(); } };
+    });
+    if (res && res.cards) {
+      var box = el.querySelector('.reward-cards');
+      res.cards.forEach(function (id) {
+        var c = UI.cardEl(D.cardById[id], { static: true });
+        c.onclick = function () { St.eventTakeCard(id); Meta.event(); };
+        box.appendChild(c);
+      });
+      el.querySelector('.skip-card').onclick = function () { St.eventTakeCard(null); Meta.event(); };
+    }
+    if (res && res.gotCard) el.querySelector('.got-card').appendChild(UI.cardEl(D.cardById[res.gotCard], { static: true }));
+    if (el.querySelector('.up')) el.querySelector('.up').onclick = function () { Meta.upgrade(); };
+    if (el.querySelector('.next')) el.querySelector('.next').onclick = function () {
+      if (res.fight) Meta.continueRun(); else nodeDone(St.eventFinish());
+    };
+    if (el.querySelector('.back')) el.querySelector('.back').onclick = function () { Meta.map(); };
+    UI.show('camp');
+  };
+  function SND(k) { if (G.Audio) G.Audio.play(k); }
 
   // ================= 상점 =================
   Meta.shop = function () {
@@ -413,7 +543,7 @@
     el.querySelector('.heal').onclick = function () { if (St.shopHeal()) Meta.shop(); };
     el.querySelector('.refresh').onclick = function () { if (St.shopRefresh()) Meta.shop(); };
     el.querySelector('.party').onclick = function () { Meta.party(Meta.shop, '확인', Meta.shop); };
-    el.querySelector('.leave').onclick = function () { St.leaveShop(); Meta.map(); };
+    el.querySelector('.leave').onclick = function () { nodeDone(St.leaveShop()); };
     UI.show('camp');
   };
 

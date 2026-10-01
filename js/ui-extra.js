@@ -5,7 +5,7 @@
   var St = function () { return G.Stage; };
 
   var X = G.Extra = {};
-  var THEMES = ['forest', 'desert', 'snow', 'volcano', 'castle'];
+  var THEMES = ['forest', 'desert', 'snow', 'volcano', 'castle', 'mirror'];
   var RANK = { normal: '일반', elite: '정예', boss: '보스', final: '최종 보스' };
   var OWNERS = ['kai', 'bram', 'lyra', 'sera', 'nox', 'common'];
 
@@ -85,7 +85,7 @@
         return (cs.rarity === 'all' || c.rarity === cs.rarity) && (cs.owner === 'all' || c.owner === cs.owner) && (cs.type === 'all' || c.type === cs.type);
       }).forEach(function (c) {
         var has = d.cards.indexOf(c.id) >= 0;
-        var el = UI.cardEl(c, { static: true, silhouette: !has });
+        var el = UI.cardEl(has ? St().cardDef(c.id) : c, { static: true, silhouette: !has });
         if (!has) {
           el.querySelector('.cname span').textContent = '???';
           el.querySelector('.ctext span').textContent = '아직 얻지 못한 카드';
@@ -195,7 +195,7 @@
       var g = body.querySelector(gridSel);
       if (!ids.length) g.innerHTML = '<p class="dim">' + (inDeck ? '비어 있다' : '덱 밖에 있는 카드가 없다') + '</p>';
       ids.forEach(function (id) {
-        var c = UI.cardEl(D.cardById[id], { static: true });
+        var c = UI.cardEl(St().cardDef(id), { static: true });
         c.onclick = function () {
           if (inDeck) {
             if (deck.length <= e.deckMin) { msg.textContent = '덱은 최소 ' + e.deckMin + '장이어야 한다.'; return; }

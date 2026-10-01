@@ -8,7 +8,7 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 global.window = global;
 ['js/core.js', 'data/keywords.js', 'data/characters.js', 'data/cards.js', 'data/monsters.js', 'data/relics.js',
- 'js/status.js', 'js/deck.js', 'js/battle.js', 'js/effects.js'].forEach(f => {
+ 'data/upgrades.js', 'data/events.js', 'js/status.js', 'js/deck.js', 'js/upgrade.js', 'js/battle.js', 'js/effects.js'].forEach(f => {
   vm.runInThisContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), { filename: f });
 });
 const G = global.Game;
@@ -47,7 +47,48 @@ G.Data.monsters.forEach(m => {
   });
   if (m.onDeath) walk(m.onDeath, m.id + ' onDeath');
 });
-check(G.Data.monsters.length === 36, '몬스터 36종 (현재 ' + G.Data.monsters.length + ')');
+check(G.Data.monsters.length === 41, '몬스터 41종 (현재 ' + G.Data.monsters.length + ')');
+check(G.Data.monsters.filter(m => m.mirror).length === 5, '거울 속 그림자 5종');
+
+// 강화 카드: 192장 모두 무언가 바뀌고, 설명의 {dN}·{+…} 가 올바르다
+cards.forEach(c => {
+  const u = G.Data.cardById[c.id + '+'];
+  check(u && u.upgraded && u.base === c.id, c.id + ': 강화 카드 없음');
+  if (!u) return;
+  check(u.changed, c.id + ': 강화해도 바뀌는 것이 없음');
+  check(JSON.stringify(u) !== JSON.stringify(Object.assign({}, c, { id: u.id, base: u.base, upgraded: true, name: u.name, changed: true, upDmg: u.upDmg })),
+    c.id + ': 강화 카드가 원래 카드와 같음');
+  walk(u.effects, u.id);
+  let n = 0;
+  (function count(list) { list.forEach(e => { if (e.op === 'damage') n++; if (e.op === 'power') return; ['then', 'else'].forEach(k => e[k] && count(e[k])); }); })(u.effects);
+  (u.text.match(/\{d(\d)\}/g) || []).forEach(m => check(+m[2] < n, u.id + ': 설명의 ' + m + ' 에 해당하는 피해 효과 없음'));
+  check(!/\{(?![d+])/.test(u.text) && (u.text.match(/\{/g) || []).length === (u.text.match(/\}/g) || []).length, u.id + ': 설명의 { } 짝이 맞지 않음');
+  check(/\{\+|\{d/.test(u.text) || u.cost !== c.cost || u.exhaust !== c.exhaust, u.id + ': 강화로 바뀐 수치 표시({+N})가 없음');
+});
+check(G.Data.cardById['K01+'].effects[0].value === 8, '강화 규칙: 베기 6 → 8');
+check(G.Data.cardById['K22+'].cost === 2, '강화 규칙: 비용 3 → 2');
+check(G.Data.cardById['K15+'].cost === 0, '강화 규칙: 지속 카드 비용 -1');
+check(G.Data.cardById['K17+'].effects[0].then[0].value === 36 && G.Data.cardById['K17+'].effects[0].else[0].value === 18, '강화 규칙: 2배 관계 유지 (처형 18/36)');
+check(G.Data.cardById['K17+'].effects[0].cond.n === 0.6, '강화 규칙: 조건 완화 절반 → 60%');
+check(!G.Data.cardById['L12+'].exhaust, '예외: 마력 충전+ 소멸 제거');
+check(G.Data.cardById['C29+'].effects[0].p === 0.65, '예외: 동전 던지기+ 앞면 65%');
+check(G.Data.cardById['C30+'].effects[0].options[3].effects[0].value === 3, '아군에게 거는 디버프(수상한 물약의 중독)는 올리지 않음');
+check(G.util.numJosa('피해 4을 3회, 6를, 7으로') === '피해 4를 3회, 6을, 7로', '숫자 조사 교정');
+
+// 이벤트 15종
+check(G.Data.events.length === 15, '이벤트 15종');
+const EVENT_OPS = ['gold', 'hp', 'card', 'cardChoice', 'relic', 'upgrade', 'buff', 'curse', 'mirror', 'exp', 'bond', 'chance', 'fight', 'cutNext'];
+G.Data.events.forEach(ev => {
+  check(ev.choices.length >= 2, ev.id + ': 선택지 2개 이상');
+  (function w(list) {
+    list.forEach(op => {
+      check(EVENT_OPS.includes(op.op), ev.id + ': 알 수 없는 이벤트 효과 ' + op.op);
+      if (op.effects) walk(op.effects, ev.id);
+      if (op.then) w(op.then);
+      if (op.else) w(op.else);
+    });
+  })([].concat(...ev.choices.map(c => c.effects)));
+});
 
 // 희귀 이상 카드는 모두 고유 이펙트(sfx)를 가지고, 그 키가 effects.js 에 있다
 cards.forEach(c => {
@@ -91,6 +132,15 @@ doc.split('\n').forEach(line => {
   check(c.tags === m[8].trim(), id + ' 분류 "' + c.tags + '" ≠ "' + m[8].trim() + '"');
 });
 check(docRows === 192, '기획서 카드 표 192행 (현재 ' + docRows + ')');
+// '강화' 열은 데이터에서 만든 문구와 같아야 한다 (다르면 node tools/doc-upgrades.js)
+let upRows = 0;
+doc.split('\n').forEach(line => {
+  const m = line.match(/^\| ([KBLSNC]\d\d)★? \|(?:[^|]*\|){7} ([^|]*) \|$/);
+  if (!m) return;
+  upRows++;
+  check(G.Upgrade.summary(m[1]) === m[2], m[1] + ' 강화 열이 데이터와 다름 (node tools/doc-upgrades.js)');
+});
+check(upRows === 192, '기획서 카드 표 강화 열 192행 (현재 ' + upRows + ')');
 
 // ---------------------------------------------------------------- 규칙 단위 테스트
 section('규칙');
@@ -288,6 +338,26 @@ function handCard(b, id) {
   G.Status.add(b, b.monsters[0], 'chill', 3, null);
   check(b.monsters[0].status.vulnerable === 2, '얼음 왕관: 빙결 → 취약 2');
 
+  // 강화 카드는 전투에서 그대로 쓰인다
+  b = await newBattle(['kai'], ['treant'], ['C01']);
+  b.heroes[0].crit = 0; b.energy = 3; hp0 = b.monsters[0].hp;
+  await b.play(handCard(b, 'K01+'), b.monsters[0]);
+  check(hp0 - b.monsters[0].hp === 8, '베기+ 피해 8');
+  // 전술 재편+ : 버린 수보다 2장 더
+  b = await newBattle(['kai'], ['treant'], Array(20).fill('C01'));
+  const before = b.piles.hand.length;
+  await b.play(handCard(b, 'C23+'), null);
+  check(b.piles.hand.length === before + 2, '전술 재편+ 손패 ' + (before + 2) + '장 (실제 ' + b.piles.hand.length + ')');
+
+  // 거울 속 그림자: 스테이지에 맞춰 체력·힘
+  b = await newBattle(['kai'], ['shadow_kai'], ['C01'], { stage: 10 });
+  check(b.monsters[0].maxHp === 98 && b.monsters[0].status.strength === 5, '그림자 카이 10스테이지: 체력 98, 힘 5 (실제 ' + b.monsters[0].maxHp + ', ' + b.monsters[0].status.strength + ')');
+  b = await newBattle(['kai'], ['shadow_kai'], ['C01'], { stage: 1 });
+  check(b.monsters[0].maxHp === 48 && !b.monsters[0].status.strength, '그림자 카이 1스테이지: 체력 48, 힘 0');
+  // 이벤트가 남긴 전투 시작 효과
+  b = await newBattle(['kai', 'bram'], ['slime'], ['C01'], { startEffects: [{ name: '샘의 저주', effects: [{ op: 'status', status: 'weak', value: 2, target: 'allAllies' }] }] });
+  check(b.heroes.every(h => h.status.weak === 2), '전투 시작 효과: 아군 전체 약화 2');
+
   b = await newBattle(['kai'], ['slime', 'slime'], ['C01'], { affixes: ['giant', 'angry'] });
   check(b.monsters[0].maxHp === 27 && b.monsters[0].name === '거대한 슬라임', '거대한: 체력 1.5배·이름');
   check(b.monsters[1].status.strength === 2, '분노한: 힘 2');
@@ -304,18 +374,19 @@ function handCard(b, id) {
     G.rng.seed(1000 + run);
     const party = G.rng.shuffle(heroes.slice()).slice(0, G.rng.int(1, 3));
     const pool = G.Data.cards.filter(c => c.owner === 'common' || party.includes(c.owner));
-    const deck = G.rng.shuffle(pool.map(c => c.id)).slice(0, 20);
-    const theme = G.rng.pick(['forest', 'desert', 'snow', 'volcano', 'castle']);
+    const deck = G.rng.shuffle(pool.map(c => c.id)).slice(0, 20).map(id => G.rng.chance(0.4) ? id + '+' : id);
+    const theme = G.rng.pick(['forest', 'desert', 'snow', 'volcano', 'castle', 'mirror']);
     const themed = monsters.filter(m => m.theme === theme);
     const roll = G.rng.next();
     let enc;
-    if (roll < 0.15) enc = [G.rng.pick(themed.filter(m => m.rank !== 'normal')).id];
+    if (theme === 'mirror') enc = [G.rng.pick(themed).id].concat(roll < 0.5 ? ['skeleton'] : []);
+    else if (roll < 0.15) enc = [G.rng.pick(themed.filter(m => m.rank !== 'normal')).id];
     else enc = G.rng.shuffle(themed.filter(m => m.rank === 'normal').map(m => m.id)).slice(0, G.rng.int(1, 3));
     enc.forEach(id => seenMonsters.add(id));
     const relics = G.rng.shuffle(G.Data.relics.map(r => r.id)).slice(0, G.rng.int(0, 6));
     const affixes = enc.map(() => G.rng.chance(0.3) ? G.rng.pick(Object.keys(G.Data.affixes)) : null);
     try {
-      const b = G.Battle.create({ party: party.map(id => ({ id })), monsters: enc, deck, gold: 30, relics, affixes });
+      const b = G.Battle.create({ party: party.map(id => ({ id })), monsters: enc, deck, gold: 30, relics, affixes, stage: G.rng.int(1, 10) });
       await b.start();
       let guard = 0;
       while (!b.over() && b.turn < 80 && guard++ < 5000) {
@@ -326,6 +397,7 @@ function handCard(b, id) {
         const ok = await b.play(c, tg);
         if (!ok) throw new Error('play 실패: ' + c.id);
         played.add(c.id);
+        played.add(G.Upgrade.baseOf(c.id));
         // 불변 조건
         b.heroes.concat(b.monsters).forEach(u => {
           if (u.hp > u.maxHp || u.hp < 0 || u.block < 0) throw new Error('불변 조건 위반: ' + u.name + ' hp=' + u.hp + ' block=' + u.block);
@@ -348,7 +420,9 @@ function handCard(b, id) {
   const never = cards.filter(c => !played.has(c.id)).map(c => c.id);
   if (N >= 1000) {
     check(!never.length, '모든 카드가 한 번 이상 사용됨 (미사용: ' + never.join(', ') + ')');
-    check(seenMonsters.size === 36, '모든 몬스터 등장 (' + seenMonsters.size + '/36)');
+    const neverUp = cards.filter(c => !played.has(c.id + '+')).map(c => c.id + '+');
+    check(!neverUp.length, '모든 강화 카드가 한 번 이상 사용됨 (미사용: ' + neverUp.join(', ') + ')');
+    check(seenMonsters.size === 41, '모든 몬스터 등장 (' + seenMonsters.size + '/41)');
   } else console.log('  (사용 범위 검사 생략: 1000회 미만)');
 
   console.log(failures ? '\n실패 ' + failures + '건' : '\n모든 테스트 통과');

@@ -5,7 +5,9 @@
 // AI 규칙
 //  - 카드 점수 = 예상 피해(처치 보너스) + 막아야 할 만큼의 보호막 + 잃은 체력만큼의 회복 + 드로우·에너지·상태 가치
 //  - 에너지 1당 점수가 높은 카드부터 쓴다. 단일 공격은 처치 가능한 적 → 체력이 낮은 적 순서로 노린다
-//  - 보상은 높은 등급 우선, 휴식/상점은 평균 체력 60% 미만이면 휴식, 아니면 상점에서 높은 등급부터 산다
+//  - 보상은 높은 등급 우선. 갈림길: 체력이 넉넉하면(평균 70% 이상) 정예, 아니면 전투/이벤트 쪽
+//  - 휴식/상점 갈림길: 평균 체력 80% 미만이면 휴식(회복), 아니면 상점에서 높은 등급부터 산다
+//    휴식에서 체력이 충분하면 강화(덱에 든 높은 등급 카드부터). 이벤트는 첫 선택지를 고른다
 //  - 덱은 카드를 얻을 때마다 자동 구성, 파티는 캠페인마다 정한 선호 순서로 3명
 'use strict';
 const vm = require('vm');
@@ -15,7 +17,7 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 global.window = global;
 ['js/core.js', 'data/keywords.js', 'data/characters.js', 'data/cards.js', 'data/monsters.js', 'data/stages.js', 'data/relics.js',
- 'js/status.js', 'js/deck.js', 'js/battle.js', 'js/save.js', 'js/stage.js'].forEach(f => {
+ 'data/upgrades.js', 'data/events.js', 'js/status.js', 'js/deck.js', 'js/upgrade.js', 'js/battle.js', 'js/save.js', 'js/stage.js'].forEach(f => {
   vm.runInThisContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), { filename: f });
 });
 const G = global.Game, St = G.Stage, D = G.Data, S = G.Status;
@@ -159,6 +161,19 @@ async function fight(b) {
 function rarityIdx(id) { return G.RARITIES.indexOf(D.cardById[id].rarity); }
 function rebuildDecks() { const d = St.data; d.characters.concat(['common']).forEach(o => { d.decks[o] = St.autoBuild(o); }); }
 function chooseParty(order) { St.setParty(order.filter(id => St.data.characters.includes(id)).slice(0, 3)); }
+function avgHp() {
+  const d = St.data, hp = d.characters.map(id => d.run.hp[id] / D.characters.find(c => c.id === id).hp);
+  return hp.reduce((a, b) => a + b, 0) / hp.length;
+}
+// 강화: 덱에 든 카드 중 등급이 높은 것부터
+function useUpgrades() {
+  while (St.data.run.upgrades) {
+    const d = St.data, inDeck = id => (d.decks[D.cardById[id].owner] || []).includes(id);
+    const list = St.upgradable().sort((a, b) => (inDeck(b) - inDeck(a)) || rarityIdx(b) - rarityIdx(a));
+    if (!list.length) { St.skipUpgrade(); break; }
+    St.upgradeCard(list[0]);
+  }
+}
 
 async function campaign(seed, order) {
   G.rng.seed(seed);
@@ -171,18 +186,35 @@ async function campaign(seed, order) {
     St.startStage(n);
     let done = false;
     while (!done) {
+      if (!St.node()) {
+        const ch = St.choices().map(x => x.type);
+        let i = 0;
+        if (ch.includes('elite')) i = ch.indexOf(avgHp() >= 0.7 ? 'elite' : ch.find(t => t !== 'elite'));
+        else if (ch.includes('rest')) i = ch.indexOf(avgHp() < 0.8 ? 'rest' : 'shop');
+        else if (ch.includes('event')) i = ch.indexOf(avgHp() < 0.6 ? 'event' : 'battle');
+        St.choose(Math.max(0, i));
+        continue;
+      }
       const node = St.node();
       if (node.type === 'rest') {
-        const d = St.data, hp = d.characters.map(id => d.run.hp[id] / D.characters.find(c => c.id === id).hp);
-        const next = St.data.run.nodes[St.data.run.node + 1];
-        const limit = next && next.type !== 'battle' ? 0.8 : 0.6; // 보스·정예 앞에서는 더 쉽게 쉰다
-        if (hp.reduce((a, b) => a + b, 0) / hp.length < limit) St.rest();
-        else {
-          const s = St.openShop();
-          s.cards.slice().sort((a, b) => rarityIdx(b) - rarityIdx(a)).forEach(id => { if (St.data.gold - St.price(id) >= 0) St.buy(id); });
-          St.leaveShop();
-          rebuildDecks();
-        }
+        if (avgHp() < 0.8 && !St.mods().noRestHeal) { if (St.rest()) done = true; }
+        else { St.restUpgrade(); useUpgrades(); if (St.advance()) done = true; }
+        continue;
+      }
+      if (node.type === 'shop') {
+        const s = St.openShop();
+        s.cards.slice().sort((a, b) => rarityIdx(b) - rarityIdx(a)).forEach(id => { if (St.data.gold - St.price(id) >= 0) St.buy(id); });
+        if (St.leaveShop()) done = true;
+        rebuildDecks();
+        continue;
+      }
+      if (node.type === 'event' && !(node.result && node.result.fight)) {
+        const ev = St.eventDef();
+        const res = St.eventChoose(St.canChoose(ev.choices[0]) ? 0 : 1);
+        if (res.cards) St.eventTakeCard(res.cards.sort((a, b) => rarityIdx(b) - rarityIdx(a))[0]);
+        useUpgrades();
+        rebuildDecks();
+        if (!res.fight && St.eventFinish()) done = true;
         continue;
       }
       const b = G.Battle.create(St.battleOptions());
@@ -194,6 +226,7 @@ async function campaign(seed, order) {
         const res = St.battleWon(b);
         if (res.ending) { done = true; break; }
         const p = St.data.run.pending;
+        if (p.relicChoice && p.relicChoice.length) St.takeRelic(p.relicChoice[0]);
         const pick = p.cards.slice().sort((a, b) => rarityIdx(b) - rarityIdx(a))[0] || null;
         const clear = St.takeReward(pick);
         rebuildDecks();

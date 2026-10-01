@@ -107,22 +107,22 @@
       if (S.has(caster, 'weak')) d *= 0.75;
       return Math.max(0, Math.floor(d));
     };
-    var fmt = function (base) {
+    var fmt = function (base, upg) {
       var v = mod(base);
-      var cls = v > base ? ' up' : v < base ? ' down' : '';
+      var cls = v > base ? ' up' : v < base ? ' down' : upg ? ' upg' : '';
       return '<span class="num' + cls + '">' + v + '</span>';
     };
     var html = U.esc(def.text).replace(/\{d(\d)\}/g, function (_, i) {
-      var v = vals[+i];
-      if (Array.isArray(v)) return fmt(v[0]) + '~' + fmt(v[1]);
+      var v = vals[+i], upg = def.upDmg && def.upDmg[+i];
+      if (Array.isArray(v)) return fmt(v[0], upg) + '~' + fmt(v[1], upg);
       if (typeof v === 'object') {
-        if (!battle) return v.base ? String(v.base) : 'X';
+        if (!battle) return v.base ? fmt(v.base, upg) : 'X';
         var x = def.cost === 'X' ? battle.energy : 0;
-        return fmt(battle.num(v, { src: caster, attacksBefore: battle.attacksThisTurn, x: x }, null));
+        return fmt(battle.num(v, { src: caster, attacksBefore: battle.attacksThisTurn, x: x }, null), upg);
       }
-      return fmt(v);
-    });
-    return UI.keywordize(html);
+      return fmt(v, upg);
+    }).replace(/\{\+([^}]*)\}/g, '<span class="num upg">$1</span>');
+    return U.numJosa(UI.keywordize(html));
   };
 
   // ---------------- 카드 요소 ----------------
@@ -130,13 +130,13 @@
     opts = opts || {};
     var c = UI.el('div', 'card r-' + def.rarity + (opts.static ? ' static' : ''));
     var owner = G.Data.characters.filter(function (x) { return x.id === def.owner; })[0];
-    var plain = def.text.replace(/\{d\d\}/g, '00');
+    var plain = def.text.replace(/\{d\d\}/g, '00').replace(/\{\+([^}]*)\}/g, '$1');
     var len = plain.length;
     c.innerHTML =
       '<div class="cf"></div><div class="cart"></div>' +
       '<div class="cband" style="background:' + (owner ? owner.color : '#8a93b8') + '"></div>' +
-      '<div class="ccost"><span>' + (def.cost == null ? '' : def.cost) + '</span></div>' +
-      '<div class="cname"><span>' + U.esc(def.name) + '</span></div>' +
+      '<div class="ccost' + (def.upgraded && def.cost !== G.Data.cardById[def.base].cost ? ' upg' : '') + '"><span>' + (def.cost == null ? '' : def.cost) + '</span></div>' +
+      '<div class="cname' + (def.upgraded ? ' upg' : '') + '"><span>' + U.esc(def.name) + '</span></div>' +
       '<div class="ctype"><span>' + (G.TYPE_NAME[def.type] || '') + '</span></div>' +
       '<div class="ctext' + (len > 62 ? ' xlong' : len > 44 ? ' long' : '') + '"><span>' + UI.cardText(def, opts.battle, opts.inst) + '</span></div>' +
       '<div class="ccond"><span>조건 충족</span></div>';

@@ -188,6 +188,13 @@ body:not(.pixel-font) b, body:not(.pixel-font) h1, body:not(.pixel-font) h2 { fo
 .rnode.now { background: var(--gold-d); animation: markPulse2 0.8s steps(2) infinite; }
 @keyframes markPulse2 { 50% { transform: translateY(-3px); } }
 .rlink { width: 10px; height: 4px; background: var(--line); }
+.rcol { display: flex; flex-direction: column; gap: 6px; }
+.rnode.skip { opacity: 0.35; }
+.rnode.pick { background: #2a3a5a; animation: markPulse2 0.8s steps(2) infinite; }
+.fork { display: flex; flex-direction: column; gap: 6px; }
+.fork-btns { display: flex; gap: 8px; }
+.fork-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 6px; }
+.fork-btn .ico { width: 22px; height: 22px; }
 .map-bottom { flex: 0 0 auto; display: flex; align-items: center; gap: 16px; padding: 4px 18px 12px; }
 .map-bottom .party-row { justify-content: flex-start; }
 .map-bottom .relic-bar { margin-left: auto; max-width: 420px; justify-content: flex-end; }
@@ -374,6 +381,9 @@ body:not(.pixel-font) b, body:not(.pixel-font) h1, body:not(.pixel-font) h2 { fo
 .card .ctext .num { display: inline; font-size: 1em; }
 .card .ctext .num.up { color: var(--green); }
 .card .ctext .num.down { color: #ff9a9a; }
+.card .ctext .num.upg { color: #8dff6a; }
+.card .ccost.upg span { color: #8dff6a; }
+.card .cname.upg span { color: #b8ff8a; }
 .card .ccond { right: 1.4em; top: 3em; display: none; }
 .card .ccond span, .card .ctemp span { font-size: 0.7em; padding: 0.15em 0.4em; }
 .card .ccond span { background: var(--gold); color: #2a1606; }
@@ -473,6 +483,31 @@ body:not(.pixel-font) b, body:not(.pixel-font) h1, body:not(.pixel-font) h2 { fo
 .choice:disabled { opacity: 0.5; cursor: default; }
 .choice .ico { width: 44px; height: 44px; }
 .choice small { color: var(--dim); font-size: 0.75em; }
+/* 카드 강화 */
+.up-filters { gap: 6px; justify-content: center; flex-wrap: wrap; }
+.up-wrap { display: flex; gap: 16px; width: 100%; max-width: 1180px; min-height: 0; align-items: flex-start; }
+.up-grid { flex: 1; display: flex; flex-wrap: wrap; gap: 8px; align-content: flex-start; --ch: 150px; max-height: 52vh; overflow: auto; padding: 6px; }
+.up-grid .card { cursor: pointer; }
+.up-grid .card.selected { outline: var(--u) solid var(--gold); outline-offset: 2px; }
+.up-preview { flex: 0 0 auto; min-width: 360px; min-height: 240px; display: flex; align-items: center; justify-content: center; padding: 14px; --ch: 200px; text-align: center; }
+.up-pair { display: flex; align-items: center; gap: 10px; }
+.up-arrow { color: #8dff6a; font-size: 1.6em; }
+/* 이벤트 */
+.event-card { display: flex; gap: 18px; padding: 18px 22px; max-width: 760px; width: 100%; align-items: flex-start; }
+.event-icon { flex: 0 0 72px; height: 72px; display: flex; align-items: center; justify-content: center; background: var(--bg1); box-shadow: var(--edge); }
+.event-icon .ico { width: 48px; height: 48px; }
+.event-text { flex: 1; display: flex; flex-direction: column; gap: 12px; line-height: 1.6; }
+.event-choices { display: flex; flex-direction: column; gap: 8px; }
+.choice-line { text-align: left; border: 0; color: var(--text); font-family: inherit; font-size: inherit; cursor: pointer; padding: 10px 14px;
+  display: flex; flex-direction: column; gap: 3px; background: var(--bg3) var(--dither); box-shadow: var(--edge), var(--bevel); }
+.choice-line b { color: var(--gold2); }
+.choice-line small { color: var(--dim); }
+.choice-line:hover:not(:disabled) { filter: brightness(1.2); transform: translateX(4px); }
+.choice-line:disabled { opacity: 0.45; cursor: default; }
+.event-result { color: var(--cyan); }
+.event-log { margin: 0; padding-left: 18px; color: var(--text); }
+.event-log li::marker { content: '▸ '; color: var(--gold); }
+.got-card { --ch: 200px; }
 .join { display: flex; gap: 22px; align-items: center; padding: 18px 24px; max-width: 660px; }
 .join h2 { color: var(--gold2) !important; margin-bottom: 6px !important; }
 .join p { margin: 4px 0 !important; }

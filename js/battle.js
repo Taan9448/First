@@ -18,12 +18,19 @@
       block: 0, status: {}, dead: cur <= 0, crit: c.crit };
   }
 
-  function makeMonster(id, affix) {
+  function makeMonster(id, affix, stage) {
     var d = G.Data.monsterById[id];
     if (!d) throw new Error('알 수 없는 몬스터: ' + id);
     var m = { uid: uidSeq++, side: 'enemy', id: id, name: d.name, def: d, maxHp: d.hp, hp: d.hp, block: 0, size: d.size,
       status: Object.assign({}, d.startStatus || {}), dead: false, boss: d.rank === 'boss' || d.rank === 'final',
       pattern: d.pattern.slice(), pIndex: 0, intent: null, intentTarget: null, fired: {}, everyTurn: [], revived: false, affix: null };
+    // 스테이지에 맞춰 강해지는 몬스터(거울 속 그림자): 체력 배율과 힘
+    if (d.scaleByStage && stage) {
+      var sc = d.scaleByStage;
+      m.maxHp = m.hp = Math.round(d.hp * (sc.hpBase + sc.hpPer * stage));
+      var str = Math.max(0, Math.floor((stage - sc.strFrom) * sc.strPer));
+      if (str) m.status.strength = (m.status.strength || 0) + str;
+    }
     var a = affix && G.Data.affixes[affix];
     if (a) {
       m.affix = affix;
@@ -59,7 +66,8 @@
     this.opts = opts;
     this.heroes = opts.party.map(function (p) { return makeHero(p.id, p.hp); });
     var affixes = opts.affixes || [];
-    this.monsters = opts.monsters.map(function (id, i) { return makeMonster(id, affixes[i]); });
+    this.monsters = opts.monsters.map(function (id, i) { return makeMonster(id, affixes[i], opts.stage); });
+    this.startEffects = opts.startEffects || [];  // 이벤트가 남긴 전투 시작 효과 [{ name, effects }]
     this.relics = (opts.relics || []).map(function (id) { return G.Data.relicById[id]; }).filter(Boolean);
     this.mods = mergeMods(this.relics);
     this.phoenixUsed = false;
@@ -101,6 +109,10 @@
     var self = this;
     this.monsters.forEach(function (m) { self.predict(m); });
     await this.relicHooks('battleStart');
+    for (var i = 0; i < this.startEffects.length && !this.over(); i++) {
+      this.emit('fx:text', { text: this.startEffects[i].name, kind: 'buff' });
+      await this.run(this.startEffects[i].effects, { src: null, target: null, isCard: false, defTarget: 'none', pre: {} });
+    }
     await this.startPlayerTurn();
   };
 
@@ -551,7 +563,7 @@
 
       case 'summon': return this.summon(e.monster, ctx.src);
 
-      case 'custom': return this.custom(e.name, ctx);
+      case 'custom': return this.custom(e.name, ctx, e);
     }
     throw new Error('알 수 없는 효과: ' + e.op);
   };
@@ -759,7 +771,7 @@
     this.update();
   };
 
-  P.custom = async function (name, ctx) {
+  P.custom = async function (name, ctx, e) {
     var self = this, t = ctx.target;
     switch (name) {
       case 'teamUndying':
@@ -778,7 +790,7 @@
         var n = this.piles.hand.length;
         this.piles.hand.forEach(function (c) { D.resetTurn(c); if (!c.temp) self.piles.discard.push(c); });
         this.piles.hand = [];
-        this.drawCards(n + 1);
+        this.drawCards(n + ((e && e.extra) || 1));
         this.update();
         return;
     }

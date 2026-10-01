@@ -1,4 +1,4 @@
-// monsters.js — 몬스터 36종과 행동 패턴
+// monsters.js — 몬스터 41종(테마 36 + 거울의 그림자 5)과 행동 패턴
 // 형식은 GAME_DESIGN.md 2.3절. 행동 효과의 대상 기본값은 예고 때 정한 아군 1명('target').
 // 'allAllies' = 아군(플레이어 파티) 전체, 'self' = 자신, 'allMonsters' = 몬스터 전체.
 (function () {
@@ -11,6 +11,8 @@
   var sand = function (n) { return { op: 'addCard', card: 'SAND', pile: 'discard', count: n }; };
   var summon = function (id) { return { op: 'summon', monster: id }; };
   var mv = function (name, effects, extra) { return Object.assign({ name: name, effects: effects }, extra); };
+  // 그림자 몬스터의 스테이지 보정: 체력 × (0.6 + 0.08 × 스테이지), 힘 = (스테이지 - 3) × 0.75 내림
+  var SCALE = { hpBase: 0.6, hpPer: 0.08, strFrom: 3, strPer: 0.75 };
 
   function M(id, name, theme, rank, hp, moves, pattern, extra) {
     return Object.assign({ id: id, name: name, theme: theme, rank: rank, hp: hp, moves: moves, pattern: pattern,
@@ -163,7 +165,30 @@
           { hpBelow: 0.3, name: '3페이즈 — 종말', effects: [blk(15), selfSt('doom', 5)],
             pattern: ['combo', 'drainStrike', 'combo', 'drainStrike', 'combo', 'doom'], everyTurn: [selfSt('strength', 1)] }
         ],
-        desc: '세상을 집어삼키려는 마왕.' })
+        desc: '세상을 집어삼키려는 마왕.' }),
+
+    // ---------------- 거울의 방 (이벤트 E13): 파티 캐릭터의 그림자 ----------------
+    // 그 캐릭터의 대표 카드를 흉내 낸다. 스테이지에 맞춰 체력·힘이 오른다(scaleByStage)
+    M('shadow_kai', '그림자 카이', 'mirror', 'elite', 70,
+      { twin: mv('그림자 연속 베기', [dmg(4, { times: 2 })]), bash: mv('그림자 강타', [dmg(9), st('vulnerable', 1)]),
+        shout: mv('그림자 기합', [selfSt('strength', 2)]), execute: mv('그림자 처형', [dmg(14)]) },
+      ['twin', 'bash', 'shout', 'execute'], { mirror: 'kai', scaleByStage: SCALE, desc: '거울에서 걸어 나온 카이의 그림자. 칼끝에 망설임이 없다.' }),
+    M('shadow_bram', '그림자 브리아', 'mirror', 'elite', 90,
+      { bashShield: mv('그림자 방패 치기', [dmg(6), blk(8)]), wall: mv('그림자 철벽', [blk(16)]),
+        charge: mv('그림자 방패 돌진', [dmg(8), st('weak', 2)]), quake: mv('그림자 대지 강타', [dmgAll(6)]) },
+      ['bashShield', 'charge', 'wall', 'quake'], { mirror: 'bram', scaleByStage: SCALE, startStatus: { thorns: 2 }, desc: '브리아의 그림자. 가시 돋친 방패를 든다.' }),
+    M('shadow_lyra', '그림자 리라', 'mirror', 'elite', 58,
+      { fireball: mv('그림자 화염구', [dmg(6), st('burn', 3)]), frost: mv('그림자 서리 고리', [dmgAll(4), allSt('chill', 1)]),
+        wave: mv('그림자 불꽃 파동', [dmgAll(5), allSt('burn', 2)]), focus: mv('마력 응축', [blk(8), selfSt('strength', 2)]) },
+      ['fireball', 'frost', 'focus', 'wave'], { mirror: 'lyra', scaleByStage: SCALE, desc: '리라의 그림자. 차가운 불꽃을 다룬다.' }),
+    M('shadow_sera', '그림자 세라', 'mirror', 'elite', 64,
+      { smite: mv('그림자 신성한 일격', [dmg(7)]), mend: mv('그림자 치유', [{ op: 'heal', value: 12, target: 'self' }, blk(6)]),
+        judge: mv('그림자 심판', [dmg(10), st('weak', 1)]), pray: mv('그림자 기도', [{ op: 'heal', value: 6, target: 'allMonsters' }, selfSt('regen', 3)]) },
+      ['smite', 'judge', 'mend', 'pray'], { mirror: 'sera', scaleByStage: SCALE, desc: '세라의 그림자. 자신의 상처만 돌본다.' }),
+    M('shadow_nox', '그림자 녹스', 'mirror', 'elite', 60,
+      { dagger: mv('그림자 독 단검', [dmg(4), st('poison', 4)]), expose: mv('그림자 약점 노출', [st('weak', 2), st('vulnerable', 1)]),
+        ambush: mv('그림자 암습', [dmg(13)]), fog: mv('그림자 독안개', [allSt('poison', 2)]) },
+      ['dagger', 'expose', 'ambush', 'fog'], { mirror: 'nox', scaleByStage: SCALE, desc: '녹스의 그림자. 웃음소리만 먼저 들린다.' })
   ];
 
   Game.Data.monsters = list;

@@ -93,6 +93,16 @@
       defs[id] = Object.assign({}, defs[base], { pal: Object.assign({}, defs[base].pal, palOver) }, extra);
     },
     has: function (id) { return !!defs[id]; },
+    // 그림자 변형: 색을 어두운 보랏빛으로 바꾸고 눈을 붉게, 좌우를 뒤집는다(적 쪽에서 왼쪽을 본다)
+    shadow: function (id, base) {
+      var src = defs[base], p = {};
+      Object.keys(src.pal).forEach(function (k) {
+        var a = hex(src.pal[k]), l = (a[0] * 0.3 + a[1] * 0.5 + a[2] * 0.2) / 255;
+        p[k] = toHex(28 + l * 70, 18 + l * 40, 48 + l * 95);
+      });
+      p.e = '#ff3a5a'; p.w = '#ffd0d8';
+      defs[id] = Object.assign({}, src, { pal: p, flip: true });
+    },
 
     // 스프라이트 시트: [대기, 숨쉬기, 공격] 3프레임 가로 배치
     sheet: function (id) {
@@ -103,13 +113,24 @@
         grid(spec, spec.over, spec.breathe || 0),
         grid(spec, spec.attackOver || spec.over)
       ];
+      var width = spec.rows ? spec.rows[0].length : spec.half[0].length * 2;
+      if (spec.flip) {
+        frames = frames.map(function (g) {
+          var f = {};
+          Object.keys(g).forEach(function (k) { var q = k.split(','); f[(width - 1 - q[0]) + ',' + q[1]] = g[k]; });
+          return f;
+        });
+      }
       var b = bbox(frames);
       var c = canvas(b.w * 3, b.h);
       var ctx = c.getContext('2d');
       var flat = spec.flat || 'ew';
       frames.forEach(function (g, i) { paint(ctx, g, spec.pal, b, i * b.w, 0, flat); });
-      var width = spec.rows ? spec.rows[0].length : spec.half[0].length * 2;
-      var frac = function (p) { return p ? { x: (p.x - b.x0 + 0.5) / b.w, y: (p.y - b.y0 + 0.5) / b.h } : null; };
+      var frac = function (p) {
+        if (!p) return null;
+        var x = spec.flip ? width - 1 - p.x : p.x;
+        return { x: (x - b.x0 + 0.5) / b.w, y: (p.y - b.y0 + 0.5) / b.h };
+      };
       return (sheets[id] = {
         url: c.toDataURL(), canvas: c, w: b.w, h: b.h,
         anchor: (width / 2 - b.x0) / b.w, // 몸 중심의 가로 위치(0~1)
@@ -438,6 +459,21 @@
       '.aaa.', 'a...a', 'a...a', 'AAAAA', 'AAkAA', 'AAkAA', 'AAAAA'] },
     check: { pal: { g: '#7cf27c' }, rows: [
       '......g', '.....gg', 'g...gg.', 'gg.gg..', '.ggg...', '..g....'] },
+    // 맵 노드·이벤트
+    event: { pal: { y: '#ffd23f', Y: '#c99a20' }, rows: [
+      '.yyyy.', 'yY..yY', '....yY', '...yY.', '..yY..', '......', '..yY..'] },
+    shop: { pal: { b: '#c98a4a', B: '#8a5a2a', y: '#ffd23f', k: '#5a3a20' }, rows: [
+      '..k.k..', '.k...k.', 'bbbbbbb', 'bbbyybB', 'bbyybbB', 'bbbbbbB', '.BBBBB.'] },
+    anvil: { pal: { a: '#9aa7b8', A: '#5a6070', y: '#ffd23f' }, rows: [
+      '..y.y..', '...y...', 'aaaaaaa', '.aaaaaA', '..aaA..', '.aaaaA.', 'AAAAAAA'] },
+    skull: { pal: { w: '#e8e4d8', W: '#a8a090', k: '#1a1028' }, rows: [
+      '.wwwww.', 'wwwwwwW', 'wkkwkkW', 'wkkwkkW', 'wwwkwwW', '.wwwwW.', '.wkwkW.'] },
+    chest: { pal: { b: '#a8683a', B: '#6a3a1a', y: '#ffd23f' }, rows: [
+      '.bbbbb.', 'bbbbbbB', 'yyyyyyy', 'bbbybbB', 'bbbbbbB', 'BBBBBBB'] },
+    dice: { pal: { w: '#f2f2f2', W: '#a8a8b8', k: '#1a1028' }, rows: [
+      'wwwwwwW', 'wkwwwkW', 'wwwwwwW', 'wwwkwwW', 'wwwwwwW', 'wkwwwkW', 'WWWWWWW'] },
+    mirror: { pal: { g: '#f0c75e', s: '#cfe3ff', S: '#7a8ab8', k: '#3a2a5a' }, rows: [
+      '.ggggg.', 'gsssSSg', 'gssSSkg', 'gsSSkkg', 'gSSkkSg', 'gSkkSSg', '.ggggg.', '...g...', '.ggggg.'] },
 
     // 유물
     r_hourglass: { pal: { y: '#f0c75e', w: '#cfefff', s: '#e0c27a' }, rows: ['yyyyyyy', '.wsssw.', '..wsw..', '...s...', '..w.w..', '.wsssw.', 'yyyyyyy'] },

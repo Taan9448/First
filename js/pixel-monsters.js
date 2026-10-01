@@ -914,5 +914,8 @@
     breathe: 11
   });
 
+  // 거울의 방 그림자 5종: 캐릭터 스프라이트를 어둡게 칠하고 뒤집는다
+  ['kai', 'bram', 'lyra', 'sera', 'nox'].forEach(function (id) { P.shadow('shadow_' + id, id); });
+
   P.def('_unknown', { pal: { a: '#888', A: '#555', e: '#fff' }, flat: 'e', half: ['..aa', '.aaa', 'aaee', 'aaaa', 'AAAA'] });
 })();

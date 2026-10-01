@@ -38,7 +38,8 @@
 
     G.bus.clear();
     bindBus();
-    var theme = (G.Data.monsterById[battleOpts.monsters[0]] || {}).theme || 'forest';
+    var theme = battleOpts.theme || (G.Data.monsterById[battleOpts.monsters[battleOpts.monsters.length - 1]] || {}).theme || 'forest';
+    if (theme === 'mirror') theme = 'castle';
     G.Art.scene(theme).then(function (url) { if (url) field.style.backgroundImage = 'url(' + url + ')'; });
     $('.title').textContent = battleOpts.title || '전투';
     $('.stage-chip .chip').style.background = (G.Data.THEME_COLOR || {})[theme] || '#5ee0ff';

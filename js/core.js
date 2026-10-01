@@ -73,6 +73,17 @@
       var p = pair.split('/');
       return word + (batchim ? p[0] : p[1]);
     },
+    // 숫자 바로 뒤 조사를 숫자 읽기에 맞춘다: '4을' → '4를', '6를' → '6을', '7으로' → '7로'
+    // tail: 숫자와 조사 사이에 끼어 있는 HTML 태그(</span>)를 허용한다
+    numJosa: function (s) {
+      var PAIRS = { '을': '을/를', '를': '을/를', '이': '이/가', '가': '이/가', '은': '은/는', '는': '은/는' };
+      return String(s).replace(/(\d)((?:<\/[a-z]+>)?)(으로|로|을|를|이|가|은|는)(?![가-힣])/g, function (m, d, tag, j) {
+        var bat = '013678'.indexOf(d) >= 0, rieul = '178'.indexOf(d) >= 0;
+        if (j === '로' || j === '으로') return d + tag + (bat && !rieul ? '으로' : '로');
+        var p = PAIRS[j].split('/');
+        return d + tag + (bat ? p[0] : p[1]);
+      });
+    },
     cmp: function (a, op, n) {
       switch (op) {
         case '<': return a < n;

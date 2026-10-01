@@ -95,6 +95,6 @@
 
   // 버튼 클릭 소리
   document.addEventListener('click', function (e) {
-    if (e.target.closest && e.target.closest('.btn, .choice, .stage-node, .hero-pick, .tab')) G.Audio.play('click');
+    if (e.target.closest && e.target.closest('.btn, .choice, .choice-line, .stage-node, .hero-pick, .tab')) G.Audio.play('click');
   });
 })();

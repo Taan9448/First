@@ -3,7 +3,7 @@
 (function () {
   'use strict';
   var G = Game;
-  var VERSION = 1;
+  var VERSION = 2;
   var memory = {};
 
   function store() {
@@ -19,7 +19,18 @@
 
   // 버전 n → n+1 로 올리는 함수들. 저장 형식을 바꾸면 여기에 추가한다
   var MIGRATIONS = {
-    // 1: function (d) { ...; return d; }
+    // v1 → v2 (8단계): 갈림길 맵으로 바뀌어 진행 중인 스테이지는 지운다. 카드·골드·동료·유물은 그대로
+    1: function (d) {
+      d.run = null;
+      d.upgraded = d.upgraded || [];
+      d.growth = d.growth || {};
+      d.bonds = d.bonds || {};
+      d.talks = d.talks || {};
+      d.ascension = d.ascension || { current: 0, best: 0 };
+      d.eventsSeen = d.eventsSeen || [];
+      d.buffs = d.buffs || [];
+      return d;
+    }
   };
 
   var Save = G.Save = {
@@ -64,6 +75,17 @@
         d.decks[k] = d.decks[k].filter(function (id) { return okCard(id) && d.cards.indexOf(id) >= 0; });
       });
       d.relics = (d.relics || []).filter(function (id) { return G.Data.relicById && G.Data.relicById[id]; });
+      d.upgraded = (d.upgraded || []).filter(function (id) { return d.cards.indexOf(id) >= 0; });
+      d.growth = d.growth && typeof d.growth === 'object' ? d.growth : {};
+      Object.keys(d.growth).forEach(function (k) { if (chars.indexOf(k) < 0) delete d.growth[k]; });
+      d.bonds = d.bonds && typeof d.bonds === 'object' ? d.bonds : {};
+      d.talks = d.talks && typeof d.talks === 'object' ? d.talks : {};
+      d.ascension = d.ascension || { current: 0, best: 0 };
+      d.eventsSeen = (d.eventsSeen || []).filter(function (id) { return G.Data.eventById && G.Data.eventById[id]; });
+      d.buffs = (d.buffs || []).filter(function (b) {
+        return b && b.battles > 0 && (!b.mirror || chars.indexOf(b.mirror) >= 0) && (!b.card || cards[b.card]);
+      });
+      if (d.run && !Array.isArray(d.run.map)) d.run = null;
       d.codex = d.codex || { monsters: {} };
       d.codex.monsters = d.codex.monsters || {};
       d.flags = d.flags || {};

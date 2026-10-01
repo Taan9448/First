@@ -88,8 +88,8 @@
     elementOf: elementOf,
     frame: function (rarity) { return G.Pixel.raster('frame:' + rarity, frameSvg(rarity), 63, 88, 12); },
     frameCached: function (rarity) { return G.Pixel.rasterCached('frame:' + rarity); },
-    art: function (def) { return G.Pixel.raster('art:' + def.id, artSvg(def), 50, 35, 10); },
-    artCached: function (def) { return G.Pixel.rasterCached('art:' + def.id); },
+    art: function (def) { return G.Pixel.raster('art:' + (def.base || def.id), artSvg(def), 50, 35, 10); },
+    artCached: function (def) { return G.Pixel.rasterCached('art:' + (def.base || def.id)); },
     // 미리 변환해 둔다(화면에 처음 뜰 때 빈 그림이 보이지 않도록)
     preload: function (defs) {
       var jobs = G.RARITIES.map(function (r) { return G.ArtCards.frame(r); });
