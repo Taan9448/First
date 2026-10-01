@@ -232,10 +232,14 @@
   };
 
   // ---------------- 스프라이트 ----------------
+  // size: 배율(그림 1픽셀 = var(--px) × 0.5 × 배율) 또는 { h: 화면 높이 px, max } — 그 높이에 맞춘다(max 배율 이하)
   UI.spriteEl = function (spriteId, size) {
     var sh = G.Pixel.sheet(spriteId);
-    var e = UI.el('div', 'sprite');
+    var e = UI.el('div', 'sprite' + (sh.frames === 3 ? ' legacy' : ''));
+    if (size && typeof size === 'object') size = Math.min(size.max || 99, size.h / (sh.h * 4));
     size = size || 1;
+    e.style.backgroundSize = (sh.frames || 3) * 100 + '% 100%';
+    e.style.animationDelay = '-' + (Math.random() * 1.2).toFixed(2) + 's';
     e.style.width = 'calc(var(--px) * ' + (sh.w * size) + ')';
     e.style.height = 'calc(var(--px) * ' + (sh.h * size) + ')';
     e.style.backgroundImage = 'url(' + sh.url + ')';

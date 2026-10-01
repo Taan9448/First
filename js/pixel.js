@@ -1,5 +1,6 @@
-// pixel.js — 도트 스프라이트, 도트 아이콘, SVG → 도트 변환
-// 스프라이트는 글자 격자로 적는다. half(왼쪽 절반)는 좌우 대칭으로 펼치고, rows(전체)는 그대로 쓴다.
+// pixel.js — 도트 아이콘, SVG → 도트 변환, 스프라이트 시트 창구
+// 캐릭터·몬스터 그림은 11단계부터 도형 렌더러(pixel-render.js · sprites-*.js)가 그리고, 이 파일은 시트 요청을 넘겨준다.
+// 아이콘은 글자 격자로 적는다. half(왼쪽 절반)는 좌우 대칭으로 펼치고, rows(전체)는 그대로 쓴다.
 // over 는 비대칭 덧그림('.' 투명, '_' 지우기). 그릴 때 윤곽선 1px과 음영을 자동으로 입힌다.
 (function () {
   'use strict';
@@ -104,9 +105,12 @@
       defs[id] = Object.assign({}, src, { pal: p, flip: true });
     },
 
-    // 스프라이트 시트: [대기, 숨쉬기, 공격] 3프레임 가로 배치
+    // 스프라이트 시트. 캐릭터·몬스터는 도형 렌더러(js/pixel-render.js, 대기 8 + 공격 1프레임)가 그린다.
+    // 글자 격자 시트(대기, 숨쉬기, 공격 3프레임)는 정의가 남아 있는 경우에만 쓴다
     sheet: function (id) {
+      if (G.Shape && G.Shape.has(id)) return G.Shape.sheet(id);
       if (sheets[id]) return sheets[id];
+      if (!defs[id] && G.Shape) return G.Shape.sheet('_unknown');
       var spec = defs[id] || defs._unknown;
       var frames = [
         grid(spec, spec.over),
@@ -132,7 +136,7 @@
         return { x: (x - b.x0 + 0.5) / b.w, y: (p.y - b.y0 + 0.5) / b.h };
       };
       return (sheets[id] = {
-        url: c.toDataURL(), canvas: c, w: b.w, h: b.h,
+        url: c.toDataURL(), canvas: c, w: b.w, h: b.h, fw: b.w, fh: b.h, frames: 3,
         anchor: (width / 2 - b.x0) / b.w, // 몸 중심의 가로 위치(0~1)
         tip: frac(spec.tip), tipAttack: frac(spec.tipAttack || spec.tip)
       });
@@ -177,210 +181,6 @@
       return pending[key];
     }
   };
-
-  // =====================================================================
-  // 캐릭터 (얼굴 공통: e 눈, w 눈 빛, m 입/볼, s 피부, S 피부 그늘)
-  // =====================================================================
-  var SKIN = { s: '#f7d2ae', S: '#d9a37f', e: '#2a1b3d', w: '#ffffff', m: '#e57f7a' };
-  function pal(o) { return Object.assign({}, SKIN, o); }
-
-  // 카이 — 붉은 포니테일, 강철 갑옷, 붉은 스카프, 오른손에 검
-  P.def('kai', {
-    pal: pal({ h: '#d9503f', H: '#a3322b', a: '#8eaee0', A: '#56719f', g: '#f0c75e', r: '#e0584a', b: '#7a4a2a', p: '#3d3a5c', l: '#5c3b28', k: '#dfe7f2', K: '#9aa7b8' }),
-    half: [
-      '..........',
-      '......hhhh',
-      '....hhhhhh',
-      '...hhhhhhh',
-      '..hhhhhhhh',
-      '..hggggggg',
-      '..hhhhhhhh',
-      '..hhhHshhH',
-      '..hhssssss',
-      '..hhswesss',
-      '..hhseesss',
-      '...hsmssss',
-      '....sssssm',
-      '.....SSSSS',
-      '....rrrrrr',
-      '..aaarrrrr',
-      '.aaAaaaaga',
-      '.aaAaaaaga',
-      '.ss.Aaaaga',
-      '.ss.bbbbgb',
-      '....pppppp',
-      '....pppppp',
-      '.....ppp..',
-      '.....ppp..',
-      '....llll..',
-      '....llll..'
-    ],
-    over: [
-      { x: 1, y: 2, rows: ['..hh', '.hhh', 'hhh.', 'hh..', 'hH..', 'hH..', 'H...'] }, // 포니테일(뒤)
-      { x: 18, y: 4, rows: ['.k', '.k', '.k', '.k', '.k', '.k', '.k', '.k', '.k', '.k', '.k', '.K', 'ggg', '.b', '.b'] }
-    ],
-    attackOver: [
-      { x: 1, y: 2, rows: ['..hh', '.hhh', 'hhh.', 'hh..', 'hH..', 'hH..', 'H...'] },
-      { x: 18, y: 16, rows: ['.g', 'bgkkkkkkkkkK', '.g'] }
-    ],
-    breathe: 13,
-    tip: { x: 19, y: 5 }, tipAttack: { x: 29, y: 17 }
-  });
-
-  // 브리아 — 은발, 금 머리띠, 푸른 판금 갑옷, 큰 방패
-  P.def('bram', {
-    pal: pal({ h: '#e9e4d6', H: '#b3ab98', a: '#5b8fd9', A: '#35589a', g: '#f0c75e', b: '#6b4a2f', l: '#3b3f5c', d: '#a9bccf', D: '#6f839b' }),
-    half: [
-      '..........',
-      '......hhhh',
-      '....hhhhhh',
-      '...hhhhhhh',
-      '..hhhhhhhh',
-      '..hhgggggg',
-      '..hhhhhhhh',
-      '..hhhHhhhh',
-      '..hhssssss',
-      '..hhswesss',
-      '..hhseesss',
-      '..hhsmssss',
-      '..h.sssssm',
-      '...aa.SSSS',
-      '.aaaaaaaaa',
-      'aaAaaaaaga',
-      'aaAaaaaaga',
-      'ssAAaaaaga',
-      'ss.AAaaaga',
-      '...bbbbbgb',
-      '...aaaaaaa',
-      '...aAaaaaa',
-      '....AAA...',
-      '....AAA...',
-      '...llll...',
-      '...llll...'
-    ],
-    over: [{ x: 13, y: 13, rows: ['ggggggg', 'gdddddg', 'gddgddg', 'gdgggdg', 'gddgddg', 'gddgddg', 'gDdddDg', '.gDdDg.', '..gDg..', '...g...'] }],
-    attackOver: [{ x: 17, y: 13, rows: ['ggggggg', 'gdddddg', 'gddgddg', 'gdgggdg', 'gddgddg', 'gddgddg', 'gDdddDg', '.gDdDg.', '..gDg..', '...g...'] }],
-    breathe: 13,
-    tip: { x: 16, y: 17 }, tipAttack: { x: 22, y: 17 }
-  });
-
-  // 리라 — 보라 마녀 모자, 금발, 보라 로브, 수정 지팡이
-  P.def('lyra', {
-    pal: pal({ h: '#f2d36b', H: '#c9a441', t: '#7c4dbd', T: '#55308f', g: '#f0c75e', a: '#a274dc', A: '#6d41ad', f: '#8a5a35', o: '#7fe3ff', O: '#e6fbff' }),
-    half: [
-      '.........T',
-      '........TT',
-      '.......tTt',
-      '......tttt',
-      '.....ttttt',
-      '....tttggg',
-      '.ttttttttt',
-      '..hhhhhhhh',
-      '..hhhHhhhh',
-      '..hhssssss',
-      '..hhswesss',
-      '..hhseesss',
-      '..hhsmssss',
-      '..hh.ssssm',
-      '..hh..SSSS',
-      '..h.aaaaaa',
-      '...aaAaaga',
-      '..aaaAaaga',
-      '.ssaaAaaga',
-      '.ssaAAaaga',
-      '..aaAaaaga',
-      '..aaAaaaaa',
-      '.aaaAaaaaa',
-      '.aaAAaaaaa',
-      '.AAAAAAAAA'
-    ],
-    over: [
-      { x: 6, y: 0, rows: ['____'] },
-      { x: 7, y: -2, rows: ['.T', 'TT', 'Tt'] },
-      { x: 18, y: 6, rows: ['.O.', 'OoO', 'ooo', '.g.', '.f.', '.f.', '.f.', '.f.', '.f.', '.f.', '.f.', '.f.', '.f.', '.f.', '.f.', '.f.', '.f.', '.f.', '.f.'] }
-    ],
-    attackOver: [
-      { x: 6, y: 0, rows: ['____'] },
-      { x: 7, y: -2, rows: ['.T', 'TT', 'Tt'] },
-      { x: 18, y: 4, rows: ['O.O.O', '.OoO.', 'OoooO', '.ooo.', '.OgO.', '..f..', '..f..', '..f..', '..f..', '..f..', '..f..', '..f..', '..f..', '..f..', '..f..', '..f..', '..f..', '..f..', '..f..', '..f..', '..f..'] }
-    ],
-    breathe: 14,
-    tip: { x: 19, y: 7 }, tipAttack: { x: 20, y: 6 }
-  });
-
-  // 세라 — 흰 베일, 하늘색 로브, 태양 지팡이
-  P.def('sera', {
-    pal: pal({ v: '#f4f1ea', V: '#c9c3b6', h: '#9b6a45', g: '#f0c75e', a: '#cfe3f5', A: '#86a9cc', c: '#5b8fd9', f: '#d9b25a', o: '#fff3a8' }),
-    half: [
-      '..........',
-      '......vvvv',
-      '....vvvvvv',
-      '...vvvvvvv',
-      '..vvvggggg',
-      '..vvvvvvvv',
-      '..vvhhhhhh',
-      '..vvhhssss',
-      '..vvhsssss',
-      '..vvswesss',
-      '..vvseesss',
-      '..vvsmssss',
-      '..vv.ssssm',
-      '..Vv..SSSS',
-      '..Vvaaaaaa',
-      '..VaaacAga',
-      '..aaaacAgg',
-      '.ssaaacAgg',
-      '.ssaaacAgg',
-      '..aaaacAga',
-      '..aaaacaaa',
-      '.aaaaacaaa',
-      '.aaaaacaaa',
-      '.aAAaacaaa',
-      '.AAAAAAAAA'
-    ],
-    over: [{ x: 18, y: 3, rows: ['.o.o.', '..g..', 'ogggo', '..g..', '.o.o.', '..f..', '..f..', '..f..', '..f..', '..f..', '..f..', '..f..', '..f..', '..f..', '..f..', '..f..', '..f..', '..f..', '..f..', '..f..', '..f..', '..f..'] }],
-    attackOver: [{ x: 18, y: 1, rows: ['o.o.o', '.ogo.', 'ogggo', '.ogo.', 'o.o.o', '..f..', '..f..', '..f..', '..f..', '..f..', '..f..', '..f..', '..f..', '..f..', '..f..', '..f..', '..f..', '..f..', '..f..', '..f..', '..f..', '..f..', '..f..', '..f..'] }],
-    breathe: 13,
-    tip: { x: 20, y: 5 }, tipAttack: { x: 20, y: 3 }
-  });
-
-  // 녹스 — 짙은 후드, 초록 목도리, 오른손에 단검
-  P.def('nox', {
-    pal: pal({ v: '#3b3557', V: '#25213a', h: '#2e2a45', g: '#4fbf8a', G: '#2f8a5e', a: '#4a4466', A: '#2f2a47', b: '#6b4a2f', l: '#24203a', k: '#dfe7f2', K: '#9aa7b8', y: '#b6ff9e' }),
-    half: [
-      '..........',
-      '......vvvv',
-      '....vvvvvv',
-      '...vvvvvvv',
-      '..vvvvvvvv',
-      '..vvvvvvvv',
-      '..vvVhhhhh',
-      '..vvhhhhhh',
-      '..vvhsssss',
-      '..vvsyesss',
-      '..vvseesss',
-      '..vvssssss',
-      '..vv.sssss',
-      '..vv.ggggg',
-      '...ggggggg',
-      '..aagGaaaa',
-      '..aaaGaaba',
-      '.ssaaGaaba',
-      '.ssaaAaaba',
-      '...bbbbbbb',
-      '....aaaaaa',
-      '....aaaaaa',
-      '.....AAA..',
-      '.....AAA..',
-      '....llll..',
-      '....llll..'
-    ],
-    flat: 'ewy',
-    over: [{ x: 18, y: 16, rows: ['.k', '.k', 'gK', '.b'] }, { x: 2, y: 14, rows: ['gg', 'gG', '.G'] }],
-    attackOver: [{ x: 18, y: 17, rows: ['bgKkkk'] }, { x: 2, y: 14, rows: ['gg', 'gG', '.G'] }],
-    breathe: 13,
-    tip: { x: 19, y: 16 }, tipAttack: { x: 23, y: 17 }
-  });
 
   // =====================================================================
   // 아이콘 (행동 예고·상태이상·메뉴)

@@ -16,7 +16,7 @@
 
   function M(id, name, theme, rank, hp, moves, pattern, extra) {
     return Object.assign({ id: id, name: name, theme: theme, rank: rank, hp: hp, moves: moves, pattern: pattern,
-      sprite: id, size: rank === 'boss' || rank === 'final' ? 1.5 : rank === 'elite' ? 1.25 : 1 }, extra);
+      sprite: id, size: 1 }, extra); // 11단계: 그림 자체가 등급마다 크다(정예 ~96px · 보스 ~124px · 최종 보스 148px)
   }
 
   var list = [

@@ -62,7 +62,7 @@
     var rankName = { elite: '정예', boss: '보스', final: '최종 보스' }[m.def.rank] || '보스';
     var c = UI.el('div', 'cutin', '<div class="band"><div class="portrait"></div><div class="who"><small>' + (m.def.rank === 'final' ? 'FINAL BOSS' : m.def.rank === 'elite' ? 'ELITE' : 'BOSS') +
       '</small><b>' + U.esc(m.name) + '</b><span class="dim">' + rankName + ' · ' + U.esc(m.def.desc || '') + '</span></div></div>');
-    var sp = UI.spriteEl(m.def.sprite, 2.2 / Math.max(1, m.def.size));
+    var sp = UI.spriteEl(m.def.sprite, { h: 300, max: 2.4 });
     c.querySelector('.portrait').appendChild(sp);
     if (FX.low) c.style.animationDuration = '0.8s';
     field.appendChild(c);

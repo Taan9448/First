@@ -115,7 +115,7 @@
           var rec = d.codex.monsters[mo.id];
           var row = UI.el('div', 'mon-row pix');
           var sp = UI.el('div', 'sp');
-          var s = UI.spriteEl(mo.sprite, 0.6);
+          var s = UI.spriteEl(mo.sprite, { h: 96, max: 0.9 });
           s.style.left = '0';
           if (!rec) { s.style.filter = 'brightness(0)'; s.style.animation = 'none'; }
           sp.appendChild(s);

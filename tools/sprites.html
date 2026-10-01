@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>스프라이트 미리보기</title>
+<!-- 개발용: 도형 도트 그림(js/sprites-*.js)을 모두 그려 본다. 게임에는 포함하지 않는다 -->
+<style>
+  body { background: #120e1f; color: #e8e2ff; font: 13px sans-serif; margin: 16px; }
+  h2 { margin: 18px 0 8px; font-size: 15px; }
+  .row { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end; }
+  figure { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  canvas { image-rendering: pixelated; background: #221a3c; }
+  small { color: #9a90bd; }
+</style>
+</head>
+<body>
+<label>배율 <select id="z"><option>2</option><option selected>3</option><option>4</option></select></label>
+<label><input type="checkbox" id="atk"> 공격 자세</label>
+<div id="out"></div>
+<script src="../js/core.js"></script>
+<script src="../js/pixel-render.js"></script>
+<script src="../js/sprites-heroes.js"></script>
+<script src="../js/sprites-monsters.js"></script>
+<script>
+  var S = Game.Shape, out = document.getElementById('out'), anims = [];
+  function build() {
+    out.innerHTML = ''; anims = [];
+    var z = +document.getElementById('z').value, atk = document.getElementById('atk').checked;
+    var groups = {};
+    Object.keys(S.specs).forEach(function (id) { var g = S.specs[id].group || (id.indexOf('shadow_') === 0 ? 'mirror' : 'heroes'); (groups[g] = groups[g] || []).push(id); });
+    Object.keys(groups).forEach(function (g) {
+      var h = document.createElement('h2'); h.textContent = g; out.appendChild(h);
+      var row = document.createElement('div'); row.className = 'row'; out.appendChild(row);
+      groups[g].forEach(function (id) {
+        var t0 = performance.now(), sh = S.sheet(id), ms = Math.round(performance.now() - t0);
+        var f = document.createElement('figure'), cv = document.createElement('canvas');
+        cv.width = sh.fw; cv.height = sh.fh; cv.style.width = sh.fw * z + 'px';
+        f.appendChild(cv);
+        var cap = document.createElement('small'); cap.textContent = id + ' ' + sh.fw + '×' + sh.fh + ' · ' + ms + 'ms'; f.appendChild(cap);
+        row.appendChild(f);
+        anims.push({ cv: cv, sh: sh, atk: atk });
+      });
+    });
+  }
+  var fi = 0;
+  setInterval(function () {
+    fi++;
+    anims.forEach(function (a) {
+      var c = a.cv.getContext('2d'), i = a.atk ? 8 : fi % 8;
+      c.clearRect(0, 0, a.cv.width, a.cv.height);
+      c.drawImage(a.sh.canvas, i * a.sh.fw, 0, a.sh.fw, a.sh.fh, 0, 0, a.sh.fw, a.sh.fh);
+      if (a.atk && a.sh.tipAttack) { c.fillStyle = '#ff0'; c.fillRect(Math.round(a.sh.tipAttack.x * a.sh.fw), Math.round(a.sh.tipAttack.y * a.sh.fh), 1, 1); }
+    });
+  }, 150);
+  document.getElementById('z').onchange = document.getElementById('atk').onchange = build;
+  build();
+</script>
+</body>
+</html>

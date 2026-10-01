@@ -174,17 +174,18 @@
     var sh = spriteEl._sheet;
     if (!sh || !sh.canvas) return;
     var r = spriteEl.getBoundingClientRect(), h = host().getBoundingClientRect();
-    var data = sh.canvas.getContext('2d').getImageData(0, 0, sh.w, sh.h).data;
-    var step = FX.low ? 3 : 2, cx = r.left + r.width / 2;
-    for (var y = 0; y < sh.h; y += step) {
-      for (var x = 0; x < sh.w; x += step) {
-        var i = (y * sh.w * 3 + x) * 4; // 시트는 3프레임 가로 배치
+    var fw = sh.fw || sh.w, fh = sh.fh || sh.h, nf = sh.frames || 3;
+    var data = sh.canvas.getContext('2d').getImageData(0, 0, fw, fh).data;
+    var step = (FX.low ? 3 : 2) * Math.max(1, Math.round(fw / 48)), cx = r.left + r.width / 2;
+    for (var y = 0; y < fh; y += step) {
+      for (var x = 0; x < fw; x += step) {
+        var i = (y * fw + x) * 4; // 첫 프레임만 읽는다
         if (data[i + 3] < 128) continue;
-        var px = r.left + (x + 0.5) / sh.w * r.width - h.left, py = r.top + (y + 0.5) / sh.h * r.height - h.top;
+        var px = r.left + (x + 0.5) / fw * r.width - h.left, py = r.top + (y + 0.5) / fh * r.height - h.top;
         var c = cp({ x: px, y: py });
         var dir = (px + h.left - cx) / r.width;
         add({ x: c.x, y: c.y, vx: dir * rand(1, 2.4) + rand(-0.4, 0.4), vy: rand(-2.2, -0.4), g: 0.12, drag: 0.98,
-          color: 'rgb(' + data[i] + ',' + data[i + 1] + ',' + data[i + 2] + ')', size: Math.max(1, Math.round(r.width / sh.w / SCALE * step)),
+          color: 'rgb(' + data[i] + ',' + data[i + 1] + ',' + data[i + 2] + ')', size: Math.max(1, Math.round(r.width / fw / SCALE * step)),
           life: Math.round(rand(26, 44)), blink: true });
       }
     }

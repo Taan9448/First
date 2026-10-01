@@ -208,7 +208,7 @@
       html += '<button class="btn gold go" ' + (open ? '' : 'disabled') + '>' + (cleared ? '다시 도전' : '출발') + '</button>';
     }
     side.innerHTML = html;
-    var sp = UI.spriteEl(D.monsterById[bossId].sprite, Math.min(1, 1.6 / D.monsterById[bossId].size));
+    var sp = UI.spriteEl(D.monsterById[bossId].sprite, { h: 150, max: 1.2 });
     sp.style.animation = seen ? '' : 'none';
     if (!seen) sp.style.filter = 'brightness(0)';
     side.querySelector('.boss-sp').appendChild(sp);
