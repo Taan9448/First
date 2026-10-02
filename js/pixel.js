@@ -327,6 +327,13 @@
       '..w.....', '.wwwwww.', '..w.....', '........', '.....c..', '.cccccc.', '.....c..'] },
     help: { pal: { w: '#e8f0ff', c: '#5ee6ff' }, rows: [
       '.cccc.', 'cc..cc', '....cc', '...cc.', '..cc..', '......', '..cc..'] },
+    // 던전 지도(14단계): 모르는 방, 입구 문, 열린 상자
+    unknown: { pal: { w: '#b8a888', W: '#6a5a48' }, rows: [
+      '..www..', '.w...W.', 'w..ww.W', 'w.w.W.W', 'w.WW..W', '.W...W.', '..WWW..'] },
+    door: { pal: { s: '#8a8a9a', S: '#55556a', b: '#7a4a24', B: '#4a2a14', y: '#ffd23f' }, rows: [
+      '.sssss.', 'ssbbbsS', 'sbbBbbS', 'sbbBbbS', 'sbbByBS', 'sbbBbbS', 'SSSSSSS'] },
+    chest_open: { pal: { b: '#a8683a', B: '#6a3a1a', y: '#ffd23f', w: '#fff6c0' }, rows: [
+      '.bbbbb.', 'bBBBBBb', '.wyywy.', 'yyyyyyy', 'bbbybbB', 'bbbbbbB', 'BBBBBBB'] },
     sword2: { pal: { k: '#e9eef5', K: '#9aa7b8', r: '#ff5a5a', g: '#f0c75e' }, rows: [
       'k.......k', '.k.....k.', '..k...k..', '...kKk...', '....K....', '...kKk...', '..g...g..', '.r.....r.', 'r.......r'] }
   });

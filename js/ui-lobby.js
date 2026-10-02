@@ -8,7 +8,7 @@
   var heroPick = null, bannerIdx = 0, timers = [];
   function charDef(id) { return D.characters.filter(function (c) { return c.id === id; })[0]; }
   function stop() { timers.forEach(clearInterval); timers = []; }
-  function lastType(def) { return def.cols[def.cols.length - 1][0]; }
+  function lastType(def) { return def.last; }
 
   // 지금 보여 줄 스테이지: 진행 중이면 그 스테이지, 아니면 다음 목표
   function focusStage() {
@@ -26,7 +26,7 @@
   function banners() {
     var d = St.data, r = d.run, list = [], n = focusStage(), def = St.stageDef(n);
     if (r) {
-      list.push({ small: 'NOW · 진행 중', title: 'STAGE ' + r.stage + ' · ' + D.STAGE_NAME[r.stage - 1], sub: '경로 ' + Math.min(r.col + 1, r.map.length) + '/' + r.map.length + ' · 눌러서 이어하기',
+      list.push({ small: 'NOW · 진행 중', title: 'STAGE ' + r.stage + ' · ' + D.STAGE_NAME[r.stage - 1], sub: '깊이 ' + Math.min(r.col + 1, r.map.length) + '/' + r.map.length + ' · 눌러서 이어하기',
         sprite: d.party[0], go: function () { Meta.continueRun(); } });
     }
     var boss = D.monsterById[def.boss], seen = n <= d.clearedStage || !!d.codex.monsters[def.boss];

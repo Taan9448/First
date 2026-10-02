@@ -5,7 +5,7 @@
 
   var Meta = G.Meta = {};
   var NODE_ICON = { battle: 'attack', elite: 'elite', event: 'event', rest: 'campfire', shop: 'shop', boss: 'crown', midboss: 'crown', final: 'crown' };
-  function lastType(def) { return def.cols[def.cols.length - 1][0]; }
+  function lastType(def) { return def.last; }
   var THEMES = ['forest', 'desert', 'snow', 'volcano', 'castle'];
 
   function charDef(id) { return D.characters.filter(function (c) { return c.id === id; })[0]; }
@@ -84,14 +84,34 @@
   var mapSel = null;
   var resizeBound = false;
 
+  // 진행 중인 스테이지가 있으면 던전 지도(14단계)를, 없으면 월드맵을 보인다. 위의 버튼으로 바꿔 볼 수 있다
+  var mapView = 'dungeon';
   Meta.map = function (sel) {
     var d = St.data, r = d.run, el = screen('map');
     mapSel = sel || (r ? r.stage : mapSel) || Math.min(D.stages.length, d.clearedStage + 1);
     var asc = St.ascLevel();
-    el.innerHTML = topbar('원정 지도' + (asc ? ' <span class="asc-chip">승천 ' + asc + '</span>' : ''),
+    var dungeon = !!r && mapView === 'dungeon' && mapSel === r.stage;
+    el.innerHTML = topbar((dungeon ? '던전 지도' : '원정 지도') + (asc ? ' <span class="asc-chip">승천 ' + asc + '</span>' : ''),
+      (r ? '<button class="btn small ghost view">' + UI.icon('map') + (dungeon ? '월드맵' : '던전 지도') + '</button>' : '') +
       (d.flags.ended ? '<button class="btn small cyan ascend">새 원정</button>' : '') + '<button class="btn small ghost to-title">' + UI.icon('home') + '로비</button>') +
       '<div class="map-layout"><div class="map-frame"><div class="map-canvas"></div></div><aside class="map-side frame"></aside></div>' +
       '<div class="map-bottom"><div class="party-row"></div><div class="relic-bar"></div></div>';
+    var common = function () {
+      renderSide(el.querySelector('.map-side'), mapSel, dungeon);
+      el.querySelector('.party-row').innerHTML = d.party.map(miniHero).join('');
+      fillSprites(el.querySelector('.party-row'), 0.6);
+      el.querySelector('.map-bottom .relic-bar').innerHTML = UI.relicBar(d.relics);
+      el.querySelector('.to-title').onclick = function () { Meta.lobby(); };
+      if (el.querySelector('.view')) el.querySelector('.view').onclick = function () { mapView = dungeon ? 'world' : 'dungeon'; Meta.map(r.stage); };
+      if (el.querySelector('.ascend')) el.querySelector('.ascend').onclick = function () { Meta.ascend(); };
+    };
+    if (dungeon) {
+      common();
+      UI.show('map');
+      drawDungeon();
+      if (!resizeBound) { resizeBound = true; window.addEventListener('resize', fitMap); }
+      return;
+    }
     var canvas = el.querySelector('.map-canvas');
     G.ArtMap.world().then(function (u) { if (u) canvas.style.backgroundImage = 'url(' + u + ')'; });
 
@@ -141,21 +161,25 @@
     token.style.left = tp[0] / 10 + '%'; token.style.top = 'calc(' + tp[1] / 5.6 + '% - 26px)';
     canvas.appendChild(token);
 
-    renderSide(el.querySelector('.map-side'), mapSel);
-    el.querySelector('.party-row').innerHTML = d.party.map(miniHero).join('');
-    fillSprites(el.querySelector('.party-row'), 0.6);
-    el.querySelector('.map-bottom .relic-bar').innerHTML = UI.relicBar(d.relics);
-    el.querySelector('.to-title').onclick = function () { Meta.lobby(); };
-    if (el.querySelector('.ascend')) el.querySelector('.ascend').onclick = function () { Meta.ascend(); };
+    common();
     UI.show('map');
     fitMap();
     if (!resizeBound) { resizeBound = true; window.addEventListener('resize', fitMap); }
   };
 
   // 지도는 1000:560 비율을 지키며 틀 안에 꽉 차게
+  function drawDungeon() {
+    var frame = screen('map').querySelector('.map-frame');
+    if (!frame) return;
+    G.DungeonMap.render(frame, {
+      onPick: function (j) { if (St.chooseRoom(j)) { SND('click'); Meta.continueRun(); } },
+      onEnter: function () { Meta.continueRun(); }
+    });
+  }
   function fitMap() {
     var el = screen('map');
     if (!el.classList.contains('on')) return;
+    if (el.querySelector('.map-frame.dungeon')) return drawDungeon();
     var frame = el.querySelector('.map-frame'), canvas = el.querySelector('.map-canvas');
     if (!frame || !canvas) return;
     var w = frame.clientWidth - 30, h = frame.clientHeight - 30;
@@ -165,21 +189,18 @@
     canvas.classList.toggle('compact', cw < 760);
   }
 
-  // 노드 트랙: 열마다 노드 1~2개를 세로로 쌓는다. r 이 있으면 지나온 길·고를 길을 표시한다
-  function routeHTML(cols, r) {
-    return '<div class="route">' + cols.map(function (col, ci) {
-      var chosen = r ? r.path[ci] : null;
-      return '<div class="rcol">' + col.map(function (nd, ni) {
-        var type = typeof nd === 'string' ? nd : nd.type, cls = 'rnode';
-        if (r && ci < r.col) cls += ni === chosen ? ' done' : ' skip';
-        else if (r && ci === r.col) cls += chosen == null ? ' pick' : ni === chosen ? ' now' : ' skip';
-        var icon = r && ci < r.col && ni === chosen ? 'check' : NODE_ICON[type];
-        return '<div class="' + cls + '" data-tip="' + D.NODE_NAME[type] + '"><i class="ico" style="' + UI.iconStyle(icon) + '"></i></div>';
-      }).join('') + '</div>';
-    }).join('<div class="rlink"></div>') + '</div>';
+  function roomLabel(node, r) {
+    if (r.pending) return '보상 받기';
+    if (r.upgrades) return '카드 강화하기';
+    var t = node.type;
+    if (t === 'rest') return '휴식처로';
+    if (t === 'shop') return '상점으로';
+    if (t === 'treasure') return node.result && node.result.ambush ? '전투 시작' : '보물 방으로';
+    if (t === 'event') return node.result && node.result.fight ? '전투 시작' : '이벤트 보기';
+    return D.NODE_NAME[t] + ' 시작';
   }
 
-  function renderSide(side, n) {
+  function renderSide(side, n, dungeon) {
     var d = St.data, r = d.run, def = St.stageDef(n);
     var cleared = n <= d.clearedStage, open = St.canEnter(n), cur = r && r.stage === n;
     var last = lastType(def);
@@ -190,34 +211,38 @@
     var state = cur ? '진행 중' : cleared ? '클리어' : open ? '도전 가능' : '잠김 (앞 스테이지를 클리어)';
     var html = '<div class="side-head"><small>' + D.THEME_NAME[def.theme] + ' · STAGE ' + n + '</small><b>' + D.STAGE_NAME[n - 1] + '</b></div>' +
       '<div class="boss-card" style="--tc:' + tc + '"><span class="ribbon ' + (last === 'elite' ? 'cyan' : 'red') + '">' + tag + '</span><div class="sp boss-sp"></div>' +
-      '<div class="name">' + (seen ? D.monsterById[bossId].name : '???') + '</div></div>' +
-      '<div class="info-line"><span>상태</span><span>' + state + '</span></div>' +
-      '<div class="info-line"><span>보상</span><span>' + join + '</span></div>' +
-      '<div><span class="dim">경로</span>' + routeHTML(cur ? r.map : def.cols, cur ? r : null) + '</div>';
-    if (cur) {
+      '<div class="name">' + (seen ? D.monsterById[bossId].name : '???') + '</div></div>';
+    if (dungeon) {
+      var sm = G.DungeonMap.summary(), sp = Math.round(St.scoutChance() * 100);
+      html += '<div class="depth"><span>깊이</span><div class="bar"><i style="width:calc(' + Math.round(sm.depth / sm.total * 100) + '% - 4px)"></i></div><b>' + sm.depth + '/' + sm.total + '</b></div>' +
+        '<div class="info-line" data-tip="방에 들어갈 때 그 방과 이어진 다음 방의 내용이 드러날 확률' + (d.party.indexOf('nox') >= 0 ? ' (녹스가 정찰을 돕는다)' : '') + '"><span>정찰</span><span>' + sp + '%</span></div>' +
+        '<div class="info-line"><span>밝혀진 방</span><span>' + sm.known + '/' + sm.ahead + '</span></div>' +
+        '<div class="info-line"><span>보상</span><span>' + join + '</span></div>';
       var node = St.node();
+      if (r.scouted && r.scouted.length && node && !r.pending) html += '<p class="scout-note">정찰: 앞의 방 ' + r.scouted.length + '곳이 드러났다.</p>';
       if (!node && !r.pending) {
-        // 갈림길: 갈 길을 고른다
-        html += '<div class="fork"><span class="dim">갈림길 — 한 길만 갈 수 있다</span><div class="fork-btns">' + St.choices().map(function (nd, i) {
-          return '<button class="btn fork-btn" data-i="' + i + '"><i class="ico" style="' + UI.iconStyle(NODE_ICON[nd.type]) + '"></i>' + D.NODE_NAME[nd.type] + '</button>';
+        var ch = St.choices();
+        html += '<div class="fork"><span class="dim">갈림길 — ' + ch.length + '갈래. 지도에서 방을 고른다</span><div class="fork-btns">' + ch.map(function (nd, i) {
+          return '<button class="btn fork-btn" data-i="' + i + '">' + UI.icon(nd.known ? G.DungeonMap.ICON[nd.type] : 'unknown') + (nd.known ? D.NODE_NAME[nd.type] : '미지') + '</button>';
         }).join('') + '</div></div>';
-      } else {
-        var label = r.pending ? '보상 받기' : r.upgrades ? '카드 강화하기' : node.type === 'rest' ? '휴식처로' : node.type === 'shop' ? '상점으로' :
-          node.type === 'event' ? (node.result && node.result.fight ? '전투 시작' : '이벤트 보기') : D.NODE_NAME[node.type] + ' 시작';
-        html += '<button class="btn gold go">' + label + '</button>';
-      }
+      } else html += '<button class="btn gold go">' + roomLabel(node, r) + '</button>';
       html += (r.col === 0 && !r.pending ? '<button class="btn party">파티 편성</button>' : '') +
         '<button class="btn small danger quit">스테이지 포기</button>';
-    } else if (r) {
-      html += '<p class="dim">스테이지 ' + r.stage + '을(를) 진행 중이다.</p><button class="btn goto">진행 중인 스테이지 보기</button>';
     } else {
-      html += '<button class="btn gold go" ' + (open ? '' : 'disabled') + '>' + (cleared ? '다시 도전' : '출발') + '</button>';
+      var R = D.mapRules, cols = def.layout === 'final' ? R.finalSplit[0] + R.finalSplit[1] + 6 : R.middleCols[0] + 3 + '~' + (R.middleCols[1] + 3);
+      html += '<div class="info-line"><span>상태</span><span>' + state + '</span></div>' +
+        '<div class="info-line"><span>보상</span><span>' + join + '</span></div>' +
+        '<div class="info-line"><span>깊이</span><span>' + cols + '칸</span></div>' +
+        '<p class="dim route-note">들어갈 때마다 길이 새로 짜인다. 방 안에 무엇이 있는지는 들어가거나 정찰해야 알 수 있다.</p>';
+      if (cur) html += '<button class="btn gold goto">던전 지도로</button>';
+      else if (r) html += '<p class="dim">스테이지 ' + r.stage + '을(를) 진행 중이다.</p><button class="btn goto">진행 중인 스테이지 보기</button>';
+      else html += '<button class="btn gold go" ' + (open ? '' : 'disabled') + '>' + (cleared ? '다시 도전' : '출발') + '</button>';
     }
     side.innerHTML = html;
-    var sp = UI.spriteEl(D.monsterById[bossId].sprite, { h: 150, max: 1.2 });
-    sp.style.animation = seen ? '' : 'none';
-    if (!seen) sp.style.filter = 'brightness(0)';
-    side.querySelector('.boss-sp').appendChild(sp);
+    var spr = UI.spriteEl(D.monsterById[bossId].sprite, { h: 150, max: 1.2 });
+    spr.style.animation = seen ? '' : 'none';
+    if (!seen) spr.style.filter = 'brightness(0)';
+    side.querySelector('.boss-sp').appendChild(spr);
     var go = side.querySelector('.go');
     if (go) go.onclick = function () { startOrContinue(n); };
     UI.$$('.fork-btn', side).forEach(function (b) {
@@ -227,14 +252,14 @@
     if (side.querySelector('.quit')) side.querySelector('.quit').onclick = function () {
       confirmBox('스테이지를 포기할까요? (얻은 카드·골드·유물은 남는다)', '포기', function () { St.abandon(); Meta.map(); });
     };
-    if (side.querySelector('.goto')) side.querySelector('.goto').onclick = function () { Meta.map(r.stage); };
+    if (side.querySelector('.goto')) side.querySelector('.goto').onclick = function () { mapView = 'dungeon'; Meta.map(r.stage); };
   }
 
   function startOrContinue(n) {
     var r = St.data.run;
     if (r) { if (r.stage === n) Meta.continueRun(); return; }
     if (!St.canEnter(n)) return;
-    Meta.party(function () { St.startStage(n); Meta.stageIntro(n, function () { Meta.map(n); }); }, '스테이지 ' + n + ' 출발', function () { Meta.map(n); });
+    Meta.party(function () { St.startStage(n); mapView = 'dungeon'; Meta.stageIntro(n, function () { Meta.map(n); }); }, '스테이지 ' + n + ' 출발', function () { Meta.map(n); });
   }
 
   // 진행 중인 스테이지의 현재 노드로
@@ -249,6 +274,7 @@
     if (node.type === 'rest') return r.upgrades ? Meta.upgrade() : Meta.rest();
     if (node.type === 'shop') return Meta.shop();
     if (node.type === 'event' && !(node.result && node.result.fight && !node.result.cards && !r.upgrades)) return Meta.event();
+    if (node.type === 'treasure' && !(node.result && node.result.ambush)) return Meta.treasure();
     // 스토리(13단계): 중간 보스·마지막 전투 직전 장면(처음 한 번)
     var kind = node.type === 'midboss' ? 'mid' : r.col === r.map.length - 1 ? 'boss' : null;
     var sc = kind && St.sceneFor(kind, r.stage);
@@ -517,6 +543,39 @@
     if (el.querySelector('.back')) el.querySelector('.back').onclick = function () { Meta.map(); };
     UI.show('camp');
   };
+  // ================= 보물 방(14단계) =================
+  // 상자를 열지(골드·가끔 유물, 그러나 매복일 수도) 그냥 지나칠지 고른다
+  Meta.treasure = function () {
+    var r = St.data.run, node = St.node(), el = screen('camp');
+    if (!node || node.type !== 'treasure') return Meta.map();
+    var res = node.result;
+    var text = !res ? '먼지 쌓인 상자가 어둠 속에 놓여 있다. 자물쇠는 녹슬었고, 주위가 너무 조용하다. 무언가 숨죽이고 있는 것만 같다.' :
+      res.ambush ? '상자는 미끼였다! 그림자 속에 숨어 있던 적들이 덮쳐 온다. 물리치면 상자 안의 골드를 챙길 수 있다.' :
+      '삐걱이며 뚜껑이 열린다. 오래 잠들어 있던 보물이 횃불에 반짝인다.';
+    var loot = res && !res.ambush ? '<div class="loot"><span class="res">' + UI.icon('gold') + '+' + res.gold + '</span></div>' +
+      (res.relic ? '<div class="relic-tiles">' + UI.relicTile(res.relic, 'static') + '</div>' : '') : '';
+    el.innerHTML = topbar('보물 방') + '<div class="meta-body">' +
+      '<span class="ribbon">보물 방</span><h1 class="big-title">' + (res && res.ambush ? '매복!' : '잊힌 상자') + '</h1>' +
+      '<div class="event-card frame treasure-card"><div class="chest-stage' + (res ? res.ambush ? ' trap' : ' opened' : '') + '"><i class="ico chest-big" style="' +
+      UI.iconStyle(res && !res.ambush ? 'chest_open' : 'chest') + '"></i></div>' +
+      '<div class="event-text"><p>' + text + '</p>' + loot + '</div></div>' +
+      '<div class="row">' + (!res ? '<button class="btn gold open">상자를 연다</button><button class="btn ghost pass">그냥 지나간다</button>' :
+        res.ambush ? '<button class="btn danger fight">전투 시작</button>' : '<button class="btn gold next">계속</button>') +
+      '<button class="btn small ghost back">지도로</button></div></div>';
+    backdrop(el, runTheme());
+    var q = function (c) { return el.querySelector(c); };
+    if (q('.open')) q('.open').onclick = function () {
+      var out = St.openTreasure();
+      SND(out.ambush ? 'big' : 'coin');
+      Meta.treasure();
+    };
+    if (q('.pass')) q('.pass').onclick = function () { nodeDone(St.leaveTreasure()); };
+    if (q('.fight')) q('.fight').onclick = function () { Meta.continueRun(); };
+    if (q('.next')) q('.next').onclick = function () { nodeDone(St.leaveTreasure()); };
+    q('.back').onclick = function () { Meta.map(); };
+    UI.show('camp');
+  };
+
   function SND(k) { if (G.Audio) G.Audio.play(k); }
 
   // ================= 야영지 대화(9단계) =================

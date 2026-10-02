@@ -3,7 +3,7 @@
 (function () {
   'use strict';
   var G = Game;
-  var VERSION = 2;
+  var VERSION = 3;
   var memory = {};
 
   function store() {
@@ -29,6 +29,11 @@
       d.ascension = d.ascension || { current: 0, best: 0 };
       d.eventsSeen = d.eventsSeen || [];
       d.buffs = d.buffs || [];
+      return d;
+    },
+    // v2 → v3 (14단계): 던전 지도(통로·정찰)로 바뀌어 진행 중인 스테이지는 지운다
+    2: function (d) {
+      d.run = null;
       return d;
     }
   };
@@ -90,7 +95,7 @@
       d.buffs = (d.buffs || []).filter(function (b) {
         return b && b.battles > 0 && (!b.mirror || chars.indexOf(b.mirror) >= 0) && (!b.card || cards[b.card]);
       });
-      if (d.run && !Array.isArray(d.run.map)) d.run = null;
+      if (d.run && (!Array.isArray(d.run.map) || !d.run.map.every(function (col) { return Array.isArray(col) && col.every(function (n) { return n && Array.isArray(n.next); }); }))) d.run = null;
       d.codex = d.codex || { monsters: {} };
       d.codex.monsters = d.codex.monsters || {};
       d.flags = d.flags || {};

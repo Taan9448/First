@@ -210,15 +210,100 @@
       var d = St.data, def = St.stageDef(n);
       var hp = {};
       d.characters.forEach(function (id) { hp[id] = St.maxHp(id); });
-      var battles = 0;
-      var map = def.cols.map(function (col, ci) {
-        var last = ci === def.cols.length - 1;
-        return col.map(function (type) { return St.makeNode(def, type, last, battles++ === 0); });
-      });
+      var map = St.genMap(def);
       d.run = { stage: n, col: 0, path: [], map: map, hp: hp, pending: null, shop: null, upgrades: 0, replay: n <= d.clearedStage };
       St.autoPick();
       St.save();
       return d.run;
+    },
+
+    // ================= 던전 지도(14단계) =================
+    // 입구 → 경로 모듈을 무작위로 이은 중간 구역 → 야영지 → 마지막 방. 방: { type, lane, module, next:[다음 열 방 번호], known }
+    genMap: function (def) {
+      var R = D.mapRules, counts = {};
+      var pickW = function (pool) {
+        var keys = Object.keys(pool), total = 0;
+        keys.forEach(function (k) { total += pool[k]; });
+        var roll = G.rng.next() * total;
+        for (var i = 0; i < keys.length; i++) { roll -= pool[keys[i]]; if (roll < 0) return keys[i]; }
+        return keys[keys.length - 1];
+      };
+      var colFrom = function (spec, free) {
+        var w = G.rng.int(spec.w[0], spec.w[1]), out = [];
+        for (var i = 0; i < w; i++) {
+          var t = pickW(spec.pool);
+          if (!free && R.limits[t] != null && (counts[t] || 0) >= R.limits[t]) t = 'battle';
+          counts[t] = (counts[t] || 0) + 1;
+          out.push(t);
+        }
+        return out;
+      };
+      var middle = function (n) {
+        var out = [], used = {};
+        while (out.length < n) {
+          var mods = D.pathModules.filter(function (m) { return !(m.max && (used[m.id] || 0) >= m.max) && m.cols.length <= n - out.length; });
+          if (!mods.length) mods = [D.pathModules[0]];
+          var weights = {};
+          mods.forEach(function (m, i) { weights[i] = m.weight; });
+          var m = mods[+pickW(weights)];
+          used[m.id] = (used[m.id] || 0) + 1;
+          m.cols.forEach(function (c) { out.push({ types: colFrom(c), module: m.id }); });
+        }
+        return out;
+      };
+      var cols = [{ types: ['battle'], module: 'entrance' }];
+      if (def.layout === 'final') {
+        cols = cols.concat(middle(R.finalSplit[0]));
+        cols.push({ types: colFrom(R.campBeforeBoss, true), module: 'camp' });
+        cols.push({ types: ['midboss'], module: 'midboss' });
+        cols = cols.concat(middle(R.finalSplit[1]));
+      } else cols = cols.concat(middle(G.rng.int(R.middleCols[0], R.middleCols[1])));
+      cols.push({ types: colFrom(R.campBeforeBoss, true), module: 'camp' });
+      cols.push({ types: [def.last], module: 'boss' });
+      var map = cols.map(function (c, ci) {
+        var last = ci === cols.length - 1;
+        return c.types.map(function (t, i) {
+          var node = St.makeNode(def, t, last, ci <= R.easyCols);
+          node.lane = i; node.module = c.module;
+          if (c.module === 'entrance' || c.module === 'boss' || t === 'midboss') node.known = true;
+          return node;
+        });
+      });
+      St.linkMap(map);
+      return map;
+    },
+
+    // 열과 열 사이 통로: 방마다 가장 가까운 레인 + 확률로 바로 옆 레인. 통로가 엇갈리지 않게 하고, 모든 방에 들어오는 길을 만든다
+    linkMap: function (map) {
+      var side = D.mapRules.link.side;
+      var num = function (x, y) { return x - y; };
+      for (var c = 0; c < map.length - 1; c++) {
+        var A = map[c], Bn = map[c + 1], a = A.length, b = Bn.length;
+        if (a === 1) { A[0].next = Bn.map(function (_, j) { return j; }); continue; }
+        if (b === 1) { A.forEach(function (n) { n.next = [0]; }); continue; }
+        var base = A.map(function (_, i) { return Math.round(i * (b - 1) / (a - 1)); });
+        A.forEach(function (n, i) {
+          var set = [base[i]];
+          if (base[i] - 1 >= 0 && G.rng.chance(side)) set.push(base[i] - 1);
+          if (base[i] + 1 < b && G.rng.chance(side)) set.push(base[i] + 1);
+          n.next = set.sort(num);
+        });
+        for (var i = 0; i < a - 1; i++) {
+          var x = A[i].next, y = A[i + 1].next;
+          while (x[x.length - 1] > y[0]) {
+            if (x.length > 1 && x[x.length - 1] !== base[i]) x.pop();
+            else if (y.length > 1 && y[0] !== base[i + 1]) y.shift();
+            else break;
+          }
+        }
+        for (var j = 0; j < b; j++) {
+          if (A.some(function (n) { return n.next.indexOf(j) >= 0; })) continue;
+          var k = 0;
+          for (var q = 0; q < a; q++) if (base[q] <= j) k = q;
+          A[k].next.push(j); A[k].next.sort(num);
+        }
+      }
+      map[map.length - 1].forEach(function (n) { n.next = []; });
     },
 
     makeNode: function (def, type, last, first) {
@@ -257,19 +342,67 @@
       var i = r.path[r.col];
       return i == null ? null : r.map[r.col][i];
     },
-    choices: function () { var r = St.data.run; return r ? r.map[r.col] : []; },
-    // 갈림길에서 노드를 고른다(고르면 바꿀 수 없다)
-    choose: function (i) {
+    // 지금 열에서 갈 수 있는 방 번호(앞 방에서 통로가 이어진 방)
+    choiceIdx: function () {
       var r = St.data.run;
-      if (!r || r.path[r.col] != null || !r.map[r.col][i]) return false;
-      r.path[r.col] = i;
+      if (!r || r.col >= r.map.length) return [];
+      if (r.col === 0) return r.map[0].map(function (_, i) { return i; });
+      var prev = r.map[r.col - 1][r.path[r.col - 1]];
+      return prev && prev.next ? prev.next.slice() : r.map[r.col].map(function (_, i) { return i; });
+    },
+    choices: function () { var r = St.data.run; return r ? St.choiceIdx().map(function (j) { return r.map[r.col][j]; }) : []; },
+    // 갈림길에서 k번째 길을 고른다(고르면 바꿀 수 없다). 방 번호로 고를 때는 chooseRoom
+    choose: function (k) {
+      var r = St.data.run, idx = St.choiceIdx();
+      if (!r || r.path[r.col] != null || idx[k] == null) return false;
+      r.path[r.col] = idx[k];
+      St.scout();
       St.save();
       return true;
     },
+    chooseRoom: function (j) { return St.choose(St.choiceIdx().indexOf(j)); },
     autoPick: function () {
       var r = St.data.run;
-      if (r && r.col < r.map.length && r.map[r.col].length === 1) r.path[r.col] = 0;
+      if (r && r.col < r.map.length && r.path[r.col] == null) {
+        var idx = St.choiceIdx();
+        if (idx.length === 1) { r.path[r.col] = idx[0]; St.scout(); }
+      }
     },
+    // 정찰: 방에 들어가면 그 방에서 이어진 다음 방마다 확률로 내용이 드러난다
+    scoutChance: function () {
+      var R = D.mapRules;
+      return Math.min(0.95, R.scout + (St.data.party.indexOf('nox') >= 0 ? R.scoutBonus : 0) + (St.mods().scout || 0));
+    },
+    scout: function () {
+      var r = St.data.run, node = St.node();
+      if (!node) return [];
+      node.known = true;
+      var next = r.map[r.col + 1], p = St.scoutChance(), found = [];
+      (node.next || []).forEach(function (j) {
+        var n = next && next[j];
+        if (n && !n.known && G.rng.chance(p)) { n.known = true; found.push(j); }
+      });
+      r.scouted = found;
+      return found;
+    },
+
+    // 보물 방(14단계): 상자를 열면 골드(가끔 유물), 일정 확률로 매복 전투(이기면 골드를 더 받는다)
+    openTreasure: function () {
+      var d = St.data, r = d.run, node = St.node(), T = D.mapRules.treasure, def = St.stageDef(r.stage);
+      if (node.result) return node.result;
+      var res = { ambush: G.rng.chance(T.ambush), gold: G.rng.int(T.gold[0], T.gold[1]), relic: null };
+      if (res.ambush) {
+        res.gold += T.ambushGold;
+        node.fight = { kind: 'battle', monsters: G.rng.pick(def.hard).slice() };
+      } else {
+        d.gold += res.gold;
+        if (G.rng.chance(T.relic)) { res.relic = St.rollRelic('shop'); if (res.relic) St.addRelic(res.relic); }
+      }
+      node.result = res;
+      St.save();
+      return res;
+    },
+    leaveTreasure: function () { return St.advance(); },
 
     // ================= 전투 =================
     battleOptions: function () {
@@ -351,6 +484,7 @@
       var p = r.pending;
       var mirrors = battle.kills.filter(function (id) { return D.monsterById[id].mirror; }).length;
       p.gold = Math.round(p.gold * (mods.goldMult || 1) * asc.goldMult) + (battle.affixKills || 0) * 5 + mirrors * eco().mirrorGold;
+      if (node.type === 'treasure' && node.result) p.gold += node.result.gold; // 보물 방 매복을 이기면 상자 골드
       if (kind === 'elite') { p.relic = St.rollRelic('elite'); St.addRelic(p.relic); }
       if (kind === 'boss') p.relicChoice = St.rollRelicChoice(r.stage);
       d.gold += p.gold + p.fill * eco().fillGold;
@@ -386,7 +520,7 @@
       });
     },
 
-    // 등급을 굴리고, 그 등급에 남은 카드가 없으면 한 단계씩 낮춰(그래도 없으면 높여) 찾는다
+    // 등급을 굴리고, 그 등급에 남은 카드가 없으면 한 단계씩 낮추되 보상의 최저 등급은 지킨다(그래도 없으면 높인다)
     rollCards: function (count, kind, stage) {
       var w = St.rarityWeights(kind, stage), out = [];
       var total = w.reduce(function (a, b) { return a + b; }, 0);
@@ -394,9 +528,11 @@
         var roll = G.rng.next() * total, r = 0;
         while (r < 4 && roll >= w[r]) { roll -= w[r]; r++; }
         var pool = St.candidatePool(out);
+        // 굴린 등급 → 낮은 등급(가중치가 있는 것만) → 높은 등급 → 그래도 없으면 최저 보장 아래
         var order = [];
-        for (var k = r; k >= 0; k--) order.push(k);
+        for (var k = r; k >= 0; k--) if (w[k] > 0) order.push(k);
         for (k = r + 1; k < 5; k++) order.push(k);
+        for (k = r; k >= 0; k--) if (order.indexOf(k) < 0) order.push(k);
         var found = null;
         for (var j = 0; j < order.length && !found; j++) {
           var at = pool.filter(function (c) { return rarityIdx(c.rarity) === order[j]; });
@@ -617,11 +753,11 @@
           res.log.push('정예 전투');
           break;
         case 'cutNext': {
-          var next = r.map[r.col + 1];
-          if (next && next.length > 1) {
-            var cut = next.splice(G.rng.int(0, next.length - 1), 1)[0];
-            res.log.push('다음 갈림길의 ' + D.NODE_NAME[cut.type] + ' 길이 사라졌다');
-          } else res.log.push('다음 길은 원래 하나뿐이다');
+          var cur = St.node();
+          if (cur && cur.next && cur.next.length > 1) {
+            cur.next.splice(G.rng.int(0, cur.next.length - 1), 1);
+            res.log.push('앞으로 이어진 통로 하나가 무너져 막혔다');
+          } else res.log.push('앞으로 난 통로는 원래 하나뿐이다');
           break;
         }
       }

@@ -208,6 +208,7 @@ async function expedition(order) {
         rebuildDecks();
         continue;
       }
+      if (node.type === 'treasure' && !St.openTreasure().ambush) { if (St.leaveTreasure()) done = true; continue; }
       if (node.type === 'event' && !(node.result && node.result.fight)) {
         const ev = St.eventDef();
         const res = St.eventChoose(St.canChoose(ev.choices[0]) ? 0 : 1);

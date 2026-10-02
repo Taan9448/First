@@ -133,7 +133,54 @@
       '<g clip-path="url(#fog-' + theme + ')" class="fog-' + theme + '"><polygon points="' + REGION[theme] + '" fill="#0a0d1a" fill-opacity="0.6"/>' + puffs + '</g>';
   }
 
+  // 던전 지도의 낡은 양피지(14단계): 도트 한 칸 = 화면 3px. 얼룩·주름·탄 가장자리·옅은 모눈·나침반
+  var parchCache = {};
+  function parchment(w, h, seed) {
+    var key = w + 'x' + h + ':' + seed;
+    if (parchCache[key]) return parchCache[key];
+    var c = document.createElement('canvas'); c.width = w; c.height = h;
+    var ctx = c.getContext('2d'), img = ctx.createImageData(w, h), d = img.data, r = rnd(seed);
+    // 낮은 해상도 값 노이즈 두 겹 + 얼룩
+    var cell = function (cw) {
+      var gw = Math.ceil(w / cw) + 2, g = [];
+      for (var i = 0; i < gw * (Math.ceil(h / cw) + 2); i++) g.push(r());
+      return function (x, y) {
+        var gx = x / cw, gy = y / cw, x0 = Math.floor(gx), y0 = Math.floor(gy), fx = gx - x0, fy = gy - y0;
+        var a = g[y0 * gw + x0], b = g[y0 * gw + x0 + 1], cc = g[(y0 + 1) * gw + x0], dd = g[(y0 + 1) * gw + x0 + 1];
+        return (a * (1 - fx) + b * fx) * (1 - fy) + (cc * (1 - fx) + dd * fx) * fy;
+      };
+    };
+    var big = cell(40), mid = cell(11);
+    var stains = [];
+    for (var s = 0; s < Math.max(4, Math.round(w * h / 9000)); s++) stains.push([r() * w, r() * h, 6 + r() * 18]);
+    for (var y = 0; y < h; y++) for (var x = 0; x < w; x++) {
+      var v = big(x, y) * 0.55 + mid(x, y) * 0.3 + r() * 0.15;
+      stains.forEach(function (st) {
+        var dx = x - st[0], dy = y - st[1], dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < st[2]) v -= 0.22 * (1 - dist / st[2]);
+        else if (dist < st[2] + 1.5) v -= 0.12; // 얼룩 테두리
+      });
+      var edge = Math.min(x, y, w - 1 - x, h - 1 - y);
+      if (edge < 10) v -= (10 - edge) * 0.05;
+      if ((x % 24 === 0 || y % 24 === 0) && (x + y) % 2) v -= 0.07; // 옅은 모눈
+      // 다섯 단계로 끊어 칠한다
+      var lv = Math.max(0, Math.min(4, Math.floor(v * 5)));
+      var col = [[58, 40, 22], [104, 76, 42], [146, 112, 66], [178, 142, 90], [204, 172, 116]][lv];
+      var o = (y * w + x) * 4;
+      d[o] = col[0]; d[o + 1] = col[1]; d[o + 2] = col[2]; d[o + 3] = 255;
+    }
+    ctx.putImageData(img, 0, 0);
+    // 나침반(왼쪽 위)
+    ctx.fillStyle = 'rgba(58, 36, 16, 0.85)';
+    var cx = 22, cy = 22;
+    for (var k = -9; k <= 9; k++) { ctx.fillRect(cx + k, cy, 1, 1); ctx.fillRect(cx, cy + k, 1, 1); }
+    for (k = -3; k <= 3; k++) { ctx.fillRect(cx + k, cy + k, 1, 1); ctx.fillRect(cx + k, cy - k, 1, 1); }
+    ctx.fillRect(cx - 1, cy - 12, 3, 2);
+    return (parchCache[key] = c.toDataURL());
+  }
+
   G.ArtMap = {
+    parchment: parchment,
     fogLayer: fogLayer,
     world: function () { return G.Pixel.raster('map:world', worldSvg(), 500, 280, 16); },
     fog: function () { return G.Pixel.raster('map:fog', fogSvg(), 100, 70, 8); }

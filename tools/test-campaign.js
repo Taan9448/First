@@ -67,7 +67,7 @@ function invariants(where) {
 
 (async () => {
   const N = +(process.argv[2] || 3);
-  let totalBattles = 0, losses = 0, kills = 0, bought = 0, rests = 0, shops = 0, ups = 0, mirrors = 0, eventFights = 0, traitsPicked = 0, talks = 0;
+  let totalBattles = 0, losses = 0, kills = 0, bought = 0, rests = 0, shops = 0, ups = 0, mirrors = 0, eventFights = 0, traitsPicked = 0, talks = 0, treasures = 0, ambushes = 0;
   const eventsSeen = new Set(), typesSeen = new Set();
   const useUpgrades = () => {
     while (St.data.run.upgrades) {
@@ -97,7 +97,8 @@ function invariants(where) {
       while (!done) {
         if (!St.node()) {
           const ch = St.choices();
-          check(ch.length >= 1 && ch.length <= 2, '갈림길 노드 1~2개');
+          check(ch.length >= 1 && ch.length <= 4, '갈림길 노드 1~4개');
+          check(St.choiceIdx().every(j => j >= 0 && j < St.data.run.map[St.data.run.col].length), '갈 수 있는 방 번호');
           // 이벤트를 자주 고르게 해서 15종을 고루 지나가게 한다
           const ev = ch.findIndex(x => x.type === 'event');
           check(St.choose(ev >= 0 ? ev : G.rng.int(0, ch.length - 1)), '갈림길 선택');
@@ -128,6 +129,13 @@ function invariants(where) {
           if (St.data.gold >= D.economy.healCost) check(St.shopHeal(), '치료') ;
           check(!St.shopHeal(), '치료는 한 번만');
           clearInfo = St.leaveShop();
+        } else if (node.type === 'treasure' && !(node.result && node.result.ambush)) {
+          const g0 = St.data.gold, res = St.openTreasure();
+          treasures++;
+          if (res.ambush) { ambushes++; check(node.fight && node.fight.monsters.length, '매복 전투'); continue; }
+          check(St.data.gold === g0 + res.gold, '보물 골드');
+          if (res.relic) check(St.hasRelic(res.relic), '보물 유물');
+          clearInfo = St.leaveTreasure();
         } else if (node.type === 'event' && !(node.result && node.result.fight)) {
           const ev = St.eventDef();
           eventsSeen.add(ev.id);
@@ -243,6 +251,7 @@ function invariants(where) {
         const node = St.node();
         if (node.type === 'rest') { const t = St.pendingTalk(); if (t) St.finishTalk(t.key); end = St.rest(); continue; }
         if (node.type === 'shop') { St.openShop(); end = St.leaveShop(); continue; }
+        if (node.type === 'treasure' && !St.openTreasure().ambush) { end = St.leaveTreasure(); continue; }
         if (node.type === 'event' && !(node.result && node.result.fight)) {
           const ev = St.eventDef(); const res = St.eventChoose(ev.choices.findIndex(c => St.canChoose(c)));
           if (res.cards) St.eventTakeCard(null);
@@ -280,8 +289,32 @@ function invariants(where) {
   const v1 = { version: 1, gold: 77, clearedStage: 3, characters: ['kai', 'bram'], party: ['kai'], cards: ['K01', 'C01'], decks: { kai: ['K01'], common: ['C01'] },
     relics: ['R01'], run: { stage: 4, node: 1, nodes: [{ type: 'battle' }], hp: { kai: 50 } }, codex: { monsters: {} }, flags: {} };
   const m2 = G.Save.sanitize(G.Save.migrate(JSON.parse(JSON.stringify(v1))));
-  check(m2.version === 2 && m2.run === null && m2.gold === 77 && m2.cards.length === 2 && m2.relics[0] === 'R01', 'v1 → v2 마이그레이션');
+  check(m2.version === G.Save.VERSION && m2.run === null && m2.gold === 77 && m2.cards.length === 2 && m2.relics[0] === 'R01', 'v1 → 최신 마이그레이션');
   check(Array.isArray(m2.upgraded) && m2.growth && m2.bonds && m2.ascension && Array.isArray(m2.buffs), 'v2 기본값');
+
+  // 던전 지도(14단계): 길이·갈림 수·통로·숨은 방
+  {
+    let maxFork = 0, minCols = 99, types = new Set();
+    for (let k = 0; k < 120; k++) {
+      const def = St.stageDef(1 + (k % 10)), map = St.genMap(def);
+      minCols = Math.min(minCols, map.length);
+      check(map[0].length === 1 && map[0][0].type === 'battle' && map[0][0].known, '입구는 전투 1칸, 공개');
+      const last = map[map.length - 1];
+      check(last.length === 1 && last[0].type === def.last && last[0].known, '마지막 방은 ' + def.last);
+      check(map[map.length - 2].every(n => n.type === 'rest' || n.type === 'shop'), '마지막 방 앞은 야영지');
+      if (def.layout === 'final') check(map.some(col => col.length === 1 && col[0].type === 'midboss'), '10 스테이지 중간 보스');
+      for (let c = 0; c < map.length - 1; c++) {
+        const A = map[c], B = map[c + 1];
+        A.forEach(n => { check(n.next.length >= 1 && n.next.every(j => j >= 0 && j < B.length), '통로 번호'); maxFork = Math.max(maxFork, n.next.length); });
+        B.forEach((_, j) => check(A.some(n => n.next.includes(j)), '모든 방에 들어오는 통로 (' + c + ')'));
+        for (let i = 0; i < A.length - 1; i++) check(Math.max(...A[i].next) <= Math.min(...A[i + 1].next), '통로가 엇갈리지 않는다');
+      }
+      map.forEach((col, c) => col.forEach(n => { types.add(n.type); if (c > 0 && c < map.length - 1 && n.type !== 'midboss') check(!n.known, '중간 방은 처음에 숨겨져 있다'); }));
+    }
+    check(minCols >= 12, '스테이지는 12열 이상 (' + minCols + ')');
+    check(maxFork >= 3, '갈림길 3갈래 이상 (' + maxFork + ')');
+    ['battle', 'elite', 'event', 'treasure', 'rest', 'shop'].forEach(t => check(types.has(t), '방 종류 ' + t));
+  }
 
   // 스토리(13단계): 데이터 검사
   const heroIds = D.characters.map(c => c.id), themes = ['forest', 'desert', 'snow', 'volcano', 'castle'];
@@ -320,7 +353,7 @@ function invariants(where) {
   check(!cleaned.cards.includes('ZZZ99') && !cleaned.decks.common.includes('ZZZ99'), '알 수 없는 카드 ID 제거');
 
   console.log('캠페인 ' + N + '회 · 전투 ' + totalBattles + ' · AI 패배 ' + losses + ' · 강제 승리 ' + kills +
-    ' · 상점 ' + shops + '(구매 ' + bought + ') · 휴식 ' + rests + ' · 강화 ' + ups + ' · 이벤트 ' + eventsSeen.size + '종(전투 ' + eventFights + ') · 그림자 ' + mirrors + ' · 특성 ' + traitsPicked + ' · 대화 ' + talks);
+    ' · 상점 ' + shops + '(구매 ' + bought + ') · 휴식 ' + rests + ' · 강화 ' + ups + ' · 이벤트 ' + eventsSeen.size + '종(전투 ' + eventFights + ') · 그림자 ' + mirrors + ' · 특성 ' + traitsPicked + ' · 대화 ' + talks + ' · 보물 ' + treasures + '(매복 ' + ambushes + ')');
   console.log(failures ? '실패 ' + failures + '건' : '모든 테스트 통과');
   process.exit(failures ? 1 : 0);
 })().catch(err => { console.error(err); process.exit(1); });

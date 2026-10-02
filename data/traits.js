@@ -11,7 +11,7 @@
 //   onFreezeDraw · burnVuln · cleanseBlock · overhealBlock · revivePct · selfRevive · turnStartHealLowest · attackHealLowest
 //   firstDebuffDraw · 전투 전체: firstTurnEnergy · firstTurnDraw · everyN{n, v} · winHeal(전투 승리 후 아군 전체 회복)
 Game.Data.growth = {
-  exp: { battle: 10, elite: 20, boss: 35, midboss: 35, final: 50 },
+  exp: { battle: 5, elite: 12, boss: 35, midboss: 35, final: 50 },  // 14단계: 스테이지가 길어져 일반·정예 전투 경험치를 줄였다
   levels: [40, 120, 250, 450, 700]   // 레벨 1~5 문턱(누적 경험치). 10단계: 한 원정에 최고 레벨까지 가지 않게 올림
 };
 
