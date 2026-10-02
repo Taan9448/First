@@ -116,6 +116,15 @@
   };
 
   // 합동기·짝 연계를 카드 조회 표에 등록한다(카드 목록 Data.cards 와 보상·도감 집계에는 넣지 않는다)
+  // 합동기 컷인 대사(16단계): [첫째, 둘째]
+  var DUO_LINE = {
+    D01: ['브리아, 앞을 부탁해!', '……그대로 밀고 간다.'], D02: ['리라, 불꽃을 검에!', '화염검기, 발사!'],
+    D03: ['세라, 빛을 빌려줘!', '이 검에 축복을!'], D04: ['소연, 맞춰 줘!', '만천화우—비처럼 쏟아져라.'],
+    D05: ['……얼음 성벽을 세운다.', '내가 얼릴게, 브리아가 막아!'], D06: ['……성역을 지킨다.', '모두 이 빛 안으로!'],
+    D07: ['……덤벼라.', '덤비는 순간 암기가 박히지.'], D08: ['태워서 정화하는 거야!', '나쁜 기운은 전부 날려요!'],
+    D09: ['독에 불을 붙이면?', '당가식 폭발이지.'], D10: ['독을 풀어 드릴게요.', '……이번만 고마워할게.']
+  };
+  Game.Data.duoCards.forEach(function (c) { c.lines = DUO_LINE[c.id]; });
   Game.Data.duoCards.forEach(function (c) { Game.Data.cardById[c.id] = c; });
   Game.Data.duoByPair = {};
   Game.Data.duoCards.forEach(function (c) { Game.Data.duoByPair[c.duo.join('+')] = c; });

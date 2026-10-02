@@ -6,7 +6,7 @@
 
   var ICON = { battle: 'attack', elite: 'elite', event: 'event', treasure: 'chest', rest: 'campfire', shop: 'shop', boss: 'crown', midboss: 'crown', final: 'crown' };
   var SPECIAL = { entrance: '입구', camp: '야영지', midboss: '결전의 방', boss: '' };
-  var COLW = 104, PADL = 120, PADR = 120, PX = 3; // PX: 양피지 도트 한 칸의 화면 크기
+  var COLW = 104, PADL = 120, PADR = 120, PX = 3; // COLW: 열 간격 최솟값(16단계: 열이 적으면 틀 너비에 맞춰 넓힌다). PX: 양피지 도트 한 칸의 화면 크기
   var revealed = ''; // 정찰로 드러난 방의 연출은 한 번만
 
   function modName(id) {
@@ -16,13 +16,13 @@
   }
   // 방 위치: 열마다 세로로 고르게 펼치고, 손으로 그린 지도처럼 조금씩 어긋나게(열·레인으로 정해지는 값)
   function jitter(c, i, k) { var v = Math.sin((c + 1) * 12.9898 + (i + 1) * 78.233 + k * 37.719) * 43758.5453; return v - Math.floor(v) - 0.5; }
-  function layout(map, H) {
+  function layout(map, H, cw) {
     var gap = Math.min(116, (H - 150) / 3);
     return map.map(function (col, c) {
       return col.map(function (_, i) {
         var big = col.length === 1 && c === map.length - 1;
         return {
-          x: PADL + c * COLW + (big ? 18 : Math.round(jitter(c, i, 1) * 18)),
+          x: PADL + c * cw + (big ? 18 : Math.round(jitter(c, i, 1) * Math.min(28, cw * 0.17))),
           y: Math.round(H / 2 + 8 + (i - (col.length - 1) / 2) * gap + (col.length > 1 ? jitter(c, i, 2) * 16 : 0))
         };
       });
@@ -41,8 +41,9 @@
   function render(frame, opts) {
     var r = St.data.run, map = r.map;
     var H = Math.max(380, frame.clientHeight - 12);
-    var W = PADL + (map.length - 1) * COLW + PADR;
-    var pos = layout(map, H), can = r.path[r.col] == null ? St.choiceIdx() : [];
+    var cw = Math.max(COLW, Math.floor((frame.clientWidth - 4 - PADL - PADR) / Math.max(1, map.length - 1)));
+    var W = PADL + (map.length - 1) * cw + PADR;
+    var pos = layout(map, H, cw), can = r.path[r.col] == null ? St.choiceIdx() : [];
     // 횃불: 고른 방, 아직 고르지 않았으면 앞 방(처음이면 입구)
     var torchC = r.path[r.col] != null ? r.col : r.col - 1;
     var torch = torchC >= 0 ? pos[torchC][r.path[torchC]] : { x: PADL - 70, y: H / 2 + 8 };
@@ -73,12 +74,12 @@
     map.forEach(function (col, c) {
       var m = col[0].module;
       if (c > 0 && m !== map[c - 1][0].module) {
-        var bx = PADL + (c - 0.5) * COLW;
+        var bx = PADL + (c - 0.5) * cw;
         marks += '<line x1="' + bx + '" y1="40" x2="' + bx + '" y2="' + (H - 40) + '" class="cw-border"/>';
       }
       if (c === 0 || m !== map[c - 1][0].module) {
         var name = modName(m);
-        if (name) labels += '<div class="dmod" style="left:' + (PADL + c * COLW - 30) + 'px">' + name + '</div>';
+        if (name) labels += '<div class="dmod" style="left:' + (PADL + c * cw - 30) + 'px">' + name + '</div>';
       }
     });
 

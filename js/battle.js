@@ -4,7 +4,7 @@
   'use strict';
   var G = Game, S = G.Status, D = G.Deck, U = G.util;
   var ENERGY = 3, DRAW = 5, MAX_MONSTERS = 4;
-  var T = { card: 220, hit: 140, act: 320, between: 260, turn: 300 };
+  var T = { card: 220, hit: 140, act: 320, between: 260, turn: 300, cutin: 1100 };
   var uidSeq = 1;
 
   var TARGET_DEPENDENT = { targetHp: 1, targetBlock: 1, targetHas: 1, targetDebuffKinds: 1, targetIntentAttack: 1 };
@@ -391,6 +391,11 @@
     if (def.type === 'attack') this.firstAttackDone = true;
     if (caster) { caster._cardTurn = true; if (def.type === 'attack') { caster._atkTurn = true; caster._firstAtkDone = true; } }
     if (link.count >= 2 || link.pair) this.emit('combo', { count: link.count, pair: link.pair, unit: caster });
+    // 16단계: 영웅·전설 카드와 합동기는 사용한 캐릭터의 얼굴과 대사가 먼저 지나간다(opts.cutin 이 false 면 생략)
+    if (this.opts.cutin && caster && (def.rarity === 'epic' || def.rarity === 'legendary' || def.duo)) {
+      this.emit('card:cutin', { def: def, caster: caster });
+      await G.wait(T.cutin);
+    }
     this.emit('card:play', { inst: inst, caster: caster, target: target });
     this.update();
     await G.wait(T.card);

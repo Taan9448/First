@@ -1,4 +1,4 @@
-// art-map.js — 월드맵(1000×560) SVG와 지역 안개 구름. 낮은 해상도로 찍어 도트 지도로 쓴다
+// art-map.js — 월드맵(1000×560, 16단계: 무림 · 세계의 틈 · 엘단) SVG와 지역 안개 구름. 낮은 해상도로 찍어 도트 지도로 쓴다
 (function () {
   'use strict';
   var G = Game;
@@ -12,16 +12,18 @@
   function poly(pts, fill, extra) { return '<polygon points="' + pts + '" fill="' + fill + '" ' + (extra || '') + '/>'; }
   function path(d, fill, extra) { return '<path d="' + d + '" fill="' + fill + '" ' + (extra || '') + '/>'; }
 
-  var LAND = '20,548 8,330 40,230 120,170 220,150 300,120 380,70 470,30 600,18 720,30 830,14 940,26 992,70 994,320 972,430 900,486 800,470 700,500 600,530 480,546 360,552 220,556 100,556';
+  // 16단계 월드맵: 왼쪽은 무림(북쪽 청운봉 · 남쪽 만독곡), 가운데는 세계의 틈(별이 뜬 허공), 오른쪽은 엘단 대륙(사막 · 설원 · 화산)
+  var MURIM = '0,0 300,0 318,60 304,140 326,230 306,320 322,420 300,500 310,560 0,560';
+  var ELDAN = '452,24 560,8 700,20 840,10 960,30 994,90 990,260 1000,380 970,470 900,540 760,552 620,546 500,540 460,470 476,380 448,300 470,200 446,110';
   var REGION = {
-    forest: '0,0 262,0 250,170 272,262 246,402 256,560 0,560',
-    snow: '262,0 642,0 632,140 602,250 560,302 470,292 430,262 272,262 250,170',
-    desert: '272,262 430,262 470,292 502,382 472,472 482,560 256,560 246,402',
-    volcano: '642,0 822,0 802,150 812,300 782,420 700,472 482,560 472,472 502,382 470,292 560,302 602,250 632,140',
-    castle: '822,0 1000,0 1000,560 482,560 700,472 782,420 812,300 802,150'
+    castle: '0,0 300,0 318,60 304,140 326,230 320,262 0,262',
+    forest: '0,262 320,262 306,320 322,420 300,500 310,560 0,560',
+    volcano: '446,0 1000,0 1000,250 820,270 700,262 600,280 470,290 470,200 446,110',
+    desert: '470,290 600,280 700,262 720,330 700,420 720,560 440,560 460,470 476,380 448,300',
+    snow: '700,262 820,270 1000,250 1000,560 720,560 700,420 720,330'
   };
-  var FILL = { forest: '#3f8a3f', snow: '#dce8f0', desert: '#d9b062', volcano: '#5a3434', castle: '#3a2c4c' };
-
+  // 무림은 먹빛이 도는 차분한 색, 엘단은 선명한 색
+  var FILL = { forest: '#35503a', castle: '#3e4658', desert: '#d9b062', snow: '#dce8f0', volcano: '#5a3434' };
   function trees(r, n, x0, y0, x1, y1, avoid) {
     var s = '';
     for (var i = 0; i < n; i++) {
@@ -38,72 +40,94 @@
       poly((x - w * 0.16) + ',' + (y - h * 0.68) + ' ' + x + ',' + (y - h) + ' ' + (x + w * 0.16) + ',' + (y - h * 0.68) + ' ' + (x + w * 0.05) + ',' + (y - h * 0.6), snow);
   }
 
+  function rift(cx, cy, h) {
+    // 세계의 틈: 지그재그로 갈라진 보랏빛 균열과 빛
+    var pts = [], k;
+    for (k = 0; k <= 8; k++) pts.push((cx + (k % 2 ? 9 : -9) + Math.sin(k) * 3) + ',' + (cy - h / 2 + k * h / 8));
+    var line = 'M' + pts.join(' L');
+    return '<ellipse cx="' + cx + '" cy="' + cy + '" rx="34" ry="' + (h * 0.62) + '" fill="#7a3ad0" opacity="0.28"/>' +
+      '<ellipse cx="' + cx + '" cy="' + cy + '" rx="18" ry="' + (h * 0.5) + '" fill="#c070ff" opacity="0.3"/>' +
+      path(line, 'none', 'stroke="#2a0a4a" stroke-width="12" stroke-linejoin="bevel"') +
+      path(line, 'none', 'stroke="#d8a0ff" stroke-width="5" stroke-linejoin="bevel"') +
+      path(line, 'none', 'stroke="#ffffff" stroke-width="1.5" stroke-linejoin="bevel"');
+  }
+  function pagoda(x, y, k) {
+    return '<rect x="' + (x - 14 * k) + '" y="' + (y - 10 * k) + '" width="' + 28 * k + '" height="' + 10 * k + '" fill="#5a1a24"/>' +
+      '<rect x="' + (x - 11 * k) + '" y="' + (y - 9 * k) + '" width="' + 2 * k + '" height="' + 9 * k + '" fill="#9a2a2a"/><rect x="' + (x + 9 * k) + '" y="' + (y - 9 * k) + '" width="' + 2 * k + '" height="' + 9 * k + '" fill="#9a2a2a"/>' +
+      path('M' + (x - 22 * k) + ' ' + (y - 9 * k) + ' Q' + (x - 14 * k) + ' ' + (y - 15 * k) + ' ' + (x - 8 * k) + ' ' + (y - 16 * k) + ' H' + (x + 8 * k) + ' Q' + (x + 14 * k) + ' ' + (y - 15 * k) + ' ' + (x + 22 * k) + ' ' + (y - 9 * k) + ' Z', '#1a1a2a') +
+      '<rect x="' + (x - 8 * k) + '" y="' + (y - 24 * k) + '" width="' + 16 * k + '" height="' + 8 * k + '" fill="#5a1a24"/>' +
+      path('M' + (x - 15 * k) + ' ' + (y - 23 * k) + ' Q' + (x - 9 * k) + ' ' + (y - 28 * k) + ' ' + (x - 5 * k) + ' ' + (y - 29 * k) + ' H' + (x + 5 * k) + ' Q' + (x + 9 * k) + ' ' + (y - 28 * k) + ' ' + (x + 15 * k) + ' ' + (y - 23 * k) + ' Z', '#1a1a2a') +
+      '<rect x="' + (x - 2 * k) + '" y="' + (y - 21 * k) + '" width="' + 4 * k + '" height="' + 3 * k + '" fill="#ffd23f"/>';
+  }
   function worldSvg() {
-    var r = rnd(17), s = '';
-    // 바다와 물결
-    s += '<rect width="1000" height="560" fill="#16305a"/>';
-    for (var i = 0; i < 70; i++) {
-      var x = r() * 1000, y = r() * 560;
-      s += path('M' + x + ' ' + y + ' q5 -4 10 0 q5 4 10 0', 'none', 'stroke="#28528a" stroke-width="2"');
-    }
-    // 얕은 바다, 땅
-    s += poly(LAND, '#2c6aa0', 'stroke="#2c6aa0" stroke-width="26" stroke-linejoin="round"');
-    s += '<clipPath id="land"><polygon points="' + LAND + '"/></clipPath><g clip-path="url(#land)">';
-    Object.keys(REGION).forEach(function (k) { s += poly(REGION[k], FILL[k]); });
-    // 지역 경계의 굵은 그림자
-    Object.keys(REGION).forEach(function (k) { s += poly(REGION[k], 'none', 'stroke="#000" stroke-opacity="0.18" stroke-width="5"'); });
-
-    // 숲: 나무 숲
-    s += trees(r, 120, 20, 180, 250, 545, function (x, y) { return Math.abs(x - 96) < 30 && Math.abs(y - 418) < 26 || Math.abs(x - 196) < 30 && Math.abs(y - 318) < 26; });
-    // 설원: 산맥과 침엽수
-    [[300, 150, 110, 90], [380, 120, 120, 100], [470, 95, 130, 90], [560, 70, 140, 90], [620, 190, 90, 70], [340, 240, 80, 60], [430, 210, 90, 70]].forEach(function (m) {
-      s += mountain(m[0], m[1], m[2], m[3], '#9fb3cc', '#ffffff');
+    var r = rnd(17), s = '', i;
+    // 세계의 틈: 별이 뜬 허공
+    s += '<rect width="1000" height="560" fill="#0b0818"/>';
+    for (i = 0; i < 90; i++) s += '<rect x="' + (r() * 1000).toFixed(0) + '" y="' + (r() * 560).toFixed(0) + '" width="2" height="2" fill="' + (i % 4 ? '#6a5a9a' : '#e8d8ff') + '"/>';
+    for (i = 0; i < 6; i++) s += '<ellipse cx="' + (330 + r() * 120) + '" cy="' + (r() * 560) + '" rx="' + (30 + r() * 30) + '" ry="12" fill="#5a2a9a" opacity="0.25"/>';
+    // 두 땅(가장자리의 빛 번짐)
+    s += poly(MURIM, '#2a3a4a', 'stroke="#4a5a7a" stroke-width="18" stroke-linejoin="round" opacity="0.6"');
+    s += poly(ELDAN, '#2c6aa0', 'stroke="#2c6aa0" stroke-width="22" stroke-linejoin="round"');
+    s += '<clipPath id="landM"><polygon points="' + MURIM + '"/></clipPath><clipPath id="landE"><polygon points="' + ELDAN + '"/></clipPath>';
+    // ---------- 무림 ----------
+    s += '<g clip-path="url(#landM)">';
+    s += poly(REGION.castle, FILL.castle) + poly(REGION.forest, FILL.forest);
+    s += poly(REGION.castle, 'none', 'stroke="#000" stroke-opacity="0.2" stroke-width="5"');
+    // 청운봉: 먹빛 봉우리들, 정상의 전각, 소나무, 구름 띠
+    [[60, 150, 120, 120], [150, 120, 130, 110], [250, 160, 110, 100], [110, 240, 120, 70], [230, 250, 110, 70]].forEach(function (m) {
+      s += poly((m[0] - m[2] / 2) + ',' + m[1] + ' ' + m[0] + ',' + (m[1] - m[3]) + ' ' + (m[0] + m[2] / 2) + ',' + m[1], '#5a6478') +
+        poly(m[0] + ',' + (m[1] - m[3]) + ' ' + (m[0] + m[2] / 2) + ',' + m[1] + ' ' + (m[0] + m[2] * 0.12) + ',' + m[1], '#3a4256');
     });
-    for (i = 0; i < 26; i++) {
-      var px = 290 + r() * 330, py = 150 + r() * 130;
-      if (Math.abs(px - 486) < 26 && Math.abs(py - 232) < 24) continue;
-      s += poly((px - 5) + ',' + py + ' ' + px + ',' + (py - 13) + ' ' + (px + 5) + ',' + py, '#2f5a6a');
+    s += pagoda(196, 50, 1.1);
+    for (i = 0; i < 4; i++) s += '<rect x="' + (10 + r() * 240) + '" y="' + (60 + i * 46) + '" width="' + (70 + r() * 60) + '" height="7" fill="#e8e4f0" opacity="0.35"/>';
+    for (i = 0; i < 14; i++) {
+      var px = 20 + r() * 280, py = 170 + r() * 80;
+      s += poly((px - 7) + ',' + py + ' ' + px + ',' + (py - 12) + ' ' + (px + 7) + ',' + py, '#24402e') + '<rect x="' + (px - 1) + '" y="' + py + '" width="2" height="4" fill="#3a2418"/>';
     }
+    for (i = 0; i < 5; i++) s += '<ellipse cx="' + (40 + r() * 240) + '" cy="' + (90 + r() * 150) + '" rx="30" ry="6" fill="#c04a5a" opacity="0.28"/>';
+    // 단애: 청운봉과 만독곡 사이 절벽
+    s += path('M0 262 L60 270 L120 258 L190 272 L260 260 L320 266', 'none', 'stroke="#1a1a24" stroke-width="8"');
+    // 만독곡: 양쪽 절벽 사이의 독 늪과 숲, 흑풍채
+    s += trees(r, 70, 14, 300, 300, 548, function (x, y) { return Math.abs(x - 90) < 34 && Math.abs(y - 470) < 28 || Math.abs(x - 230) < 34 && Math.abs(y - 380) < 28; });
+    for (i = 0; i < 7; i++) s += '<ellipse cx="' + (30 + r() * 260) + '" cy="' + (310 + r() * 230) + '" rx="' + (16 + r() * 16) + '" ry="7" fill="#7a4aa8" opacity="0.45"/>';
+    for (i = 0; i < 10; i++) s += '<circle cx="' + (30 + r() * 260) + '" cy="' + (310 + r() * 230) + '" r="2.5" fill="#b8ff6a"/>';
+    s += '<rect x="214" y="400" width="34" height="14" fill="#3a2418"/>' + poly('210,400 231,388 252,400', '#1a1a1a') + '<rect x="244" y="380" width="2" height="22" fill="#1a1a1a"/>' + poly('246,380 260,384 246,390', '#2a2a32');
+    s += '</g>';
+    // ---------- 엘단 ----------
+    s += '<g clip-path="url(#landE)">';
+    ['volcano', 'desert', 'snow'].forEach(function (k) { s += poly(REGION[k], FILL[k]); });
+    ['volcano', 'desert', 'snow'].forEach(function (k) { s += poly(REGION[k], 'none', 'stroke="#000" stroke-opacity="0.18" stroke-width="5"'); });
     // 사막: 모래 언덕, 피라미드, 선인장
     for (i = 0; i < 16; i++) {
-      var dx = 270 + r() * 200, dy = 300 + r() * 240;
+      var dx = 470 + r() * 230, dy = 310 + r() * 230;
       s += path('M' + dx + ' ' + dy + ' q16 -12 32 0', 'none', 'stroke="#b88a42" stroke-width="3"');
     }
-    s += poly('350,360 386,300 422,360', '#e8c070') + poly('386,300 422,360 396,360', '#b88a42');
-    s += poly('420,372 444,332 468,372', '#e8c070') + poly('444,332 468,372 452,372', '#b88a42');
-    for (i = 0; i < 10; i++) {
-      var cx = 280 + r() * 180, cy = 380 + r() * 150;
+    s += poly('600,420 636,360 672,420', '#e8c070') + poly('636,360 672,420 646,420', '#b88a42');
+    s += poly('560,500 580,468 600,500', '#e8c070') + poly('580,468 600,500 588,500', '#b88a42');
+    for (i = 0; i < 8; i++) {
+      var cx = 480 + r() * 200, cy = 330 + r() * 200;
       s += '<rect x="' + cx + '" y="' + (cy - 12) + '" width="4" height="12" fill="#3f8a3f"/><rect x="' + (cx - 4) + '" y="' + (cy - 8) + '" width="4" height="3" fill="#3f8a3f"/>';
     }
+    // 설원: 산맥, 침엽수, 서리 궁전
+    [[790, 380, 110, 90], [880, 300, 120, 100], [960, 420, 110, 90], [840, 500, 100, 70]].forEach(function (m) { s += mountain(m[0], m[1], m[2], m[3], '#9fb3cc', '#ffffff'); });
+    for (i = 0; i < 22; i++) {
+      var sx = 720 + r() * 270, sy = 290 + r() * 250;
+      if (Math.abs(sx - 780) < 26 && Math.abs(sy - 450) < 24 || Math.abs(sx - 900) < 26 && Math.abs(sy - 330) < 24) continue;
+      s += poly((sx - 5) + ',' + sy + ' ' + sx + ',' + (sy - 13) + ' ' + (sx + 5) + ',' + sy, '#2f5a6a');
+    }
     // 화산: 용암 강, 화산, 바위
-    s += path('M700 210 Q690 300 640 360 T560 470', 'none', 'stroke="#ff7a2a" stroke-width="6"');
-    s += path('M700 210 Q690 300 640 360 T560 470', 'none', 'stroke="#ffd23f" stroke-width="2"');
-    s += poly('690,210 748,120 806,210', '#3a2020') + poly('748,120 806,210 770,210', '#241414') +
-      poly('734,124 748,104 762,124', '#ff7a2a') + path('M748 104 l-3 -16 m6 16 l4 -20', 'none', 'stroke="#ffd23f" stroke-width="3"');
-    for (i = 0; i < 18; i++) {
-      var rx = 630 + r() * 170, ry = 230 + r() * 220;
+    s += poly('760,170 820,60 880,170', '#3a2020') + poly('820,60 880,170 842,170', '#241414') + poly('806,64 820,44 834,64', '#ff7a2a') +
+      path('M820 44 l-3 -16 m6 16 l4 -20', 'none', 'stroke="#ffd23f" stroke-width="3"');
+    s += path('M820 170 Q760 210 700 200 T560 230', 'none', 'stroke="#ff7a2a" stroke-width="6"') + path('M820 170 Q760 210 700 200 T560 230', 'none', 'stroke="#ffd23f" stroke-width="2"');
+    for (i = 0; i < 16; i++) {
+      var rx = 470 + r() * 500, ry = 30 + r() * 210;
       s += poly(rx + ',' + ry + ' ' + (rx + 6) + ',' + (ry - 7) + ' ' + (rx + 12) + ',' + ry, '#2a1818');
     }
-    // 청운문(15단계): 봉우리 위의 기와지붕 전각, 소나무, 핏빛 안개
-    s += poly('850,210 900,70 950,210', '#2a2038') + poly('900,70 950,210 925,210', '#1f1830') + poly('886,110 900,70 914,110', '#d8d0e8') +
-      '<rect x="878" y="150" width="44" height="22" fill="#5a1a24"/><rect x="884" y="152" width="3" height="20" fill="#9a2a2a"/><rect x="913" y="152" width="3" height="20" fill="#9a2a2a"/>' +
-      path('M868 152 Q878 144 890 142 H910 Q922 144 932 152 L926 154 H874 Z', '#1a1a2a') +
-      '<rect x="886" y="132" width="28" height="9" fill="#5a1a24"/>' + path('M878 134 Q886 128 894 127 H906 Q914 128 922 134 L918 136 H882 Z', '#1a1a2a') +
-      '<rect x="897" y="136" width="6" height="4" fill="#ffd23f"/>';
-    for (i = 0; i < 10; i++) {
-      var tx = 820 + r() * 160, ty = 240 + r() * 200;
-      s += poly(tx + ',' + ty + ' ' + (tx + 7) + ',' + (ty - 14) + ' ' + (tx + 14) + ',' + ty, '#1f3a30') + '<rect x="' + (tx + 6) + '" y="' + ty + '" width="2" height="4" fill="#3a2418"/>';
-    }
-    for (i = 0; i < 8; i++) s += '<ellipse cx="' + (820 + r() * 170) + '" cy="' + (260 + r() * 220) + '" rx="34" ry="8" fill="#c04a5a" opacity="0.3"/>';
-    // 강: 설원에서 숲을 지나 바다로
-    var river = 'M470 120 Q430 200 380 230 T300 280 Q250 330 230 380 T150 470 Q110 520 90 560';
-    s += path(river, 'none', 'stroke="#2c6aa0" stroke-width="10"') + path(river, 'none', 'stroke="#6fb8e6" stroke-width="3"');
     s += '</g>';
     // 해안선
-    s += poly(LAND, 'none', 'stroke="' + K + '" stroke-width="4" stroke-linejoin="round"');
-    // 나침반
-    s += '<g transform="translate(60 80)">' + poly('0,-26 6,-6 0,0 -6,-6', '#f0c75e') + poly('0,26 6,6 0,0 -6,6', '#8a93b8') +
-      poly('-26,0 -6,-6 0,0 -6,6', '#8a93b8') + poly('26,0 6,-6 0,0 6,6', '#8a93b8') + '<circle r="4" fill="#f0c75e"/></g>';
+    s += poly(MURIM, 'none', 'stroke="' + K + '" stroke-width="4" stroke-linejoin="round"') + poly(ELDAN, 'none', 'stroke="' + K + '" stroke-width="4" stroke-linejoin="round"');
+    // 세계의 틈: 두 갈래 균열(2장 → 3장, 8장 → 9장)
+    s += rift(386, 420, 120) + rift(390, 150, 110);
     return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 560" width="1000" height="560">' + s + '</svg>';
   }
 

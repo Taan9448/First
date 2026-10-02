@@ -187,13 +187,59 @@
     }
   };
 
+  // 앞쪽 장식: 고정 난수로 테마마다 같은 모양
+  function frnd(seed) { var v = seed; return function () { v = (v * 9301 + 49297) % 233280; return v / 233280; }; }
+  var FORE = {
+    forest: function () {
+      var r = frnd(3), o = '';
+      for (var i = 0; i < 46; i++) {
+        var x = r() * 400, h = 6 + r() * 16, c = i % 3 ? '#1a2e1c' : '#24402a';
+        o += '<path d="M' + x + ' 40 L' + (x + 2) + ' ' + (40 - h) + ' L' + (x + 4) + ' 40 Z" fill="' + c + '"/>';
+      }
+      for (i = 0; i < 6; i++) { var mx = 20 + r() * 360; o += '<rect x="' + mx + '" y="30" width="3" height="10" fill="#c8b8a0"/><path d="M' + (mx - 4) + ' 31 Q' + (mx + 1.5) + ' 22 ' + (mx + 7) + ' 31 Z" fill="#8a2e5a"/>'; }
+      for (i = 0; i < 8; i++) o += '<circle cx="' + (r() * 400).toFixed(0) + '" cy="' + (30 + r() * 8).toFixed(0) + '" r="1.5" fill="#b8ff6a"/>';
+      return o;
+    },
+    desert: function () {
+      var r = frnd(5), o = '<path d="M0 40 Q40 28 90 34 T190 32 T300 30 T400 33 V40 Z" fill="#b8884a"/><path d="M0 40 Q60 34 120 38 T260 36 T400 37 V40 Z" fill="#9a6e38"/>';
+      for (var i = 0; i < 7; i++) { var x = r() * 380; o += '<path d="M' + x + ' 40 L' + (x + 6) + ' ' + (31 - r() * 4) + ' L' + (x + 14) + ' 33 L' + (x + 18) + ' 40 Z" fill="#7a5a3a"/>'; }
+      return o;
+    },
+    snow: function () {
+      var r = frnd(7), o = '<path d="M0 40 Q30 26 70 32 T150 30 T240 28 T330 31 T400 29 V40 Z" fill="#e8f2fb"/><path d="M0 40 Q50 34 110 37 T250 35 T400 36 V40 Z" fill="#b8cfe2"/>';
+      for (var i = 0; i < 6; i++) { var x = r() * 380; o += '<path d="M' + x + ' 40 L' + (x + 4) + ' ' + (24 - r() * 6) + ' L' + (x + 8) + ' 40 Z" fill="#9fd6f2"/>'; }
+      return o;
+    },
+    volcano: function () {
+      var r = frnd(9), o = '';
+      for (var i = 0; i < 12; i++) {
+        var x = r() * 400, w = 14 + r() * 20, h = 6 + r() * 12;
+        o += '<path d="M' + x + ' 40 L' + (x + w * 0.2) + ' ' + (40 - h) + ' L' + (x + w * 0.7) + ' ' + (40 - h * 0.8) + ' L' + (x + w) + ' 40 Z" fill="#2a1414"/>' +
+          '<path d="M' + (x + w * 0.3) + ' 40 L' + (x + w * 0.45) + ' ' + (40 - h * 0.6) + '" stroke="#ff6a2a" stroke-width="1.2"/>';
+      }
+      return o;
+    },
+    castle: function () {
+      var r = frnd(11), o = '<rect y="34" width="400" height="6" fill="#241a26"/>';
+      for (var i = 0; i < 20; i++) o += '<rect x="' + (i * 20 + (i % 2) * 6) + '" y="34" width="1.5" height="6" fill="#120c16"/>';
+      [[30, 22], [350, 18]].forEach(function (p) { o += '<rect x="' + p[0] + '" y="' + p[1] + '" width="10" height="' + (40 - p[1]) + '" fill="#3a2a38"/><rect x="' + (p[0] - 2) + '" y="' + p[1] + '" width="14" height="3" fill="#4a3a48"/>'; });
+      for (i = 0; i < 9; i++) o += '<ellipse cx="' + (r() * 400).toFixed(0) + '" cy="' + (34 + r() * 4).toFixed(0) + '" rx="' + (12 + r() * 14).toFixed(0) + '" ry="3" fill="#c03040" opacity="0.4"/>';
+      return o;
+    }
+  };
+
   Game.Art = {
     GLYPH: GLYPH,
     glyph: function (key) { return GLYPH[key] || GLYPH.star; },
     sceneSvg: function (theme) {
       return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 150" width="400" height="150">' + (SCENE[theme] || SCENE.forest)() + '</svg>';
     },
-    // 전투 배경을 도트로 변환해 url 을 넘긴다
-    scene: function (theme) { return Game.Pixel.raster('scene:' + theme, Game.Art.sceneSvg(theme), 200, 75, 12); }
+    // 전투 배경을 도트로 변환해 url 을 넘긴다(16단계: 해상도를 두 배로 올려 캐릭터 도트 크기에 가깝게)
+    scene: function (theme) { return Game.Pixel.raster('scene2:' + theme, Game.Art.sceneSvg(theme), 400, 150, 14); },
+    // 전투 앞쪽 장식(16단계): 캐릭터 발치를 가리는 풀·모래·눈더미·바위·돌기둥. 투명 배경 400×40
+    foreSvg: function (theme) {
+      return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 40" width="400" height="40">' + (FORE[theme] || FORE.forest)() + '</svg>';
+    },
+    fore: function (theme) { return Game.Pixel.raster('fore:' + theme, Game.Art.foreSvg(theme), 400, 40, 14); }
   };
 })();

@@ -185,6 +185,7 @@ span.gold.bump { animation: popIn 0.4s steps(4); }
 @keyframes logoIn { from { opacity: 0; transform: translateY(-20px); } }
 @keyframes floaty { 50% { transform: translateY(-6px); } }
 @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } }
+.logo-tag { margin-top: -10px; font-family: var(--font-title); font-size: 20px; letter-spacing: 10px; color: #ffd0c0; text-shadow: 2px 2px 0 #5a1420; animation: fadeUp 0.8s var(--ease) 0.15s both; }
 .logo-line { width: 320px; height: 2px; background: repeating-linear-gradient(90deg, var(--cyan) 0 6px, transparent 6px 10px); opacity: 0.7; }
 .lineup { display: flex; gap: 12px; align-items: flex-end; padding: 0 20px 8px; position: relative; }
 .lineup::after { content: ''; position: absolute; left: 10%; right: 10%; bottom: 0; height: 6px; background: repeating-linear-gradient(90deg, rgba(94, 230, 255, 0.5) 0 4px, transparent 4px 8px); z-index: -1; }
@@ -377,6 +378,11 @@ span.gold.bump { animation: popIn 0.4s steps(4); }
 .map-route { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .region-tag { position: absolute; transform: translate(-50%, -50%); padding: 3px 12px; font-size: 0.85em; white-space: nowrap; pointer-events: none;
   background: rgba(5, 9, 19, 0.8); clip-path: var(--pxs); z-index: 2; }
+.world-tag { position: absolute; transform: translate(-50%, -50%); pointer-events: none; z-index: 2; font-family: var(--font-title); font-size: 1.15em; letter-spacing: 4px; white-space: nowrap;
+  color: #f0e6d0; text-shadow: var(--num-stroke); opacity: 0.85; }
+.world-tag.w-rift { color: #e0b8ff; font-size: 0.95em; letter-spacing: 2px; writing-mode: vertical-rl; }
+.world-tag.w-eldan { color: #d8f0ff; }
+.map-canvas.compact .world-tag { font-size: 0.9em; letter-spacing: 2px; }
 .region-tag i { display: inline-block; width: 8px; height: 8px; margin-right: 6px; vertical-align: 1px; }
 .region-tag.locked { color: var(--dim); }
 .smark { --m0: #5a7cb0; --m1: #2c4670; --mt: var(--text); position: absolute; transform: translate(-50%, -50%); width: 42px; height: 42px; border: 0; cursor: pointer; padding: 0; z-index: 2;
@@ -535,6 +541,28 @@ span.gold.bump { animation: popIn 0.4s steps(4); }
 .field { position: absolute; inset: 0; background-color: #1a2a3a; background-size: cover; background-position: center bottom; image-rendering: pixelated; overflow: hidden; --uw: 140px; }
 .field::before { content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 0;
   background: var(--scan), radial-gradient(120% 80% at 50% 45%, transparent 40%, rgba(5, 9, 19, 0.55) 100%), linear-gradient(rgba(5, 9, 19, 0.45), transparent 20%); }
+/* 16단계: 바닥 · 지평선 안개 · 앞쪽 장식 · 떠다니는 입자 — 캐릭터가 배경 속 땅을 딛고 서게 한다 */
+.field { --fl0: #3a5a34; --fl1: #142016; --haze: rgba(140, 220, 120, 0.22); --mote: #c8ff7a; --glow: rgba(184, 240, 122, 0.22); }
+.field[data-theme="desert"] { --fl0: #c9a060; --fl1: #6a4a24; --haze: rgba(255, 210, 140, 0.25); --mote: #ffe0a0; --glow: rgba(255, 210, 122, 0.22); }
+.field[data-theme="snow"] { --fl0: #dfeaf4; --fl1: #6f86a0; --haze: rgba(220, 240, 255, 0.3); --mote: #ffffff; --glow: rgba(200, 240, 255, 0.25); }
+.field[data-theme="volcano"] { --fl0: #4a2420; --fl1: #140808; --haze: rgba(255, 110, 50, 0.22); --mote: #ffb04a; --glow: rgba(255, 140, 70, 0.25); }
+.field[data-theme="castle"] { --fl0: #4a3a48; --fl1: #100a14; --haze: rgba(220, 70, 90, 0.22); --mote: #ff8a9a; --glow: rgba(255, 110, 130, 0.22); }
+.field .floor { position: absolute; left: 0; right: 0; bottom: 0; height: calc(var(--ch) * 0.78 + 26px + 84px); z-index: 0; pointer-events: none;
+  background:
+    linear-gradient(transparent 0 7%, rgba(0, 0, 0, 0.18) 7% 8%, transparent 8% 19%, rgba(0, 0, 0, 0.16) 19% 20.5%, transparent 20.5% 37%, rgba(0, 0, 0, 0.14) 37% 39%, transparent 39% 61%, rgba(0, 0, 0, 0.12) 61% 64%, transparent 64%),
+    linear-gradient(var(--fl0), var(--fl1)); }
+.field .floor::before { content: ''; position: absolute; left: 0; right: 0; bottom: 100%; height: 70px; background: linear-gradient(transparent, var(--haze)); }
+.field .floor::after { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: rgba(255, 255, 255, 0.12); }
+.field .fore { position: absolute; left: 0; right: 0; bottom: calc(var(--ch) * 0.78 + 26px + 58px); height: 28px; z-index: 2; pointer-events: none;
+  background-size: 100% 100%; background-repeat: no-repeat; image-rendering: pixelated; opacity: 0.92; }
+.field .motes { position: absolute; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; }
+.field .motes i { position: absolute; width: 4px; height: 4px; background: var(--mote); opacity: 0; animation: moteUp 6s linear infinite; box-shadow: 0 0 6px var(--mote); }
+@keyframes moteUp { 0% { transform: translate(0, 0); opacity: 0; } 15% { opacity: 0.7; } 85% { opacity: 0.5; } 100% { transform: translate(24px, -120px); opacity: 0; } }
+.field[data-theme="snow"] .motes i { animation-name: moteDown; }
+@keyframes moteDown { 0% { transform: translate(0, -60px); opacity: 0; } 20% { opacity: 0.8; } 100% { transform: translate(-30px, 80px); opacity: 0; } }
+/* 캐릭터 뒤로 테마 빛이 번져 배경 색과 묶인다 */
+.field .unit .sprite { filter: drop-shadow(0 0 7px var(--glow)); }
+.field .unit .shadow { width: 86%; height: calc(var(--px) * 4); bottom: calc(var(--px) * -2); background: radial-gradient(closest-side, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0)); clip-path: none; }
 .side { position: absolute; bottom: calc(var(--ch) * 0.78 + 26px); display: flex; align-items: flex-end; gap: 14px; z-index: 1; }
 .side.heroes { left: 4%; }
 .side.monsters { right: 4%; }
@@ -634,6 +662,31 @@ span.gold.bump { animation: popIn 0.4s steps(4); }
 @keyframes hitBump { 40% { transform: scale(1.35) rotate(-4deg); } }
 
 /* 보스 컷인 · 페이즈 띠 */
+/* ---------- 16단계: 영웅·전설 카드 컷인 ---------- */
+.skill-cut { --hc: #5ee6ff; position: absolute; inset: 0; z-index: 55; pointer-events: none; display: flex; align-items: center; animation: scBg 1.1s var(--ease) forwards; }
+@keyframes scBg { 0% { background: rgba(5, 9, 19, 0); } 12%, 82% { background: rgba(5, 9, 19, 0.55); } 100% { background: rgba(5, 9, 19, 0); } }
+.skill-cut .sc-lines { position: absolute; left: 0; right: 0; top: 50%; height: 230px; transform: translateY(-50%) skewY(-6deg);
+  background: repeating-linear-gradient(90deg, transparent 0 30px, rgba(255, 255, 255, 0.08) 30px 34px), linear-gradient(90deg, var(--hc), color-mix(in srgb, var(--hc) 40%, #050913) 60%, #050913);
+  animation: scSweep 1.1s var(--ease) forwards; box-shadow: 0 -4px 0 #fff, 0 4px 0 #fff; }
+@keyframes scSweep { 0% { clip-path: inset(0 100% 0 0); } 14% { clip-path: inset(0 0 0 0); } 82% { clip-path: inset(0 0 0 0); opacity: 1; } 100% { clip-path: inset(0 0 0 100%); opacity: 0.6; } }
+.skill-cut .sc-band { position: relative; width: 100%; display: flex; align-items: center; gap: 26px; padding: 0 7%; transform: skewY(-6deg); animation: scBand 1.1s var(--ease) forwards; }
+@keyframes scBand { 0% { transform: skewY(-6deg) translateX(-30%); opacity: 0; } 16% { transform: skewY(-6deg) translateX(0); opacity: 1; } 80% { transform: skewY(-6deg) translateX(2%); opacity: 1; } 100% { transform: skewY(-6deg) translateX(14%); opacity: 0; } }
+.skill-cut .cf-face { display: flex; align-items: center; gap: 14px; }
+.skill-cut .cf-win { position: relative; width: 200px; height: 190px; overflow: hidden; flex: 0 0 auto; clip-path: polygon(8% 0, 100% 0, 92% 100%, 0 100%);
+  background: radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.35), transparent 70%), #0a0f1e; box-shadow: inset 0 0 0 4px #fff; }
+.skill-cut .cf-win .sprite { position: absolute; filter: drop-shadow(0 0 10px var(--hc)); }
+.skill-cut .cf-face b { display: none; }
+.skill-cut .cf-face p { margin: 0; max-width: 300px; padding: 10px 16px; font-family: var(--font-title); font-size: 1.35em; line-height: 1.35; color: #fff;
+  background: rgba(5, 9, 19, 0.82); clip-path: var(--pxc); box-shadow: inset 4px 0 0 var(--hc); text-shadow: 2px 2px 0 #050913; }
+.skill-cut .sc-card { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; text-align: right; }
+.skill-cut .sc-card small { color: #ffe39a; letter-spacing: 4px; font-size: 0.9em; text-shadow: 2px 2px 0 #050913; }
+.skill-cut .sc-card b { font-family: var(--font-title); font-size: 52px; line-height: 1; color: #fff; text-shadow: 4px 4px 0 #050913, 0 0 18px var(--hc); }
+.skill-cut .sc-card .cstars { position: static; display: flex; gap: 4px; }
+.skill-cut .sc-card .cstars i { width: 26px; height: 26px; background-size: contain; image-rendering: pixelated; }
+.skill-cut .sc-card .cstars i.off { opacity: 0.25; }
+.skill-cut.r-legendary .sc-card b { color: #ffe066; }
+.skill-cut.duo .cf-win { width: 160px; height: 160px; }
+.skill-cut.duo .cf-face p { max-width: 200px; font-size: 1.1em; }
 .cutin { position: absolute; inset: 0; z-index: 60; display: flex; align-items: center; cursor: pointer; background: var(--scan), rgba(5, 9, 19, 0.65); animation: cutBg 1.6s var(--ease) forwards; }
 @keyframes cutBg { 0% { opacity: 0; } 12% { opacity: 1; } 85% { opacity: 1; } 100% { opacity: 0; } }
 .cutin .band { position: relative; width: 100%; height: 170px; display: flex; align-items: center; gap: 30px; padding: 0 10%;

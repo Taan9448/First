@@ -14,7 +14,7 @@
     return '<span class="gold"><i class="ico" style="' + UI.iconStyle('gold') + '"></i>' + St.data.gold + '</span>';
   }
   // 화면 제목 + 작은 영문 부제(12단계)
-  var TITLE_SUB = 'MURIM × MAGIC · THE EXPEDITION OF FIVE HEROES';
+  var TITLE_SUB = 'SWORD BEYOND THE HEAVENS · MURIM × MAGIC';
   var TITLE_EN = { '원정 지도': 'WORLD MAP', '파티 편성': 'SQUAD', '보상': 'REWARD', '휴식': 'CAMP', '카드 강화': 'UPGRADE', '이벤트': 'EVENT', '상점': 'SHOP',
     '새 원정': 'NEW EXPEDITION', '스테이지 클리어': 'STAGE CLEAR', '모닥불 이야기': 'CAMPFIRE TALK', '스토리': 'STORY' };
   function topbar(title, extra) {
@@ -76,7 +76,7 @@
     var html = '<div class="title-bg"></div><div class="title-shade"></div><div class="stars">' + stars + '</div>' +
       '<div class="title-wrap">' +
       '<div class="logo-sub">' + TITLE_SUB + '</div>' +
-      '<h1 class="logo">다섯 영웅의 원정</h1><div class="logo-line"></div>' + inner +
+      '<h1 class="logo">천외검결</h1><div class="logo-tag">두 세계의 검</div><div class="logo-line"></div>' + inner +
       (G.debug ? '<div class="debugtag">디버그 모드 · 별도 저장</div>' : '') + '</div>' +
       '<div class="title-foot">저장 칸 3개 · 진행은 브라우저에 자동 저장된다</div>';
     setTimeout(function () {
@@ -198,14 +198,23 @@
     var route = '';
     for (var i = 0; i < D.mapPos.length - 1; i++) {
       var a = D.mapPos[i], b = D.mapPos[i + 1], done = i + 1 <= d.clearedStage;
-      route += '<line x1="' + a[0] + '" y1="' + a[1] + '" x2="' + b[0] + '" y2="' + b[1] + '" stroke="#1a1208" stroke-width="12"/>' +
-        '<line x1="' + a[0] + '" y1="' + a[1] + '" x2="' + b[0] + '" y2="' + b[1] + '" stroke="' + (done ? '#ffd23f' : '#c9b48a') + '" stroke-width="' + (done ? 6 : 4) + '" stroke-dasharray="' + (done ? '14 6' : '8 10') + '"/>';
+      var ri = (D.riftAfter || []).indexOf(i + 1);
+      // 세계의 틈을 건너는 길은 틈을 지나 보랏빛으로 굽는다(16단계)
+      var dPath = ri >= 0 ? 'M' + a[0] + ' ' + a[1] + ' Q' + D.riftPos[ri][0] + ' ' + D.riftPos[ri][1] + ' ' + b[0] + ' ' + b[1] : 'M' + a[0] + ' ' + a[1] + ' L' + b[0] + ' ' + b[1];
+      route += '<path d="' + dPath + '" fill="none" stroke="#1a1208" stroke-width="12"/>' +
+        '<path d="' + dPath + '" fill="none" stroke="' + (ri >= 0 ? (done ? '#e8b0ff' : '#9a6ad0') : done ? '#ffd23f' : '#c9b48a') + '" stroke-width="' + (done ? 6 : 4) + '" stroke-dasharray="' + (done ? '14 6' : '8 10') + '"/>';
     }
     // 잠긴 지역은 경계 그대로 안개로 덮는다
     var fog = '';
     D.regions.forEach(function (rg, ri) { if (!St.canEnter(ri * 2 + 1)) fog += G.ArtMap.fogLayer(rg.theme, 11 + ri); });
     canvas.innerHTML = '<svg class="map-route" viewBox="0 0 1000 560" preserveAspectRatio="none" shape-rendering="crispEdges">' + fog + route + '</svg>';
 
+    // 세계 이름표(16단계)
+    (D.worldLabels || []).forEach(function (wl) {
+      var t = UI.el('div', 'world-tag w-' + wl.world, wl.text);
+      t.style.left = wl.pos[0] / 10 + '%'; t.style.top = wl.pos[1] / 5.6 + '%';
+      canvas.appendChild(t);
+    });
     // 지역 이름표
     D.regions.forEach(function (rg, ri) {
       var open = St.canEnter(ri * 2 + 1);
@@ -305,10 +314,9 @@
           return '<button class="btn fork-btn" data-i="' + i + '">' + UI.icon(nd.known ? G.DungeonMap.ICON[nd.type] : 'unknown') + (nd.known ? D.NODE_NAME[nd.type] : '미지') + '</button>';
         }).join('') + '</div></div>';
       } else html += '<button class="btn gold go">' + roomLabel(node, r) + '</button>';
-      html += (r.col === 0 && !r.pending ? '<button class="btn party">파티 편성</button>' : '') +
-        '<button class="btn small danger quit">스테이지 포기</button>';
+      if (r.col === 0 && !r.pending) html += '<button class="btn party">파티 편성</button>';
     } else {
-      var R = D.mapRules, cols = def.layout === 'final' ? R.finalSplit[0] + R.finalSplit[1] + 6 : R.middleCols[0] + 3 + '~' + (R.middleCols[1] + 3);
+      var R = D.mapRules, cols = def.layout === 'final' ? R.finalSplit[0] + R.finalSplit[1] + 5 : R.middleCols[0] + 3 + '~' + (R.middleCols[1] + 3);
       html += '<div class="info-line"><span>상태</span><span>' + state + '</span></div>' +
         '<div class="info-line"><span>보상</span><span>' + join + '</span></div>' +
         '<div class="info-line"><span>깊이</span><span>' + cols + '칸</span></div>' +
@@ -328,9 +336,6 @@
       b.onclick = function () { if (St.choose(+b.getAttribute('data-i'))) Meta.continueRun(); };
     });
     if (side.querySelector('.party')) side.querySelector('.party').onclick = function () { Meta.party(Meta.map, '확인', Meta.map); };
-    if (side.querySelector('.quit')) side.querySelector('.quit').onclick = function () {
-      confirmBox('스테이지를 포기할까요? (얻은 카드·골드·유물은 남는다)', '포기', function () { St.abandon(); Meta.map(); });
-    };
     if (side.querySelector('.goto')) side.querySelector('.goto').onclick = function () { mapView = 'dungeon'; Meta.map(r.stage); };
   }
 
@@ -849,11 +854,11 @@
     var el = screen('ending');
     el.innerHTML = '<div class="title-bg"></div><div class="title-shade"></div>' +
       '<div class="title-wrap"><div class="logo-sub">THE END</div><h1 class="logo">원정 완료</h1><div class="logo-line"></div><div class="lineup"></div>' +
-      '<div class="story frame gold"><p>다섯 땅 위로 아침이 밝았다. 다섯 영웅의 원정은 이렇게 끝났다.</p>' +
+      '<div class="story frame gold"><p>청운봉에 다시 푸른 구름이 걸렸다. 두 세계를 잇는 검, 천외검결의 이야기는 이렇게 끝났다.</p>' +
       '<p class="dim">로비의 \'스토리\'에서 지나온 장면을 다시 볼 수 있다.</p>' + (St.ascLevel() ? '<p class="asc-done">승천 ' + St.ascLevel() + ' 원정 완료!</p>' : '') +
       '<p class="dim">플레이해 주셔서 감사합니다. 카드·유물·성장을 그대로 가지고 더 어려운 <b>승천</b> 원정을 떠날 수 있다.</p></div>' +
       '<div class="menu"><button class="btn gold big asc">새 원정 (승천)</button><button class="btn big ok">로비로</button></div></div>';
-    G.Art.scene('forest').then(function (u) { if (u) el.querySelector('.title-bg').style.backgroundImage = 'url(' + u + ')'; });
+    G.Art.scene('castle').then(function (u) { if (u) el.querySelector('.title-bg').style.backgroundImage = 'url(' + u + ')'; });
     var line = el.querySelector('.lineup');
     D.characters.forEach(function (c) { var w = UI.el('div', 'slot'); w.appendChild(UI.spriteEl(c.id, 1.1)); line.appendChild(w); });
     el.querySelector('.ok').onclick = function () { Meta.lobby(); };

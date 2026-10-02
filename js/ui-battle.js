@@ -41,6 +41,14 @@
     var theme = battleOpts.theme || (G.Data.monsterById[battleOpts.monsters[battleOpts.monsters.length - 1]] || {}).theme || 'forest';
     if (theme === 'mirror') theme = 'castle';
     G.Art.scene(theme).then(function (url) { if (url) field.style.backgroundImage = 'url(' + url + ')'; });
+    // 16단계: 배경과 캐릭터를 잇는 바닥·앞쪽 장식·떠다니는 입자(테마별)
+    field.setAttribute('data-theme', theme);
+    G.Art.fore(theme).then(function (url) { var f = field.querySelector('.fore'); if (url && f) f.style.backgroundImage = 'url(' + url + ')'; });
+    var motes = field.querySelector('.motes'), mh = '';
+    if (!(G.FX && G.FX.low)) for (var mi = 0; mi < 16; mi++) {
+      mh += '<i style="left:' + (Math.random() * 100).toFixed(1) + '%;bottom:' + (8 + Math.random() * 60).toFixed(1) + '%;animation-delay:-' + (Math.random() * 6).toFixed(2) + 's;animation-duration:' + (5 + Math.random() * 4).toFixed(2) + 's"></i>';
+    }
+    motes.innerHTML = mh;
     $('.title').textContent = battleOpts.title || '전투';
     $('.stage-chip .chip').style.background = (G.Data.THEME_COLOR || {})[theme] || '#5ee0ff';
     $('.relic-bar').innerHTML = UI.relicBar(battleOpts.relics);
@@ -49,6 +57,7 @@
     $('.combo').classList.remove('on');
     field.classList.remove('zoom'); field.style.transform = '';
     UI.show('battle');
+    battleOpts.cutin = !FX.low; // 16단계: 영웅·전설 카드 컷인(이펙트 '낮음'이면 생략)
     B = G.Battle.create(battleOpts);
     if (G.Extra) G.Extra.refreshMenu();
     renderAll();
@@ -71,6 +80,32 @@
     var end = function () { if (finished) return; finished = true; if (c.parentNode) c.parentNode.removeChild(c); done(); };
     c.onclick = end;
     setTimeout(end, FX.low ? 800 : 1600);
+  }
+
+  function heroDef(id) { return G.Data.characters.filter(function (c) { return c.id === id; })[0]; }
+  function skillCutIn(def, caster) {
+    var ids = def.duo ? def.duo.slice() : [caster.id];
+    var lines = def.duo ? (def.lines || []) : [def.line || G.rng.pick((heroDef(caster.id) || {}).cutin || ['하앗!'])];
+    var rar = def.duo ? 'duo' : def.rarity;
+    var faces = ids.map(function (id, i) {
+      var h = heroDef(id) || { name: id, color: '#5ee6ff' };
+      return '<div class="cf-face" style="--hc:' + h.color + '"><div class="cf-win"></div><b>' + h.name + '</b>' + (lines[i] ? '<p>' + U.esc(lines[i]) + '</p>' : '') + '</div>';
+    }).join('');
+    var c = UI.el('div', 'skill-cut r-' + rar + (def.duo ? ' duo' : ''), '<div class="sc-lines"></div><div class="sc-band">' + faces +
+      '<div class="sc-card"><small>' + (def.duo ? '합동기' : def.rarity === 'legendary' ? '전설 · LEGENDARY' : '영웅 · EPIC') + '</small><b>' + U.esc(def.name) + '</b>' + UI.starsHTML(def.duo ? 'epic' : def.rarity) + '</div></div>');
+    c.style.setProperty('--hc', (heroDef(ids[0]) || {}).color || '#5ee6ff');
+    field.appendChild(c);
+    // 얼굴 클로즈업: 그림 좌표(56×64)의 얼굴 중심(약 54%, 31%)이 창 가운데 오도록 놓는다
+    UI.$$('.cf-win', c).forEach(function (w, i) {
+      var sp = UI.spriteEl(ids[i], 4.2);
+      sp.classList.add('pose');
+      w.appendChild(sp);
+      var sw = sp.offsetWidth, sh = sp.offsetHeight;
+      sp.style.left = Math.round(w.clientWidth / 2 - sw * 0.55) + 'px';
+      sp.style.top = Math.round(w.clientHeight * 0.52 - sh * 0.31) + 'px';
+    });
+    SND.play(def.rarity === 'legendary' || def.duo ? 'big' : 'buff');
+    setTimeout(function () { if (c.parentNode) c.parentNode.removeChild(c); }, 1100 / (G.speed || 1));
   }
 
   // 연타 카운터
@@ -499,6 +534,8 @@
       handSig = '';
     });
     on('cards:draw', function () { SND.play('draw'); });
+    // 16단계: 영웅·전설 카드 · 합동기 컷인 — 얼굴 클로즈업 + 카드 이름 + 대사
+    on('card:cutin', function (d) { skillCutIn(d.def, d.caster); });
     on('card:play', function (d) {
       var def = d.inst.def;
       cur = { def: def, caster: d.caster, el: G.ArtCards.elementOf(def) };

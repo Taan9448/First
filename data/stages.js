@@ -60,14 +60,19 @@ Game.Data.stages = [
 })();
 
 // 월드맵 위 스테이지 위치(1000×560 지도 좌표)와 지역 이름표 위치
-Game.Data.mapPos = [[96, 418], [196, 318], [300, 430], [396, 330], [486, 232], [574, 142], [662, 268], [748, 172], [846, 318], [924, 196]];
+Game.Data.mapPos = [[96, 470], [232, 372], [530, 456], [636, 352], [780, 456], [900, 332], [880, 200], [600, 150], [236, 196], [132, 96]];
+// 16단계 월드맵: 왼쪽 무림(만독곡·청운문), 가운데 세계의 틈, 오른쪽 엘단. riftAfter: 그 스테이지 다음 길은 세계의 틈을 건넌다
+Game.Data.riftAfter = [2, 8];
+Game.Data.riftPos = [[386, 420], [390, 150]];   // 두 틈의 위치(지도 좌표)
 Game.Data.regions = [
-  { theme: 'forest', label: [140, 520], box: [0, 200, 250, 560] },
-  { theme: 'desert', label: [350, 520], box: [240, 250, 450, 560] },
-  { theme: 'snow', label: [470, 56], box: [420, 30, 630, 300] },
-  { theme: 'volcano', label: [700, 56], box: [610, 60, 800, 360] },
-  { theme: 'castle', label: [910, 56], box: [790, 60, 1000, 420] }
+  { theme: 'forest', label: [150, 534], box: [0, 262, 320, 560] },
+  { theme: 'desert', label: [580, 534], box: [440, 280, 720, 560] },
+  { theme: 'snow', label: [860, 534], box: [700, 250, 1000, 560] },
+  { theme: 'volcano', label: [720, 30], box: [446, 0, 1000, 290] },
+  { theme: 'castle', label: [150, 248], box: [0, 0, 326, 262] }
 ];
+// 세계 이름표(지도 위 큰 글씨)
+Game.Data.worldLabels = [{ text: '무림 · 중원', pos: [150, 300], world: 'murim' }, { text: '세계의 틈', pos: [388, 286], world: 'rift' }, { text: '엘단 대륙', pos: [720, 290], world: 'eldan' }];
 Game.Data.STAGE_NAME = ['만독곡 입구', '흑풍채', '모래 바다', '파라오의 무덤', '눈보라 고개', '서리 궁전', '불타는 협곡', '화룡의 둥지', '청운문 산문', '청운봉 혈마단'];
 Game.Data.THEME_COLOR = { forest: '#4fae4a', desert: '#e0a84a', snow: '#9fd6f2', volcano: '#e0584a', castle: '#a274dc' };
 

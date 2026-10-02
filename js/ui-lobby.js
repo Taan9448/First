@@ -56,7 +56,7 @@
     el.innerHTML = '<div class="lb-bg"></div><div class="lb-shade"></div>' +
       '<header class="lb-top">' +
         '<div class="lb-profile"><div class="lv"><small>LV</small><b>' + maxLevel() + '</b></div>' +
-        '<div class="pf"><b>다섯 영웅 원정대 <span class="mode-chip" style="--mc:' + St.mode().color + '">' + St.mode().name + '</span></b><small>' + G.Save.slot + '번 칸 · ' + (asc ? '승천 ' + asc + ' 원정' : '기본 원정') + ' · 최고 기록 ' + (d.ascension.best ? '승천 ' + d.ascension.best : d.flags.ended ? '원정 완료' : '진행 중') + '</small><i></i></div></div>' +
+        '<div class="pf"><b>하린 일행 <span class="mode-chip" style="--mc:' + St.mode().color + '">' + St.mode().name + '</span></b><small>' + G.Save.slot + '번 칸 · ' + (asc ? '승천 ' + asc + ' 원정' : '기본 원정') + ' · 최고 기록 ' + (d.ascension.best ? '승천 ' + d.ascension.best : d.flags.ended ? '원정 완료' : '진행 중') + '</small><i></i></div></div>' +
         '<span class="spacer"></span>' +
         '<span class="res" data-tip="골드">' + UI.icon('gold') + d.gold + '</span>' +
         '<span class="res" data-tip="모은 카드">' + UI.icon('deck') + owned + '<small>/' + allCards.length + '</small></span>' +

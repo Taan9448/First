@@ -23,7 +23,7 @@ function section(name) { console.log('\n■ ' + name); }
 // ---------------------------------------------------------------- 데이터 검사
 section('데이터');
 const cards = G.Data.cards.filter(c => c.owner !== 'none');
-check(cards.length === 192, '카드 192장 (현재 ' + cards.length + ')');
+check(cards.length === 200, '카드 200장 (현재 ' + cards.length + ')');
 const KNOWN_OPS = ['damage', 'block', 'heal', 'status', 'cleanse', 'revive', 'loseHp', 'draw', 'energy', 'discount',
   'doubleNext', 'gold', 'power', 'if', 'chance', 'oneOf', 'conjure', 'addCard', 'randomizeCosts', 'freeRandom', 'summon', 'custom'];
 function walk(effects, where) {
@@ -50,7 +50,7 @@ G.Data.monsters.forEach(m => {
 check(G.Data.monsters.length === 41, '몬스터 41종 (현재 ' + G.Data.monsters.length + ')');
 check(G.Data.monsters.filter(m => m.mirror).length === 5, '거울 속 그림자 5종');
 
-// 강화 카드: 192장 모두 무언가 바뀌고, 설명의 {dN}·{+…} 가 올바르다
+// 강화 카드: 200장 모두 무언가 바뀌고, 설명의 {dN}·{+…} 가 올바르다
 cards.forEach(c => {
   const u = G.Data.cardById[c.id + '+'];
   check(u && u.upgraded && u.base === c.id, c.id + ': 강화 카드 없음');
@@ -161,7 +161,7 @@ doc.split('\n').forEach(line => {
   check(c.target === TGT[m[7].trim()], id + ' 대상 ' + c.target + ' ≠ ' + m[7].trim());
   check(c.tags === m[8].trim(), id + ' 분류 "' + c.tags + '" ≠ "' + m[8].trim() + '"');
 });
-check(docRows === 192, '기획서 카드 표 192행 (현재 ' + docRows + ')');
+check(docRows === 200, '기획서 카드 표 200행 (현재 ' + docRows + ')');
 // '강화' 열은 데이터에서 만든 문구와 같아야 한다 (다르면 node tools/doc-upgrades.js)
 let upRows = 0;
 doc.split('\n').forEach(line => {
@@ -170,7 +170,7 @@ doc.split('\n').forEach(line => {
   upRows++;
   check(G.Upgrade.summary(m[1]) === m[2], m[1] + ' 강화 열이 데이터와 다름 (node tools/doc-upgrades.js)');
 });
-check(upRows === 192, '기획서 카드 표 강화 열 192행 (현재 ' + upRows + ')');
+check(upRows === 200, '기획서 카드 표 강화 열 200행 (현재 ' + upRows + ')');
 
 // ---------------------------------------------------------------- 규칙 단위 테스트
 section('규칙');
@@ -463,7 +463,7 @@ function handCard(b, id) {
   check(b.monsters[1].status.strength === 2, '분노한: 힘 2');
 
   // ---------------------------------------------------------------- 무작위 전투
-  const N = +(process.argv[2] || 3000);
+  const N = +(process.argv[2] || 6000); // 16단계: 카드가 200장이 되어 모든 강화 카드가 한 번 이상 나오도록 3000 → 6000
   section('무작위 전투 ' + N + '회');
   const heroes = G.Data.characters.map(c => c.id);
   const monsters = G.Data.monsters;
