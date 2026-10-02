@@ -313,7 +313,7 @@
           el.style.top = '170px';
           el.style.transform = 'rotate(28deg) scale(0.55)';
         }
-        setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 360);
+        setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, el._castMs || 360);
       }
     });
     layoutHand();
@@ -523,6 +523,44 @@
   }
   function pts(list) { return list.filter(function (u) { return !u.dead; }).map(spritePt); }
 
+  // 화면(#app) 기준 사각형
+  function appRect(r) { var a = document.getElementById('app').getBoundingClientRect(); return { x: r.left - a.left, y: r.top - a.top, w: r.width, h: r.height }; }
+  function unitRect(u) { var e = unitEls[u.uid]; return e ? appRect(e._sprite.getBoundingClientRect()) : null; }
+  function liveRects(list) { return list.filter(function (u) { return !u.dead; }).map(unitRect).filter(Boolean); }
+  // 도트 연출이 향할 대상: 회복은 아군, 공격은 적
+  function fxTargets(def, d) {
+    if (def.type === 'heal') {
+      if (def.target === 'allAllies' || def.target === 'allDowned') return liveRects(B.heroes);
+      var h = d.target && d.target.side !== 'enemy' ? d.target : d.caster;
+      return h ? [unitRect(h)].filter(Boolean) : liveRects(B.heroes);
+    }
+    if (def.type !== 'attack') return [];
+    if (d.target) return [unitRect(d.target)].filter(Boolean);
+    var foes = liveRects(B.monsters);
+    if (def.target === 'randomEnemy' && foes.length) return [G.rng.pick(foes)];
+    return foes;
+  }
+  // 카드를 전장 아래 가운데로 띄워 모은 뒤 부순다. 첫 타격까지의 시간(ms)을 돌려준다
+  function castCard(el, d, key) {
+    var def = d.inst.def, pal = G.PFX.palFor(key, cur.el), sc = 1.08;
+    var hr = handEl.getBoundingClientRect(), fr = field.getBoundingClientRect();
+    var cw = el.offsetWidth, ch = el.offsetHeight;
+    var cx = fr.left + fr.width / 2, cy = hr.top - ch * sc * 0.5 + 6;
+    var spd = G.speed || 1, gather = G.PFX.gatherMs(def.rarity) / spd;
+    el.classList.remove('dragging', 'hovered');
+    el.classList.add('flying', 'casting');
+    el.style.setProperty('--cglow', G.PFX.glowOf(pal));
+    el.style.left = cx - hr.left - cw / 2 + 'px';
+    el.style.top = cy - hr.top - ch / 2 + 'px';
+    el.style.transform = 'scale(' + sc + ')';
+    el._castMs = gather + 160;
+    setTimeout(function () { el.classList.add('burst'); }, gather);
+    var hold = G.PFX.play({ key: key, pal: pal, rarity: def.rarity,
+      card: appRect({ left: cx - cw * sc / 2, top: cy - ch * sc / 2, width: cw * sc, height: ch * sc }),
+      hero: d.caster ? unitRect(d.caster) : null, targets: fxTargets(def, d) });
+    return hold;
+  }
+
   function bindBus() {
     var on = G.bus.on;
     on('battle:update', function () { renderAll(); });
@@ -541,7 +579,11 @@
       cur = { def: def, caster: d.caster, el: G.ArtCards.elementOf(def) };
       SND.play('play');
       var el = cardEls[d.inst.uid];
-      if (el) {
+      // 18단계: 카드가 떠올라 빛나다 도트 조각으로 부서지고, 카드에 배정된 도트 연출이 이어진다(data/fx.js)
+      var pkey = FX.low || !el ? null : G.PFX.keyFor(def, cur.el), pixel = pkey && pkey !== 'release';
+      var gather = pkey ? G.PFX.gatherMs(def.rarity) / (G.speed || 1) : 140;
+      if (pkey) d.hold = castCard(el, d, pkey);
+      else if (el) {
         var hr = handEl.getBoundingClientRect(), tx, ty;
         if (d.target) {
           var r = unitEls[d.target.uid]._sprite.getBoundingClientRect();
@@ -557,24 +599,26 @@
       }
       pulseClass($('.energy'), 'pulse', 400);
       if (d.caster) {
-        var ce = unitEls[d.caster.uid];
-        pulseClass(ce && ce._sprite, 'pose', 380);
-        var magic = FX.MAGIC[cur.el];
-        pulseClass(ce, def.type === 'attack' && !magic ? 'lunge-r' : 'hop', 330);
-        // 마법 공격: 무기 끝에서 탄이 포물선으로 날아간다
-        if (def.type === 'attack' && magic) {
+        var ce = unitEls[d.caster.uid], magic = FX.MAGIC[cur.el];
+        setTimeout(function () {
+          pulseClass(ce && ce._sprite, 'pose', 380);
+          pulseClass(ce, def.type === 'attack' && !magic ? 'lunge-r' : 'hop', 330);
+        }, pkey ? gather : 0);
+        // 마법 공격: 무기 끝에서 탄이 포물선으로 날아간다 (도트 연출이 없을 때)
+        if (def.type === 'attack' && magic && !pixel) {
           var from = tipPt(d.caster), colors = FX.colors(cur.el);
           var to = d.target ? [spritePt(d.target)] : def.target === 'allEnemies' ? pts(B.monsters) : [fieldCenter()];
           to.forEach(function (t) { FX.projectile(from, t, colors[0], null, { trail: colors[1], frames: 12 }); });
           FX.burst(from, { colors: colors, n: 8, speed: 1.2 });
         }
       }
-      if (def.sfx) {
+      // 희귀 이상 카드의 고유 이펙트. 도트 연출이 맡은 공격·회복 카드는 겹치지 않게 생략한다
+      if (def.sfx && !pixel) {
         var ctx = { from: d.caster ? tipPt(d.caster) : fieldCenter(), targets: d.target ? [spritePt(d.target)] : [],
           enemies: pts(B.monsters), allies: pts(B.heroes), center: fieldCenter(), el: cur.el };
-        setTimeout(function () { FX.play(def.sfx, ctx); }, 140);
+        setTimeout(function () { FX.play(def.sfx, ctx); }, gather);
         SND.play(/dragon|explosion|meteor|quake|miracle/.test(def.sfx) ? 'big' : 'magic');
-      }
+      } else if (pixel) SND.play(def.rarity === 'legendary' || /dragon|swords|roc|bloodBolt/.test(pkey) ? 'big' : 'magic');
     });
     on('card:done', function () { cur = null; });
     // 연계 수와 짝 연계

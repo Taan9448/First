@@ -396,9 +396,11 @@
       this.emit('card:cutin', { def: def, caster: caster });
       await G.wait(T.cutin);
     }
-    this.emit('card:play', { inst: inst, caster: caster, target: target });
+    // 화면 쪽이 카드 연출의 첫 타격까지 걸리는 시간을 hold(ms)에 적어 주면 그만큼 기다린 뒤 효과를 낸다
+    var play = { inst: inst, caster: caster, target: target, hold: 0 };
+    this.emit('card:play', play);
     this.update();
-    await G.wait(T.card);
+    await G.wait(Math.max(T.card, play.hold || 0));
     await this.run(def.effects, ctx);
     if (dbl && !this.over()) {
       this.emit('fx:text', { unit: caster, text: '분신!', kind: 'info' });

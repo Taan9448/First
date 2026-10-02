@@ -8,7 +8,7 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 global.window = global;
 ['js/core.js', 'data/keywords.js', 'data/characters.js', 'data/cards.js', 'data/monsters.js', 'data/relics.js',
- 'data/upgrades.js', 'data/events.js', 'data/bonds.js', 'data/traits.js', 'data/ascension.js', 'data/modes.js', 'js/status.js', 'js/deck.js', 'js/upgrade.js', 'js/battle.js', 'js/effects.js'].forEach(f => {
+ 'data/upgrades.js', 'data/events.js', 'data/bonds.js', 'data/traits.js', 'data/ascension.js', 'data/modes.js', 'js/status.js', 'js/deck.js', 'js/upgrade.js', 'js/battle.js', 'js/effects.js', 'data/fx.js', 'js/fx-pixel.js'].forEach(f => {
   vm.runInThisContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), { filename: f });
 });
 const G = global.Game;
@@ -126,6 +126,16 @@ cards.forEach(c => {
   if (rare) check(c.sfx && G.FX.SFX[c.sfx], c.id + ': 희귀 이상인데 고유 이펙트 없음 (' + c.sfx + ')');
   else check(!c.sfx, c.id + ': 일반·고급인데 고유 이펙트가 있음');
 });
+
+// 18단계: 카드 도트 연출 배정(data/fx.js)의 이름이 모두 js/fx-pixel.js 에 있고, 모든 카드가 연출을 고를 수 있다
+(function () {
+  const D = G.Data.cardFx;
+  const names = [].concat(Object.values(D.byCard), Object.values(D.heal), Object.values(D.byOwner), Object.values(D.byElement), Object.values(D.bySchool));
+  names.forEach(k => check(G.PFX.has(k), 'data/fx.js: 없는 도트 연출 ' + k));
+  Object.keys(D.byCard).forEach(id => check(G.Data.cardById[id], 'data/fx.js: 없는 카드 ' + id));
+  Object.values(D.elPal).forEach(p => check(G.PFX.glowOf(p) !== '#ffffff' || p === 'none', 'data/fx.js: 없는 팔레트 ' + p));
+  cards.forEach(c => { const k = G.PFX.keyFor(c, c.el || 'neutral'); check(G.PFX.has(k), c.id + ': 도트 연출을 고르지 못함 (' + k + ')'); });
+})();
 
 // 설명의 {dN} 자리표시자가 damage 효과 수를 넘지 않는지
 cards.forEach(c => {
