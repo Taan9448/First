@@ -286,10 +286,55 @@
   function def(id, spec) { specs[id] = spec; delete sheets[id]; }
   function variant(id, base, extra) { specs[id] = Object.assign({}, specs[base], extra); delete sheets[id]; }
 
+  // 18단계: 손으로 찍은 도트 격자(글자 1개 = 1픽셀)로 시트를 만든다.
+  // spec.grid = { rows, pal, k(화면 배율), waist(숨쉴 때 내려앉는 윗몸의 마지막 줄), cx, tip, face }
+  // 대기 8프레임은 윗몸이 1px 내려앉았다 돌아오고, 공격 프레임은 몸 전체가 앞으로 2px(윗몸 3px) 기운다
+  var EYES = 'eEW';
+  function gridSheet(spec) {
+    var g = spec.grid, rows = g.rows, gw = rows[0].length, gh = rows.length;
+    var PADX = 2, fw = gw + 4, fh = gh + 1;
+    var cv = document.createElement('canvas'); cv.width = fw * FRAMES; cv.height = fh;
+    var ctx = cv.getContext('2d'), img = ctx.createImageData(fw * FRAMES, fh), dd = img.data;
+    var col = {};
+    Object.keys(g.pal).forEach(function (ch) {
+      var hex = g.pal[ch];
+      if (spec.remap) hex = spec.remap(hex, EYES.indexOf(ch) >= 0 ? 'eye' : (g.glow || '').indexOf(ch) >= 0 ? 'glow' : ch);
+      col[ch] = hexRgb(hex);
+    });
+    for (var f = 0; f < FRAMES; f++) {
+      var atk = f === IDLE, dy = atk ? 0 : Math.round(G.Shape.bob(f / IDLE, 1));
+      for (var pass = 0; pass < 2; pass++) for (var y = 0; y < gh; y++) {
+        var upper = y <= g.waist;
+        if ((pass === 1) !== upper) continue;
+        var row = rows[y];
+        for (var x = 0; x < gw; x++) {
+          var c = col[row[x]];
+          if (!c) continue;
+          var X = PADX + x + (atk ? (upper ? 3 : 2) : 0), Y = y + (upper ? dy : 0);
+          if (X < 0 || X >= fw || Y < 0 || Y >= fh) continue;
+          if (spec.flip) X = fw - 1 - X;
+          var k = (Y * fw * FRAMES + f * fw + X) * 4;
+          dd[k] = c[0]; dd[k + 1] = c[1]; dd[k + 2] = c[2]; dd[k + 3] = 255;
+        }
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+    var KK = g.k || K;
+    var fx = function (gx) { var px = (PADX + gx + 0.5) / fw; return spec.flip ? 1 - px : px; };
+    var pt = function (q, dx) { return q ? { x: fx(q[0] + (dx || 0)), y: (q[1] + 0.5) / fh } : null; };
+    return {
+      url: cv.toDataURL(), canvas: cv, frames: FRAMES, fw: fw, fh: fh,
+      w: fw * KK, h: fh * KK, anchor: fx(g.cx), tip: pt(g.tip), tipAttack: pt(g.tip, 3),
+      face: g.face ? pt(g.face) : null
+    };
+  }
+
   function sheet(id) {
     if (sheets[id]) return sheets[id];
     var spec = specs[id];
     if (!spec) return null;
+    if (spec.grid) return (sheets[id] = gridSheet(spec));
+    if (spec.build) return (sheets[id] = spec.build(spec));
     var m0 = spec.fn(0, null), s = (spec.h - 2) / m0.h;
     var style = spec.style || { rim: spec.rim };
     var opts = { flip: !!spec.flip, remap: spec.remap };

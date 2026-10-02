@@ -100,9 +100,9 @@
       var sp = UI.spriteEl(ids[i], 4.2);
       sp.classList.add('pose');
       w.appendChild(sp);
-      var sw = sp.offsetWidth, sh = sp.offsetHeight;
-      sp.style.left = Math.round(w.clientWidth / 2 - sw * 0.55) + 'px';
-      sp.style.top = Math.round(w.clientHeight * 0.52 - sh * 0.31) + 'px';
+      var sw = sp.offsetWidth, sh = sp.offsetHeight, fc = sp._sheet.face || { x: 0.55, y: 0.31 };
+      sp.style.left = Math.round(w.clientWidth / 2 - sw * fc.x) + 'px';
+      sp.style.top = Math.round(w.clientHeight * 0.52 - sh * fc.y) + 'px';
     });
     SND.play(def.rarity === 'legendary' || def.duo ? 'big' : 'buff');
     setTimeout(function () { if (c.parentNode) c.parentNode.removeChild(c); }, 1100 / (G.speed || 1));
