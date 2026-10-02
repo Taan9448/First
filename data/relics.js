@@ -18,10 +18,10 @@
     R('R06', '화약 주머니', 'common', 'r_powder', '전투 시작 시 모든 적에게 피해 5.', { hooks: [{ on: 'battleStart', effects: [{ op: 'damage', value: 5, target: 'allEnemies' }] }] }),
     R('R07', '가죽 장갑', 'common', 'r_glove', '매 전투 첫 공격 카드 피해 +5.', { mods: { firstAttackBonus: 5 } }),
     R('R08', '은방울', 'common', 'r_bell', '매 전투 첫 턴 카드 2장 더 뽑기.', { mods: { firstTurnDraw: 2 } }),
-    R('R09', '독 바른 바늘', 'common', 'r_needle', '적에게 중독을 걸 때마다 +1.', { mods: { statusAdd: { poison: 1 } } }),
+    R('R09', '당가 독침', 'common', 'r_needle', '적에게 중독을 걸 때마다 +1.', { mods: { statusAdd: { poison: 1 } } }),
     R('R10', '부싯돌', 'common', 'r_flint', '적에게 화상을 걸 때마다 +1.', { mods: { statusAdd: { burn: 1 } } }),
     R('R11', '서리 결정', 'common', 'r_frost', '전투 시작 시 무작위 적 1명에게 한기 2.', { hooks: [{ on: 'battleStart', effects: [st('chill', 2, 'randomEnemy')] }] }),
-    R('R12', '붕대 뭉치', 'common', 'r_bandage', '쓰러진 아군이 전투 후 25% 대신 50% 체력으로 복귀.', { mods: { downedPct: 0.5 } }),
+    R('R12', '금창약', 'common', 'r_bandage', '쓰러진 아군이 전투 후 25% 대신 50% 체력으로 복귀.', { mods: { downedPct: 0.5 } }),
 
     R('R13', '전사의 문장', 'uncommon', 'r_crest', '치명타가 나면 그 캐릭터가 보호막 3.', { mods: { onCritBlock: 3 } }),
     R('R14', '불사조 깃털', 'uncommon', 'r_feather', '전투마다 처음 쓰러지는 아군 1명이 체력 20%로 즉시 일어난다.', { mods: { phoenix: 0.2 } }),
@@ -39,7 +39,7 @@
     R('R25', '얼음 왕관', 'rare', 'r_icecrown', '적이 빙결되면 취약 2도 받는다.', { mods: { freezeVuln: 2 } }),
     R('R26', '빈 손의 천칭', 'rare', 'r_scales', '손패를 모두 쓰고 턴을 끝내면 다음 턴 카드 2장 더.', { mods: { emptyHandDraw: 2 } }),
 
-    R('R27', '마왕의 왕관', 'boss', 'r_demoncrown', '매 턴 에너지 +1. 휴식으로 회복할 수 없다.', { mods: { turnEnergy: 1, noRestHeal: true } }),
+    R('R27', '혈마의 관', 'boss', 'r_demoncrown', '매 턴 에너지 +1. 휴식으로 회복할 수 없다.', { mods: { turnEnergy: 1, noRestHeal: true } }),
     R('R28', '시간의 톱니바퀴', 'boss', 'r_gear', '매 턴 에너지 +1. 매 턴 뽑는 카드 -1.', { mods: { turnEnergy: 1, turnDraw: -1 } }),
     R('R29', '피의 계약서', 'boss', 'r_contract', '매 턴 에너지 +1. 전투 시작 시 아군 전체 체력 5 잃음.', { mods: { turnEnergy: 1 }, hooks: [{ on: 'battleStart', effects: [{ op: 'loseHp', value: 5, target: 'allAllies' }] }] }),
     R('R30', '현자의 돌', 'boss', 'r_stone', '매 턴 에너지 +1. 상점 가격 +50%.', { mods: { turnEnergy: 1, shopPriceMult: 1.5 } })

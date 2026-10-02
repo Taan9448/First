@@ -100,4 +100,6 @@
   G.RARITIES = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
   G.RARITY_NAME = { common: '일반', uncommon: '고급', rare: '희귀', epic: '영웅', legendary: '전설' };
   G.TYPE_NAME = { attack: '공격', skill: '보조', block: '방어', heal: '회복', power: '지속', curse: '방해' };
+  // 카드 계열(15단계): 무공 · 마법 · 융합(무공 + 마법)
+  G.SCHOOL_NAME = { martial: '무공', magic: '마법', fusion: '융합', neutral: '' };
 })();

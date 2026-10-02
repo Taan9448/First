@@ -92,6 +92,18 @@
     net: path('M12 10 L68 10 L60 50 L20 50 Z', 'none', 'stroke="#d9c08a" stroke-width="3"') + path('M26 10 L28 50 M40 10 V50 M54 10 L52 50 M14 23 H66 M17 36 H63', 'none', 'stroke="#d9c08a" stroke-width="2"'),
     bomb: circ(36, 34, 17, '#3b3557') + circ(30, 28, 4, '#8a8fb0', 'stroke="none"') + path('M46 20 Q54 10 60 12', 'none', 'stroke="' + brown + '" stroke-width="3"') + path('M60 4 l2 6 6 2 -6 2 -2 6 -2 -6 -6 -2 6 -2 Z', '#ffe066', 'stroke-width="1"'),
     potion: path('M34 6 H46 V16 Q60 22 60 36 Q60 52 40 52 Q20 52 20 36 Q20 22 34 16 Z', '#ff6a8a') + rect(32, 4, 16, 5, '#c9a441') + circ(32, 34, 4, '#ffd0dc', 'stroke="none"'),
+    // 15단계 무림 그림: 직검(술 달린 검), 암기(비도 세 자루), 부적, 단약, 장법(손바닥)
+    jian: g('rotate(-40 40 28)', rect(37, 2, 6, 38, steel) + path('M37 2 L40 -4 L43 2 Z', steel) + rect(30, 40, 20, 4, gold) + rect(37, 44, 6, 10, brown) + circ(40, 56, 3, gold)) +
+      path('M30 46 Q22 52 24 60 M30 46 Q30 54 34 60', 'none', 'stroke="#d9443f" stroke-width="3"'),
+    needles: [[14, 18], [22, 32], [30, 46]].map(function (p) {
+      return g('translate(' + p[0] + ' ' + p[1] + ') rotate(-18)', path('M18 0 L30 -5 L44 0 L30 5 Z', steel) + rect(4, -2, 14, 4, '#5a6070') + path('M4 0 L-6 -5 M4 0 L-6 5', 'none', 'stroke="#4fbf8a" stroke-width="3"'));
+    }).join(''),
+    talisman: rect(26, 4, 28, 48, '#f2d36a') + rect(26, 4, 28, 48, 'none', 'stroke="#c99a20" stroke-width="2"') +
+      path('M40 10 V44 M32 16 H48 M33 24 Q40 30 47 24 M32 34 H48 M36 40 L44 46', 'none', 'stroke="#c0302a" stroke-width="3"') + circ(40, 52, 3, '#c0302a'),
+    pill: glow(40, 30, 22, '#ffe066') + circ(40, 30, 13, '#f0b030') + circ(35, 25, 4, '#fff6c0', 'stroke="none"') +
+      path('M18 50 Q40 40 62 50', 'none', 'stroke="#ffd23f" stroke-width="2" opacity="0.7"'),
+    palm: path('M24 52 V28 Q24 22 28 22 Q32 22 32 28 V18 Q32 12 36 12 Q40 12 40 18 V14 Q40 8 44 8 Q48 8 48 14 V20 Q48 14 52 14 Q56 14 56 20 V40 Q56 52 44 54 H32 Q24 54 24 52 Z', '#f4c49c') +
+      [12, 20, 28].map(function (r) { return circ(40, 32, r + 10, 'none', 'stroke="#9fe6ff" stroke-width="2" opacity="' + (0.7 - r / 50) + '"'); }).join(''),
     chest: rect(14, 24, 52, 26, '#a8683a') + path('M14 24 Q14 8 40 8 Q66 8 66 24 Z', '#c27a45') + rect(14, 22, 52, 5, gold) + rect(36, 26, 8, 10, gold),
     // 전설 카드 전용
     musou: [0, 45, 90, 135, 180, 225, 270, 315].map(function (a) {
@@ -132,11 +144,15 @@
       '<rect width="400" height="150" fill="url(#sk)"/>';
   }
   var SCENE = {
+    // 만독곡(15단계): 양쪽 절벽 사이의 독 늪, 보랏빛·초록 독안개
     forest: function () {
-      return sky('#0d2a2e', '#2f6b4f') + '<circle cx="320" cy="30" r="14" fill="#e6f5d0" opacity="0.8"/>' +
-        trees(26, 110, 70, '#163d33', 3) + trees(22, 120, 55, '#1f5a3f', 7) +
-        '<path d="M150 0 L190 0 L240 150 L170 150 Z" fill="#e6f5a0" opacity="0.12"/>' +
-        '<rect y="118" width="400" height="32" fill="#2a4a2a"/><rect y="118" width="400" height="4" fill="#3f7a3a"/>';
+      return sky('#14202a', '#2f5a46') + '<circle cx="300" cy="28" r="12" fill="#d8f0c0" opacity="0.7"/>' +
+        '<path d="M0 0 H70 L84 40 L60 80 L78 120 H0 Z" fill="#1a2a24"/><path d="M400 0 H330 L316 50 L338 90 L320 120 H400 Z" fill="#1a2a24"/>' +
+        '<path d="M70 0 L84 40 L60 80 L78 120 H64 L48 80 L70 40 Z" fill="#26392f"/><path d="M330 0 L316 50 L338 90 L320 120 H334 L352 90 L330 50 Z" fill="#26392f"/>' +
+        trees(14, 112, 46, '#1a3a2c', 3) +
+        '<rect y="70" width="400" height="10" fill="#9a5ad0" opacity="0.12"/><rect y="88" width="400" height="12" fill="#8ad04a" opacity="0.12"/>' +
+        '<rect y="118" width="400" height="32" fill="#25351f"/><path d="M0 128 Q60 122 120 128 T240 127 T400 126 V138 H0 Z" fill="#5a8a2a" opacity="0.8"/>' +
+        '<circle cx="90" cy="130" r="3" fill="#b8ff6a"/><circle cx="210" cy="132" r="2" fill="#b8ff6a"/><circle cx="330" cy="129" r="2.5" fill="#b8ff6a"/>';
     },
     desert: function () {
       return sky('#f29a4a', '#ffd88a') + '<circle cx="80" cy="40" r="20" fill="#fff3c0"/>' +
@@ -153,12 +169,21 @@
         '<path d="M190 30 L230 30 L222 22 L198 22 Z" fill="#ff7a2a"/><path d="M205 30 L200 70 L212 70 L215 30 Z" fill="#ff5a2a" opacity="0.8"/>' +
         hills(115, 18, '#2a1414', 9) + '<rect y="120" width="400" height="30" fill="#3a1a14"/><path d="M0 132 Q100 126 200 134 T400 130 V136 H0 Z" fill="#ff6a2a" opacity="0.7"/>';
     },
+    // 청운문(15단계): 붉은 달 아래 구름 낀 봉우리, 기와지붕 전각, 핏빛 안개
     castle: function () {
-      return sky('#120a24', '#4a2a6a') + '<circle cx="80" cy="34" r="16" fill="#f0e6ff"/><circle cx="86" cy="30" r="14" fill="#2a1840"/>' +
-        '<rect x="230" y="40" width="22" height="80" fill="#1f1530"/><rect x="290" y="25" width="28" height="95" fill="#1f1530"/><rect x="350" y="50" width="22" height="70" fill="#1f1530"/>' +
-        '<path d="M226 40 L241 18 L256 40 Z M286 25 L304 0 L322 25 Z M346 50 L361 30 L376 50 Z" fill="#2a1d40"/>' +
-        '<rect x="252" y="70" width="98" height="50" fill="#1a1028"/><rect x="300" y="50" width="6" height="8" fill="#ffd23f"/><rect x="240" y="60" width="4" height="6" fill="#ffd23f"/>' +
-        '<rect y="120" width="400" height="30" fill="#2a2038"/><rect y="120" width="400" height="3" fill="#4a3a60"/>';
+      return sky('#1a0f22', '#5a2a3a') + '<circle cx="78" cy="32" r="15" fill="#ff8a7a"/><circle cx="78" cy="32" r="15" fill="#ffd0c0" opacity="0.35"/>' +
+        '<path d="M0 120 L40 50 L70 80 L110 30 L150 90 L190 60 L230 100 V120 Z" fill="#2a2038"/>' +
+        '<path d="M170 120 L240 40 L280 70 L330 20 L400 90 V120 Z" fill="#231a30"/>' +
+        '<rect y="58" width="400" height="8" fill="#e8d8f0" opacity="0.12"/><rect y="84" width="400" height="10" fill="#e8d8f0" opacity="0.1"/>' +
+        // 전각: 기단, 기둥, 두 겹 처마
+        '<rect x="248" y="96" width="96" height="6" fill="#3a2a30"/><rect x="258" y="78" width="76" height="18" fill="#4a1a22"/>' +
+        '<rect x="264" y="80" width="4" height="16" fill="#8a2a2a"/><rect x="292" y="80" width="4" height="16" fill="#8a2a2a"/><rect x="320" y="80" width="4" height="16" fill="#8a2a2a"/>' +
+        '<path d="M240 80 Q250 74 262 72 H330 Q342 74 352 80 L344 82 H248 Z" fill="#1a1a2a"/>' +
+        '<rect x="270" y="62" width="52" height="10" fill="#4a1a22"/><path d="M256 64 Q266 58 276 56 H316 Q326 58 336 64 L330 66 H262 Z" fill="#1a1a2a"/>' +
+        '<rect x="292" y="66" width="8" height="5" fill="#ffd23f"/>' +
+        '<rect y="112" width="400" height="12" fill="#c03040" opacity="0.18"/>' +
+        '<rect y="120" width="400" height="30" fill="#2a2030"/><rect y="120" width="400" height="3" fill="#5a3a4a"/>' +
+        '<path d="M0 134 H400 M0 142 H400" stroke="#3a2a3a" stroke-width="2"/>';
     }
   };
 

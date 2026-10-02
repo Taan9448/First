@@ -14,6 +14,7 @@
     return '<span class="gold"><i class="ico" style="' + UI.iconStyle('gold') + '"></i>' + St.data.gold + '</span>';
   }
   // 화면 제목 + 작은 영문 부제(12단계)
+  var TITLE_SUB = 'MURIM × MAGIC · THE EXPEDITION OF FIVE HEROES';
   var TITLE_EN = { '원정 지도': 'WORLD MAP', '파티 편성': 'SQUAD', '보상': 'REWARD', '휴식': 'CAMP', '카드 강화': 'UPGRADE', '이벤트': 'EVENT', '상점': 'SHOP',
     '새 원정': 'NEW EXPEDITION', '스테이지 클리어': 'STAGE CLEAR', '모닥불 이야기': 'CAMPFIRE TALK', '스토리': 'STORY' };
   function topbar(title, extra) {
@@ -37,6 +38,7 @@
     return '<div class="hpbar"><i style="width:' + (hp / max * 100) + '%"></i><span>' + hp + '/' + max + '</span></div>';
   }
   function miniHero(id) {
+    if (St.isDead(id)) return '<div class="mini-hero dead"><div class="sp" data-id="' + id + '"></div><span>' + charDef(id).name + '</span><small>사망</small></div>';
     return '<div class="mini-hero"><div class="sp" data-id="' + id + '"></div><span>' + charDef(id).name + '</span>' + hpBar(id) + '</div>';
   }
   function fillSprites(root, size) {
@@ -52,31 +54,108 @@
   // ================= 타이틀 =================
   Meta.title = function () {
     var el = screen('title');
-    var has = G.Save.exists();
+    var last = G.Save.lastSlot();
+    el.innerHTML = titleFrame('<div class="lineup"></div>' +
+      '<div class="menu">' +
+      '<button class="btn gold big cont" ' + (last ? '' : 'disabled') + '>이어하기' + (last ? ' <small>' + last + '번 칸</small>' : '') + '</button>' +
+      '<button class="btn big slots">저장 칸 · 새 게임</button>' +
+      (G.debug ? '<button class="btn small test">전투 테스트 (디버그)</button>' : '') +
+      '</div>');
+    var line = el.querySelector('.lineup');
+    D.characters.forEach(function (c) { var w = UI.el('div', 'slot'); w.appendChild(UI.spriteEl(c.id, 1.1)); line.appendChild(w); });
+    el.querySelector('.cont').onclick = function () { openSlot(last); };
+    el.querySelector('.slots').onclick = function () { Meta.slots(); };
+    if (G.debug) el.querySelector('.test').onclick = function () { G.TestMenu.open(); };
+    UI.show('title');
+  };
+  function titleFrame(inner) {
     var stars = '';
     for (var i = 0; i < 40; i++) {
       stars += '<i style="left:' + (Math.random() * 100).toFixed(1) + '%;top:' + (Math.random() * 45).toFixed(1) + '%;animation-delay:-' + (Math.random() * 2.4).toFixed(2) + 's"></i>';
     }
-    el.innerHTML = '<div class="title-bg"></div><div class="title-shade"></div><div class="stars">' + stars + '</div>' +
+    var html = '<div class="title-bg"></div><div class="title-shade"></div><div class="stars">' + stars + '</div>' +
       '<div class="title-wrap">' +
-      '<div class="logo-sub">THE EXPEDITION OF FIVE HEROES</div>' +
-      '<h1 class="logo">다섯 영웅의 원정</h1><div class="logo-line"></div>' +
-      '<div class="lineup"></div>' +
-      '<div class="menu">' +
-      '<button class="btn gold big cont" ' + (has ? '' : 'disabled') + '>이어하기</button>' +
-      '<button class="btn big new">새 게임</button>' +
-      (G.debug ? '<button class="btn small test">전투 테스트 (디버그)</button>' : '') +
-      '</div>' + (G.debug ? '<div class="debugtag">디버그 모드 · 별도 저장</div>' : '') + '</div>' +
-      '<div class="title-foot">진행은 브라우저에 자동 저장된다 · 로비에서 원정 · 동료 · 덱 · 도감을 연다</div>';
-    G.Art.scene('castle').then(function (u) { if (u) el.querySelector('.title-bg').style.backgroundImage = 'url(' + u + ')'; });
-    var line = el.querySelector('.lineup');
-    D.characters.forEach(function (c) { var w = UI.el('div', 'slot'); w.appendChild(UI.spriteEl(c.id, 1.1)); line.appendChild(w); });
-    el.querySelector('.cont').onclick = function () { if (St.load()) Meta.lobby(); else Meta.title(); };
-    el.querySelector('.new').onclick = function () {
-      var start = function () { St.newGame(); Meta.scene('prologue', Meta.lobby); };
-      if (has) confirmBox('저장된 진행을 지우고 새로 시작할까요?', '새 게임', start); else start();
+      '<div class="logo-sub">' + TITLE_SUB + '</div>' +
+      '<h1 class="logo">다섯 영웅의 원정</h1><div class="logo-line"></div>' + inner +
+      (G.debug ? '<div class="debugtag">디버그 모드 · 별도 저장</div>' : '') + '</div>' +
+      '<div class="title-foot">저장 칸 3개 · 진행은 브라우저에 자동 저장된다</div>';
+    setTimeout(function () {
+      var bg = screen('title').querySelector('.title-bg');
+      G.Art.scene('castle').then(function (u) { if (u && bg) bg.style.backgroundImage = 'url(' + u + ')'; });
+    }, 0);
+    return html;
+  }
+  function openSlot(n) {
+    if (!n) return;
+    G.Save.use(n);
+    if (St.load()) Meta.lobby(); else Meta.title();
+  }
+
+  // ================= 저장 칸(15단계) =================
+  // 칸마다 모드·진행·동료를 보여 준다. 빈 칸은 모드를 골라 새 게임
+  Meta.slots = function () {
+    var el = screen('title');
+    var cards = '';
+    for (var n = 1; n <= G.Save.SLOTS; n++) {
+      var d = G.Save.peek(n);
+      if (!d) {
+        cards += '<div class="slot-card empty" data-n="' + n + '"><small>SLOT ' + n + '</small><b>빈 칸</b><p class="dim">새 원정을 시작한다</p>' +
+          '<div class="row"><button class="btn gold new" data-n="' + n + '">새 게임</button></div></div>';
+        continue;
+      }
+      var md = D.modes[d.mode] || D.modes.normal;
+      var alive = d.characters.filter(function (id) { return (d.dead || []).indexOf(id) < 0; });
+      var prog = d.flags.ended ? '엔딩 도달' : d.run ? '스테이지 ' + d.run.stage + ' 진행 중' : '스테이지 ' + Math.min(D.stages.length, d.clearedStage + 1) + ' 대기';
+      cards += '<div class="slot-card" data-n="' + n + '" style="--mc:' + md.color + '"><small>SLOT ' + n + '</small>' +
+        '<span class="mode-chip">' + md.name + '</span><b>' + prog + '</b>' +
+        '<div class="slot-heroes" data-heroes="' + d.characters.join(',') + '" data-dead="' + (d.dead || []).join(',') + '"></div>' +
+        '<div class="info-line"><span>클리어</span><span>' + d.clearedStage + '/' + D.stages.length + (d.ascension && d.ascension.current ? ' · 승천 ' + d.ascension.current : '') + '</span></div>' +
+        '<div class="info-line"><span>동료</span><span>' + alive.length + '명' + ((d.dead || []).length ? ' · 사망 ' + d.dead.length : '') + '</span></div>' +
+        '<div class="info-line"><span>골드 · 카드</span><span>' + d.gold + ' · ' + d.cards.length + '장</span></div>' +
+        '<div class="row"><button class="btn gold go" data-n="' + n + '">이어하기</button><button class="btn small danger del" data-n="' + n + '">지우기</button></div></div>';
+    }
+    el.innerHTML = titleFrame('<span class="ribbon">저장 칸을 고른다</span><div class="slot-grid">' + cards + '</div>' +
+      '<div class="menu"><button class="btn back">뒤로</button></div>');
+    UI.$$('.slot-heroes', el).forEach(function (h) {
+      var dead = h.getAttribute('data-dead').split(',');
+      h.getAttribute('data-heroes').split(',').forEach(function (id) {
+        if (!id) return;
+        var sp = UI.spriteEl(id, 0.55);
+        if (dead.indexOf(id) >= 0) { sp.classList.add('dead'); sp.setAttribute('data-tip', charDef(id).name + ' · 사망'); }
+        h.appendChild(sp);
+      });
+    });
+    UI.$$('.slot-card .go', el).forEach(function (b) { b.onclick = function () { openSlot(+b.getAttribute('data-n')); }; });
+    UI.$$('.slot-card .new', el).forEach(function (b) { b.onclick = function () { Meta.modeSelect(+b.getAttribute('data-n')); }; });
+    UI.$$('.slot-card .del', el).forEach(function (b) {
+      b.onclick = function () {
+        var n = +b.getAttribute('data-n');
+        confirmBox(n + '번 칸의 기록을 지울까요? 되돌릴 수 없다.', '지우기', function () { G.Save.clear(n); Meta.slots(); });
+      };
+    });
+    el.querySelector('.back').onclick = Meta.title;
+    UI.show('title');
+  };
+
+  // ================= 모드 선택(15단계) =================
+  Meta.modeSelect = function (slot) {
+    var el = screen('title'), pick = 'normal';
+    var render = function () {
+      el.innerHTML = titleFrame('<span class="ribbon">' + slot + '번 칸 · 게임 모드를 고른다 (나중에 바꿀 수 없다)</span><div class="mode-grid">' +
+        D.MODE_ORDER.map(function (k) {
+          var m = D.modes[k];
+          return '<button class="mode-card' + (k === pick ? ' on' : '') + '" data-k="' + k + '" style="--mc:' + m.color + '"><small>' + m.en + '</small><b>' + m.name + '</b><p>' + U.esc(m.desc) + '</p></button>';
+        }).join('') + '</div>' +
+        '<div class="menu row"><button class="btn back">뒤로</button><button class="btn gold big start">' + D.modes[pick].name + ' 모드로 시작</button></div>');
+      UI.$$('.mode-card', el).forEach(function (b) { b.onclick = function () { pick = b.getAttribute('data-k'); SND('click'); render(); }; });
+      el.querySelector('.back').onclick = Meta.slots;
+      el.querySelector('.start').onclick = function () {
+        G.Save.use(slot);
+        St.newGame(pick);
+        Meta.scene('prologue', Meta.lobby);
+      };
     };
-    if (G.debug) el.querySelector('.test').onclick = function () { G.TestMenu.open(); };
+    render();
     UI.show('title');
   };
 
@@ -215,7 +294,7 @@
     if (dungeon) {
       var sm = G.DungeonMap.summary(), sp = Math.round(St.scoutChance() * 100);
       html += '<div class="depth"><span>깊이</span><div class="bar"><i style="width:calc(' + Math.round(sm.depth / sm.total * 100) + '% - 4px)"></i></div><b>' + sm.depth + '/' + sm.total + '</b></div>' +
-        '<div class="info-line" data-tip="방에 들어갈 때 그 방과 이어진 다음 방의 내용이 드러날 확률' + (d.party.indexOf('nox') >= 0 ? ' (녹스가 정찰을 돕는다)' : '') + '"><span>정찰</span><span>' + sp + '%</span></div>' +
+        '<div class="info-line" data-tip="방에 들어갈 때 그 방과 이어진 다음 방의 내용이 드러날 확률' + (d.party.indexOf('nox') >= 0 ? ' (소연이 정찰을 돕는다)' : '') + '"><span>정찰</span><span>' + sp + '%</span></div>' +
         '<div class="info-line"><span>밝혀진 방</span><span>' + sm.known + '/' + sm.ahead + '</span></div>' +
         '<div class="info-line"><span>보상</span><span>' + join + '</span></div>';
       var node = St.node();
@@ -302,10 +381,24 @@
         var sc = cur && cur.type === 'midboss' && St.sceneFor('midout', stage);
         if (sc) Meta.scene(sc, Meta.reward); else Meta.reward();
       };
+      if (St.lastDied && St.lastDied.length) {
+        var dm = UI.modal('<h2>전사</h2><p class="died">' + St.lastDied.map(function (id) { return charDef(id).name; }).join(', ') + '은(는) 쓰러진 채 다시 일어나지 못했다.</p>' +
+          '<div class="row" style="justify-content:center"><button class="btn gold ok">계속</button></div>', 'result lose');
+        dm.querySelector('.ok').onclick = function () { UI.closeModal(dm); Meta.traits(next); };
+        return;
+      }
       return Meta.traits(next);
     }
-    St.battleLost(battle);
-    var m = UI.modal('<h2>패배…</h2><p>스테이지를 처음부터 다시 시작한다.<br>얻은 카드·골드·유물은 그대로 남는다.</p>' +
+    var lost = St.battleLost(battle);
+    var names = lost.died.map(function (id) { return charDef(id).name; }).join(', ');
+    if (lost.wiped) {
+      var w = UI.modal('<h2>원정의 끝</h2><p>' + names + '… 모두 쓰러져 다시 일어나지 못했다.<br>하드코어 모드의 기록은 여기서 사라진다.</p>' +
+        '<div class="row" style="justify-content:center"><button class="btn gold ok">타이틀로</button></div>', 'result lose');
+      w.querySelector('.ok').onclick = function () { UI.closeModal(w); Meta.title(); };
+      return;
+    }
+    var m = UI.modal('<h2>패배…</h2>' + (names ? '<p class="died">' + names + '은(는) 돌아오지 못했다.</p>' : '') +
+      '<p>스테이지를 처음부터 다시 시작한다.<br>얻은 카드·골드·유물은 그대로 남는다.</p>' +
       '<div class="row" style="justify-content:center"><button class="btn gold ok">맵으로</button></div>', 'result lose');
     m.querySelector('.ok').onclick = function () { UI.closeModal(m); Meta.map(); };
   }
@@ -318,6 +411,7 @@
     function render() {
       var heroes = d.characters.map(function (id) {
         var c = charDef(id), on = pick.indexOf(id) >= 0;
+        if (St.isDead(id)) return '<div class="hero-pick locked dead"><div class="portrait"><div class="sp" data-id="' + id + '"></div></div><b>' + c.name + '</b><small>사망 — 다시 편성할 수 없다</small></div>';
         return '<div class="hero-pick ' + (on ? 'on' : '') + '" data-hero="' + id + '"><div class="portrait" style="--hc:' + UI.shade(c.color, -0.55) + '"><div class="sp" data-id="' + id + '"></div></div>' +
           '<b>' + c.name + ' <span class="lvtag">Lv ' + St.levelOf(id) + '</span></b><small>' + c.role + ' · ' + c.job + '<br>치명타 ' + Math.round(c.crit * 100) + '% · 덱 ' + (d.decks[id] || []).length + '장</small>' + hpBar(id) + '</div>';
       }).join('');
@@ -420,7 +514,7 @@
       '<h1 class="big-title">모닥불</h1><p class="dim">하나만 고를 수 있다.</p>' +
       '<div class="row choices">' +
       '<button class="choice rest" ' + (mods.noRestHeal ? 'disabled' : '') + '><i class="ico" style="' + UI.iconStyle('campfire') + '"></i><span>회복</span><small>' +
-      (mods.noRestHeal ? '마왕의 왕관: 휴식으로 회복할 수 없다' : '동료 전원 체력 ' + e.restPct * 100 + '% 회복') + '</small></button>' +
+      (mods.noRestHeal ? '혈마의 관: 휴식으로 회복할 수 없다' : '동료 전원 체력 ' + e.restPct * 100 + '% 회복') + '</small></button>' +
       '<button class="choice up" ' + (St.upgradable().length ? '' : 'disabled') + '><i class="ico" style="' + UI.iconStyle('anvil') + '"></i><span>강화</span><small>' +
       (St.upgradable().length ? '보유 카드 1장 강화' : '강화할 카드가 없다') + '</small></button>' +
       '</div><div class="panel-box"><div class="party-row">' + d.characters.map(miniHero).join('') + '</div></div>' +

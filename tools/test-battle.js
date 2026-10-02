@@ -8,7 +8,7 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 global.window = global;
 ['js/core.js', 'data/keywords.js', 'data/characters.js', 'data/cards.js', 'data/monsters.js', 'data/relics.js',
- 'data/upgrades.js', 'data/events.js', 'data/bonds.js', 'data/traits.js', 'data/ascension.js', 'js/status.js', 'js/deck.js', 'js/upgrade.js', 'js/battle.js', 'js/effects.js'].forEach(f => {
+ 'data/upgrades.js', 'data/events.js', 'data/bonds.js', 'data/traits.js', 'data/ascension.js', 'data/modes.js', 'js/status.js', 'js/deck.js', 'js/upgrade.js', 'js/battle.js', 'js/effects.js'].forEach(f => {
   vm.runInThisContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), { filename: f });
 });
 const G = global.Game;
@@ -459,7 +459,7 @@ function handCard(b, id) {
   check(b.monsters[0].status.strength === 2, '광폭화: 체력 조건 발동 때 힘 +2');
 
   b = await newBattle(['kai'], ['slime', 'slime'], ['C01'], { affixes: ['giant', 'angry'] });
-  check(b.monsters[0].maxHp === 27 && b.monsters[0].name === '거대한 슬라임', '거대한: 체력 1.5배·이름');
+  check(b.monsters[0].maxHp === 27 && b.monsters[0].name === '거대한 ' + G.Data.monsterById.slime.name, '거대한: 체력 1.5배·이름');
   check(b.monsters[1].status.strength === 2, '분노한: 힘 2');
 
   // ---------------------------------------------------------------- 무작위 전투

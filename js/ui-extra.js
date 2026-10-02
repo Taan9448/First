@@ -275,7 +275,7 @@
     var talks = Object.keys(d.talks || {}).reduce(function (s, k) { return s + d.talks[k]; }, 0);
     var stat = function (label, v, sub) { return '<div class="stat"><small>' + label + '</small><b>' + v + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</div>'; };
     win('원정 기록', '<div class="stat-grid">' +
-      stat('클리어한 스테이지', d.clearedStage + '/' + D.stages.length, d.flags.ended ? '마왕을 쓰러뜨렸다' : '') +
+      stat('클리어한 스테이지', d.clearedStage + '/' + D.stages.length, d.flags.ended ? '혈마를 쓰러뜨렸다' : '') +
       stat('승천', St().ascLevel() ? '승천 ' + St().ascLevel() : '기본', '최고 기록 ' + (d.ascension.best ? '승천 ' + d.ascension.best : '—')) +
       stat('동료', d.characters.length + '/' + D.characters.length) +
       stat('최고 레벨', 'Lv ' + Math.max.apply(null, d.characters.map(function (id) { return St().levelOf(id); }))) +
@@ -332,7 +332,7 @@
       this.disabled = true;
     };
     m.querySelector('.reset').onclick = function () {
-      var c = UI.modal('<h2>저장 데이터를 지울까요?</h2><p>되돌릴 수 없다.</p><div class="row" style="justify-content:flex-end">' +
+      var c = UI.modal('<h2>' + G.Save.slot + '번 칸의 저장 데이터를 지울까요?</h2><p>되돌릴 수 없다. 다른 칸은 그대로다.</p><div class="row" style="justify-content:flex-end">' +
         '<button class="btn no">취소</button><button class="btn gold yes">지우기</button></div>');
       c.querySelector('.no').onclick = function () { UI.closeModal(c); };
       c.querySelector('.yes').onclick = function () {

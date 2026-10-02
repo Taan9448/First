@@ -486,7 +486,7 @@
     }
   };
   P.traitAfterCard = async function (def, caster) {
-    // 한 턴의 3·6·9번째 공격 카드마다 카드 1장(카이 특성)
+    // 한 턴의 3·6·9번째 공격 카드마다 카드 1장(하린 특성)
     if (def.type === 'attack' && this.attacksThisTurn % 3 === 0) {
       var n = 0;
       this.alive('ally').forEach(function (h) { n += h.tm.thirdAttackDraw || 0; });

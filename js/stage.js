@@ -15,9 +15,10 @@
     load: function () { St.data = G.Save.load(); return St.data; },
     save: function () { if (St.data) G.Save.write(St.data); },
 
-    newGame: function () {
+    // mode: 'normal' | 'hard' | 'hardcore' (data/modes.js). 저장 칸은 G.Save.use(n)로 먼저 고른다
+    newGame: function (mode) {
       var d = {
-        version: G.Save.VERSION, gold: 0, clearedStage: 0, run: null,
+        version: G.Save.VERSION, gold: 0, clearedStage: 0, run: null, mode: D.modes && D.modes[mode] ? mode : 'normal', dead: [],
         characters: ['kai'], party: ['kai'], cards: [], decks: {}, relics: [], upgraded: [],
         growth: {}, bonds: {}, talks: {}, ascension: { current: 0, best: 0 }, eventsSeen: [], buffs: [],
         codex: { monsters: {} }, flags: { tutorialDone: false }, story: { seen: [] }
@@ -36,6 +37,20 @@
       }
       St.save();
       return d;
+    },
+
+    // ================= 게임 모드(15단계) =================
+    mode: function () { return D.modes[(St.data && St.data.mode) || 'normal'] || D.modes.normal; },
+    isDead: function (id) { return !!St.data && (St.data.dead || []).indexOf(id) >= 0; },
+    living: function () { return St.data.characters.filter(function (id) { return !St.isDead(id); }); },
+    // 하드코어: 동료가 죽는다. 편성에서 빠지고 이번 스테이지 체력 기록도 지운다
+    kill: function (id) {
+      var d = St.data;
+      if (St.isDead(id)) return;
+      d.dead = d.dead || [];
+      d.dead.push(id);
+      d.party = d.party.filter(function (x) { return x !== id; });
+      if (d.run) delete d.run.hp[id];
     },
 
     // ================= 승천(10단계) =================
@@ -65,7 +80,9 @@
         hp = curve.hp * (1 + curve.hpPerStage * (stage - 1));
         dmg = curve.dmg * (1 + curve.dmgPerStage * (stage - 1));
       }
-      return { hpMult: a.hpMult + hp - 1, bossHpMult: a.bossHpMult, finalHpMult: a.finalHpMult, dmgMult: a.dmgMult + dmg - 1,
+      // 게임 모드(15단계): 체력·피해 배율을 모두 곱한다
+      var md = St.mode(), mh = md.enemyHp || 1, mdg = md.enemyDmg || 1;
+      return { hpMult: (a.hpMult + hp) * mh - 1, bossHpMult: a.bossHpMult * mh, finalHpMult: a.finalHpMult * mh, dmgMult: (a.dmgMult + dmg) * mdg - 1,
         triggerStr: a.triggerStr, doomMult: a.doomMult };
     },
     maxAscension: function () { return Math.min((D.ascension || []).length, ((St.data.ascension || {}).best || 0) + 1); },
@@ -195,7 +212,7 @@
 
     setParty: function (ids) {
       var d = St.data;
-      ids = ids.filter(function (id) { return d.characters.indexOf(id) >= 0; }).slice(0, 3);
+      ids = ids.filter(function (id) { return d.characters.indexOf(id) >= 0 && !St.isDead(id); }).slice(0, 3);
       if (!ids.length) return false;
       d.party = ids;
       St.save();
@@ -209,7 +226,9 @@
     startStage: function (n) {
       var d = St.data, def = St.stageDef(n);
       var hp = {};
-      d.characters.forEach(function (id) { hp[id] = St.maxHp(id); });
+      St.living().forEach(function (id) { hp[id] = St.maxHp(id); });
+      d.party = d.party.filter(function (id) { return !St.isDead(id); });
+      if (!d.party.length) d.party = St.living().slice(0, 3);
       var map = St.genMap(def);
       d.run = { stage: n, col: 0, path: [], map: map, hp: hp, pending: null, shop: null, upgrades: 0, replay: n <= d.clearedStage };
       St.autoPick();
@@ -456,17 +475,21 @@
       var downed = Math.max(asc.downedPct != null ? asc.downedPct : eco().downedPct, mods.downedPct || 0);
       var winHeal = (mods.winHeal || 0);
       battle.heroes.forEach(function (h) { winHeal += h.tm && h.tm.winHeal || 0; });
+      var died = [];
       battle.heroes.forEach(function (h) {
+        if (h.dead && St.mode().permadeath) { died.push(h.id); return; } // 하드코어: 쓰러진 채 끝나면 죽는다
         var hp = h.dead ? Math.max(1, Math.floor(h.maxHp * downed)) : h.hp;
         if (winHeal) hp = Math.min(h.maxHp, hp + winHeal);
         r.hp[h.id] = hp;
       });
+      St.lastDied = died;
       // 성장·친밀도(9단계): 편성된 동료는 쓰러져 있어도 경험치를 받고, 함께 이긴 짝은 친밀도 +1
       var fightType = node.fight ? node.fight.kind : node.type;
       var exp = (D.growth.exp[fightType] || D.growth.exp.battle);
-      battle.heroes.forEach(function (h) { St.growthOf(h.id).exp += exp; });
-      St.partyPairs(battle.heroes.map(function (h) { return h.id; })).forEach(function (k) { d.bonds[k] = (d.bonds[k] || 0) + D.bondGain.battle; });
-      St.lastExp = { amount: exp, heroes: battle.heroes.map(function (h) { return h.id; }) };
+      battle.heroes.forEach(function (h) { if (died.indexOf(h.id) < 0) St.growthOf(h.id).exp += exp; });
+      died.forEach(St.kill);
+      St.partyPairs(battle.heroes.filter(function (h) { return died.indexOf(h.id) < 0; }).map(function (h) { return h.id; })).forEach(function (k) { d.bonds[k] = (d.bonds[k] || 0) + D.bondGain.battle; });
+      St.lastExp = { amount: exp, heroes: battle.heroes.filter(function (h) { return died.indexOf(h.id) < 0; }).map(function (h) { return h.id; }) };
       battle.monsters.forEach(function (m) { St.markSeen([m.id]); });
       battle.kills.forEach(function (id) { d.codex.monsters[id].kills++; });
       d.gold = Math.max(0, d.gold + battle.goldDelta);
@@ -492,11 +515,22 @@
       return { reward: r.pending };
     },
 
-    // 패배: 스테이지 처음부터 (카드·골드는 유지)
+    // 패배: 스테이지 처음부터 (카드·골드는 유지). 하드코어면 싸운 동료가 모두 죽고, 살아 있는 동료가 없으면 저장 칸을 지운다
+    // 반환: { died: [...], wiped: bool }
     battleLost: function (battle) {
       battle.monsters.forEach(function (m) { St.markSeen([m.id]); });
-      var n = St.data.run.stage;
-      return St.startStage(n);
+      var n = St.data.run.stage, died = [];
+      if (St.mode().permadeath) {
+        died = battle.heroes.map(function (h) { return h.id; });
+        died.forEach(St.kill);
+        if (!St.living().length) {
+          G.Save.clear();
+          St.data = null;
+          return { died: died, wiped: true };
+        }
+      }
+      St.startStage(n);
+      return { died: died, wiped: false };
     },
 
     // ================= 보상 =================
@@ -516,7 +550,7 @@
     candidatePool: function (exclude) {
       var d = St.data;
       return D.cards.filter(function (c) {
-        return (c.owner === 'common' || d.characters.indexOf(c.owner) >= 0) && !St.owns(c.id) && exclude.indexOf(c.id) < 0;
+        return (c.owner === 'common' || (d.characters.indexOf(c.owner) >= 0 && !St.isDead(c.owner))) && !St.owns(c.id) && exclude.indexOf(c.id) < 0;
       });
     },
 
@@ -589,7 +623,7 @@
     },
     healAll: function (pct) {
       var r = St.data.run;
-      St.data.characters.forEach(function (id) {
+      St.living().forEach(function (id) {
         var max = St.maxHp(id);
         if (r.hp[id] != null) r.hp[id] = Math.min(max, r.hp[id] + Math.floor(max * pct));
       });
@@ -632,9 +666,9 @@
       if (!s || s.healed || d.gold < eco().healCost) return false;
       d.gold -= eco().healCost;
       s.healed = true;
-      d.characters.forEach(function (id) {
+      St.living().forEach(function (id) {
         var max = St.maxHp(id);
-        d.run.hp[id] = Math.min(max, d.run.hp[id] + Math.floor(max * eco().healPct));
+        if (d.run.hp[id] != null) d.run.hp[id] = Math.min(max, d.run.hp[id] + Math.floor(max * eco().healPct));
       });
       St.save();
       return true;
@@ -935,7 +969,7 @@
     debugHealAll: function () {
       var r = St.data.run;
       if (!r) return;
-      St.data.characters.forEach(function (id) { r.hp[id] = St.maxHp(id); });
+      St.living().forEach(function (id) { r.hp[id] = St.maxHp(id); });
       St.save();
     }
   };

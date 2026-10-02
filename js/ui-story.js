@@ -132,7 +132,7 @@
     el.classList.remove('narrating');
     var cards = (D.story || []).map(function (ch) {
       var anySeen = ch.scenes.some(function (sc) { return sc.kind === 'ascend' ? St.data.ascension.best > 0 || St.ascLevel() > 0 : St.storySeen(sc.id); });
-      var stageTheme = ch.n >= 1 && ch.n <= D.stages.length ? D.stages[ch.n - 1].theme : ch.n === 0 ? 'castle' : 'forest';
+      var stageTheme = ch.n >= 1 && ch.n <= D.stages.length ? D.stages[ch.n - 1].theme : 'castle'; // 프롤로그·에필로그는 청운문
       return '<div class="sc-card' + (anySeen ? '' : ' locked') + '" data-theme="' + stageTheme + '"><div class="sc-art"></div>' +
         '<div class="sc-head"><small>' + ch.en + '</small><b>' + (anySeen ? ch.title : '???') + '</b></div><div class="sc-btns">' +
         ch.scenes.map(function (sc) {

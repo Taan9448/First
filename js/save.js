@@ -1,9 +1,9 @@
-// save.js — localStorage 저장/불러오기, 버전 마이그레이션, 설정 저장
+// save.js — localStorage 저장/불러오기(저장 칸 3개, 15단계), 버전 마이그레이션, 설정 저장
 // 저장소를 쓸 수 없는 환경(사생활 보호 모드 등)에서는 메모리에만 보관한다.
 (function () {
   'use strict';
   var G = Game;
-  var VERSION = 3;
+  var VERSION = 4;
   var memory = {};
 
   function store() {
@@ -35,18 +35,56 @@
     2: function (d) {
       d.run = null;
       return d;
+    },
+    // v3 → v4 (15단계): 게임 모드와 사망 기록. 예전 저장은 노말 모드로, 던전 길이가 바뀌어 진행 중인 스테이지는 지운다
+    3: function (d) {
+      d.mode = d.mode || 'normal';
+      d.dead = d.dead || [];
+      d.run = null;
+      return d;
     }
   };
 
   var Save = G.Save = {
     VERSION: VERSION,
-    key: function () { return G.debug ? 'fiveHeroes.save.debug' : 'fiveHeroes.save'; },
+    store: store,                              // 테스트용
+    SLOTS: 3,
+    slot: 1,                                   // 지금 쓰는 저장 칸(1~3)
+    base: function () { return G.debug ? 'fiveHeroes.save.debug' : 'fiveHeroes.save'; },
+    key: function (slot) { return Save.base() + '.' + (slot || Save.slot); },
     SETTINGS_KEY: 'fiveHeroes.settings',
 
-    exists: function () { return !!store().getItem(Save.key()); },
+    // 칸이 하나뿐이던 예전 저장(키에 칸 번호 없음)은 1번 칸으로 옮긴다
+    adoptLegacy: function () {
+      var s = store(), old = s.getItem(Save.base());
+      if (old == null) return;
+      if (s.getItem(Save.key(1)) == null) s.setItem(Save.key(1), old);
+      s.removeItem(Save.base());
+    },
+    // slot 을 주면 그 칸, 없으면 아무 칸에나 저장이 있는지
+    exists: function (slot) {
+      Save.adoptLegacy();
+      if (slot) return !!store().getItem(Save.key(slot));
+      for (var i = 1; i <= Save.SLOTS; i++) if (store().getItem(Save.key(i))) return true;
+      return false;
+    },
+    // 마지막으로 쓴 칸(타이틀의 '이어하기')
+    lastSlot: function () {
+      var n = +store().getItem(Save.base() + '.last');
+      if (n >= 1 && n <= Save.SLOTS && Save.exists(n)) return n;
+      for (var i = 1; i <= Save.SLOTS; i++) if (Save.exists(i)) return i;
+      return 0;
+    },
+    use: function (slot) {
+      Save.slot = slot;
+      try { store().setItem(Save.base() + '.last', String(slot)); } catch (e) { /* 무시 */ }
+    },
+    // 칸의 내용을 미리 본다(지금 칸은 바꾸지 않는다)
+    peek: function (slot) { return Save.load(slot); },
 
-    load: function () {
-      var raw = store().getItem(Save.key());
+    load: function (slot) {
+      Save.adoptLegacy();
+      var raw = store().getItem(Save.key(slot));
       if (!raw) return null;
       var d;
       try { d = JSON.parse(raw); } catch (e) { return null; }
@@ -112,6 +150,11 @@
       d.story.seen = d.story.seen.filter(function (id, i, a) { return byId[id] && a.indexOf(id) === i; });
       d.gold = Math.max(0, d.gold | 0);
       d.clearedStage = d.clearedStage | 0;
+      d.mode = G.Data.modes && G.Data.modes[d.mode] ? d.mode : 'normal';
+      d.dead = (d.dead || []).filter(function (id, i, a) { return d.characters.indexOf(id) >= 0 && a.indexOf(id) === i; });
+      if (d.party.every(function (id) { return d.dead.indexOf(id) >= 0; })) {
+        d.party = d.characters.filter(function (id) { return d.dead.indexOf(id) < 0; }).slice(0, 3);
+      } else d.party = d.party.filter(function (id) { return d.dead.indexOf(id) < 0; });
       return d;
     },
 
@@ -120,7 +163,7 @@
       try { store().setItem(Save.key(), JSON.stringify(d)); } catch (e) { /* 용량 초과 등은 무시 */ }
     },
 
-    clear: function () { store().removeItem(Save.key()); },
+    clear: function (slot) { store().removeItem(Save.key(slot)); },
 
     // ---------------- 설정 ----------------
     DEFAULT_SETTINGS: { volume: 70, fx: 'normal', speed: 1 },

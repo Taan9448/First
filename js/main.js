@@ -4,7 +4,7 @@
   var G = Game, UI = G.UI;
   G.debug = /[?&]debug=1/.test(location.search);
 
-  var THEMES = [['forest', '속삭이는 숲'], ['desert', '타오르는 사막'], ['snow', '얼어붙은 설원'], ['volcano', '용암 화산'], ['castle', '마왕성'], ['mirror', '거울의 방']];
+  var THEMES = ['forest', 'desert', 'snow', 'volcano', 'castle', 'mirror'].map(function (t) { return [t, Game.Data.THEME_NAME[t]]; });
   var RANK = { normal: '', elite: '정예 ', boss: '보스 ', final: '최종 보스 ' };
   var DECK_MODES = [['basic', '기본 카드'], ['random', '무작위 20장'], ['rare', '희귀 이상 20장']];
   var state = { party: ['kai'], encounter: ['slime', 'slime'], deck: 'basic' };

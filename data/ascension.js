@@ -21,5 +21,5 @@ Game.Data.ascension = [
   { n: 7, name: '깊은 상처', desc: '쓰러진 아군 복귀 25% → 10%', mods: { downedPct: 0.10 } },
   { n: 8, name: '광폭화', desc: '정예·보스가 체력 조건을 발동하면 힘 +2', mods: { triggerStr: 2 } },
   { n: 9, name: '빈약한 전리품', desc: '카드 보상 후보 3장 → 2장', mods: { rewardCards: 2 } },
-  { n: 10, name: '마왕의 각성', desc: '최종 보스 체력 +20%, 종말 피해 2배', mods: { finalHpMult: 0.20, doomMult: 2 } }
+  { n: 10, name: '혈마의 각성', desc: '최종 보스 체력 +20%, 종말 피해 2배', mods: { finalHpMult: 0.20, doomMult: 2 } }
 ];

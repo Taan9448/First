@@ -52,13 +52,13 @@ Game.Data.events = [
         text: '문양이 피를 삼키고, 제단 위에 무언가가 떠올랐다.' },
       { label: '기도만 한다', desc: '파티 전원 체력 8 회복', effects: [{ op: 'hp', who: 'party', value: 8 }], text: '고요한 기도 끝에 몸이 가벼워졌다.' }
     ] },
-  { id: 'E06', name: '도박꾼 고블린', icon: 'dice',
-    text: '고블린이 주사위를 흔든다. "30닢 걸어! 이기면 두 배!"',
+  { id: 'E06', name: '노름판', icon: 'dice',
+    text: '길가 노름판의 사내가 주사위 통을 흔든다. "30닢 걸어! 이기면 두 배!"',
     choices: [
       { label: '골드 30을 건다', desc: '50% 확률로 골드 60, 아니면 잃음', need: { gold: 30 }, effects: [{ op: 'gold', value: -30 },
-        { op: 'chance', p: 0.5, then: [{ op: 'gold', value: 60 }], else: [], thenText: '주사위가 6을 가리켰다. 고블린이 투덜대며 돈을 내놓았다.', elseText: '주사위는 1. 고블린이 낄낄대며 금화를 쓸어 갔다.' }],
+        { op: 'chance', p: 0.5, then: [{ op: 'gold', value: 60 }], else: [], thenText: '주사위가 6을 가리켰다. 노름꾼이 투덜대며 돈을 내놓았다.', elseText: '주사위는 1. 노름꾼이 낄낄대며 금화를 쓸어 갔다.' }],
         text: '' },
-      { label: '무시한다', desc: '아무 일도 없다', effects: [], text: '고블린의 야유를 뒤로하고 걸었다.' }
+      { label: '무시한다', desc: '아무 일도 없다', effects: [], text: '노름꾼의 야유를 뒤로하고 걸었다.' }
     ] },
   { id: 'E07', name: '쓰러진 모험가', icon: 'skull',
     text: '길가에 낡은 갑옷을 입은 모험가가 쓰러져 있다. 짐 꾸러미가 그대로다.',
@@ -74,19 +74,19 @@ Game.Data.events = [
       { label: '축복을 받는다', desc: '무작위 일반 유물', effects: [{ op: 'relic', pool: 'common' }], text: '정령이 웃으며 작은 선물을 남기고 흩어졌다.' },
       { label: '거절한다', desc: '아무 일도 없다', effects: [], text: '정령은 아쉬운 듯 빛을 깜박였다.' }
     ] },
-  { id: 'E09', name: '낡은 마법서', icon: 'focus',
-    text: '바위틈에 끼어 있는 마법서. 펼치면 무언가 위험한 것이 튀어나올 것 같다.',
+  { id: 'E09', name: '낡은 비급서', icon: 'focus',
+    text: '바위틈에 끼어 있는 책. 무공 비급인지 마법서인지 모를 글자가 빼곡하다. 펼치면 무언가 튀어나올 것 같다.',
     choices: [
       { label: '읽는다', desc: '고급 이상 카드 2장 중 1장, 무작위 아군 체력 8 잃음', effects: [{ op: 'hp', who: 'random', value: -8 }, { op: 'cardChoice', count: 2, minRarity: 'uncommon' }],
         text: '책장에서 불꽃이 튀었지만, 새로운 기술을 깨쳤다.' },
-      { label: '덮는다', desc: '아무 일도 없다', effects: [], text: '마법서를 바위틈에 도로 밀어 넣었다.' }
+      { label: '덮는다', desc: '아무 일도 없다', effects: [], text: '책을 바위틈에 도로 밀어 넣었다.' }
     ] },
-  { id: 'E10', name: '훈련장', icon: 'strength',
-    text: '버려진 기사단의 훈련장. 허수아비와 목검이 그대로 남아 있다.',
+  { id: 'E10', name: '버려진 연무장', icon: 'strength',
+    text: '문 닫은 무관의 연무장. 목인장과 목검이 그대로 남아 있다.',
     choices: [
       { label: '수련한다', desc: '파티 전원 경험치 +20, 파티 전원 체력 10% 잃음', effects: [{ op: 'exp', value: 20 }, { op: 'hp', who: 'party', pct: -0.1 }],
         text: '땀을 흘린 만큼 몸이 기억했다.' },
-      { label: '지나간다', desc: '아무 일도 없다', effects: [], text: '훈련장을 지나쳤다.' }
+      { label: '지나간다', desc: '아무 일도 없다', effects: [], text: '연무장을 지나쳤다.' }
     ] },
   { id: 'E11', name: '모닥불 이야기', icon: 'campfire',
     text: '바람이 잦아든 밤. 모닥불이 유난히 따뜻하다.',

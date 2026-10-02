@@ -1,6 +1,6 @@
 // tools/sim.js — 밸런스 시뮬레이터 (개발 전용, 게임에서 로드하지 않음)
 // 간단한 판단 규칙 AI가 캠페인 전체를 반복 플레이하고 스테이지별 시도 횟수와 실패 지점을 보고한다.
-// 실행: node tools/sim.js [캠페인 횟수=12] [시드=1] [승천 최고 단계=0] (승천은 기본 원정 뒤 1단계부터 차례로, 진행 상태를 이어서)
+// 실행: node tools/sim.js [캠페인 횟수=12] [시드=1] [승천 최고 단계=0] [모드=normal|hard] (승천은 기본 원정 뒤 1단계부터 차례로, 진행 상태를 이어서)
 //
 // AI 규칙
 //  - 카드 점수 = 예상 피해(처치 보너스) + 막아야 할 만큼의 보호막 + 잃은 체력만큼의 회복 + 드로우·에너지·상태 가치
@@ -17,7 +17,7 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 global.window = global;
 ['js/core.js', 'data/keywords.js', 'data/characters.js', 'data/cards.js', 'data/monsters.js', 'data/stages.js', 'data/relics.js',
- 'data/upgrades.js', 'data/events.js', 'data/bonds.js', 'data/traits.js', 'data/ascension.js', 'js/status.js', 'js/deck.js', 'js/upgrade.js', 'js/battle.js', 'js/save.js', 'js/stage.js'].forEach(f => {
+ 'data/upgrades.js', 'data/events.js', 'data/bonds.js', 'data/traits.js', 'data/ascension.js', 'data/modes.js', 'js/status.js', 'js/deck.js', 'js/upgrade.js', 'js/battle.js', 'js/save.js', 'js/stage.js'].forEach(f => {
   vm.runInThisContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), { filename: f });
 });
 const G = global.Game, St = G.Stage, D = G.Data, S = G.Status;
@@ -249,10 +249,10 @@ async function expedition(order) {
 }
 
 // 새 게임 → 기본 원정 → 승천 1~ascMax 를 차례로(카드·유물·성장은 이어짐). 반환: [단계별 기록]
-async function campaign(seed, order, ascMax) {
+async function campaign(seed, order, ascMax, mode) {
   G.rng.seed(seed);
   G.Save.clear();
-  St.newGame();
+  St.newGame(mode);
   const runs = [await expedition(order)];
   for (let lv = 1; lv <= ascMax; lv++) {
     if (!St.newExpedition(lv)) throw new Error('새 원정 실패 ' + lv);
@@ -263,13 +263,13 @@ async function campaign(seed, order, ascMax) {
 
 (async () => {
   // node tools/sim.js [캠페인 수] [시드] [승천 최고 단계]
-  const N = +(process.argv[2] || 12), seed0 = +(process.argv[3] || 1), ascMax = +(process.argv[4] || 0);
+  const N = +(process.argv[2] || 12), seed0 = +(process.argv[3] || 1), ascMax = +(process.argv[4] || 0), mode = process.argv[5] || 'normal';
   const mk = () => { const a = []; for (let n = 1; n <= 10; n++) a.push({ attempts: 0, first: 0, within3: 0, forced: 0, lost: {}, turns: [], left: [], lostTurn: [] }); return a; };
   const byAsc = []; for (let lv = 0; lv <= ascMax; lv++) byAsc.push(mk());
   const byOrder = PARTY_ORDERS.map(() => ({ runs: 0, fails: 0 }));
   for (let i = 0; i < N; i++) {
     const oi = i % PARTY_ORDERS.length;
-    const runs = await campaign(seed0 * 1000 + i, PARTY_ORDERS[oi], ascMax);
+    const runs = await campaign(seed0 * 1000 + i, PARTY_ORDERS[oi], ascMax, mode);
     byOrder[oi].runs++;
     runs.forEach((res, lv) => res.forEach((r, k) => {
       const s = byAsc[lv][k];
@@ -285,7 +285,7 @@ async function campaign(seed, order, ascMax) {
     }));
   }
   const pad = (v, w) => String(v).padStart(w);
-  console.log('캠페인 ' + N + '회 (AI 기준, 시드 ' + seed0 + (ascMax ? ', 승천 1~' + ascMax + ' 연속' : '') + ')');
+  console.log('캠페인 ' + N + '회 (AI 기준, ' + D.modes[mode].name + ' 모드, 시드 ' + seed0 + (ascMax ? ', 승천 1~' + ascMax + ' 연속' : '') + ')');
   byAsc.forEach((stats, lv) => {
     console.log('\n' + (lv ? '승천 ' + lv : '기본 원정'));
     console.log('스테이지 | 평균 시도 | 첫 시도 클리어 | 3번 안에 | 강제 | 평균 턴 | 진 곳');

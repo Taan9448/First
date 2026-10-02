@@ -340,6 +340,30 @@ span.gold.bump { animation: popIn 0.4s steps(4); }
 .hero-pick.on::after { content: '출전'; position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: var(--cyan); color: #04202e; padding: 1px 12px;
   font-size: 0.85em; z-index: 1; clip-path: var(--pxs); animation: popIn 0.35s steps(3); }
 .hero-pick.locked { opacity: 0.45; cursor: default; }
+.hero-pick.dead .sp, .mini-hero.dead .sp, .sprite.dead { filter: grayscale(1) brightness(0.45); }
+.hero-pick.dead small, .mini-hero.dead small { color: var(--red); }
+.died { color: #ff9aa6; }
+/* ---------- 저장 칸·게임 모드(15단계) ---------- */
+.mode-chip { display: inline-block; padding: 1px 10px; margin-left: 6px; font-size: 0.75em; color: #050913; background: var(--mc, var(--cyan)); clip-path: var(--pxs); vertical-align: 2px; }
+.slot-grid, .mode-grid { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; animation: fadeUp 0.5s var(--ease) both; }
+.slot-card { --mc: var(--line2); position: relative; width: 250px; min-height: 250px; display: flex; flex-direction: column; gap: 6px; padding: 16px 18px; background: var(--panel);
+  clip-path: var(--cut); box-shadow: inset 0 0 0 2px var(--mc), inset 0 4px 0 var(--mc); }
+.slot-card > small { color: var(--dim); letter-spacing: 2px; }
+.slot-card > b { font-family: var(--font-title); font-size: 1.25em; color: #fff; }
+.slot-card .mode-chip { position: absolute; top: 14px; right: 14px; margin: 0; }
+.slot-card.empty { justify-content: center; align-items: center; text-align: center; box-shadow: inset 0 0 0 2px rgba(94, 230, 255, 0.25); }
+.slot-card .row { margin-top: auto; justify-content: flex-end; }
+.slot-heroes { display: flex; gap: 2px; align-items: flex-end; min-height: 44px; }
+.mode-card { --mc: var(--cyan); width: 230px; min-height: 190px; display: flex; flex-direction: column; gap: 8px; padding: 18px; text-align: left; border: 0; cursor: pointer; color: var(--text);
+  font-family: var(--font); background: var(--panel); clip-path: var(--cut); box-shadow: inset 0 0 0 2px rgba(150, 190, 240, 0.25); transition: transform 0.12s steps(2); }
+.mode-card small { color: var(--mc); letter-spacing: 3px; }
+.mode-card b { font-family: var(--font-title); font-size: 1.8em; color: #fff; }
+.mode-card p { margin: 0; color: var(--dim); line-height: 1.5; font-size: 0.92em; }
+.mode-card:hover { transform: translateY(-3px); }
+.mode-card.on { box-shadow: inset 0 0 0 3px var(--mc), inset 0 6px 0 var(--mc); background: linear-gradient(180deg, color-mix(in srgb, var(--mc) 18%, transparent), var(--panel) 70%); }
+.mode-card.on p { color: var(--text); }
+.menu.row { flex-direction: row; }
+.btn small { font-size: 0.7em; opacity: 0.8; margin-left: 6px; }
 .mini-hero { display: flex; flex-direction: column; align-items: center; gap: 3px; width: 108px; font-size: 0.9em; }
 .mini-hero .hpbar { width: 96px; }
 .mini-hero .sp, .hero-pick .sp, .join .sp { display: flex; align-items: flex-end; justify-content: center; }
@@ -732,10 +756,34 @@ span.gold.bump { animation: popIn 0.4s steps(4); }
 .card .cstars i { width: 1.42em; height: 1.42em; background-size: contain; background-repeat: no-repeat; image-rendering: pixelated; filter: drop-shadow(0.07em 0.07em 0 #000); }
 .card .cstars i.off { opacity: 0.28; filter: grayscale(1) brightness(0.5); }
 .card .ccost, .card .cname, .card .ctype, .card .ctext, .card .ccond, .card .ctemp { position: absolute; display: flex; align-items: center; justify-content: center; }
-.card .ccost { left: 0.5em; top: 0.5em; width: 2.4em; height: 2.4em; z-index: 1; }
-.card .ccost span { font-family: var(--font-title); font-size: 1.5em; color: #fff; text-shadow: 0.08em 0.08em 0 #050913, -0.08em -0.08em 0 #050913, 0.08em -0.08em 0 #050913, -0.08em 0.08em 0 #050913; }
-.card .ccost.up span { color: #ff9a9a; }
-.card .ccost.down span { color: var(--green); }
+.card .ccost { --g0: #c8f6ff; --g1: #2fb8ff; --g2: #135a9a; left: -0.45em; top: -0.45em; width: 3.1em; height: 3.1em; z-index: 3;
+  clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%);
+  background: #050913; filter: drop-shadow(0.12em 0.15em 0 rgba(0, 0, 0, 0.6)); }
+/* 15단계 비용 보석: 검은 테 안에 색 띠 3단, 큰 숫자 */
+.card .ccost::before { content: ''; position: absolute; inset: 0.22em; clip-path: inherit;
+  background: linear-gradient(180deg, var(--g0) 0 22%, var(--g1) 22% 64%, var(--g2) 64%); box-shadow: inset 0 0 0 0.12em rgba(255, 255, 255, 0.35); }
+.card .ccost span { position: relative; font-family: var(--font-title); font-size: 1.95em; line-height: 1; color: #fff;
+  text-shadow: 0.07em 0.07em 0 #050913, -0.07em -0.07em 0 #050913, 0.07em -0.07em 0 #050913, -0.07em 0.07em 0 #050913, 0 0.1em 0 #050913, 0.1em 0 0 #050913; }
+.card .ccost.c0 { --g0: #d8ffd0; --g1: #4fd26a; --g2: #1f7a34; }
+.card .ccost.c3 { --g0: #ffe8b0; --g1: #ff9a3a; --g2: #a8461a; }
+.card .ccost.cx { --g0: #f2d8ff; --g1: #b066ff; --g2: #5a2a9a; }
+.card .ccost.none { display: none; }
+.card .ccost.up span { color: #ffb0b0; }
+.card .ccost.down span { color: #b8ffb0; }
+/* 계열 도장(15단계): 그림 창 왼쪽 아래, 세로 글씨 */
+.card .cschool { position: absolute; left: 0.95em; top: 8.25em; height: 1.2em; z-index: 1; padding: 0 0.45em; display: flex; align-items: center;
+  color: #fff3e0; background: #b02a24; clip-path: var(--pxs); box-shadow: inset 0 0 0 0.1em rgba(255, 220, 180, 0.55); }
+.card .cschool span { font-size: 0.62em; letter-spacing: 0.05em; white-space: nowrap; }
+.card.sc-magic .cschool { background: #2a5ab8; color: #e0f4ff; box-shadow: inset 0 0 0 0.12em rgba(150, 220, 255, 0.6); }
+.card.sc-fusion .cschool { background: linear-gradient(180deg, #b02a24 0 50%, #6a2ab0 50%); }
+/* 한지 본문(무공·융합): 어두운 먹 글씨 */
+.card.sc-martial .ctext span, .card.sc-fusion .ctext span { color: #2a1a10; }
+.card.sc-martial .ctext b.kw, .card.sc-fusion .ctext b.kw { color: #a8321c; font-weight: bold; }
+.card.sc-martial .ctext .num.up, .card.sc-fusion .ctext .num.up { color: #1f8a3a; }
+.card.sc-martial .ctext .num.down, .card.sc-fusion .ctext .num.down { color: #c0302a; }
+.card.sc-martial .ctext .num.upg, .card.sc-fusion .ctext .num.upg { color: #1f8a3a; }
+.card.sc-martial .cname span { color: #ffe6c0; }
+.card.sc-fusion .cname span { color: #f2dcff; }
 .card .cname { left: 1.4em; top: 10.1em; width: 10.2em; height: 1.55em; overflow: hidden; justify-content: flex-start; padding-left: 0.2em; }
 .card .cname span { font-size: 0.98em; white-space: nowrap; text-shadow: 0.08em 0.08em 0 #050913; }
 .card .ctype { right: 0.95em; top: 8.25em; height: 1.2em; padding: 0 0.45em; background: rgba(6, 10, 22, 0.85); clip-path: var(--pxs); box-shadow: inset 0 0 0 0.1em var(--tc, #5a7fb2); }

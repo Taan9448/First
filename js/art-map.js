@@ -84,16 +84,17 @@
       var rx = 630 + r() * 170, ry = 230 + r() * 220;
       s += poly(rx + ',' + ry + ' ' + (rx + 6) + ',' + (ry - 7) + ' ' + (rx + 12) + ',' + ry, '#2a1818');
     }
-    // 마왕성: 성, 죽은 나무, 보랏빛 안개
-    s += '<rect x="884" y="150" width="80" height="50" fill="#1c1428"/><rect x="876" y="120" width="20" height="80" fill="#241a34"/>' +
-      '<rect x="952" y="120" width="20" height="80" fill="#241a34"/><rect x="912" y="92" width="24" height="108" fill="#2a1e3c"/>' +
-      poly('872,120 886,96 900,120', '#3a2852') + poly('948,120 962,96 976,120', '#3a2852') + poly('908,92 924,62 940,92', '#3a2852') +
-      '<rect x="920" y="110" width="6" height="8" fill="#ffd23f"/><rect x="884" y="140" width="4" height="6" fill="#ff5a5a"/>';
-    for (i = 0; i < 12; i++) {
+    // 청운문(15단계): 봉우리 위의 기와지붕 전각, 소나무, 핏빛 안개
+    s += poly('850,210 900,70 950,210', '#2a2038') + poly('900,70 950,210 925,210', '#1f1830') + poly('886,110 900,70 914,110', '#d8d0e8') +
+      '<rect x="878" y="150" width="44" height="22" fill="#5a1a24"/><rect x="884" y="152" width="3" height="20" fill="#9a2a2a"/><rect x="913" y="152" width="3" height="20" fill="#9a2a2a"/>' +
+      path('M868 152 Q878 144 890 142 H910 Q922 144 932 152 L926 154 H874 Z', '#1a1a2a') +
+      '<rect x="886" y="132" width="28" height="9" fill="#5a1a24"/>' + path('M878 134 Q886 128 894 127 H906 Q914 128 922 134 L918 136 H882 Z', '#1a1a2a') +
+      '<rect x="897" y="136" width="6" height="4" fill="#ffd23f"/>';
+    for (i = 0; i < 10; i++) {
       var tx = 820 + r() * 160, ty = 240 + r() * 200;
-      s += path('M' + tx + ' ' + ty + ' v-16 m0 6 l-6 -6 m6 2 l6 -7', 'none', 'stroke="#1a1028" stroke-width="2"');
+      s += poly(tx + ',' + ty + ' ' + (tx + 7) + ',' + (ty - 14) + ' ' + (tx + 14) + ',' + ty, '#1f3a30') + '<rect x="' + (tx + 6) + '" y="' + ty + '" width="2" height="4" fill="#3a2418"/>';
     }
-    for (i = 0; i < 8; i++) s += '<ellipse cx="' + (820 + r() * 170) + '" cy="' + (260 + r() * 220) + '" rx="34" ry="8" fill="#7a5aa8" opacity="0.35"/>';
+    for (i = 0; i < 8; i++) s += '<ellipse cx="' + (820 + r() * 170) + '" cy="' + (260 + r() * 220) + '" rx="34" ry="8" fill="#c04a5a" opacity="0.3"/>';
     // 강: 설원에서 숲을 지나 바다로
     var river = 'M470 120 Q430 200 380 230 T300 280 Q250 330 230 380 T150 470 Q110 520 90 560';
     s += path(river, 'none', 'stroke="#2c6aa0" stroke-width="10"') + path(river, 'none', 'stroke="#6fb8e6" stroke-width="3"');

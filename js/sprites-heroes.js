@@ -1,4 +1,4 @@
-// sprites-heroes.js — 영웅 5명의 도형 도트 그림(56px, 오른쪽을 본다) + 그림자 변형 5종
+// sprites-heroes.js — 영웅 5명의 도형 도트 그림(56px, 오른쪽을 본다) + 그림자 변형 5종. 15단계: 하린·소연은 무림 복장
 // 단위 좌표: 상자 56×64, 발끝 y=63, 몸 중심 x=24. pose === 'attack' 이면 공격 자세
 (function () {
   'use strict';
@@ -40,6 +40,16 @@
   mat('mask', '#1f2733', { dark: 0.14 });
   mat('scarfG', '#4fbf8a');
   mat('glintG', '', { emit: true, ramp: ['#0c3a2a', '#1f7a55', '#4fd99a', '#8fffc8', '#d0ffe8', '#ffffff'] });
+  // 15단계 무림 복장
+  mat('hairK', '#2e2840', { dark: 0.2, light: 0.12, shift: 18 });
+  mat('muW', '#e9edf5', { dark: 0.3, shift: 20 });
+  mat('muB', '#3f6fc4', { dark: 0.2 });
+  mat('shoeK', '#33303f', { dark: 0.16 });
+  mat('jade', '#5fd9a0', { spec: 0.6, shin: 12 });
+  mat('veil', '#cfe9dc', { dark: 0.25, light: 0.1 });
+  mat('muG', '#2e6a52', { dark: 0.2 });
+  mat('muGD', '#1e4a3a', { dark: 0.16 });
+  mat('sashP', '#8a4ac9', { dark: 0.2 });
 
   function face(x, y, o) {
     o = o || {};
@@ -51,42 +61,59 @@
   }
   var RIM = '#a8d8ff';
 
-  // 카이 — 붉은 포니테일, 강철 갑옷, 붉은 스카프, 검. 공격: 앞으로 크게 내지른다
+  // 하린(kai) — 검은 머리를 높이 묶은 붉은 댕기, 청운문의 흰 무복과 푸른 깃, 붉은 허리띠, 술 달린 직검. 공격: 앞으로 크게 찌른다
   S.def('kai', { h: 56, rim: RIM, fn: function (t, pose) {
     var atk = pose === 'attack', b = atk ? 0.6 : S.bob(t), w = S.wave(t), lx = atk ? 1.6 : 0;
     var y = function (v) { return v + b; }, x = function (v) { return v + lx; };
-    // 공격 자세 좌표는 몸을 숙이기(lx) 전 기준
     var hand = atk ? [37.2, 36.4] : [33.5, 41.4];
-    var blade = atk ? [38.9, 35.8, 53.2, 30.6] : [35.2, 38.7, 46, 22.4];
-    var guard = atk ? [38, 33.4, 39.8, 38.2] : [32.2, 37.6, 37.4, 41];
+    var blade = atk ? [38.9, 35.8, 54, 31] : [35.2, 38.7, 45.6, 21.6];
+    var guard = atk ? [38.2, 33.6, 39.6, 38] : [32.6, 37.8, 37, 40.6];
     var pommel = atk ? [35.2, 37.2] : [32.3, 43.4];
-    return { w: 56, h: 64, cx: 24, tip: [46, 22.4], tipAttack: [54.8, 30.6], parts: [
-      E(x(13.5), y(17), 4.6, 8.2, 'hairR', { rot: 0.65 + w * 0.06 + (atk ? 0.25 : 0), g: 'hair' }),
-      E(x(9.5), y(25), 3, 5.6, 'hairR', { rot: 0.4 + w * 0.12 + (atk ? 0.35 : 0), g: 'hair' }),
-      P([[x(20), y(27)], [x(9) - (atk ? 3 : 0), y(33) + w * 1.2 - (atk ? 3 : 0)], [x(11) - (atk ? 3 : 0), y(37) + w * 1.5 - (atk ? 2 : 0)], [x(22), y(31)]], 'scarf', { g: 'scarfT', bev: 1.2 }),
-      C(x(19), y(31), x(15.5) - (atk ? 2 : 0), y(40), 3, 2.6, 'steelD', { g: 'armB' }),
-      E(x(15.5) - (atk ? 2 : 0), y(41.5), 2.4, 2.4, 'leather', { g: 'armB' }),
-      C(21, 47, atk ? 18.5 : 20, 58, 3.6, 3.2, 'pants', { g: 'legB' }),
-      B(atk ? 19 : 20.5, 59.6, 4.3, 3.2, 3, 'boot', { g: 'legB' }),
-      C(27.5, 47, atk ? 31 : 28.5, 58, 3.8, 3.3, 'pants', { g: 'legF' }),
-      B(atk ? 32 : 29.5, 59.6, 4.7, 3.2, 3, 'boot', { g: 'legF' }),
-      B(x(24), y(46), 9.2, 3.6, 2.6, 'steelD', { g: 'tasset' }),
-      B(x(24), y(38), 8.8, 8.4, 2.4, 'steel', { g: 'torso' }),
-      B(x(24), y(44), 9, 1.5, 6, 'leather', { line: false }),
-      E(x(28.5), y(44), 1.4, 1.4, 'gold', { line: false, keep: true, minS: 0.6 }),
-      B(x(25), y(29.5), 7.6, 3, 2.2, 'scarf', { g: 'scarf' }),
-      E(x(23), y(16), 10.6, 10.2, 'hairR', { g: 'hair' }),
+    var tas = atk ? [[35.2, 37.2], [31, 41.5], [29.5, 46]] : [[32.3, 43.4], [31.2, 48.5 + w * 0.8], [29.6, 52 + w]];
+    return { w: 56, h: 64, cx: 24, tip: [45.6, 21.6], tipAttack: [55.6, 31], parts: [
+      // 높이 묶은 긴 머리(뒤로 날린다)
+      E(x(14), y(17), 3.8, 9.4, 'hairK', { rot: 0.95 + w * 0.08 + (atk ? 0.3 : 0), g: 'hair' }),
+      E(x(9.5), y(26), 2.8, 7, 'hairK', { rot: 0.55 + w * 0.14 + (atk ? 0.4 : 0), g: 'hair' }),
+      E(x(7.6), y(33) + w, 1.8, 4.2, 'hairK', { rot: 0.35 + w * 0.2 + (atk ? 0.5 : 0), g: 'hair' }),
+      // 뒤 소매와 손
+      C(x(19), y(31), x(15) - (atk ? 2 : 0), y(40), 3.3, 3.7, 'muW', { g: 'armB' }),
+      E(x(15) - (atk ? 2 : 0), y(41.8), 2.2, 2.2, 'skin', { g: 'armB' }),
+      // 다리와 신
+      C(21, 47, atk ? 18.5 : 20, 58, 3.4, 3, 'pants', { g: 'legB' }),
+      B(atk ? 19 : 20.4, 59.8, 4.1, 2.9, 3, 'shoeK', { g: 'legB' }),
+      C(27.5, 47, atk ? 31 : 28.5, 58, 3.5, 3.1, 'pants', { g: 'legF' }),
+      B(atk ? 32 : 29.4, 59.8, 4.5, 2.9, 3, 'shoeK', { g: 'legF' }),
+      // 무복 아랫자락(앞뒤 두 폭)과 푸른 단
+      P([[x(16.5), y(42)], [x(24), y(42)], [x(22.5) - (atk ? 2 : 0), y(53) + w * 0.4], [x(14.5) - (atk ? 2 : 0), y(51.5) + w * 0.6]], 'muW', { g: 'skirtB', bev: 1.4 }),
+      P([[x(24), y(42)], [x(31.5), y(42)], [x(33.5) + (atk ? 2 : 0), y(51.5)], [x(25), y(53)]], 'muW', { g: 'skirtF', bev: 1.4 }),
+      C(x(25.2), y(52.6), x(33.3) + (atk ? 2 : 0), y(51.3), 0.8, 0.8, 'muB', { line: false, ao: false }),
+      // 몸통, 교차 깃, 붉은 허리띠
+      B(x(24), y(37), 8.4, 8.4, 2.4, 'muW', { g: 'torso' }),
+      C(x(21.2), y(30.2), x(26.6), y(38), 1.1, 1.1, 'muB', { line: false }),
+      C(x(27.8), y(30.2), x(25.4), y(34.5), 1, 1, 'muB', { line: false }),
+      B(x(24), y(43.2), 9, 2, 6, 'scarf', { g: 'sash' }),
+      P([[x(18.5), y(43)], [x(14.5) - (atk ? 2 : 0), y(48) + w], [x(16.5) - (atk ? 2 : 0), y(49.5) + w], [x(20), y(44.5)]], 'scarf', { g: 'sashT', bev: 0.8 }),
+      // 머리
+      E(x(23), y(16), 10.4, 10, 'hairK', { g: 'hair' }),
       E(x(28.5), y(19.8), 7.2, 7.4, 'skin', { g: 'face' }),
-      E(x(26), y(11.5), 9.6, 5, 'hairR', { rot: -0.25, g: 'bang' }),
-      P([[x(28), y(11)], [x(36), y(15.5)], [x(32.5), y(17.5)], [x(27), y(15)]], 'hairR', { g: 'bang', bev: 1 }),
-      C(x(15.5), y(14), x(33), y(10), 1.1, 1.1, 'gold', { g: 'circ' })
+      E(x(26), y(11.5), 9.6, 5, 'hairK', { rot: -0.25, g: 'bang' }),
+      P([[x(28), y(11)], [x(35.5), y(15.5)], [x(32.5), y(17.5)], [x(27), y(15)]], 'hairK', { g: 'bang', bev: 1 }),
+      C(x(23.5), y(18), x(22.6), y(27.5), 1.9, 1.3, 'hairK', { g: 'lock' }),
+      // 정수리 묶음과 붉은 댕기
+      E(x(17), y(8.6), 3, 2.8, 'hairK', { g: 'bun' }),
+      P([[x(15.5), y(7.5)], [x(10.5), y(4.5) + w * 0.6], [x(11.5), y(8.5) + w * 0.6]], 'scarf', { g: 'rib', bev: 0.6 }),
+      P([[x(15.5), y(9)], [x(11), y(12) + w * 0.8], [x(13), y(13.5) + w * 0.8]], 'scarf', { g: 'rib2', bev: 0.6 })
     ].concat(face(x(31.8), y(19.8)), [
-      E(x(29.5), y(30.5), 5, 4, 'steel', { g: 'paul' }),
-      L(x(blade[0]), y(blade[1]), x(blade[2]), y(blade[3]), 2.2, 'blade'),
-      C(x(guard[0]), y(guard[1]), x(guard[2]), y(guard[3]), 1.1, 1.1, 'gold', { g: 'guard' }),
-      C(x(29.5), y(32), x(hand[0] - 1), y(hand[1] - 1.9), 2.9, 2.5, 'steel', { g: 'arm' }),
-      E(x(hand[0]), y(hand[1]), 2.7, 2.6, 'leather', { g: 'arm' }),
-      E(x(pommel[0]), y(pommel[1]), 1.2, 1.2, 'gold', { g: 'pommel' })
+      // 직검: 가는 날, 금 코등이, 술
+      L(x(blade[0]), y(blade[1]), x(blade[2]), y(blade[3]), 1.7, 'blade'),
+      C(x(guard[0]), y(guard[1]), x(guard[2]), y(guard[3]), 1, 1, 'gold', { g: 'guard' }),
+      C(x(tas[0][0]), y(tas[0][1]), x(tas[1][0]), y(tas[1][1]), 0.8, 0.9, 'scarf', { g: 'tassel' }),
+      C(x(tas[1][0]), y(tas[1][1]), x(tas[2][0]), y(tas[2][1]), 0.9, 1.3, 'scarf', { g: 'tassel' }),
+      // 앞 소매(넓은 소매 끝에 푸른 단)와 손
+      C(x(29.5), y(32), x(hand[0] - 1.2), y(hand[1] - 2), 3.2, 3.4, 'muW', { g: 'arm' }),
+      E(x(hand[0] - 1.4), y(hand[1] - 1.6), 2.4, 2.6, 'muB', { g: 'cuff' }),
+      E(x(hand[0]), y(hand[1]), 2.3, 2.3, 'skin', { g: 'arm' }),
+      E(x(pommel[0]), y(pommel[1]), 1.1, 1.1, 'gold', { g: 'pommel' })
     ]) };
   } });
 
@@ -182,36 +209,52 @@
     ]) };
   } });
 
-  // 녹스 — 초록 두건과 망토, 복면, 단검. 공격: 몸을 숙이며 단검을 찌른다
+  // 소연(nox) — 사천당가. 검은 쌍상투와 옥비녀, 연녹색 면사, 짙은 녹색 무복에 보라 허리띠, 손가락 사이의 비도 세 자루.
+  // 공격: 몸을 틀며 비도를 날린다
   S.def('nox', { h: 56, rim: RIM, fn: function (t, pose) {
     var atk = pose === 'attack', b = atk ? 1 : S.bob(t), w = S.wave(t), lx = atk ? 1.8 : 0;
     var y = function (v) { return v + b; }, x = function (v) { return v + lx; };
-    var hand = atk ? [37.2, 38.4] : [33.6, 41.6];
-    var blade = atk ? [39.2, 38.3, 52, 36] : [35.4, 41.6, 44.6, 38.6];
-    return { w: 56, h: 64, cx: 24, tip: [44.6, 38.6], tipAttack: [53.8, 36], parts: [
-      P([[x(14.5), y(27)], [x(24), y(26)], [x(23), y(50)], [x(11) + w * 1.2 - (atk ? 3 : 0), y(54)], [x(8) + w * 1.5 - (atk ? 4 : 0), y(50) - (atk ? 2 : 0)]], 'cloakD', { g: 'cloak', bev: 1.6 }),
-      P([[x(19.5), y(28)], [x(11) - (atk ? 3 : 0), y(33) + w - (atk ? 2 : 0)], [x(13) - (atk ? 3 : 0), y(36) + w * 1.3 - (atk ? 2 : 0)], [x(21), y(31)]], 'scarfG', { g: 'scarfT', bev: 1 }),
-      C(x(19), y(32), x(16) - (atk ? 1.5 : 0), y(40), 2.8, 2.4, 'cloth', { g: 'armB' }),
-      E(x(16) - (atk ? 1.5 : 0), y(41.2), 2.2, 2.2, 'leather', { g: 'armB' }),
+    var hand = atk ? [38, 36.4] : [33.6, 41.6];
+    var fan = atk ? [[39, 35, 48, 31], [39.4, 36.4, 49.4, 35.4], [39, 37.8, 48, 39.6]] : [[34.6, 40.4, 40.4, 35.6], [35.2, 41.4, 42, 39.4], [34.6, 42.6, 40.6, 44]];
+    var parts = [
+      // 뒤로 늘어진 긴 머리
+      C(x(17.5), y(18), x(14) + w * 0.6, y(36), 3.6, 2.2, 'hairK', { g: 'hairL' }),
+      // 뒤 소매와 손
+      C(x(19), y(32), x(16) - (atk ? 1.5 : 0), y(40), 3.1, 3.4, 'muG', { g: 'armB' }),
+      E(x(16) - (atk ? 1.5 : 0), y(41.6), 2.1, 2.1, 'skin', { g: 'armB' }),
+      // 다리
       C(21, 47, atk ? 18 : 20, 58, 3.2, 2.9, 'cloth', { g: 'legB' }),
-      B(atk ? 18.4 : 20.4, 59.7, 4.2, 3, 3, 'boot', { g: 'legB' }),
+      B(atk ? 18.4 : 20.4, 59.8, 4.1, 2.9, 3, 'shoeK', { g: 'legB' }),
       C(27.3, 47, atk ? 32 : 28.6, 58, 3.3, 3, 'cloth', { g: 'legF' }),
-      B(atk ? 33 : 29.6, 59.7, 4.6, 3, 3, 'boot', { g: 'legF' }),
-      B(x(24), y(38.5), 7.8, 8, 2.4, 'cloth', { g: 'torso' }),
-      B(x(24), y(44.5), 8.6, 1.5, 6, 'leather', { line: false }),
-      E(x(19.5), y(46.3), 2, 2.3, 'leather', { g: 'pouch' }),
-      B(x(25), y(29.3), 7.2, 2.7, 2.2, 'scarfG', { g: 'scarf' }),
-      P([[x(16), y(12)], [x(22), y(8)], [x(9), y(3)]], 'cloak', { g: 'hood', bev: 1.2 }),
-      E(x(24), y(18), 10.6, 10.4, 'cloak', { g: 'hood' }),
-      E(x(29.5), y(20.5), 6, 6.6, 'skin', { g: 'face' }),
-      P([[x(23), y(22.5)], [x(36.2), y(21.2)], [x(35), y(27)], [x(24.5), y(28.5)]], 'mask', { g: 'mask', bev: 1 }),
-      E(x(25.5), y(13.5), 9.4, 4.4, 'cloak', { rot: -0.18, g: 'hoodF' }),
-      E(x(32.6), y(19.6), 1.25, 0.75, 'glintG', { keep: true, line: false, emitLv: atk ? 5 : 4 }),
-      C(x(29.5), y(32), x(hand[0] - 1), y(hand[1] - 2), 2.8, 2.5, 'cloth', { g: 'armF' }),
-      L(x(blade[0]), y(blade[1]), x(blade[2]), y(blade[3]), 1.5, 'blade'),
-      C(x(blade[0] - 0.4), y(blade[1] - 2), x(blade[0] + 0.4), y(blade[1] + 2), 0.7, 0.7, 'gold', { g: 'guard' }),
-      E(x(hand[0]), y(hand[1]), 2.4, 2.4, 'leather', { g: 'armF' })
-    ] };
+      B(atk ? 33 : 29.6, 59.8, 4.5, 2.9, 3, 'shoeK', { g: 'legF' }),
+      // 짧은 치마폭
+      P([[x(16.5), y(42)], [x(31.5), y(42)], [x(33) + (atk ? 1.5 : 0), y(50)], [x(15) - (atk ? 1.5 : 0), y(50) + w * 0.5]], 'muGD', { g: 'skirt', bev: 1.4 }),
+      // 몸통과 깃, 보라 허리띠(늘어진 끈)
+      B(x(24), y(37.5), 8, 8.4, 2.4, 'muG', { g: 'torso' }),
+      C(x(21), y(30.4), x(26.6), y(37.8), 1, 1, 'muGD', { line: false }),
+      B(x(24), y(43.2), 8.8, 1.9, 6, 'sashP', { g: 'sash' }),
+      C(x(19), y(44), x(17) - (atk ? 2 : 0), y(50) + w, 0.9, 0.9, 'sashP', { g: 'sashT' }),
+      E(x(19.5), y(46.6), 1.8, 2.2, 'leather', { g: 'pouch' }),
+      // 머리: 쌍상투, 옥비녀
+      E(x(23.5), y(16.5), 10, 9.8, 'hairK', { g: 'hair' }),
+      E(x(17.5), y(8), 3.6, 3.4, 'hairK', { g: 'bunB' }),
+      E(x(29), y(6.6), 3.6, 3.4, 'hairK', { g: 'bunF' }),
+      C(x(26), y(5.2), x(33.5), y(3.8), 0.7, 0.7, 'jade', { g: 'pin' }),
+      E(x(33.6), y(3.8), 1.1, 1.1, 'jade', { keep: true, line: false, minS: 0.6 }),
+      E(x(29), y(20.4), 6.8, 7, 'skin', { g: 'face' }),
+      E(x(26), y(12.5), 9.2, 4.4, 'hairK', { rot: -0.2, g: 'bang' }),
+      C(x(23.6), y(18), x(22.4), y(27), 1.8, 1.2, 'hairK', { g: 'lock' }),
+      // 면사(코 아래를 가린다)
+      P([[x(25.5), y(22.6)], [x(35.6), y(21.6)], [x(34.6), y(27.4)], [x(26.5), y(28.6)]], 'veil', { g: 'veil', bev: 0.8 }),
+      E(x(32.4), y(19.4), 0.9, 1.4, 'eye', { keep: true, line: false }),
+      E(x(32.7), y(18.6), 0.4, 0.45, 'white', { keep: true, line: false, minS: 1.1 }),
+      E(x(32.8), y(19.5), 1.1, 0.6, 'glintG', { keep: true, line: false, emitLv: atk ? 4 : 2 }),
+      // 앞 소매와 손, 비도 세 자루
+      C(x(29.5), y(32), x(hand[0] - 1), y(hand[1] - 2), 3, 3.2, 'muG', { g: 'armF' })
+    ];
+    fan.forEach(function (f, i) { parts.push(L(x(f[0]), y(f[1]), x(f[2]), y(f[3]), 1.2, 'blade')); });
+    parts.push(E(x(hand[0]), y(hand[1]), 2.3, 2.3, 'skin', { g: 'armF' }));
+    return { w: 56, h: 64, cx: 24, tip: [42, 39.4], tipAttack: [49.4, 35.4], parts: parts };
   } });
 
   // 거울의 그림자: 영웅 그림을 왼쪽으로 돌리고 어두운 보랏빛으로

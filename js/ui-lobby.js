@@ -56,7 +56,7 @@
     el.innerHTML = '<div class="lb-bg"></div><div class="lb-shade"></div>' +
       '<header class="lb-top">' +
         '<div class="lb-profile"><div class="lv"><small>LV</small><b>' + maxLevel() + '</b></div>' +
-        '<div class="pf"><b>다섯 영웅 원정대</b><small>' + (asc ? '승천 ' + asc + ' 원정' : '기본 원정') + ' · 최고 기록 ' + (d.ascension.best ? '승천 ' + d.ascension.best : d.flags.ended ? '원정 완료' : '진행 중') + '</small><i></i></div></div>' +
+        '<div class="pf"><b>다섯 영웅 원정대 <span class="mode-chip" style="--mc:' + St.mode().color + '">' + St.mode().name + '</span></b><small>' + G.Save.slot + '번 칸 · ' + (asc ? '승천 ' + asc + ' 원정' : '기본 원정') + ' · 최고 기록 ' + (d.ascension.best ? '승천 ' + d.ascension.best : d.flags.ended ? '원정 완료' : '진행 중') + '</small><i></i></div></div>' +
         '<span class="spacer"></span>' +
         '<span class="res" data-tip="골드">' + UI.icon('gold') + d.gold + '</span>' +
         '<span class="res" data-tip="모은 카드">' + UI.icon('deck') + owned + '<small>/' + allCards.length + '</small></span>' +
@@ -69,7 +69,7 @@
         (d.flags.ended ? '<button class="navbtn nav-asc">' + UI.icon('crown') + '<span>승천</span><i class="dot"></i></button>' : '') +
       '</nav>' +
       '<div class="lb-hero"><div class="plat"></div></div>' +
-      '<div class="lb-name"><small>' + hc.id.toUpperCase() + '</small><b>' + hc.name + '</b><span>' + hc.job + ' · Lv ' + St.levelOf(hc.id) + '</span></div>' +
+      '<div class="lb-name"><small>' + (hc.en || hc.id.toUpperCase()) + '</small><b>' + hc.name + '</b><span>' + hc.job + ' · Lv ' + St.levelOf(hc.id) + '</span></div>' +
       (heroes.length > 1 ? '<button class="btn icon ghost lb-swap" data-tip="다른 동료 보기">' + UI.icon('swap') + '</button>' : '') +
       '<div class="lb-voice"><span class="tag">VOICE</span><p></p></div>' +
       '<section class="lb-tiles">' +
@@ -187,7 +187,7 @@
   function journal() {
     var d = St.data, r = d.run;
     var kills = Object.keys(d.codex.monsters).reduce(function (s, k) { return s + (d.codex.monsters[k].kills || 0); }, 0);
-    return (r ? '스테이지 ' + r.stage + ' 진행 중' : d.flags.ended ? '마왕을 쓰러뜨렸다' : '스테이지 ' + (d.clearedStage + 1) + ' 출발 대기') + ' · 처치한 적 ' + kills + ' · 동료 ' + d.characters.length + '명';
+    return (r ? '스테이지 ' + r.stage + ' 진행 중' : d.flags.ended ? '혈마를 쓰러뜨렸다' : '스테이지 ' + (d.clearedStage + 1) + ' 출발 대기') + ' · 처치한 적 ' + kills + ' · 동료 ' + d.characters.length + '명';
   }
   function SND(k) { if (G.Audio) G.Audio.play(k); }
 

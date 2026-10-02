@@ -9,7 +9,7 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 global.window = global;
 ['js/core.js', 'data/keywords.js', 'data/characters.js', 'data/cards.js', 'data/monsters.js', 'data/stages.js', 'data/relics.js',
- 'data/upgrades.js', 'data/events.js', 'data/bonds.js', 'data/traits.js', 'data/ascension.js', 'data/story.js', 'js/status.js', 'js/deck.js', 'js/upgrade.js', 'js/battle.js', 'js/save.js', 'js/stage.js'].forEach(f => {
+ 'data/upgrades.js', 'data/events.js', 'data/bonds.js', 'data/traits.js', 'data/ascension.js', 'data/modes.js', 'data/story.js', 'js/status.js', 'js/deck.js', 'js/upgrade.js', 'js/battle.js', 'js/save.js', 'js/stage.js'].forEach(f => {
   vm.runInThisContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), { filename: f });
 });
 const G = global.Game, St = G.Stage, D = G.Data;
@@ -294,10 +294,10 @@ function invariants(where) {
 
   // 던전 지도(14단계): 길이·갈림 수·통로·숨은 방
   {
-    let maxFork = 0, minCols = 99, types = new Set();
+    let maxFork = 0, minCols = 99, maxCols = 0, types = new Set();
     for (let k = 0; k < 120; k++) {
       const def = St.stageDef(1 + (k % 10)), map = St.genMap(def);
-      minCols = Math.min(minCols, map.length);
+      minCols = Math.min(minCols, map.length); maxCols = Math.max(maxCols, map.length);
       check(map[0].length === 1 && map[0][0].type === 'battle' && map[0][0].known, '입구는 전투 1칸, 공개');
       const last = map[map.length - 1];
       check(last.length === 1 && last[0].type === def.last && last[0].known, '마지막 방은 ' + def.last);
@@ -311,7 +311,7 @@ function invariants(where) {
       }
       map.forEach((col, c) => col.forEach(n => { types.add(n.type); if (c > 0 && c < map.length - 1 && n.type !== 'midboss') check(!n.known, '중간 방은 처음에 숨겨져 있다'); }));
     }
-    check(minCols >= 12, '스테이지는 12열 이상 (' + minCols + ')');
+    check(minCols >= 7 && maxCols <= 9, '스테이지는 7~9열 (' + minCols + '~' + maxCols + ')');
     check(maxFork >= 3, '갈림길 3갈래 이상 (' + maxFork + ')');
     ['battle', 'elite', 'event', 'treasure', 'rest', 'shop'].forEach(t => check(types.has(t), '방 종류 ' + t));
   }
@@ -351,6 +351,51 @@ function invariants(where) {
   St.save();
   const cleaned = G.Save.load();
   check(!cleaned.cards.includes('ZZZ99') && !cleaned.decks.common.includes('ZZZ99'), '알 수 없는 카드 ID 제거');
+
+  // 저장 칸 3개·게임 모드(15단계)
+  {
+    G.Save.clear(1); G.Save.clear(2); G.Save.clear(3);
+    // 칸이 하나이던 예전 저장은 1번 칸으로 옮겨진다
+    const legacy = { version: 3, gold: 42, clearedStage: 2, characters: ['kai'], party: ['kai'], cards: ['K01'], decks: {}, relics: [], codex: { monsters: {} }, flags: {} };
+    G.Save.store().setItem(G.Save.base(), JSON.stringify(legacy));
+    G.Save.use(2); St.newGame('hard'); St.data.gold = 7; St.save();
+    G.Save.use(3); St.newGame('hardcore'); St.save();
+    check(G.Save.peek(2).mode === 'hard' && G.Save.peek(2).gold === 7 && G.Save.peek(3).mode === 'hardcore', '칸마다 따로 저장');
+    check(G.Save.lastSlot() === 3, '마지막으로 쓴 칸');
+    G.Save.use(1);
+    const l1 = G.Save.peek(1);
+    check(!!l1 && (l1.mode === 'normal' && l1.gold === 42 && l1.version === G.Save.VERSION), '예전 저장 → 1번 칸, 노말 모드');
+    // 하드: 적 체력·피해 1.5배
+    G.Save.use(2); St.load();
+    const hm = St.enemyMods(3);
+    G.Save.use(3); St.load();
+    const nm = St.enemyMods(3);
+    check(Math.abs((1 + hm.hpMult) - (1 + nm.hpMult) * D.modes.hard.enemyHp) < 1e-9 && Math.abs((1 + hm.dmgMult) - (1 + nm.dmgMult) * D.modes.hard.enemyDmg) < 1e-9 && D.modes.hard.enemyHp > 1, '하드 모드 적 보정');
+    // 하드코어: 쓰러진 채 이기면 그 동료는 죽는다
+    const d = St.data;
+    d.characters = ['kai', 'bram', 'lyra', 'sera']; ['bram', 'lyra', 'sera'].forEach(id => { d.decks[id] = []; });
+    d.party = ['kai', 'bram', 'lyra'];
+    St.startStage(1); St.autoPick();
+    const fake = (deadIds) => ({ heroes: d.party.map(id => ({ id, dead: deadIds.includes(id), hp: deadIds.includes(id) ? 0 : 10, maxHp: St.maxHp(id) })),
+      monsters: [], kills: [], goldDelta: 0 });
+    St.battleWon(fake(['bram']));
+    check(St.isDead('bram') && !d.party.includes('bram') && d.run.hp.bram == null, '하드코어: 쓰러진 동료 사망');
+    check(!St.setParty(['bram']) && St.setParty(['bram', 'kai']) && !d.party.includes('bram'), '죽은 동료는 편성할 수 없다');
+    d.run.pending = null;
+    // 지면 싸운 동료가 모두 죽고, 남은 동료로 다시 시작
+    d.party = ['kai', 'lyra'];
+    let lost = St.battleLost(fake(['kai', 'lyra']));
+    check(!lost.wiped && St.isDead('kai') && St.isDead('lyra') && d.party.join() === 'sera' && St.data.run.col === 0, '하드코어 패배: 남은 동료로 재시작');
+    lost = St.battleLost(fake(['sera']));
+    check(lost.wiped && !G.Save.exists(3) && St.data === null, '모두 죽으면 저장 칸 삭제');
+    // 노말: 쓰러져도 25%로 복귀
+    G.Save.use(2); St.load(); St.data.mode = 'normal';
+    St.data.characters = ['kai', 'bram']; St.data.decks.bram = []; St.data.party = ['kai', 'bram'];
+    St.startStage(1); St.autoPick();
+    St.battleWon({ heroes: [{ id: 'kai', dead: false, hp: 5, maxHp: 70 }, { id: 'bram', dead: true, hp: 0, maxHp: 95 }], monsters: [], kills: [], goldDelta: 0 });
+    check(!St.isDead('bram') && St.data.run.hp.bram > 0, '노말: 쓰러진 동료는 복귀');
+    G.Save.clear(1); G.Save.clear(2); G.Save.use(1);
+  }
 
   console.log('캠페인 ' + N + '회 · 전투 ' + totalBattles + ' · AI 패배 ' + losses + ' · 강제 승리 ' + kills +
     ' · 상점 ' + shops + '(구매 ' + bought + ') · 휴식 ' + rests + ' · 강화 ' + ups + ' · 이벤트 ' + eventsSeen.size + '종(전투 ' + eventFights + ') · 그림자 ' + mirrors + ' · 특성 ' + traitsPicked + ' · 대화 ' + talks + ' · 보물 ' + treasures + '(매복 ' + ambushes + ')');

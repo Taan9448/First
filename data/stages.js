@@ -1,8 +1,8 @@
 // stages.js — 스테이지 10개, 던전 지도 규칙(14단계), 등장 몬스터 조합, 보상·상점 수치
 // 노드: battle(일반) · elite(정예) · event(이벤트) · treasure(보물) · rest(휴식) · shop(상점) · boss(보스) · midboss(중간 보스) · final(최종 보스)
-// 던전 지도(GAME_DESIGN.md 3장): 입구(1칸) → 경로 모듈을 무작위로 이어 붙인 중간 구역(10~11열) → 야영지(휴식/상점) → 마지막 방(정예/보스)
+// 던전 지도(GAME_DESIGN.md 3장): 입구(1칸) → 경로 모듈을 무작위로 이어 붙인 중간 구역(4~5열) → 야영지(휴식/상점) → 마지막 방(정예/보스)
 //   열마다 방이 1~4개, 방마다 다음 열의 이웃 방 1~3개로 통로가 이어진다. 방의 내용은 정찰하거나 들어가기 전까지 보이지 않는다.
-// 일반 전투는 앞쪽 3열까지 easy, 그 뒤에는 hard 조합에서 하나를 고른다.
+// 일반 전투는 앞쪽 2열까지 easy, 그 뒤에는 hard 조합에서 하나를 고른다.
 // 마지막 방이 아닌 정예: midElite 가 있으면 그 몬스터, 없으면 hard 조합에 변이를 모두 붙인 '정예 무리'.
 (function () {
   // 경로 모듈: 이어 붙일 열 목록. w = 그 열의 방 수 범위, pool = 방 종류 가중치
@@ -16,13 +16,13 @@
     { id: 'vault', name: '잊힌 보물고', weight: 1, cols: [{ w: [2, 3], pool: { treasure: 2, elite: 1, battle: 1 } }] }
   ];
   Game.Data.mapRules = {
-    middleCols: [10, 11],            // 입구와 야영지 사이 열 수(최종 스테이지는 중간 보스 앞뒤로 나눈다)
-    finalSplit: [7, 2],              // 10 스테이지: 중간 보스 앞 열 수, 뒤 열 수
+    middleCols: [4, 5],              // 입구와 야영지 사이 열 수(최종 스테이지는 중간 보스 앞뒤로 나눈다). 15단계에서 10~11 → 4~5
+    finalSplit: [3, 1],              // 10 스테이지: 중간 보스 앞 열 수, 뒤 열 수
     campBeforeBoss: { w: [2, 3], pool: { rest: 2, shop: 2 } },
-    limits: { elite: 2, rest: 2, shop: 1, treasure: 3 },   // 중간 구역에서 종류별 최대 개수(넘치면 전투로)
-    easyCols: 3,                     // 이 열까지의 일반 전투는 easy 조합
+    limits: { elite: 1, rest: 1, shop: 1, treasure: 2 },   // 중간 구역에서 종류별 최대 개수(넘치면 전투로)
+    easyCols: 2,                     // 이 열까지의 일반 전투는 easy 조합
     link: { side: 0.5 },             // 방마다 바로 옆 레인 방으로 통로가 더 날 확률
-    scout: 0.3, scoutBonus: 0.2,     // 방에 들어가면 이어진 다음 방마다 정찰 확률(파티에 녹스가 있으면 더한다)
+    scout: 0.3, scoutBonus: 0.2,     // 방에 들어가면 이어진 다음 방마다 정찰 확률(파티에 소연이 있으면 더한다)
     treasure: { gold: [25, 45], relic: 0.15, ambush: 0.3, ambushGold: 20 }
   };
 Game.Data.stages = [
@@ -68,10 +68,12 @@ Game.Data.regions = [
   { theme: 'volcano', label: [700, 56], box: [610, 60, 800, 360] },
   { theme: 'castle', label: [910, 56], box: [790, 60, 1000, 420] }
 ];
-Game.Data.STAGE_NAME = ['숲 입구', '고목의 심장', '모래 바다', '파라오의 무덤', '눈보라 고개', '서리 궁전', '불타는 협곡', '화룡의 둥지', '마왕성 외곽', '마왕의 옥좌'];
+Game.Data.STAGE_NAME = ['만독곡 입구', '흑풍채', '모래 바다', '파라오의 무덤', '눈보라 고개', '서리 궁전', '불타는 협곡', '화룡의 둥지', '청운문 산문', '청운봉 혈마단'];
 Game.Data.THEME_COLOR = { forest: '#4fae4a', desert: '#e0a84a', snow: '#9fd6f2', volcano: '#e0584a', castle: '#a274dc' };
 
-Game.Data.THEME_NAME = { forest: '속삭이는 숲', desert: '타오르는 사막', snow: '얼어붙은 설원', volcano: '용암 화산', castle: '마왕성', mirror: '거울의 방' };
+Game.Data.THEME_NAME = { forest: '만독곡', desert: '타오르는 사막', snow: '얼어붙은 설원', volcano: '용암 화산', castle: '청운문', mirror: '거울의 방' };
+// 테마가 속한 세계(15단계): 무림(1~2장, 9~10장) · 엘단 대륙(3~8장)
+Game.Data.THEME_WORLD = { forest: '무림', desert: '엘단', snow: '엘단', volcano: '엘단', castle: '무림', mirror: '거울' };
 Game.Data.NODE_NAME = { battle: '전투', elite: '정예', event: '이벤트', treasure: '보물', rest: '휴식', shop: '상점', boss: '보스', midboss: '중간 보스', final: '최종 보스' };
 
 // 스테이지 난이도(10단계 재조정): 그 스테이지 적의 체력·공격 피해 배율. 승천 보정과 더해진다
@@ -92,7 +94,7 @@ Game.Data.economy = {
   // 보스 보상(희귀/영웅/전설): 스테이지 2 → 10 사이는 선형 보간
   bossFrom: [85, 13, 2],
   bossTo: [40, 40, 20],
-  gold: { battle: [9, 15], elite: [25, 35], boss: [60, 100] },  // 14단계: 전투가 두 배쯤 늘어 일반·정예 골드를 줄였다
+  gold: { battle: [13, 21], elite: [32, 42], boss: [60, 100] },  // 15단계: 던전 길이를 절반으로 줄이며 조정
   skipGold: 10,
   fillGold: 20,           // 후보 카드가 3장이 안 될 때 빈자리 대신 주는 골드
   price: { common: 30, uncommon: 55, rare: 90, epic: 150, legendary: 250 },

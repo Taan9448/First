@@ -11,7 +11,7 @@
 //   onFreezeDraw · burnVuln · cleanseBlock · overhealBlock · revivePct · selfRevive · turnStartHealLowest · attackHealLowest
 //   firstDebuffDraw · 전투 전체: firstTurnEnergy · firstTurnDraw · everyN{n, v} · winHeal(전투 승리 후 아군 전체 회복)
 Game.Data.growth = {
-  exp: { battle: 5, elite: 12, boss: 35, midboss: 35, final: 50 },  // 14단계: 스테이지가 길어져 일반·정예 전투 경험치를 줄였다
+  exp: { battle: 8, elite: 16, boss: 35, midboss: 35, final: 50 },  // 15단계: 던전 길이를 절반으로 줄이며 14단계에서 깎은 값을 일부 되돌렸다
   levels: [40, 120, 250, 450, 700]   // 레벨 1~5 문턱(누적 경험치). 10단계: 한 원정에 최고 레벨까지 가지 않게 올림
 };
 
@@ -22,8 +22,8 @@ Game.Data.growth = {
       [t('날카로운 눈', '치명타 확률 +5%', { critAdd: 0.05 }), t('선제 일격', '매 전투 첫 공격 카드 피해 +4', { firstAttackBonus: 4 })],
       [t('단련된 몸', '최대 체력 +10', { maxHp: 10 }), t('투지', '전투 시작 시 힘 +1', { startStatus: { strength: 1 } })],
       [t('필살의 기술', '전투 시작 시 치명 강화 1', { startStatus: { critUp: 1 } }), t('검의 흐름', '한 턴에 세 번째 공격 카드마다 카드 1장 뽑기', { thirdAttackDraw: 1 })],
-      [t('승리의 방패', '카이의 카드로 처치하면 보호막 5', { onKillBlock: 5 }), t('전리의 숨', '카이의 카드로 처치하면 체력 3 회복', { onKillHeal: 3 })],
-      [t('빠른 검', '매 턴 카이의 첫 공격 카드 비용 -1', { firstOwnAttackDiscount: 1 }), t('배수의 진', '체력이 절반 이하일 때 공격 피해 +3', { lowHpDamage: 3 })]
+      [t('승리의 방패', '하린의 카드로 처치하면 보호막 5', { onKillBlock: 5 }), t('전리의 숨', '하린의 카드로 처치하면 체력 3 회복', { onKillHeal: 3 })],
+      [t('빠른 검', '매 턴 하린의 첫 공격 카드 비용 -1', { firstOwnAttackDiscount: 1 }), t('배수의 진', '체력이 절반 이하일 때 공격 피해 +3', { lowHpDamage: 3 })]
     ],
     bram: [
       [t('강철 체력', '최대 체력 +12', { maxHp: 12 }), t('선봉의 방패', '전투 시작 시 보호막 8', { startBlock: 8 })],
@@ -47,10 +47,10 @@ Game.Data.growth = {
       [t('돌보는 눈', '턴 시작 시 체력 비율이 가장 낮은 아군 3 회복', { turnStartHealLowest: 3 }), t('심판의 은혜', '세라의 공격 카드를 쓰면 체력이 가장 낮은 아군 2 회복', { attackHealLowest: 2 })]
     ],
     nox: [
-      [t('급소 감각', '치명타 확률 +5%', { critAdd: 0.05 }), t('독의 달인', '녹스가 거는 중독 +1', { statusAdd: { poison: 1 } })],
+      [t('급소 감각', '치명타 확률 +5%', { critAdd: 0.05 }), t('독의 달인', '소연이 거는 중독 +1', { statusAdd: { poison: 1 } })],
       [t('잠입 훈련', '최대 체력 +8', { maxHp: 8 }), t('준비된 계획', '매 전투 첫 턴 카드 1장 더 뽑기', { firstTurnDraw: 1 })],
-      [t('약점 공략', '녹스가 거는 약화 +1', { statusAdd: { weak: 1 } }), t('허점 공략', '녹스가 거는 취약 +1', { statusAdd: { vulnerable: 1 } })],
-      [t('책략가의 눈', '매 턴 녹스가 처음 디버프를 걸면 카드 1장 뽑기', { firstDebuffDraw: 1 }), t('암살자의 흐름', '녹스의 카드로 처치하면 에너지 +1', { onKillEnergy: 1 })],
+      [t('약점 공략', '소연이 거는 약화 +1', { statusAdd: { weak: 1 } }), t('허점 공략', '소연이 거는 취약 +1', { statusAdd: { vulnerable: 1 } })],
+      [t('당가의 눈', '매 턴 소연이 처음 디버프를 걸면 카드 1장 뽑기', { firstDebuffDraw: 1 }), t('암살자의 흐름', '소연의 카드로 처치하면 에너지 +1', { onKillEnergy: 1 })],
       [t('긴 호흡', '3턴마다 에너지 +1', { everyN: { n: 3, v: 1 } }), t('치명의 비수', '전투 시작 시 치명 강화 1', { startStatus: { critUp: 1 } })]
     ]
   };

@@ -52,7 +52,7 @@
   });
 
   // =====================================================================
-  // 속삭이는 숲
+  // 만독곡(옛 속삭이는 숲) — 무림 몬스터 일부는 js/sprites-murim.js
   // =====================================================================
   mat('ooze', '#4f9a3c', { spec: 0.6, shin: 10, dark: 0.22 });
   mat('oozeCore', '#2c5e2a', { dark: 0.14 });
@@ -121,7 +121,7 @@
       ]) };
     };
   }
-  M('slime', 'forest', 58, ooze({ body: 'ooze', core: 'oozeCore', inner: 'boneMurk', eye: 'eyeY', shine: 'oozeShine' }));
+  // 독두꺼비(slime)는 js/sprites-murim.js
 
   // 독버섯: 거대한 독갓을 쓴 균사 거인
   M('mushroom', 'forest', 72, function (t, pose) {
@@ -222,33 +222,7 @@
     ) };
   });
 
-  // 고블린 도적: 두건을 쓰고 웅크린 약탈자, 녹슨 단검
-  M('goblin', 'forest', 62, function (t, pose) {
-    var atk = pose === 'attack', b = S.bob(t, 1), y = function (v) { return v + b; };
-    var hand = atk ? [6, 38] : [12, 41], dag = atk ? [6, 37, 1, 27] : [11, 40, 3, 31];
-    return { w: 56, h: 60, cx: 28, tipAttack: [1, 27], parts: concat([
-      E(40, y(33), 9.5, 11, 'sack', { g: 'sack', rot: 0.2 }),
-      C(39, y(23), 43, y(26), 1, 1, 'ragD', { line: false }),
-      C(33, y(36), 41, y(43), 2.4, 2, 'skinG', { g: 'armB' }), E(42, y(44), 2.3, 2.3, 'skinG', { g: 'armB' }),
-      C(30, 46, 36, 52, 3.2, 2.8, 'ragD', { g: 'legB' }), C(36, 52, 34, 57, 2.6, 2.2, 'ragD', { g: 'legB' }), E(32, 58, 4, 1.8, 'skinG', { g: 'legB' }),
-      C(25, 46, 18, 52, 3.2, 2.8, 'rag', { g: 'legF' }), C(18, 52, 21, 57, 2.6, 2.2, 'rag', { g: 'legF' }), E(19, 58, 4.4, 1.8, 'skinG', { g: 'legF' }),
-      E(29, y(39), 11, 9.5, 'rag', { rot: 0.35, g: 'body' }),
-      B(28, y(45), 9, 1.4, 6, 'ragD', { line: false }),
-      E(24, y(23), 11, 10.5, 'hood', { g: 'hood' }),
-      P([[29, y(17)], [44, y(9)], [32, y(23)]], 'skinG', { g: 'earB', bev: 1 }),
-      E(18, y(26), 7.6, 7.2, 'skinG', { g: 'face' }),
-      P([[12, y(24)], [5, y(29)], [12.5, y(29.5)]], 'skinG', { g: 'nose', bev: 0.8 }),
-      E(20, y(17.5), 9.5, 4.6, 'hood', { rot: -0.2, g: 'hoodF' }),
-      P([[25, y(15)], [39, y(4)], [30, y(19)]], 'hood', { g: 'hoodT', bev: 1.2 }),
-      E(15.5, y(24.4), 2.2, 1.1, 'eyeY', { rot: -0.3, keep: true, line: false }),
-      E(21.6, y(24.6), 1.8, 1, 'eyeY', { rot: 0.25, keep: true, line: false }),
-      C(10, y(31.4), 19, y(32.4), 1.2, 1.2, 'mouthD')
-    ], fangs(11, 19, y(31), 4, 1.6, 1), [
-      L(dag[0], y(dag[1]), dag[2], y(dag[3]), 1.6, 'rust'),
-      C(22, y(36), hand[0] + 2, y(hand[1] - 1), 2.6, 2.2, 'skinG', { g: 'armF' }),
-      E(hand[0], y(hand[1]), 2.6, 2.5, 'skinG', { g: 'armF' })
-    ]) };
-  });
+  // goblin 는 js/sprites-murim.js(15단계 무림 몬스터)
 
   // 거대 거미(정예): 해골 무늬 배, 여덟 다리, 붉은 눈 여섯
   M('giant_spider', 'forest', 92, function (t, pose) {
@@ -280,42 +254,7 @@
     ) };
   });
 
-  // 고목의 수호자(보스): 타락한 고대 나무
-  M('treant', 'forest', 124, function (t, pose) {
-    var atk = pose === 'attack', b = S.bob(t, 1.2), y = function (v) { return v + b; }, w1 = wave(t);
-    var armF = atk ? [[30, 52], [14, 46], [2, 34]] : [[30, 54], [16, 66], [10, 82]];
-    var motes = [];
-    for (var i = 0; i < 5; i++) { var ph = (t + i / 5) % 1; motes.push(E(18 + i * 18 + Math.sin(ph * TAU) * 4, 60 - ph * 50, 1.2, 1.2, 'corrupt', { keep: true, line: false, ao: false })); }
-    return { w: 112, h: 122, cx: 56, tipAttack: [2, 34], glow: [{ x: 50, y: 50, r: 16, c: '#c8ff4a', k: 0.8 }, { x: 52, y: 70, r: 14, c: '#b04aff', k: 0.6 }], parts: concat(
-      // 뒤쪽 가지 팔
-      chain([[74, y(54)], [92, y(66)], [100, y(82)], [104, y(92)]], 6.5, 2.4, 'barkD', { g: 'armB' }),
-      chain([[100, y(82)], [108, y(86)]], 2, 1, 'barkD', { g: 'armB' }), chain([[101, y(88)], [104, y(98)]], 2, 1, 'barkD', { g: 'armB' }),
-      // 수관
-      [E(56, y(22), 34, 18, 'leafD', { g: 'crown' }), E(30, y(30), 18, 13, 'leafD', { g: 'crown' }), E(84, y(30), 20, 14, 'leafD', { g: 'crown' }),
-        E(44, y(14), 16, 10, 'leaf', { g: 'crown2' }), E(70, y(12), 15, 9, 'leaf', { g: 'crown2' }), E(22, y(26), 9, 7, 'leaf', { g: 'crown2' }), E(92, y(22), 10, 7, 'leaf', { g: 'crown2' })],
-      // 뿌리
-      chain([[44, 112], [30, 116], [16, 120]], 5, 2, 'barkD', { g: 'root' }), chain([[66, 112], [82, 116], [98, 120]], 5, 2, 'barkD', { g: 'root' }),
-      chain([[56, 114], [56, 121]], 6, 4, 'barkD', { g: 'root' }),
-      // 줄기 몸통
-      [P([[34, y(36)], [78, y(36)], [84, 114], [28, 114]], 'bark', { g: 'trunk', bev: 4 }),
-        C(42, y(44), 40, 108, 0.8, 0.8, 'barkD', { line: false, ao: false }), C(70, y(46), 72, 108, 0.8, 0.8, 'barkD', { line: false, ao: false }),
-        C(56, y(84), 58, 110, 0.8, 0.8, 'barkD', { line: false, ao: false }),
-        E(66, y(88), 6, 8, 'moss', { line: false, flat: 0.5 }), E(38, y(98), 5, 6, 'moss', { line: false, flat: 0.5 }),
-        // 얼굴: 옹이 눈썹, 빛나는 구멍 눈, 벌어진 입
-        B(42, y(46), 9, 2.6, 3, 'barkD', { rot: 0.25, g: 'brow' }), B(64, y(46), 9, 2.6, 3, 'barkD', { rot: -0.25, g: 'brow2' }),
-        E(43, y(51), 5, 3, 'mouthD'), E(64, y(51), 5, 3, 'mouthD'),
-        E(43, y(51), 3, 1.6, 'eyeG', { keep: true, line: false }), E(64, y(51), 3, 1.6, 'eyeG', { keep: true, line: false }),
-        E(53, y(70), 11, atk ? 10 : 7.5, 'mouthD', { g: 'mouth' }),
-        E(53, y(72), 6, atk ? 6 : 4, 'corrupt', { line: false, ao: false, emitLv: 2 })],
-      fangs(43, 63, y(64), 6, 4, 1), fangs(45, 61, y(77) + (atk ? 2.5 : 0), 5, 3.4, -1),
-      // 앞쪽 가지 팔과 손가락 가지
-      chain([[38, y(46)], armF[0].map(function (v, i) { return i ? y(v) : v; }), [armF[1][0], y(armF[1][1])], [armF[2][0], y(armF[2][1])]], 7.5, 3, 'bark', { g: 'armF' }),
-      chain([[armF[2][0], y(armF[2][1])], [armF[2][0] - 6, y(armF[2][1] + (atk ? -6 : 6))]], 2.6, 1, 'bark', { g: 'armF' }),
-      chain([[armF[2][0] + 2, y(armF[2][1] + 2)], [armF[2][0] - 3, y(armF[2][1] + (atk ? 2 : 12))]], 2.4, 1, 'bark', { g: 'armF' }),
-      chain([[armF[2][0] + 3, y(armF[2][1])], [armF[2][0] + 1 + w1, y(armF[2][1] + (atk ? -10 : -2))]], 2.2, 1, 'bark', { g: 'armF' }),
-      motes
-    ) };
-  });
+  // treant 는 js/sprites-murim.js(15단계 무림 몬스터)
 
   // 면이 나뉜 결정 덩어리: 중심에서 각 변으로 삼각형을 만들고, 변 쪽으로 기운 법선을 준다
   function facets(cx, cy, pts, m, g, tilt, o) {
@@ -973,7 +912,7 @@
   });
 
   // =====================================================================
-  // 마왕성
+  // 청운문(옛 마왕성) — 사람 모양 몬스터는 js/sprites-murim.js
   // =====================================================================
   mat('voidRobe', '#2c2046', { dark: 0.14, shift: 20 });
   mat('voidRobeL', '#43306a', { dark: 0.18, shift: 20 });
@@ -991,59 +930,9 @@
   mat('skinA', '#5a2a6a', { dark: 0.18 });
   mat('wingA', '#33183c', { dark: 0.14 });
 
-  // 해골 병사: 녹슨 투구와 칼, 둥근 방패
-  M('skeleton', 'castle', 70, function (t, pose) {
-    var atk = pose === 'attack', b = S.bob(t, 0.9), y = function (v) { return v + b; };
-    var hand = atk ? [12, 34] : [16, 40], blade = atk ? [11, 33, 0, 26] : [15, 39, 10, 22];
-    return { w: 56, h: 68, cx: 28, tipAttack: [1, 26], glow: [{ x: 24, y: y(18), r: 6, c: '#ff3a3a', k: 0.8 }], parts: concat([
-      C(32, y(30), 38, y(38), 1.4, 1.2, 'bone', { g: 'armB' }), C(38, y(38), 40, y(44), 1.2, 1, 'bone', { g: 'armB' }),
-      E(41, y(40), 8.4, 9.6, 'rust', { g: 'shield' }), E(41, y(40), 2.2, 2.4, 'steel', { g: 'boss' }),
-      C(30, y(46), 32, 56, 1.5, 1.3, 'bone', { g: 'lgB' }), C(32, 56, 33, 65, 1.3, 1.1, 'bone', { g: 'lgB' }), E(32, 56, 1.8, 1.8, 'bone', { g: 'lgB' }), E(34, 66, 3.4, 1.4, 'bone', { g: 'lgB' }),
-      C(26, y(46), 23, 56, 1.6, 1.4, 'bone', { g: 'lgF' }), C(23, 56, 24, 65, 1.4, 1.2, 'bone', { g: 'lgF' }), E(23, 56, 1.9, 1.9, 'bone', { g: 'lgF' }), E(22, 66, 3.6, 1.4, 'bone', { g: 'lgF' }),
-      E(28, y(45), 6.4, 3, 'bone', { g: 'pelvis' }),
-      C(28, y(28), 28, y(44), 1.3, 1.3, 'bone', { g: 'spine' }),
-      C(22, y(30), 34, y(30), 1.2, 1.2, 'bone', { g: 'rib' }), C(22.6, y(33.4), 33.4, y(33.4), 1.1, 1.1, 'bone', { g: 'rib' }), C(23.4, y(36.8), 32.6, y(36.8), 1, 1, 'bone', { g: 'rib' }),
-      C(21, y(27), 35, y(27), 1.6, 1.6, 'bone', { g: 'clav' }),
-      E(25, y(19), 7.6, 7, 'bone', { g: 'skull' }),
-      B(24, y(26), 5, 2.2, 3, 'bone', { g: 'jaw' }),
-      C(20.5, y(26), 27.5, y(26), 0.4, 0.4, 'mouthD', { line: false, ao: false }),
-      E(21.6, y(19), 2.2, 2.1, 'mouthD'), E(27.6, y(19), 2.2, 2.1, 'mouthD'),
-      E(21.6, y(19), 1.1, 1, 'eyeR', { keep: true, line: false }), E(27.6, y(19), 1.1, 1, 'eyeR', { keep: true, line: false }),
-      E(24.6, y(22.6), 0.8, 1, 'mouthD', { keep: true }),
-      B(26, y(13.4), 8.6, 4.6, 2.6, 'rust', { g: 'helm' }), B(26, y(18.2), 9, 1, 6, 'cut'),
-      C(19, y(14.6), 19, y(19.6), 1, 0.6, 'rust', { g: 'helm' }),
-      L(blade[0], y(blade[1]), blade[2], y(blade[3]), 1.8, 'rust'),
-      C(hand[0] - 2, y(hand[1] - 1.4), hand[0] + 2, y(hand[1] + 1.4), 0.9, 0.9, 'rust', { g: 'guard' }),
-      C(23, y(29), 20, y(36), 1.4, 1.2, 'bone', { g: 'armF' }), C(20, y(36), hand[0] + 1, y(hand[1]), 1.2, 1, 'bone', { g: 'armF' }),
-      E(hand[0], y(hand[1]), 1.8, 1.8, 'bone', { g: 'armF' })
-    ]) };
-  });
+  // skeleton 는 js/sprites-murim.js(15단계 무림 몬스터)
 
-  // 암흑 마법사: 얼굴 없는 두건, 해진 로브, 손 위에 떠 있는 어둠의 구슬
-  M('dark_mage', 'castle', 76, function (t, pose) {
-    var atk = pose === 'attack', b = wave(t) * 1.2, y = function (v) { return v + b; }, w = wave(t, 1);
-    var orb = atk ? [8, 30] : [12, 36], a0 = t * TAU;
-    var runes = [];
-    for (var i = 0; i < 4; i++) { var a = a0 + i * TAU / 4; runes.push(E(orb[0] + Math.cos(a) * 7, y(orb[1]) + Math.sin(a) * 3, 0.8, 0.8, 'eyeV', { keep: true, line: false, ao: false })); }
-    var hem = [];
-    for (var k = 0; k <= 6; k++) hem.push([44 - k * 5, 72 - (k % 2) * 5 + (k % 2 ? w : 0)]);
-    return { w: 58, h: 74, cx: 30, tipAttack: orb, glow: [{ x: orb[0], y: y(orb[1]), r: 11, c: '#b04aff' }, { x: 26, y: y(18), r: 6, c: '#c060ff', k: 0.7 }], parts: concat([
-      C(37, y(32), 43, y(44), 2.6, 3.4, 'voidRobe', { g: 'armB' }), E(43, y(46), 1.8, 1.8, 'bone', { g: 'armB' }),
-      P([[22, y(28)], [38, y(28)]].concat(hem), 'voidRobe', { g: 'robe', bev: 2 }),
-      P([[27, y(34)], [33, y(34)], [35, y(68)], [25, y(68)]], 'voidRobeL', { line: false, bev: 1 }),
-      B(30, y(32), 8.4, 7, 2.4, 'voidRobe', { g: 'robe' }),
-      C(23, y(28), 37, y(28), 1, 1, 'goldB', { line: false }),
-      E(29, y(17), 9.4, 9.6, 'voidRobe', { g: 'hood' }),
-      P([[33, y(10)], [40, y(4)], [38, y(14)]], 'voidRobe', { g: 'hood', bev: 1 }),
-      E(26, y(19), 6, 6.4, 'mouthD', { g: 'void' }),
-      E(23.8, y(18.4), 1.6, 0.8, 'eyeV', { keep: true, line: false }), E(28.4, y(18.6), 1.4, 0.7, 'eyeV', { keep: true, line: false }),
-      E(28, y(11.5), 8.6, 3.6, 'voidRobeL', { rot: -0.2, g: 'hoodF' }),
-      E(orb[0], y(orb[1]), 4.6, 4.6, 'corrupt', { line: false, g: 'orb' })
-    ], runes, [
-      C(24, y(32), orb[0] + 5, y(orb[1] + 4), 2.6, 3.2, 'voidRobe', { g: 'armF' }),
-      E(orb[0] + 4.4, y(orb[1] + 5), 1.9, 1.9, 'bone', { g: 'armF' })
-    ]) };
-  });
+  // dark_mage 는 js/sprites-murim.js(15단계 무림 몬스터)
 
   // 가고일: 웅크린 돌 악마, 펼친 날개와 갈고리 발톱
   M('gargoyle', 'castle', 78, function (t, pose) {
@@ -1101,34 +990,7 @@
     ]) };
   });
 
-  // 저주받은 갑옷: 텅 빈 갑옷 틈으로 보랏빛이 새어 나온다, 땅에 꽂은 대검
-  M('cursed_armor', 'castle', 84, function (t, pose) {
-    var atk = pose === 'attack', b = S.bob(t, 0.8), y = function (v) { return v + b; }, a0 = t * TAU;
-    var sw = atk ? [[6, 46, 2, 4], [12, 46]] : [[16, 44, 16, 80], [16, 40]];
-    var wisps = [];
-    for (var i = 0; i < 4; i++) { var ph = (t + i / 4) % 1; wisps.push(E(30 + Math.sin(ph * TAU + i) * 6, y(40 - ph * 26), 1.1, 1.1, 'corrupt', { keep: true, line: false, ao: false })); }
-    return { w: 66, h: 82, cx: 34, tipAttack: atk ? [2, 4] : [16, 30], glow: [{ x: 32, y: y(36), r: 18, c: '#b04aff', k: 0.7 }, { x: 28, y: y(16), r: 6, c: '#c060ff' }], parts: concat([
-      E(46, y(30), 7, 6, 'armorC', { g: 'paulB' }),
-      C(44, y(34), 48, y(48), 3.4, 3, 'armorC', { g: 'armB' }),
-      C(38, 56, 40, 78, 4.2, 3.8, 'armorC', { g: 'lgB' }), B(41, 79, 5.4, 2.4, 3, 'armorC', { g: 'lgB' }),
-      C(28, 56, 26, 78, 4.4, 4, 'armorC', { g: 'lgF' }), B(25, 79, 5.8, 2.4, 3, 'armorC', { g: 'lgF' }),
-      E(27, 66, 3.2, 2.6, 'armorC', { g: 'knee' }),
-      B(33, y(52), 10, 5, 2.4, 'armorC', { g: 'tas' }),
-      B(33, y(40), 11, 11, 2.2, 'armorC', { g: 'torso' }),
-      C(26, y(44), 40, y(44), 0.9, 0.9, 'mouthD', { line: false }),
-      P([[33, y(32)], [36, y(38)], [33, y(44)], [30, y(38)]], 'corrupt', { emitLv: 3, line: false, bev: 0 }),
-      B(30, y(17), 7.6, 8.6, 2.6, 'armorC', { g: 'helm' }),
-      P([[30, y(9)], [40, y(4) + wave(t) * 0.6], [36, y(11)]], 'capeR', { g: 'plume', bev: 0.8 }),
-      B(26, y(18), 5, 1.2, 5, 'mouthD'),
-      E(24.4, y(18), 1.4, 0.8, 'eyeV', { keep: true, line: false }), E(28.4, y(18), 1.3, 0.7, 'eyeV', { keep: true, line: false }),
-      E(21, y(29), 7.6, 6.4, 'armorC', { g: 'paulF' }),
-      L(sw[0][0], y(sw[0][1]), sw[0][2], atk ? y(sw[0][3]) : sw[0][3], 3, 'steel', { taper: 0.85 }),
-      C(sw[1][0] - 5, y(sw[1][1]), sw[1][0] + 5, y(sw[1][1]), 1.3, 1.3, 'rust', { g: 'guard' }),
-      C(sw[1][0], y(sw[1][1] - 6), sw[1][0], y(sw[1][1]), 1.1, 1.1, 'leather', { g: 'grip' }),
-      C(22, y(33), sw[1][0] + 1, y(sw[1][1] - 4), 3.4, 3, 'armorC', { g: 'armF' }),
-      E(sw[1][0], y(sw[1][1] - 4), 3, 2.8, 'armorC', { g: 'armF' })
-    ], wisps) };
-  });
+  // cursed_armor 는 js/sprites-murim.js(15단계 무림 몬스터)
 
   // 죽음의 기사(정예): 뿔 투구에 푸른 불꽃 눈, 해골 어깨, 들쭉날쭉한 대검
   M('death_knight', 'castle', 100, function (t, pose) {
@@ -1164,86 +1026,7 @@
     ]) };
   });
 
-  // 기사단장 발타르(보스): 진홍 갑옷과 금 장식, 깃털 투구, 거대한 할버드
-  M('baltar', 'castle', 122, function (t, pose) {
-    var atk = pose === 'attack', b = S.bob(t, 1.2), y = function (v) { return v + b; }, w = wave(t);
-    var top = atk ? [4, 30] : [12, 8], bot = atk ? [54, 112] : [20, 118];
-    var dx = top[0] - bot[0], dy = top[1] - bot[1], dl = Math.sqrt(dx * dx + dy * dy), ux = dx / dl, uy = dy / dl, px = -uy, py = ux;
-    var ax = top[0] - ux * 10, ay = top[1] - uy * 10;
-    var hand = [top[0] - ux * 40, top[1] - uy * 40];
-    var plume = [];
-    for (var i = 0; i < 4; i++) plume.push(feather(46, y(12), -0.6 + i * 0.25 + w * 0.05, 18 - i * 2, 2.4, 'capeR', { g: 'plume' }));
-    return { w: 98, h: 120, cx: 50, tipAttack: top, glow: [{ x: 40, y: y(24), r: 7, c: '#ff3a3a' }], parts: concat(
-      [P([[40, y(36)], [64, y(36)], [82 + w * 2, 114], [44, 116]], 'capeR', { g: 'cape', bev: 2.4 })],
-      plume,
-      [E(64, y(42), 10, 8.6, 'armorB', { g: 'paulB' }), C(64, y(46), 70, y(66), 5, 4.4, 'armorB', { g: 'armB' }), E(71, y(70), 4.4, 4.2, 'armorB', { g: 'armB' }),
-        C(56, 78, 60, 112, 6.4, 5.6, 'armorB', { g: 'lgB' }), B(61, 114, 8, 3, 3, 'armorB', { g: 'lgB' }),
-        C(44, 78, 40, 112, 6.8, 6, 'armorB', { g: 'lgF' }), B(39, 114, 8.6, 3, 3, 'armorB', { g: 'lgF' }),
-        E(41, 94, 4.4, 3.6, 'goldB', { g: 'knee' }),
-        P([[38, y(60)], [62, y(60)], [64, y(86)], [36, y(86)]], 'capeR', { g: 'tabard', bev: 1.6 }),
-        P([[50, y(64)], [55, y(72)], [50, y(80)], [45, y(72)]], 'goldB', { line: false, bev: 0.8 }),
-        B(50, y(52), 16, 14, 2.2, 'armorB', { g: 'torso' }),
-        C(36, y(46), 64, y(46), 1, 1, 'goldB', { line: false, ao: false }), C(50, y(40), 50, y(62), 0.9, 0.9, 'goldB', { line: false, ao: false }),
-        B(42, y(25), 10, 11, 2.6, 'armorB', { g: 'helm' }),
-        C(34, y(16), 50, y(16), 1, 1, 'goldB', { line: false }),
-        B(37, y(26), 7, 1.5, 5, 'mouthD'),
-        E(35, y(26), 1.9, 0.9, 'eyeR', { keep: true, line: false }), E(40, y(26), 1.6, 0.8, 'eyeR', { keep: true, line: false }),
-        C(36, y(29), 36, y(34), 0.5, 0.5, 'mouthD', { line: false }), C(39, y(29), 39, y(34), 0.5, 0.5, 'mouthD', { line: false }),
-        E(36, y(42), 11, 9, 'armorB', { g: 'paulF' }), C(27, y(40), 44, y(38), 0.9, 0.9, 'goldB', { line: false, ao: false }),
-        // 할버드
-        C(top[0], y(top[1]), bot[0], bot[1] + b, 1.5, 1.5, 'wood', { g: 'shaft' }),
-        P([[ax + px * 1, y(ay + py * 1)], [ax + px * 10 + ux * 4, y(ay + py * 10 + uy * 4)], [ax + px * 11 - ux * 6, y(ay + py * 11 - uy * 6)], [ax + px * 1 - ux * 8, y(ay + py * 1 - uy * 8)]], 'steel', { g: 'axe', bev: 1 }),
-        P([[ax - px * 1, y(ay - py * 1)], [ax - px * 6, y(ay - py * 6 - 0)], [ax - px * 1 - ux * 4, y(ay - py * 1 - uy * 4)]], 'steel', { g: 'axe2', bev: 0.6 }),
-        L(top[0] - ux * 2, y(top[1] - uy * 2), top[0] + ux * 9, y(top[1] + uy * 9), 1.8, 'steel'),
-        C(ax - px * 1.4, y(ay - py * 1.4), ax + px * 1.4, y(ay + py * 1.4), 1.2, 1.2, 'goldB', { g: 'collar' }),
-        C(34, y(48), hand[0] + 3, y(hand[1] + 2), 4.6, 4, 'armorB', { g: 'armF' }),
-        E(hand[0], y(hand[1]), 3.8, 3.6, 'armorB', { g: 'armF' })]
-    ) };
-  });
+  // baltar 는 js/sprites-murim.js(15단계 무림 몬스터)
 
-  // 마왕 아스타로트(최종 보스): 거대한 굽은 뿔과 왕관, 세 개의 눈, 악마 날개, 어둠의 홀
-  M('astaroth', 'castle', 148, function (t, pose) {
-    var atk = pose === 'attack', b = S.bob(t, 1.6), y = function (v) { return v + b; }, f = wave(t) * 3, w = wave(t, 1);
-    var orb = atk ? [10, 40] : [18, 56];
-    var motes = [];
-    for (var i = 0; i < 6; i++) { var ph = (t + i / 6) % 1; motes.push(E(20 + i * 20 + Math.sin(ph * TAU + i) * 5, 130 - ph * 90, 1.3, 1.3, 'corrupt', { keep: true, line: false, ao: false })); }
-    return { w: 140, h: 146, cx: 70, tipAttack: orb, glow: [{ x: orb[0], y: y(orb[1]), r: 18, c: '#b04aff' }, { x: 62, y: y(30), r: 12, c: '#ff3a3a', k: 0.8 }], parts: concat(
-      wing(82, y(52), [[118, y(4) - f], [138, y(30) - f], [136, y(64)], [120, y(84)], [100, y(88)]], 'wingA', 'skinA', 'wB'),
-      wing(58, y(52), [[32, y(4) - f], [8, y(22) - f], [4, y(56)], [16, y(80)], [36, y(86)]], 'wingA', 'skinA', 'wB2'),
-      [P([[52, y(46)], [88, y(46)], [110 + w * 3, 142], [30 - w * 2, 142]], 'capeR', { g: 'cape', bev: 2.6 }),
-        C(84, y(56), 92, y(84), 6.4, 5.6, 'obsid', { g: 'armB' }), E(93, y(88), 5.4, 5, 'skinA', { g: 'armB' }),
-        P([[93, y(86)], [100, y(80) - w], [97, y(90)]], 'corrupt', { emitLv: 3, line: false }),
-        C(78, 100, 82, 138, 7.4, 6.6, 'obsid', { g: 'lgB' }), B(83, 140, 9, 3, 3, 'obsid', { g: 'lgB' }),
-        C(62, 100, 58, 138, 7.8, 7, 'obsid', { g: 'lgF' }), B(57, 140, 9.6, 3, 3, 'obsid', { g: 'lgF' }),
-        E(59, 116, 5, 4.4, 'goldB', { g: 'knee' }), E(81, 116, 4.6, 4, 'goldB', { g: 'knee2' }),
-        P([[54, y(80)], [86, y(80)], [92, y(106)], [48, y(106)]], 'obsid', { g: 'skirt', bev: 2 }),
-        P([[66, y(82)], [74, y(82)], [72, y(106)], [68, y(106)]], 'capeR', { line: false, bev: 1 }),
-        B(70, y(66), 20, 18, 2.2, 'obsid', { g: 'torso' }),
-        C(52, y(60), 88, y(60), 1.2, 1.2, 'goldB', { line: false, ao: false }), C(70, y(52), 70, y(80), 1, 1, 'goldB', { line: false, ao: false }),
-        E(70, y(66), 4.4, 4.8, 'corrupt', { line: false })],
-      // 뿔(뒤)
-      chain([[74, y(26)], [88, y(16)], [96, y(22)], [96, y(34)]], 4.4, 1.4, 'bone', { g: 'hornB' }),
-      [E(64, y(32), 12, 13, 'skinA', { g: 'head' }),
-        B(60, y(41), 8, 4, 3, 'skinA', { g: 'jaw' }),
-        B(60, y(27), 10, 2.4, 3, 'hairV', { rot: 0.1, g: 'brow' }),
-        E(56, y(31), 2.6, 1.1, 'eyeR', { rot: -0.25, keep: true, line: false }), E(64, y(31), 2.4, 1, 'eyeR', { rot: 0.25, keep: true, line: false }),
-        E(60, y(23.6), 1.6, 1.4, 'eyeR', { keep: true, line: false }),
-        C(54, y(38.5), 64, y(38.5), 1.2, 1.2, 'mouthD')],
-      fangs(54, 64, y(38), 5, 2.4, 1),
-      // 왕관
-      [B(64, y(20), 11, 2.6, 4, 'goldB', { g: 'crown' })],
-      [[55, 18], [60, 17], [65, 16.5], [70, 17], [74, 18]].map(function (q, i) { return P([[q[0] - 2, y(q[1])], [q[0], y(q[1] - 6 - (i === 2 ? 3 : 0))], [q[0] + 2, y(q[1])]], 'goldB', { g: 'crown', bev: 0.6 }); }),
-      [E(65, y(18.6), 1.2, 1.2, 'eyeR', { keep: true, line: false })],
-      // 뿔(앞)
-      chain([[54, y(24)], [40, y(14)], [32, y(20)], [32, y(32)]], 4.6, 1.4, 'bone', { g: 'hornF' }),
-      [E(48, y(52), 12, 10, 'obsid', { g: 'paulF' }), E(92, y(52), 11, 9, 'obsid', { g: 'paulB2' }),
-        P([[40, y(48)], [34, y(38)], [44, y(46)]], 'goldB', { g: 'spkP', bev: 0 }),
-        C(orb[0] + 3, y(orb[1] + 4), orb[0] + 6, 140, 1.6, 1.6, 'goldB', { g: 'staff' }),
-        E(orb[0], y(orb[1]), 6, 6, 'corrupt', { line: false, g: 'orb' }),
-        C(orb[0] - 6, y(orb[1] + 6), orb[0] + 6, y(orb[1] + 6), 1.2, 1.2, 'goldB', { g: 'orbC' }),
-        C(48, y(58), orb[0] + 8, y(orb[1] + 10), 6, 5.2, 'obsid', { g: 'armF' }),
-        E(orb[0] + 6, y(orb[1] + 10), 4.6, 4.4, 'skinA', { g: 'armF' })],
-      motes
-    ) };
-  });
+  // astaroth 는 js/sprites-murim.js(15단계 무림 몬스터)
 })();

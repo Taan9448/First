@@ -164,7 +164,8 @@
   // ---------------- 카드 요소 ----------------
   UI.cardEl = function (def, opts) {
     opts = opts || {};
-    var c = UI.el('div', 'card r-' + def.rarity + ' t-' + def.type + (opts.static ? ' static' : '') + (def.duo ? ' duo' : ''));
+    var school = def.school || 'neutral';
+    var c = UI.el('div', 'card r-' + def.rarity + ' t-' + def.type + ' sc-' + school + (opts.static ? ' static' : '') + (def.duo ? ' duo' : ''));
     var owner = G.Data.characters.filter(function (x) { return x.id === def.owner; })[0];
     var band = owner ? owner.color : '#8a93b8';
     if (def.duo) {
@@ -176,19 +177,24 @@
     c.innerHTML = '<div class="cin">' +
       '<div class="cf"></div><div class="cart"></div>' + UI.starsHTML(def.rarity) +
       '<div class="cband" style="background:' + band + '"></div>' +
-      '<div class="ccost' + (def.upgraded && def.cost !== G.Data.cardById[def.base].cost ? ' upg' : '') + '"><span>' + (def.cost == null ? '' : def.cost) + '</span></div>' +
+      '<div class="ccost' + costCls(def.cost) + (def.upgraded && def.cost !== G.Data.cardById[def.base].cost ? ' upg' : '') + '"><span>' + (def.cost == null ? '' : def.cost) + '</span></div>' +
+      (G.SCHOOL_NAME[school] ? '<div class="cschool"><span>' + G.SCHOOL_NAME[school] + '</span></div>' : '') +
       '<div class="cname' + (def.upgraded ? ' upg' : '') + '"><span>' + U.esc(def.name) + '</span></div>' +
       '<div class="ctype"><span>' + (G.TYPE_NAME[def.type] || '') + '</span></div>' +
       '<div class="ctext' + (len > 62 ? ' xlong' : len > 44 ? ' long' : '') + '"><span>' + UI.cardText(def, opts.battle, opts.inst) + '</span></div>' +
       '<div class="ccond"><span>조건 충족</span></div><div class="cchain"></div></div>';
     if (opts.silhouette) c.classList.add('silhouette');
     var setImg = function (sel, url) { if (url) c.querySelector(sel).style.backgroundImage = 'url(' + url + ')'; };
-    var f = G.ArtCards.frameCached(def.rarity), a = G.ArtCards.artCached(def);
-    if (f) setImg('.cf', f); else G.ArtCards.frame(def.rarity).then(function (u) { setImg('.cf', u); });
+    var f = G.ArtCards.frameCached(def.rarity, school), a = G.ArtCards.artCached(def);
+    if (f) setImg('.cf', f); else G.ArtCards.frame(def.rarity, school).then(function (u) { setImg('.cf', u); });
     if (a) setImg('.cart', a); else G.ArtCards.art(def).then(function (u) { setImg('.cart', u); });
     c.setAttribute('data-tip', UI.cardTip(def));
     return c;
   };
+
+  // 비용 보석 색(15단계): 0은 초록, X는 보라, 3 이상은 주황
+  function costCls(cost) { return cost == null ? ' none' : cost === 'X' ? ' cx' : cost === 0 ? ' c0' : cost >= 3 ? ' c3' : ''; }
+  UI.costCls = costCls;
 
   // 등급 별: 일반 1개 ~ 전설 5개(빈 칸은 흐리게)
   UI.starsHTML = function (rarity) {
@@ -204,7 +210,8 @@
     var who = owner ? owner.name : def.owner === 'common' ? '공용' : def.duo ? def.duo.map(function (id) {
       return G.Data.characters.filter(function (x) { return x.id === id; })[0].name; }).join('+') + ' 합동기' : '';
     var stars = G.RARITIES.indexOf(def.rarity) + 1;
-    return '<b>' + U.esc(def.name) + '</b> · ' + (def.duo ? '합동기 ' : stars ? G.RARITY_NAME[def.rarity] + '(별 ' + stars + ') ' : '') + (G.TYPE_NAME[def.type] || '') +
+    var sc = G.SCHOOL_NAME[def.school || 'neutral'];
+    return '<b>' + U.esc(def.name) + '</b> · ' + (def.duo ? '합동기 ' : stars ? G.RARITY_NAME[def.rarity] + '(별 ' + stars + ') ' : '') + (sc ? sc + ' ' : '') + (G.TYPE_NAME[def.type] || '') +
       ' · ' + who +
       (def.exhaust ? ' · 소멸' : '') + (def.tags ? '<br><span style="color:#8a93b8">' + def.tags + '</span>' : '');
   };
@@ -214,6 +221,7 @@
     var cost = battle.costOf(inst);
     var costEl = el.querySelector('.ccost');
     costEl.firstChild.textContent = cost == null ? '' : cost;
+    costEl.className = 'ccost' + costCls(cost) + (costEl.classList.contains('upg') ? ' upg' : '');
     costEl.classList.toggle('down', cost !== 'X' && cost != null && cost < inst.def.cost);
     costEl.classList.toggle('up', cost !== 'X' && cost != null && cost > inst.def.cost);
     var can = battle.canPlay(inst);
