@@ -65,6 +65,32 @@ cards.forEach(c => {
   check(!/\{(?![d+])/.test(u.text) && (u.text.match(/\{/g) || []).length === (u.text.match(/\}/g) || []).length, u.id + ': 설명의 { } 짝이 맞지 않음');
   check(/\{\+|\{d/.test(u.text) || u.cost !== c.cost || u.exhaust !== c.exhaust, u.id + ': 강화로 바뀐 수치 표시({+N})가 없음');
 });
+// 18단계: 2·3단계 강화 카드 — 수치가 1단계 이상이고 각인이 붙는다
+const SK = G.Data.upgradeSkills;
+Object.values(SK.pick).forEach(m => Object.values(m).forEach(k => check(SK.skills[k], 'data/upgrades.js: 없는 각인 ' + k)));
+Object.keys(SK.skills).forEach(k => ['lv2', 'lv3'].forEach(l => {
+  const s = SK.skills[k][l];
+  check(s && s.effects.length && s.text, k + '.' + l + ': 각인 효과·설명 없음');
+  if (s) walk(s.effects, '각인 ' + k + '.' + l);
+}));
+cards.forEach(c => {
+  [2, 3].forEach(l => {
+    const u = G.Data.cardById[c.id + '+' + l], prev = G.Upgrade.def(c.id, l - 1);
+    check(u && u.level === l && u.base === c.id && u.engrave && u.engrave.level === l, c.id + '+' + l + ': ' + l + '단계 강화 카드·각인 없음');
+    if (!u) return;
+    check(u.cost === prev.cost || (u.cost === c.cost - 1 && prev.cost === u.cost), u.id + ': 2·3단계에서 비용이 바뀜');
+    check(u.text.indexOf('{*' + u.engrave.name + '}') >= 0, u.id + ': 설명에 각인 표시({*이름})가 없음');
+    walk(u.effects, u.id);
+    let n = 0;
+    (function count(list) { list.forEach(e => { if (e.op === 'damage') n++; if (e.op === 'power') return; ['then', 'else'].forEach(k => e[k] && count(e[k])); }); })(u.effects);
+    (u.text.match(/\{d(\d)\}/g) || []).forEach(m => check(+m[2] < n, u.id + ': 설명의 ' + m + ' 에 해당하는 피해 효과 없음'));
+    check(!/\{(?![d+*])/.test(u.text) && (u.text.match(/\{/g) || []).length === (u.text.match(/\}/g) || []).length, u.id + ': 설명의 { } 짝이 맞지 않음');
+  });
+});
+check(G.Data.cardById['K01+2'].effects[0].value === 10 && G.Data.cardById['K01+3'].effects[0].value === 12, '강화 규칙: 청운일검 6 → 8 → 10 → 12');
+check(G.Data.cardById['K01+2'].engrave.id === 'swordQi' && G.Data.cardById['L01+3'].engrave.id === 'ember' && G.Data.cardById['S01+2'].engrave.id === 'purify', '각인 고르기: 무공 공격 검기 · 불 공격 불씨 · 회복 정화');
+check(G.Upgrade.levelOf('K01+3') === 3 && G.Upgrade.levelOf('K01+') === 1 && G.Upgrade.levelOf('K01') === 0 && G.Upgrade.baseOf('K01+2') === 'K01', '강화 id 규칙');
+check(G.Upgrade.idOf('K01', { K01: 2 }) === 'K01+2' && G.Upgrade.idOf('K01', {}) === 'K01', '강화 단계 표 → 카드 id');
 check(G.Data.cardById['K01+'].effects[0].value === 8, '강화 규칙: 베기 6 → 8');
 check(G.Data.cardById['K22+'].cost === 2, '강화 규칙: 비용 3 → 2');
 check(G.Data.cardById['K15+'].cost === 0, '강화 규칙: 지속 카드 비용 -1');
@@ -484,7 +510,7 @@ function handCard(b, id) {
     G.rng.seed(1000 + run);
     const party = G.rng.shuffle(heroes.slice()).slice(0, G.rng.int(1, 3));
     const pool = G.Data.cards.filter(c => c.owner === 'common' || party.includes(c.owner));
-    const deck = G.rng.shuffle(pool.map(c => c.id)).slice(0, 20).map(id => G.rng.chance(0.4) ? id + '+' : id);
+    const deck = G.rng.shuffle(pool.map(c => c.id)).slice(0, 20).map(id => G.rng.chance(0.5) ? id + G.rng.pick(['+', '+', '+2', '+3']) : id);
     const theme = G.rng.pick(['forest', 'desert', 'snow', 'volcano', 'castle', 'mirror']);
     const themed = monsters.filter(m => m.theme === theme);
     const roll = G.rng.next();
@@ -535,6 +561,8 @@ function handCard(b, id) {
   if (N >= 1000) {
     check(!never.length, '모든 카드가 한 번 이상 사용됨 (미사용: ' + never.join(', ') + ')');
     const neverUp = cards.filter(c => !played.has(c.id + '+')).map(c => c.id + '+');
+    const neverUp3 = cards.filter(c => !played.has(c.id + '+3')).map(c => c.id + '+3');
+    check(neverUp3.length <= cards.length * 0.1, '3단계 강화 카드 대부분이 한 번 이상 사용됨 (미사용 ' + neverUp3.length + '장)');
     const neverDuo = G.Data.duoCards.filter(c => !played.has(c.id)).map(c => c.id);
     check(!neverDuo.length, '모든 합동기가 한 번 이상 사용됨 (미사용: ' + neverDuo.join(', ') + ')');
     check(!neverUp.length, '모든 강화 카드가 한 번 이상 사용됨 (미사용: ' + neverUp.join(', ') + ')');

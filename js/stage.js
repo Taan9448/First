@@ -19,7 +19,7 @@
     newGame: function (mode) {
       var d = {
         version: G.Save.VERSION, gold: 0, clearedStage: 0, run: null, mode: D.modes && D.modes[mode] ? mode : 'normal', dead: [],
-        characters: ['kai'], party: ['kai'], cards: [], decks: {}, relics: [], upgraded: [],
+        characters: ['kai'], party: ['kai'], cards: [], decks: {}, relics: [], upgraded: {},
         growth: {}, bonds: {}, talks: {}, ascension: { current: 0, best: 0 }, eventsSeen: [], buffs: [],
         codex: { monsters: {} }, flags: { tutorialDone: false }, story: { seen: [] }
       };
@@ -182,25 +182,29 @@
       return pick.map(function (c) { return c.id; });
     },
 
-    // 전투 덱: 강화한 카드는 'K01+' 로 바꿔 넣는다
+    // 전투 덱: 강화한 카드는 단계에 맞게 'K01+' · 'K01+2' · 'K01+3' 으로 바꿔 넣는다
     battleDeck: function (party) {
       var d = St.data, ids = [];
       party.concat(['common']).forEach(function (o) { ids = ids.concat(d.decks[o] || []); });
       return ids.map(function (id) { return G.Upgrade.idOf(id, d.upgraded); });
     },
 
-    // ================= 카드 강화 =================
-    isUpgraded: function (id) { return (St.data.upgraded || []).indexOf(id) >= 0; },
-    // 보유 카드의 지금 모습(강화했으면 강화 카드)
-    cardDef: function (id) { return St.isUpgraded(id) ? D.cardById[id + '+'] : D.cardById[id]; },
+    // ================= 카드 강화 (18단계: 3단계까지) =================
+    // 보유 카드의 강화 단계(0~3). St.data.upgraded = { 카드 id: 단계 }
+    upLevel: function (id) { return G.Upgrade.levelIn(id, St.data.upgraded); },
+    isUpgraded: function (id) { return St.upLevel(id) > 0; },
+    // 보유 카드의 지금 모습(강화했으면 그 단계의 강화 카드)
+    cardDef: function (id) { return D.cardById[G.Upgrade.idOf(id, St.data.upgraded)]; },
+    // 한 단계 더 강화했을 때의 모습
+    nextDef: function (id) { return G.Upgrade.def(id, St.upLevel(id) + 1); },
     upgradable: function () {
-      return St.data.cards.filter(function (id) { return !St.isUpgraded(id); });
+      return St.data.cards.filter(function (id) { return St.upLevel(id) < G.Upgrade.MAX; });
     },
-    // 강화 기회(휴식·이벤트)를 쓴다
+    // 강화 기회(휴식·이벤트)를 쓴다. 한 번에 한 단계 오른다
     upgradeCard: function (id) {
       var d = St.data, r = d.run;
-      if (!r || !r.upgrades || !St.owns(id) || St.isUpgraded(id)) return false;
-      d.upgraded.push(id);
+      if (!r || !r.upgrades || !St.owns(id) || St.upLevel(id) >= G.Upgrade.MAX) return false;
+      d.upgraded[id] = St.upLevel(id) + 1;
       r.upgrades--;
       St.save();
       return true;

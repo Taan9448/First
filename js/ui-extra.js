@@ -280,7 +280,7 @@
       stat('동료', d.characters.length + '/' + D.characters.length) +
       stat('최고 레벨', 'Lv ' + Math.max.apply(null, d.characters.map(function (id) { return St().levelOf(id); }))) +
       stat('모은 카드', d.cards.filter(function (id) { return D.cardById[id] && D.cardById[id].owner !== 'none'; }).length + '/' + all) +
-      stat('강화한 카드', (d.upgraded || []).length) +
+      stat('강화한 카드', Object.keys(d.upgraded || {}).length) +
       stat('모은 유물', d.relics.length + '/' + D.relics.length) +
       stat('만난 몬스터', seen + '/' + D.monsters.length) +
       stat('쓰러뜨린 적', kills) +

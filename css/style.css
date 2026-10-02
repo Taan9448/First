@@ -838,6 +838,13 @@ span.gold.bump { animation: popIn 0.4s steps(4); }
 .card .ctext .num.up { color: var(--green); }
 .card .ctext .num.down { color: #ff9a9a; }
 .card .ctext .num.upg { color: #8dff6a; }
+/* 18단계: 2·3단계 강화의 각인 */
+.card .ctext .engr { display: inline-block; margin-top: 0.15em; padding: 0 0.35em; border-radius: 2px; background: #6a4a10; color: #ffe08a; font-weight: 700; box-shadow: inset 0 0 0 1px #c9a040; }
+.card.lay-ink .ctext .engr { background: #8a1c18; color: #ffe8c8; box-shadow: inset 0 0 0 1px #3a0a08; }
+.card.up2 .cname.upg span, .card.up3 .cname.upg span { color: #ffe08a; }
+.card .cname .clv { font-style: normal; text-combine-upright: all; }
+.card.lay-ink.up2 .cname.upg span, .card.lay-ink.up3 .cname.upg span { color: #a8221c; }
+.card.up3 .cin { filter: drop-shadow(0 0 3px rgba(255, 210, 110, 0.75)); }
 .card .ccost.upg span { color: #8dff6a; }
 .card .cname.upg span { color: #b8ff8a; }
 .card .ccond { right: 1em; top: 2.2em; display: none; z-index: 1; }
@@ -1072,6 +1079,11 @@ span.gold.bump { animation: popIn 0.4s steps(4); }
 .up-grid .card { cursor: pointer; }
 .up-preview { flex: 0 0 auto; min-width: 380px; min-height: 260px; display: flex; align-items: center; justify-content: center; padding: 16px; --ch: 200px; text-align: center; }
 .up-pair { display: flex; align-items: center; gap: 12px; }
+.up-preview { flex-direction: column; gap: 10px; }
+.up-engr { margin: 0; max-width: 360px; font-size: 0.9em; line-height: 1.5; color: #f6e6c0; }
+.up-engr b { color: #ffd27a; }
+.card .up-lv { position: absolute; left: 0; right: 0; bottom: -0.2em; display: flex; justify-content: center; z-index: 2; pointer-events: none; }
+.card .up-lv span { font-size: 0.7em; padding: 0.1em 0.6em; background: #2a1e08; color: #ffe08a; box-shadow: inset 0 0 0 1px #c9a040; clip-path: var(--pxs); }
 .up-pair .card { animation: dealIn 0.4s var(--spring) both; }
 .up-pair .card:last-child { animation-delay: 0.1s; }
 .up-arrow { color: #8dff6a; font-size: 1.8em; animation: nudge 0.8s steps(2) infinite; }

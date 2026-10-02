@@ -1,15 +1,21 @@
-// upgrade.js — 강화 카드 만들기(data/upgrades.js 의 규칙 + 예외 표)
-// 강화 카드는 id 뒤에 '+'를 붙여 Game.Data.cardById 에 함께 등록한다('K01+'). 카드 목록(Data.cards)에는 넣지 않는다.
-// 설명의 {+N} 은 강화로 바뀐 수치이고, upDmg 는 값이 바뀐 피해 효과의 순서({dN})다.
+// upgrade.js — 강화 카드 만들기(data/upgrades.js 의 규칙 + 예외 표 + 각인)
+// 강화 카드는 단계마다 id 뒤에 '+', '+2', '+3' 을 붙여 Game.Data.cardById 에 함께 등록한다('K01+', 'K01+2', 'K01+3').
+// 카드 목록(Data.cards)에는 넣지 않는다. 설명의 {+N} 은 강화로 바뀐 수치, {*이름} 은 2단계부터 붙는 각인이고,
+// upDmg 는 값이 바뀐 피해 효과의 순서({dN})다.
 (function () {
   'use strict';
   var G = Game, D = G.Data;
 
   function clone(x) { return JSON.parse(JSON.stringify(x)); }
 
+  // 숫자 n 을 steps 번 올린다. 첫 번은 pct·minAdd, 그 뒤로는 pctNext·minAddNext
+  function upN(n, R, steps) {
+    for (var i = 0; i < steps; i++) n = i === 0 ? Math.max(n + R.minAdd, Math.ceil(n * (1 + R.pct))) : Math.max(n + R.minAddNext, Math.ceil(n * (1 + R.pctNext)));
+    return n;
+  }
   // 숫자·범위·비례식의 기본값을 올린다. 바뀌지 않으면 null
-  function scale(v, R) {
-    var up = function (n) { return Math.max(n + R.minAdd, Math.ceil(n * (1 + R.pct))); };
+  function scale(v, R, steps) {
+    var up = function (n) { return upN(n, R, steps); };
     if (typeof v === 'number') return v > 0 ? up(v) : null;
     if (Array.isArray(v)) return [up(v[0]), up(v[1])];
     if (v && typeof v === 'object' && v.base > 0) return Object.assign({}, v, { base: up(v.base) });
@@ -77,17 +83,20 @@
     return out;
   }
 
-  // 자동 규칙: 반환 { effects, text, cost, changed }
-  function auto(card) {
+  // 자동 규칙: 반환 { effects, text, cost, changed }. level 은 강화 단계(1~3)
+  function auto(card, level) {
     var R = D.upgradeRules;
     var effects = clone(card.effects), text = card.text, cost = card.cost, changed = false;
     var labels = [];
     walk(effects, function (e) { if (e.op === 'oneOf') e.options.forEach(function (o) { labels.push(o); }); });
 
-    // 1. 비용 3 카드와 지속 카드: 비용 -1
+    // 1. 비용 3 카드와 지속 카드: 1단계는 비용 -1 만, 2·3단계는 그 위에 수치를 (단계 - 1)번 올린다
+    var steps = level || 1;
     if (typeof cost === 'number' && cost > 0 && (cost >= R.costDownAt || card.type === 'power')) {
-      return { effects: effects, text: text, cost: cost - 1, changed: true };
+      cost--; changed = true; steps--;
+      if (!steps) return { effects: effects, text: text, cost: cost, changed: true };
     }
+    var statusAdd = R.statusAdd * R.statusAddAt.filter(function (l) { return l <= steps; }).length;
 
     // 아군에게 거는 디버프(수상한 물약의 중독 등)는 올리지 않는다
     var ALLY = ['ally', 'allAllies', 'self', 'lowestAlly', 'downedAlly'];
@@ -108,7 +117,7 @@
       var a = e.then[0], b = e.else[0];
       if (a.op !== b.op || ['damage', 'block', 'heal'].indexOf(a.op) < 0) return;
       if (typeof a.value !== 'number' || typeof b.value !== 'number' || a.value !== b.value * 2 || (a.times || 1) !== (b.times || 1)) return;
-      var nb = scale(b.value, R);
+      var nb = scale(b.value, R, steps);
       if (a.op !== 'damage') { bump(a, 'value', nb * 2, keywordsOf(a)); bump(b, 'value', nb, keywordsOf(b)); }
       else { a.value = nb * 2; b.value = nb; }
       paired.push(a, b);
@@ -117,14 +126,14 @@
     walk(effects, function (e) {
       if (paired.indexOf(e) >= 0 || e.op === 'power') return;
       if (e.op === 'damage') {
-        var nd = scale(e.value, R);
+        var nd = scale(e.value, R, steps);
         if (!nd) return;
         // 비례식의 기본값은 설명에 숫자로 적혀 있다
         // ({d0} 으로 보이므로 설명에 없어도 그대로 둔다)
         if (typeof e.value === 'object' && !Array.isArray(e.value)) { bump(e, 'value', nd, ['피해']); edits[edits.length - 1].optional = true; } else e.value = nd;
       }
-      else if (e.op === 'block' || e.op === 'heal' || e.op === 'gold') { var nv = scale(e.value, R); if (nv) bump(e, 'value', nv, keywordsOf(e)); }
-      else if (e.op === 'status' && R.noStatusUp.indexOf(e.status) < 0 && !harmsAlly(e)) { var ns = addN(e.value, R.statusAdd); if (ns) bump(e, 'value', ns, keywordsOf(e)); }
+      else if (e.op === 'block' || e.op === 'heal' || e.op === 'gold') { var nv = scale(e.value, R, steps); if (nv) bump(e, 'value', nv, keywordsOf(e)); }
+      else if (e.op === 'status' && R.noStatusUp.indexOf(e.status) < 0 && !harmsAlly(e)) { var ns = addN(e.value, statusAdd); if (ns) bump(e, 'value', ns, keywordsOf(e)); }
     });
     // 지속 효과 안쪽은 바꾸지 않는다(지속 카드는 비용으로 강화)
     var dmgChanged = damageList(card.effects).join() !== damageList(effects).join();
@@ -182,13 +191,38 @@
     return { effects: effects, text: text, cost: cost, changed: changed };
   }
 
-  function build(card) {
-    var ex = D.upgradeExceptions[card.id] || {};
-    // 예외가 있으면 자동 규칙을 쓰지 않고 원래 카드 위에 예외 항목만 덮어쓴다
-    var a = D.upgradeExceptions[card.id] ?
-      { effects: clone(ex.effects || card.effects), text: ex.text || card.text, cost: card.cost, changed: !!(ex.effects || ex.text) } : auto(card);
+  // 2·3단계 각인 고르기 (data/upgrades.js 의 upgradeSkills.pick)
+  function skillOf(card) {
+    var P = D.upgradeSkills.pick;
+    if (P.byCard[card.id]) return P.byCard[card.id];
+    if (card.type === 'attack') {
+      var el = G.cardElement(card);
+      if (P.byElement[el]) return P.byElement[el];
+      if (P.bySchool[card.school]) return P.bySchool[card.school];
+    }
+    return P.byType[card.type] || 'reserve';
+  }
+  // 각인을 카드 효과 뒤에 붙인다. 설명의 {d} 는 붙인 피해의 순서({dN})로 바꾼다
+  function engrave(u, card, level) {
+    var key = skillOf(card), sk = D.upgradeSkills.skills[key], lv = sk['lv' + level];
+    var n = damageList(u.effects).length;
+    var text = lv.text.replace(/\{d\}/g, function () { return '{d' + (n++) + '}'; });
+    u.effects = u.effects.concat(clone(lv.effects));
+    u.text = u.text + ' {*' + sk.name + '} ' + text;
+    // 화면에 그대로 적을 설명: {d} 자리에 붙인 피해의 기본값
+    var vals = lv.effects.filter(function (e) { return e.op === 'damage'; }).map(function (e) { return e.value; }), k = 0;
+    u.engrave = { id: key, name: sk.name, level: level, text: G.util.numJosa(lv.text.replace(/\{d\}/g, function () { return vals[k++]; })) };
+  }
+
+  var SUFFIX = ['', '+', '+2', '+3'];
+  function build(card, level) {
+    level = level || 1;
+    var ex = D.upgradeExceptions[card.id];
+    // 예외가 있으면 자동 규칙을 쓰지 않고 원래 카드 위에 예외 항목만 덮어쓴다. 2·3단계에서도 수치는 그대로이고 각인만 붙는다
+    var a = ex ? { effects: clone(ex.effects || card.effects), text: ex.text || card.text, cost: card.cost, changed: !!(ex.effects || ex.text) } : auto(card, level);
+    ex = ex || {};
     var u = Object.assign({}, card, {
-      id: card.id + '+', base: card.id, upgraded: true, name: card.name + '+',
+      id: card.id + SUFFIX[level], base: card.id, upgraded: true, level: level, name: card.name + SUFFIX[level],
       effects: a.effects, text: a.text,
       cost: ex.cost != null ? ex.cost : a.cost,
       exhaust: ex.exhaust != null ? ex.exhaust : card.exhaust,
@@ -197,14 +231,25 @@
     if (u.exhaust !== card.exhaust && !ex.text) u.text = u.text.replace(/ ?소멸\./, '');
     var d0 = damageList(card.effects), d1 = damageList(u.effects);
     u.upDmg = d1.map(function (v, i) { return v !== d0[i]; });
+    if (level >= 2) engrave(u, card, level);
     return u;
   }
 
   var Up = G.Upgrade = {
-    // 'K01' → 'K01+' (강화 안 한 카드는 그대로)
-    idOf: function (id, upgraded) { return upgraded && upgraded.indexOf(id) >= 0 ? id + '+' : id; },
-    baseOf: function (id) { return String(id).replace(/\+$/, ''); },
-    def: function (id) { return D.cardById[Up.baseOf(id) + '+']; },
+    MAX: D.upgradeRules.maxLevel,
+    // 'K01' + 강화 단계 표({ K01: 2 }) → 'K01+2' (강화 안 한 카드는 그대로)
+    idOf: function (id, upgraded) { return id + SUFFIX[Up.levelIn(id, upgraded)]; },
+    levelIn: function (id, upgraded) {
+      if (!upgraded) return 0;
+      if (Array.isArray(upgraded)) return upgraded.indexOf(id) >= 0 ? 1 : 0;
+      return Math.min(Up.MAX, upgraded[id] | 0);
+    },
+    // 카드 id 의 강화 단계: 'K01' → 0, 'K01+' → 1, 'K01+3' → 3
+    levelOf: function (id) { var m = /\+(\d*)$/.exec(String(id)); return m ? +(m[1] || 1) : 0; },
+    baseOf: function (id) { return String(id).replace(/\+\d*$/, ''); },
+    // 강화 카드 정의. level 을 빼면 1단계
+    def: function (id, level) { return D.cardById[Up.baseOf(id) + SUFFIX[level || 1]]; },
+    skillOf: skillOf,
     // 설명을 글자로(문서·테스트용): {+N} → N, {dN} → 피해 값
     plain: function (def) {
       var vals = damageList(def.effects).map(function (s) { return JSON.parse(s); });
@@ -213,7 +258,7 @@
         if (Array.isArray(v)) return v[0] + '~' + v[1];
         if (v && typeof v === 'object') return v.base ? String(v.base) : 'X';
         return String(v);
-      }).replace(/\{\+([^}]*)\}/g, '$1');
+      }).replace(/\{\+([^}]*)\}/g, '$1').replace(/\{\*([^}]*)\}/g, '[$1]');
     },
     // 8장 표의 '강화' 열 문구: 비용이 바뀌면 "비용 N." 을 앞에 붙인다
     summary: function (id) {
@@ -225,6 +270,6 @@
 
   D.cards.forEach(function (c) {
     if (c.owner === 'none') return;
-    D.cardById[c.id + '+'] = build(c);
+    for (var l = 1; l <= Up.MAX; l++) D.cardById[c.id + SUFFIX[l]] = build(c, l);
   });
 })();

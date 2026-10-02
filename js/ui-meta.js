@@ -552,7 +552,7 @@
     var inDeck = function (id) { var o = D.cardById[id].owner; return (d.decks[o] || []).indexOf(id) >= 0; };
     list.sort(function (a, b) { return (inDeck(b) - inDeck(a)) || (a < b ? -1 : 1); });
     el.innerHTML = topbar('카드 강화') + '<div class="meta-body">' +
-      '<h1 class="big-title">카드 강화</h1><p class="dim">카드 1장을 골라 강화한다. 강화는 그 카드에 영구히 남는다. (남은 강화 ' + r.upgrades + ')</p>' +
+      '<h1 class="big-title">카드 강화</h1><p class="dim">카드 1장을 골라 한 단계 강화한다(최대 ' + G.Upgrade.MAX + '단계). 2단계부터는 수치와 함께 각인이 붙는다. 강화는 그 카드에 영구히 남는다. (남은 강화 ' + r.upgrades + ')</p>' +
       '<div class="row up-filters">' + owners.map(function (o) {
         return '<button class="btn small ' + (upFilter === o ? 'on' : '') + '" data-o="' + o + '">' + (o === 'all' ? '전체' : o === 'common' ? '공용' : charDef(o).name) + '</button>';
       }).join('') + '</div>' +
@@ -561,17 +561,21 @@
     backdrop(el, runTheme());
     var grid = el.querySelector('.up-grid'), prev = el.querySelector('.up-preview'), chosen = null;
     list.forEach(function (id) {
-      var c = UI.cardEl(D.cardById[id], { static: true });
+      var c = UI.cardEl(St.cardDef(id), { static: true });
       c.classList.add('mini');
       if (inDeck(id)) c.appendChild(UI.el('div', 'ctemp', '<span>덱</span>'));
+      c.appendChild(UI.el('div', 'up-lv', '<span>' + St.upLevel(id) + ' &#8594; ' + (St.upLevel(id) + 1) + '단계</span>'));
       c.onclick = function () {
         chosen = id;
         UI.$$('.card', grid).forEach(function (x) { x.classList.toggle('selected', x === c); });
         prev.innerHTML = '<div class="up-pair"></div>';
         var pair = prev.querySelector('.up-pair');
-        pair.appendChild(UI.cardEl(D.cardById[id], { static: true }));
+        var nx = St.nextDef(id);
+        pair.appendChild(UI.cardEl(St.cardDef(id), { static: true }));
         pair.appendChild(UI.el('div', 'up-arrow', '&#9654;'));
-        pair.appendChild(UI.cardEl(D.cardById[id + '+'], { static: true }));
+        pair.appendChild(UI.cardEl(nx, { static: true }));
+        if (nx.engrave) prev.appendChild(UI.el('p', 'up-engr', '<b>' + nx.level + '단계 각인 「' + nx.engrave.name + '」</b><br>' + U.esc(nx.engrave.text) +
+          (nx.level === 2 ? '<br><span class="dim">3단계에서 더 강한 각인으로 바뀐다.</span>' : '')));
         el.querySelector('.ok').disabled = false;
       };
       c.ondblclick = function () { chosen = id; done(); };
@@ -580,9 +584,9 @@
     if (!list.length) grid.innerHTML = '<p class="dim">강화할 카드가 없다.</p>';
     function done() {
       if (!chosen || !St.upgradeCard(chosen)) return;
-      var name = D.cardById[chosen + '+'].name;
+      var name = St.cardDef(chosen).name;
       var m = UI.modal('<h2>' + U.josa(name, '이/가') + ' 되었다!</h2><div class="row" style="justify-content:center"></div><div class="row" style="justify-content:center"><button class="btn gold ok">계속</button></div>');
-      m.querySelector('.row').appendChild(UI.cardEl(D.cardById[chosen + '+'], { static: true }));
+      m.querySelector('.row').appendChild(UI.cardEl(St.cardDef(chosen), { static: true }));
       SND('buff');
       m.querySelector('.ok').onclick = function () { UI.closeModal(m); if (St.data.run.upgrades) Meta.upgrade(); else after(); };
     }

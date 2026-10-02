@@ -3,7 +3,7 @@
 (function () {
   'use strict';
   var G = Game;
-  var VERSION = 4;
+  var VERSION = 5;
   var memory = {};
 
   function store() {
@@ -41,6 +41,13 @@
       d.mode = d.mode || 'normal';
       d.dead = d.dead || [];
       d.run = null;
+      return d;
+    },
+    // v4 → v5 (18단계): 강화가 3단계까지 늘어 강화 목록(카드 id 배열)을 단계 표({ 카드 id: 단계 })로 바꾼다
+    4: function (d) {
+      var map = {};
+      if (Array.isArray(d.upgraded)) d.upgraded.forEach(function (id) { map[id] = 1; });
+      d.upgraded = map;
       return d;
     }
   };
@@ -118,7 +125,12 @@
         d.decks[k] = d.decks[k].filter(function (id) { return okCard(id) && d.cards.indexOf(id) >= 0; });
       });
       d.relics = (d.relics || []).filter(function (id) { return G.Data.relicById && G.Data.relicById[id]; });
-      d.upgraded = (d.upgraded || []).filter(function (id) { return d.cards.indexOf(id) >= 0; });
+      var up = d.upgraded && typeof d.upgraded === 'object' && !Array.isArray(d.upgraded) ? d.upgraded : {};
+      d.upgraded = {};
+      Object.keys(up).forEach(function (id) {
+        var lv = Math.min(G.Upgrade ? G.Upgrade.MAX : 3, up[id] | 0);
+        if (lv > 0 && d.cards.indexOf(id) >= 0) d.upgraded[id] = lv;
+      });
       d.growth = d.growth && typeof d.growth === 'object' ? d.growth : {};
       Object.keys(d.growth).forEach(function (k) {
         if (chars.indexOf(k) < 0) { delete d.growth[k]; return; }

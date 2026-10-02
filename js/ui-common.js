@@ -157,22 +157,29 @@
         return fmt(battle.num(v, { src: caster, attacksBefore: battle.attacksThisTurn, x: x }, null), upg);
       }
       return fmt(v, upg);
-    }).replace(/\{\+([^}]*)\}/g, '<span class="num upg">$1</span>');
+    }).replace(/\{\+([^}]*)\}/g, '<span class="num upg">$1</span>')
+      .replace(/ ?\{\*([^}]*)\} ?/g, '<br><span class="engr">$1</span> ');
     return U.numJosa(UI.keywordize(html));
   };
+
+  // 카드 이름. 강화 표시(+, +2, +3)는 세로쓰기에서도 바로 서도록 따로 감싼다
+  function nameHTML(def) {
+    var m = def.upgraded && /^(.*?)(\+\d?)$/.exec(def.name);
+    return m ? U.esc(m[1]) + '<i class="clv">' + m[2] + '</i>' : U.esc(def.name);
+  }
 
   // ---------------- 카드 요소 ----------------
   UI.cardEl = function (def, opts) {
     opts = opts || {};
     var school = def.school || 'neutral', lay = G.ArtCards.layoutOf(school);
-    var c = UI.el('div', 'card r-' + def.rarity + ' t-' + def.type + ' sc-' + school + ' lay-' + lay + (opts.static ? ' static' : '') + (def.duo ? ' duo' : ''));
+    var c = UI.el('div', 'card r-' + def.rarity + ' t-' + def.type + ' sc-' + school + ' lay-' + lay + (opts.static ? ' static' : '') + (def.duo ? ' duo' : '') + (def.level >= 2 ? ' up' + def.level : ''));
     var owner = G.Data.characters.filter(function (x) { return x.id === def.owner; })[0];
     var band = owner ? owner.color : '#8a93b8';
     if (def.duo) {
       var cs = def.duo.map(function (id) { return G.Data.characters.filter(function (x) { return x.id === id; })[0].color; });
       band = 'linear-gradient(90deg,' + cs[0] + ' 0 50%,' + cs[1] + ' 50% 100%)';
     }
-    var plain = def.text.replace(/\{d\d\}/g, '00').replace(/\{\+([^}]*)\}/g, '$1');
+    var plain = def.text.replace(/\{d\d\}/g, '00').replace(/\{\+([^}]*)\}/g, '$1').replace(/\{\*([^}]*)\}/g, '$1');
     var len = plain.length;
     // 17단계: 무공 = 수묵 족자(등급은 아래 매듭 수), 그 밖 = 두 세계 분할(등급은 오른쪽 세로 별, 이름 아래 한 줄 정보)
     var who = owner ? owner.name : def.duo ? '합동기' : def.owner === 'common' ? '공용' : '';
@@ -185,7 +192,7 @@
       '<div class="cband" style="background:' + band + '"></div>' +
       '<div class="ccost' + costCls(def.cost) + (def.upgraded && def.cost !== G.Data.cardById[def.base].cost ? ' upg' : '') + '"><span>' + (def.cost == null ? '' : def.cost) + '</span></div>' +
       (G.SCHOOL_NAME[school] ? '<div class="cschool"><span>' + G.SCHOOL_NAME[school] + '</span></div>' : '') +
-      '<div class="cname' + (def.upgraded ? ' upg' : '') + (def.name.length >= 5 ? ' long' : '') + '"><span>' + U.esc(def.name) + '</span></div>' +
+      '<div class="cname' + (def.upgraded ? ' upg' : '') + (def.name.length >= 5 ? ' long' : '') + '"><span>' + nameHTML(def) + '</span></div>' +
       '<div class="ctype"><span>' + (G.TYPE_NAME[def.type] || '') + '</span></div>' +
       '<div class="ctext' + (len > 62 ? ' xlong' : len > 44 ? ' long' : '') + '"><span>' + UI.cardText(def, opts.battle, opts.inst) + '</span></div>' +
       '<div class="ccond"><span>조건 충족</span></div><div class="cchain"></div></div>';
@@ -219,7 +226,8 @@
     var sc = G.SCHOOL_NAME[def.school || 'neutral'];
     return '<b>' + U.esc(def.name) + '</b> · ' + (def.duo ? '합동기 ' : stars ? G.RARITY_NAME[def.rarity] + '(별 ' + stars + ') ' : '') + (sc ? sc + ' ' : '') + (G.TYPE_NAME[def.type] || '') +
       ' · ' + who +
-      (def.exhaust ? ' · 소멸' : '') + (def.tags ? '<br><span style="color:#8a93b8">' + def.tags + '</span>' : '');
+      (def.exhaust ? ' · 소멸' : '') + (def.tags ? '<br><span style="color:#8a93b8">' + def.tags + '</span>' : '') +
+      (def.engrave ? '<br><span style="color:#ffd27a">강화 ' + def.level + '단계 각인 「' + def.engrave.name + '」</span>' : def.upgraded ? '<br><span style="color:#8dff6a">강화 1단계</span>' : '');
   };
 
   // 손패 카드의 비용·사용 가능·조건 충족 표시를 갱신한다

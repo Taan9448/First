@@ -43,6 +43,29 @@
     }
   };
 
+  // ---------- 카드 속성 ----------
+  var OWNER_EL = { kai: 'steel', bram: 'guard', lyra: 'arcane', sera: 'holy', nox: 'shadow', common: 'neutral', none: 'earth' };
+
+  // 속성: 데이터의 el, 없으면 효과로 추정, 그래도 없으면 소유자 기본값
+  G.cardElement = function (def) {
+    if (def.el) return def.el;
+    var found = null;
+    (function walk(list) {
+      list.forEach(function (e) {
+        if (found) return;
+        if (e.op === 'status') {
+          if (e.status === 'burn') found = 'fire';
+          else if (e.status === 'chill' || e.status === 'frozen') found = 'ice';
+          else if (e.status === 'poison') found = 'poison';
+        }
+        ['then', 'else', 'effects', 'onHit', 'onCrit'].forEach(function (k) { if (Array.isArray(e[k])) walk(e[k]); });
+      });
+    })(def.effects);
+    if (!found && def.art === 'bolt') found = 'lightning';
+    if (!found && (def.type === 'heal') && def.owner !== 'sera') found = 'nature';
+    return found || OWNER_EL[def.owner] || 'neutral';
+  };
+
   // ---------- 연출 대기 ----------
   // 테스트·시뮬레이션에서는 G.instant = true 로 즉시 완료시킨다
   G.instant = false;

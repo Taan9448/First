@@ -46,8 +46,11 @@ function invariants(where) {
   });
   check(d.party.length >= 1 && d.party.length <= 3, where + ': 파티 인원');
   d.party.forEach(id => check(d.characters.includes(id), where + ': 파티에 미합류 캐릭터'));
-  d.upgraded.forEach(id => check(d.cards.includes(id), where + ': 미보유 카드 강화 ' + id));
-  check(new Set(d.upgraded).size === d.upgraded.length, where + ': 강화 중복');
+  check(d.upgraded && typeof d.upgraded === 'object' && !Array.isArray(d.upgraded), where + ': 강화 단계 표 형식');
+  Object.keys(d.upgraded).forEach(id => {
+    check(d.cards.includes(id), where + ': 미보유 카드 강화 ' + id);
+    check(d.upgraded[id] >= 1 && d.upgraded[id] <= G.Upgrade.MAX, where + ': 강화 단계 ' + id + '=' + d.upgraded[id]);
+  });
   d.buffs.forEach(b => check(b.battles > 0, where + ': 다 쓴 이벤트 효과가 남음'));
   d.characters.forEach(id => check(St.growthOf(id).traits.length <= St.levelOf(id), where + ': ' + id + ' 특성이 레벨보다 많음'));
   if (d.run) {
@@ -74,8 +77,9 @@ function invariants(where) {
       const list = St.upgradable();
       if (!list.length) { St.skipUpgrade(); break; }
       const id = G.rng.pick(list);
-      check(St.upgradeCard(id) && St.isUpgraded(id), '카드 강화 ' + id);
-      check(St.battleDeck(St.data.party).every(x => !St.isUpgraded(G.Upgrade.baseOf(x)) || x.endsWith('+')), '전투 덱에 강화 카드가 들어감');
+      const lv = St.upLevel(id);
+      check(St.upgradeCard(id) && St.upLevel(id) === lv + 1, '카드 강화 ' + id + ' ' + lv + ' → ' + (lv + 1));
+      check(St.battleDeck(St.data.party).every(x => G.Upgrade.levelOf(x) === St.upLevel(G.Upgrade.baseOf(x)) && D.cardById[x]), '전투 덱에 강화 단계가 맞는 카드가 들어감');
       ups++;
     }
   };
@@ -290,7 +294,20 @@ function invariants(where) {
     relics: ['R01'], run: { stage: 4, node: 1, nodes: [{ type: 'battle' }], hp: { kai: 50 } }, codex: { monsters: {} }, flags: {} };
   const m2 = G.Save.sanitize(G.Save.migrate(JSON.parse(JSON.stringify(v1))));
   check(m2.version === G.Save.VERSION && m2.run === null && m2.gold === 77 && m2.cards.length === 2 && m2.relics[0] === 'R01', 'v1 → 최신 마이그레이션');
-  check(Array.isArray(m2.upgraded) && m2.growth && m2.bonds && m2.ascension && Array.isArray(m2.buffs), 'v2 기본값');
+  check(m2.upgraded && !Array.isArray(m2.upgraded) && m2.growth && m2.bonds && m2.ascension && Array.isArray(m2.buffs), 'v2 기본값');
+  // 저장 v4 → v5 (18단계): 강화 목록(배열) → 강화 단계 표
+  const v4 = Object.assign(JSON.parse(JSON.stringify(v1)), { version: 4, upgraded: ['K01', 'X99'], mode: 'normal', dead: [] });
+  const m5 = G.Save.sanitize(G.Save.migrate(v4));
+  check(m5.version === G.Save.VERSION && m5.upgraded.K01 === 1 && !('X99' in m5.upgraded) && Object.keys(m5.upgraded).length === 1, 'v4 → v5: 강화 목록을 단계 표로');
+  // 3단계까지만 강화된다
+  {
+    const keep = JSON.stringify(St.data);
+    St.data.cards.push('K01'); St.data.run = St.data.run || { upgrades: 0 };
+    St.data.upgraded.K01 = 2; St.data.run.upgrades = 3;
+    check(St.upgradeCard('K01') && St.upLevel('K01') === 3 && St.cardDef('K01').id === 'K01+3', '2 → 3단계 강화');
+    check(!St.upgradeCard('K01') && St.data.run.upgrades === 2 && St.upgradable().indexOf('K01') < 0, '3단계에서 더 강화되지 않음');
+    St.data = JSON.parse(keep);
+  }
 
   // 던전 지도(14단계): 길이·갈림 수·통로·숨은 방
   {
