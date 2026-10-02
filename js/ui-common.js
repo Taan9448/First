@@ -164,8 +164,8 @@
   // ---------------- 카드 요소 ----------------
   UI.cardEl = function (def, opts) {
     opts = opts || {};
-    var school = def.school || 'neutral';
-    var c = UI.el('div', 'card r-' + def.rarity + ' t-' + def.type + ' sc-' + school + (opts.static ? ' static' : '') + (def.duo ? ' duo' : ''));
+    var school = def.school || 'neutral', lay = G.ArtCards.layoutOf(school);
+    var c = UI.el('div', 'card r-' + def.rarity + ' t-' + def.type + ' sc-' + school + ' lay-' + lay + (opts.static ? ' static' : '') + (def.duo ? ' duo' : ''));
     var owner = G.Data.characters.filter(function (x) { return x.id === def.owner; })[0];
     var band = owner ? owner.color : '#8a93b8';
     if (def.duo) {
@@ -174,12 +174,18 @@
     }
     var plain = def.text.replace(/\{d\d\}/g, '00').replace(/\{\+([^}]*)\}/g, '$1');
     var len = plain.length;
+    // 17단계: 무공 = 수묵 족자(등급은 아래 매듭 수), 그 밖 = 두 세계 분할(등급은 오른쪽 세로 별, 이름 아래 한 줄 정보)
+    var who = owner ? owner.name : def.duo ? '합동기' : def.owner === 'common' ? '공용' : '';
+    var nStar = G.RARITIES.indexOf(def.rarity) + 1, knots = '';
+    for (var k = 0; k < nStar; k++) knots += '<i></i>';
+    var rankHTML = lay === 'ink' ? '<div class="cknots">' + knots + '</div>' : UI.starsHTML(def.rarity);
+    var subHTML = lay === 'split' ? '<div class="csub"><span>' + [G.SCHOOL_NAME[school], G.TYPE_NAME[def.type], who].filter(Boolean).join(' · ') + '</span></div>' : '';
     c.innerHTML = '<div class="cin">' +
-      '<div class="cf"></div><div class="cart"></div>' + UI.starsHTML(def.rarity) +
+      '<div class="cf"></div><div class="cart"></div>' + rankHTML + subHTML +
       '<div class="cband" style="background:' + band + '"></div>' +
       '<div class="ccost' + costCls(def.cost) + (def.upgraded && def.cost !== G.Data.cardById[def.base].cost ? ' upg' : '') + '"><span>' + (def.cost == null ? '' : def.cost) + '</span></div>' +
       (G.SCHOOL_NAME[school] ? '<div class="cschool"><span>' + G.SCHOOL_NAME[school] + '</span></div>' : '') +
-      '<div class="cname' + (def.upgraded ? ' upg' : '') + '"><span>' + U.esc(def.name) + '</span></div>' +
+      '<div class="cname' + (def.upgraded ? ' upg' : '') + (def.name.length >= 5 ? ' long' : '') + '"><span>' + U.esc(def.name) + '</span></div>' +
       '<div class="ctype"><span>' + (G.TYPE_NAME[def.type] || '') + '</span></div>' +
       '<div class="ctext' + (len > 62 ? ' xlong' : len > 44 ? ' long' : '') + '"><span>' + UI.cardText(def, opts.battle, opts.inst) + '</span></div>' +
       '<div class="ccond"><span>조건 충족</span></div><div class="cchain"></div></div>';

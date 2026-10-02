@@ -823,20 +823,6 @@ span.gold.bump { animation: popIn 0.4s steps(4); }
 .card .ccost.none { display: none; }
 .card .ccost.up span { color: #ffb0b0; }
 .card .ccost.down span { color: #b8ffb0; }
-/* 계열 도장(15단계): 그림 창 왼쪽 아래, 세로 글씨 */
-.card .cschool { position: absolute; left: 0.95em; top: 8.25em; height: 1.2em; z-index: 1; padding: 0 0.45em; display: flex; align-items: center;
-  color: #fff3e0; background: #b02a24; clip-path: var(--pxs); box-shadow: inset 0 0 0 0.1em rgba(255, 220, 180, 0.55); }
-.card .cschool span { font-size: 0.62em; letter-spacing: 0.05em; white-space: nowrap; }
-.card.sc-magic .cschool { background: #2a5ab8; color: #e0f4ff; box-shadow: inset 0 0 0 0.12em rgba(150, 220, 255, 0.6); }
-.card.sc-fusion .cschool { background: linear-gradient(180deg, #b02a24 0 50%, #6a2ab0 50%); }
-/* 한지 본문(무공·융합): 어두운 먹 글씨 */
-.card.sc-martial .ctext span, .card.sc-fusion .ctext span { color: #2a1a10; }
-.card.sc-martial .ctext b.kw, .card.sc-fusion .ctext b.kw { color: #a8321c; font-weight: bold; }
-.card.sc-martial .ctext .num.up, .card.sc-fusion .ctext .num.up { color: #1f8a3a; }
-.card.sc-martial .ctext .num.down, .card.sc-fusion .ctext .num.down { color: #c0302a; }
-.card.sc-martial .ctext .num.upg, .card.sc-fusion .ctext .num.upg { color: #1f8a3a; }
-.card.sc-martial .cname span { color: #ffe6c0; }
-.card.sc-fusion .cname span { color: #f2dcff; }
 .card .cname { left: 1.4em; top: 10.1em; width: 10.2em; height: 1.55em; overflow: hidden; justify-content: flex-start; padding-left: 0.2em; }
 .card .cname span { font-size: 0.98em; white-space: nowrap; text-shadow: 0.08em 0.08em 0 #050913; }
 .card .ctype { right: 0.95em; top: 8.25em; height: 1.2em; padding: 0 0.45em; background: rgba(6, 10, 22, 0.85); clip-path: var(--pxs); box-shadow: inset 0 0 0 0.1em var(--tc, #5a7fb2); }
@@ -881,6 +867,66 @@ span.gold.bump { animation: popIn 0.4s steps(4); }
 .card.silhouette .cart { filter: brightness(0); }
 .card.silhouette .cf, .card.silhouette .cstars { filter: brightness(0.45) grayscale(0.6); }
 .card.silhouette { color: var(--dim); }
+
+/* ================= 17단계 카드 틀 두 종 =================
+   무공 = B 수묵 족자: 한지 위 먹 그림, 붓글씨 세로 이름(왼쪽 — 손패가 겹쳐도 보이게), 붉은 인장 비용, 아래 매듭 수 = 등급
+   그 밖 = D 두 세계 분할: 붉은 옻칠 / 푸른 별빛 대각선, 마름모 보석 비용, 오른쪽 세로 별, 이름 띠 + 한 줄 정보 */
+.card .cband { display: none; }
+.card .cschool { position: absolute; z-index: 1; display: flex; align-items: center; }
+.card .cschool span { white-space: nowrap; }
+/* ---- 수묵 족자 ---- */
+.card.lay-ink .cart { left: 2.6em; top: 1.35em; width: 8.6em; height: 7.1em; clip-path: none; filter: grayscale(1) brightness(0.42) contrast(1.7) sepia(0.25); }
+.card.lay-ink .cart::after { display: none; }
+.card.lay-ink .cname { left: 0.4em; top: 2.95em; width: 2.1em; height: 7em; padding: 0; justify-content: flex-start; align-items: center; flex-direction: column; overflow: visible; }
+.card.lay-ink .cname span { writing-mode: vertical-rl; font-family: 'Nanum Brush Script', var(--font-title); font-size: 1.6em; line-height: 1.05; letter-spacing: 0.04em; color: #1a1410; text-shadow: none; white-space: nowrap; }
+.card.lay-ink .cname.long span { font-size: 1.28em; }
+.card.lay-ink .cname.upg span { color: #1f7a34; }
+.card.lay-ink .ccost { left: 0.2em; top: 0.35em; width: 2.5em; height: 2.5em; clip-path: none; transform: rotate(-6deg); background: #b8221c; filter: drop-shadow(0.08em 0.12em 0 rgba(0, 0, 0, 0.45));
+  box-shadow: inset 0 0 0 0.16em #f6e2c8, inset 0 0 0 0.28em #b8221c; }
+.card.lay-ink .ccost::before { display: none; }
+.card.lay-ink .ccost span { font-family: 'Song Myung', var(--font-title); font-size: 1.7em; color: #fff4e0; text-shadow: 0.05em 0.05em 0 #5a0a08; }
+.card.lay-ink .ccost.c0 { background: #2f7a3a; box-shadow: inset 0 0 0 0.16em #f6e2c8, inset 0 0 0 0.28em #2f7a3a; }
+.card.lay-ink .ccost.c3 { background: #7a1a4a; box-shadow: inset 0 0 0 0.16em #f6e2c8, inset 0 0 0 0.28em #7a1a4a; }
+.card.lay-ink .ccost.cx { background: #3a2a8a; box-shadow: inset 0 0 0 0.16em #f6e2c8, inset 0 0 0 0.28em #3a2a8a; }
+.card.lay-ink .ccost.up span { color: #ffd0d0; } .card.lay-ink .ccost.down span, .card.lay-ink .ccost.upg span { color: #d0ffb8; }
+.card.lay-ink .cschool { left: 2.7em; top: 8.75em; height: 1.05em; padding: 0 0.4em; color: #a8221c; box-shadow: inset 0 0 0 0.09em #a8221c; background: rgba(255, 250, 240, 0.4); }
+.card.lay-ink .cschool span { font-size: 0.6em; font-weight: bold; }
+.card.lay-ink .ctype { left: 5.3em; right: auto; top: 8.75em; height: 1.05em; background: none; box-shadow: none; clip-path: none; padding: 0; }
+.card.lay-ink .ctype span { font-size: 0.6em; color: #6a4a2a; }
+.card.lay-ink .ctext { left: 1em; top: 10.2em; width: 10.5em; height: 5.7em; }
+.card.lay-ink .ctext span { color: #2a1a10; font-size: 0.9em; line-height: 1.35; }
+.card.lay-ink .ctext.long span { font-size: 0.8em; } .card.lay-ink .ctext.xlong span { font-size: 0.7em; }
+.card.lay-ink .ctext b.kw { color: #a8221c; font-weight: bold; }
+.card.lay-ink .ctext .num.up, .card.lay-ink .ctext .num.upg { color: #1f7a34; }
+.card.lay-ink .ctext .num.down { color: #c0302a; }
+.card.lay-ink .cknots { position: absolute; left: 0; right: 0; bottom: -1.05em; display: flex; justify-content: center; gap: 0.55em; z-index: 1; pointer-events: none; }
+.card.lay-ink .cknots i { width: 0.5em; height: 1.35em; background: linear-gradient(180deg, #b8221c 0 30%, #d84a3a 30%); clip-path: polygon(25% 0, 75% 0, 75% 30%, 100% 40%, 100% 100%, 0 100%, 0 40%, 25% 30%); }
+.card.lay-ink.r-legendary .cknots i { background: linear-gradient(180deg, #c99a20 0 30%, #ffd23f 30%); }
+.card.lay-ink .ccond { right: auto; left: 1.1em; top: 7.4em; }
+.card.lay-ink .ctemp { left: 3.2em; top: 0.7em; }
+.card.lay-ink.r-epic .cf::after, .card.lay-ink.r-legendary .cf::after { inset: 0.6em 0.4em; clip-path: none; }
+.card.lay-ink.silhouette .cart { filter: brightness(0); }
+/* ---- 두 세계 분할 ---- */
+.card.lay-split .cart { left: 1.3em; top: 1.6em; width: 9.9em; height: 8em; clip-path: none; }
+.card.lay-split .cart::after { height: 30%; }
+.card.lay-split .ccost { left: -0.55em; top: -0.55em; width: 3.2em; height: 3.2em; clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
+.card.lay-split .ccost::before { inset: 0.28em; }
+.card.lay-split .ccost span { font-size: 1.75em; }
+.card.lay-split .cstars { left: auto; right: 0.12em; top: 1.6em; width: 1.05em; height: auto; flex-direction: column; gap: 0.12em; padding: 0.2em 0; }
+.card.lay-split .cstars::before { inset: 0; }
+.card.lay-split .cstars i { width: 0.85em; height: 0.85em; }
+.card.lay-split .cschool, .card.lay-split .ctype { display: none; }
+.card.lay-split .cname { left: 0.9em; top: 9.75em; width: 10.7em; height: 1.25em; padding-left: 0.1em; }
+.card.lay-split .cname span { font-family: var(--font-title); font-size: 1em; color: #fff; }
+.card.lay-split .cname.upg span { color: #b8ff8a; }
+.card.lay-split .csub { position: absolute; left: 1em; top: 10.95em; width: 10.6em; height: 0.8em; display: flex; align-items: center; overflow: hidden; }
+.card.lay-split .csub span { font-size: 0.55em; color: #c8d4ec; letter-spacing: 0.04em; white-space: nowrap; }
+.card.lay-split .ctext { left: 0.8em; top: 12.3em; width: 10.9em; height: 4.5em; }
+.card.lay-split .ctext span { color: #eef4ff; }
+.card.lay-split .ctext b.kw { color: #ffd27a; }
+.card.lay-split .ccond { right: 1.6em; top: 1.8em; }
+.card.lay-split .ctemp { left: 2.6em; top: 1.9em; }
+.card.lay-split.r-epic .cf::after, .card.lay-split.r-legendary .cf::after { inset: 0.3em; clip-path: none; }
 
 /* ================= 툴팁·창 ================= */
 #tip { position: fixed; z-index: 1000; max-width: 280px; padding: 10px 13px; background: rgba(8, 14, 28, 0.97); font-size: 0.92em; line-height: 1.55;

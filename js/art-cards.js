@@ -1,4 +1,4 @@
-// art-cards.js — 카드 속성 배경, 등급 × 계열(15단계) 프레임, 카드 그림 조합
+// art-cards.js — 카드 속성 배경, 카드 틀(17단계: 무공 = 수묵 족자, 그 밖 = 두 세계 분할), 카드 그림 조합
 // 프레임(125×175)과 그림(80×66)은 SVG로 그린 뒤 절반 해상도로 찍어 도트 그림으로 쓴다.
 (function () {
   'use strict';
@@ -40,57 +40,52 @@
       '<path d="M0 54 Q20 48 40 54 T80 52 V66 H0 Z" fill="' + c[0] + '" opacity="0.6"/>';
   }
 
-  // ---------------- 등급별 금속 프레임 ----------------
-  var METAL = {
-    common: { hi: '#c3c8d0', mid: '#8a8f99', lo: '#4f535c', gem: '#d0d4dc' },
-    uncommon: { hi: '#e6b07a', mid: '#b07a45', lo: '#6a4422', gem: '#5fe07a' },
-    rare: { hi: '#eef3fa', mid: '#a9b8c9', lo: '#5f6f84', gem: '#4fa8ff' },
-    epic: { hi: '#d9b8ff', mid: '#9b6bd6', lo: '#55307f', gem: '#e07aff' },
-    legendary: { hi: '#fff0a8', mid: '#e8b83a', lo: '#8a5f12', gem: '#ff5a5a' }
-  };
-  // 15단계 카드 틀: 계열마다 재질이 다르다. 등급은 바깥 테두리 금속 색과 별로 나타낸다
-  //   무공: 검은 옻칠 나무 + 붉은 칠 안쪽 테 + 금 모서리 장식, 본문은 밝은 한지
-  //   마법: 짙은 남색 + 빛나는 룬 테, 본문은 어두운 유리
-  //   융합: 옻칠 바깥 + 보랏빛 룬 안쪽, 본문은 보랏빛이 도는 한지
-  //   무계열: 강철
-  var SCHOOL_SKIN = {
-    martial: { outer: '#2a1a14', inner: '#a8322c', line: '#e0b050', art: '#1a100c', name: '#3a1c16', text: '#efe3c4', textEdge: '#b89a62' },
-    magic: { outer: '#141e3c', inner: '#2f4fa8', line: '#7ad0ff', art: '#0b1226', name: '#141e38', text: '#101a32', textEdge: '#3f6ab8' },
-    fusion: { outer: '#2a1a24', inner: '#7a3aa8', line: '#ffd27a', art: '#160c1e', name: '#2c1630', text: '#ece0d4', textEdge: '#a07ac0' },
-    neutral: { outer: '#1c2232', inner: '#4f5a74', line: '#aab4c8', art: '#0b1226', name: '#141e38', text: '#101a32', textEdge: '#5a6680' }
-  };
-  function frameSvg(rarity, school) {
-    var m = METAL[rarity] || METAL.common, k = SCHOOL_SKIN[school] || SCHOOL_SKIN.neutral;
-    var rune = '';
-    if (school === 'magic' || school === 'fusion') {
-      // 본문 판 둘레의 룬 점
-      for (var i = 0; i < 9; i++) rune += '<rect x="' + (14 + i * 12) + '" y="166" width="3" height="1.5" fill="' + k.line + '" opacity="0.8"/>';
-    }
-    var corner = school === 'martial' || school === 'fusion' ?
-      // 금 모서리 장식(구름무늬 꺾쇠)
-      '<polyline points="9,22 9,9 22,9" fill="none" stroke="' + k.line + '" stroke-width="2"/><rect x="11" y="11" width="3" height="3" fill="' + k.line + '"/>' +
-      '<polyline points="103,9 116,9 116,22" fill="none" stroke="' + k.line + '" stroke-width="2"/><rect x="111" y="11" width="3" height="3" fill="' + k.line + '"/>' : '';
+  // ---------------- 17단계 카드 틀 두 종 ----------------
+  // 무공 카드 = 수묵 족자: 위아래 족자 막대(끝 장식 = 등급 색), 한지 바탕, 그림 뒤 먹 원(엔소), 본문 위 가는 먹줄
+  // 세로 이름은 왼쪽 줄(손패에서 카드가 겹쳐도 가려지지 않게), 그림은 오른쪽
+  var CAP = { common: '#8a7a62', uncommon: '#4f9a5a', rare: '#4f86c8', epic: '#8a4ac9', legendary: '#e8b83a' };
+  function inkFrameSvg(rarity) {
+    var cap = CAP[rarity] || CAP.common, lines = '';
+    for (var i = 0; i < 26; i++) lines += '<rect x="5" y="' + (9 + i * 6.2).toFixed(1) + '" width="115" height="0.8" fill="#c8b48a" opacity="0.35"/>';
+    var rod = function (y) {
+      return '<rect x="0" y="' + y + '" width="125" height="7" rx="2" fill="#4a2814"/><rect x="0" y="' + y + '" width="125" height="2" fill="#7a4a24"/>' +
+        '<rect x="0" y="' + (y - 1) + '" width="6" height="9" rx="1" fill="' + cap + '"/><rect x="119" y="' + (y - 1) + '" width="6" height="9" rx="1" fill="' + cap + '"/>';
+    };
     return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 125 175" width="125" height="175">' +
-      // 바깥 금속 틀(등급 색, 깎은 모서리)
-      '<polygon points="13,1 124,1 124,162 112,174 1,174 1,13" fill="' + m.lo + '" stroke="' + K + '" stroke-width="2"/>' +
-      '<polygon points="14,4 121,4 121,161 111,171 4,171 4,14" fill="' + m.mid + '"/>' +
-      '<polyline points="5,14 14,5 120,5" fill="none" stroke="' + m.hi + '" stroke-width="2"/>' +
-      // 계열 재질
-      '<polygon points="15,7 118,7 118,159 109,168 7,168 7,15" fill="' + k.outer + '" stroke="' + K + '" stroke-width="1.5"/>' +
-      // 그림 창 테두리(계열 안쪽 테)
-      '<rect x="7" y="7" width="111" height="93" fill="' + k.inner + '"/>' +
-      '<rect x="9" y="9" width="107" height="89" fill="' + k.art + '"/>' + corner +
-      // 이름 판
-      '<rect x="7" y="99" width="111" height="18" fill="' + k.name + '" stroke="' + K + '" stroke-width="1.5"/>' +
-      '<rect x="8" y="100" width="4" height="16" fill="' + m.gem + '"/>' +
-      '<rect x="9" y="116" width="107" height="1" fill="' + k.line + '" opacity="0.6"/>' +
-      // 본문 판
-      '<rect x="9" y="119" width="107" height="46" fill="' + k.text + '"/>' +
-      '<rect x="9" y="119" width="107" height="2" fill="' + k.textEdge + '"/>' +
-      '<rect x="9" y="163" width="107" height="2" fill="' + k.textEdge + '"/>' + rune +
-      // 오른쪽 아래 장식
-      '<polygon points="104,171 111,171 121,161 121,154" fill="' + m.hi + '" opacity="0.8"/>' +
+      '<rect x="4" y="5" width="117" height="165" fill="#eadcb8"/>' + lines +
+      '<rect x="4" y="5" width="117" height="165" fill="none" stroke="#c8ae7a" stroke-width="3"/>' +
+      '<ellipse cx="69" cy="49" rx="44" ry="34" fill="#1a1410" opacity="0.08"/>' +
+      '<circle cx="69" cy="49" r="33" fill="none" stroke="#1a1410" stroke-width="4.5" stroke-dasharray="168 40" transform="rotate(-60 69 49)" opacity="0.85"/>' +
+      '<rect x="10" y="99" width="105" height="1" fill="#6a4a2a" opacity="0.7"/>' +
+      rod(0) + rod(168) + '</svg>';
+  }
+  // 그 밖의 카드 = 두 세계 분할: 붉은 옻칠(무림)과 푸른 별빛(엘단)을 대각선으로 나눈다. 마법은 푸른 쪽, 융합은 반반
+  var SPLIT = { magic: 0.3, fusion: 0.5, neutral: 0.5 };
+  var EDGE = { common: '#9aa0aa', uncommon: '#5fbf6a', rare: '#5fa8ff', epic: '#b06aff', legendary: '#ffd23f' };
+  function splitFrameSvg(rarity, school) {
+    var t = SPLIT[school] != null ? SPLIT[school] : 0.5, edge = EDGE[rarity] || EDGE.common, grey = school === 'neutral';
+    var xT = Math.round(t * 125 + 26), xB = Math.round(t * 125 - 26);
+    var red0 = grey ? '#4a4650' : '#6a1414', red1 = grey ? '#2e2c34' : '#2e0a0a', blu0 = grey ? '#2e3240' : '#13265a', blu1 = grey ? '#1a1c26' : '#060c22';
+    var dots = '', r = 7;
+    for (var y = 6; y < 175; y += 9) for (var x = 4 + (y % 2) * 4; x < 125; x += 11) {
+      r = (r * 9301 + 49297) % 233280;
+      var left = x < xT + (xB - xT) * (y / 175);
+      dots += left ? '<circle cx="' + x + '" cy="' + y + '" r="1" fill="#ffc8a0" opacity="0.18"/>' : (r % 3 ? '' : '<rect x="' + x + '" y="' + y + '" width="1.2" height="1.2" fill="#bfe8ff" opacity="0.6"/>');
+    }
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 125 175" width="125" height="175">' +
+      '<defs><linearGradient id="gr" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="' + red0 + '"/><stop offset="1" stop-color="' + red1 + '"/></linearGradient>' +
+      '<linearGradient id="gb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="' + blu0 + '"/><stop offset="1" stop-color="' + blu1 + '"/></linearGradient></defs>' +
+      '<rect x="0" y="0" width="125" height="175" rx="4" fill="' + edge + '"/><rect x="0" y="0" width="125" height="175" rx="4" fill="none" stroke="' + K + '" stroke-width="2"/>' +
+      '<polygon points="3,3 ' + xT + ',3 ' + xB + ',172 3,172" fill="url(#gr)"/><polygon points="' + xT + ',3 122,3 122,172 ' + xB + ',172" fill="url(#gb)"/>' + dots +
+      '<line x1="' + xT + '" y1="3" x2="' + xB + '" y2="172" stroke="#ffffff" stroke-width="1.6" opacity="0.85"/>' +
+      '<rect x="12" y="15" width="101" height="82" fill="#050913" opacity="0.35" stroke="#ffffff" stroke-opacity="0.7" stroke-width="1.5"/>' +
+      '<rect x="3" y="96" width="119" height="23" fill="#050913" opacity="0.82"/><rect x="3" y="96" width="119" height="1.5" fill="' + edge + '"/>' +
+      '<rect x="7" y="122" width="111" height="47" rx="2" fill="#050913" opacity="0.62"/>' +
       '</svg>';
+  }
+  // 무공 카드 그림: 배경 없이 글리프만(먹빛은 화면에서 입힌다)
+  function inkArtSvg(def) {
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 66" width="80" height="66"><g transform="translate(0 5)">' + G.Art.glyph(def.art || 'star') + '</g></svg>';
   }
 
   // 그림 창이 커져서(12단계) 배경을 80×66 으로 늘리고, 80×56 기준으로 그린 글리프를 가운데로 내린다
@@ -101,11 +96,19 @@
 
   G.ArtCards = {
     elementOf: elementOf,
-    SCHOOLS: Object.keys(SCHOOL_SKIN),
-    frame: function (rarity, school) { school = school || 'neutral'; return G.Pixel.raster('frame3:' + rarity + ':' + school, frameSvg(rarity, school), 63, 88, 12); },
-    frameCached: function (rarity, school) { return G.Pixel.rasterCached('frame3:' + rarity + ':' + (school || 'neutral')); },
-    art: function (def) { return G.Pixel.raster('art2:' + (def.base || def.id), artSvg(def), 50, 41, 10); },
-    artCached: function (def) { return G.Pixel.rasterCached('art2:' + (def.base || def.id)); },
+    // 17단계: 무공 = 수묵 족자 틀, 그 밖 = 두 세계 분할 틀(125×175 그대로 찍어 가는 선을 살린다)
+    layoutOf: function (school) { return school === 'martial' ? 'ink' : 'split'; },
+    frame: function (rarity, school) {
+      school = school || 'neutral';
+      var ink = school === 'martial';
+      return G.Pixel.raster('frame4:' + rarity + ':' + school, ink ? inkFrameSvg(rarity) : splitFrameSvg(rarity, school), 125, 175, 14);
+    },
+    frameCached: function (rarity, school) { return G.Pixel.rasterCached('frame4:' + rarity + ':' + (school || 'neutral')); },
+    art: function (def) {
+      if (def.school === 'martial') return G.Pixel.raster('artInk:' + (def.base || def.id), inkArtSvg(def), 50, 41, 10);
+      return G.Pixel.raster('art2:' + (def.base || def.id), artSvg(def), 50, 41, 10);
+    },
+    artCached: function (def) { return G.Pixel.rasterCached((def.school === 'martial' ? 'artInk:' : 'art2:') + (def.base || def.id)); },
     // 미리 변환해 둔다(화면에 처음 뜰 때 빈 그림이 보이지 않도록)
     preload: function (defs) {
       var jobs = [];
