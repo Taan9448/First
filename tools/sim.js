@@ -267,10 +267,12 @@ async function campaign(seed, order, ascMax, mode) {
   const mk = () => { const a = []; for (let n = 1; n <= 10; n++) a.push({ attempts: 0, first: 0, within3: 0, forced: 0, lost: {}, turns: [], left: [], lostTurn: [] }); return a; };
   const byAsc = []; for (let lv = 0; lv <= ascMax; lv++) byAsc.push(mk());
   const byOrder = PARTY_ORDERS.map(() => ({ runs: 0, fails: 0 }));
+  const perRun = byAsc.map(() => []); // 원정마다 진 횟수(기본 원정 전체 · 승천 단계별)
   for (let i = 0; i < N; i++) {
     const oi = i % PARTY_ORDERS.length;
     const runs = await campaign(seed0 * 1000 + i, PARTY_ORDERS[oi], ascMax, mode);
     byOrder[oi].runs++;
+    runs.forEach((res, lv) => perRun[lv].push(res.reduce((a, r) => a + r.tries, 0)));
     runs.forEach((res, lv) => res.forEach((r, k) => {
       const s = byAsc[lv][k];
       s.attempts += r.tries + 1;
@@ -279,7 +281,7 @@ async function campaign(seed, order, ascMax, mode) {
       if (r.forced) s.forced++;
       r.lostAt.forEach(t => { s.lost[t] = (s.lost[t] || 0) + 1; });
       s.turns = s.turns.concat(r.turns);
-      s.left = s.left.concat(r.left || []);
+      s.left = s.left.concat((r.left || []).filter(v => isFinite(v)));
       s.lostTurn = s.lostTurn.concat(r.lostTurn || []);
       byOrder[oi].fails += r.tries;
     }));
@@ -297,6 +299,18 @@ async function campaign(seed, order, ascMax, mode) {
       console.log(pad(k + 1, 6) + '   | ' + pad((s.attempts / N).toFixed(2), 8) + ' | ' + pad(Math.round(s.first / N * 100) + '%', 13) +
         ' | ' + pad(Math.round(s.within3 / N * 100) + '%', 7) + ' | ' + pad(s.forced, 4) + ' | ' + pad(turns, 6) + ' | ' + lost + left);
     });
+  });
+  // 원정 전체를 깨기까지 진 횟수의 분포: "N번 안에 깰 확률" = 진 횟수가 N-1 이하인 원정의 비율
+  perRun.forEach((list, lv) => {
+    if (!list.length) return;
+    const max = Math.max.apply(null, list), avg = list.reduce((a, b) => a + b, 0) / list.length;
+    console.log('\n' + (lv ? '승천 ' + lv : '기본 원정') + ' 전체: 진 횟수 분포 (평균 ' + avg.toFixed(2) + '번, 최대 ' + max + '번)');
+    console.log(' 진 횟수 | 원정 수 |  비율 | 누적(이만큼 지고 안에 클리어)');
+    for (let f = 0; f <= max; f++) {
+      const n = list.filter(x => x === f).length, cum = list.filter(x => x <= f).length;
+      if (!n && f > 0) continue;
+      console.log(pad(f, 7) + '  | ' + pad(n, 6) + '  | ' + pad(Math.round(n / list.length * 100) + '%', 5) + ' | ' + pad(Math.round(cum / list.length * 100) + '%', 5));
+    }
   });
   console.log('\n파티 선호 순서별 총 패배 수');
   byOrder.forEach((o, i) => console.log('  ' + PARTY_ORDERS[i].slice(0, 3).join('/') + ' 우선: 캠페인 ' + o.runs + '회, 패배 ' + o.fails));
