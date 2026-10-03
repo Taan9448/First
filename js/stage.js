@@ -25,8 +25,8 @@
       };
       St.data = d;
       D.cards.forEach(function (c) { if (c.basic && (c.owner === 'kai' || c.owner === 'common')) d.cards.push(c.id); });
-      d.decks.kai = St.ownedOf('kai');
-      d.decks.common = St.autoBuild('common');
+      d.decks.kai = St.starterDeck('kai');
+      d.decks.common = St.starterDeck('common');
       if (G.debug) {
         // 디버그: 모든 캐릭터·카드 해금
         d.characters = D.characters.map(function (c) { return c.id; });
@@ -154,7 +154,7 @@
       return St.data.cards.filter(function (id) { return D.cardById[id].owner === owner; });
     },
 
-    // 카드를 얻는다. 해당 덱에 자리가 있으면 자동으로 넣는다
+    // 카드를 보유 카드(수집)에 넣는다. 처음 얻은 카드이고 준비 덱에 자리가 있으면 준비 덱에도 넣는다
     addCard: function (id) {
       var d = St.data;
       if (St.owns(id)) return false;
@@ -164,15 +164,84 @@
       if (d.decks[owner].length < eco().deckMax) d.decks[owner].push(id);
       return true;
     },
+    // 시작 카드(19단계): data/characters.js 의 starter, 공용은 economy.starterCommon
+    starterDeck: function (owner) {
+      var list = owner === 'common' ? eco().starterCommon : (charDef(owner) || {}).starter;
+      list = (list || []).filter(function (id) { return St.owns(id); });
+      return list.length ? list.slice() : St.autoBuild(owner, eco().startDeck);
+    },
 
-    // 자동 구성: 등급이 높은 카드부터 최대 autoBuildSize장, 공격 카드는 최소 3장
-    autoBuild: function (owner) {
+    // ================= 스테이지 덱(19단계) =================
+    // 스테이지에 들어갈 때 준비 덱을 그대로 복사한다. 그 스테이지에서 얻은 카드는 스테이지 덱에 들어가고(보유 카드에도 남는다),
+    // 제거·복제는 스테이지 덱에만 적용된다. 스테이지가 끝나거나 지면 스테이지 덱은 사라진다
+    runDecks: function () { var r = St.data.run; return r && r.decks ? r.decks : null; },
+    inRunDeck: function (id) {
+      var rd = St.runDecks();
+      if (!rd) return false;
+      return Object.keys(rd).some(function (o) { return rd[o].indexOf(id) >= 0; });
+    },
+    runDeckList: function (owners) {
+      var rd = St.runDecks() || St.data.decks, out = [];
+      (owners || Object.keys(rd)).forEach(function (o) { (rd[o] || []).forEach(function (id) { out.push(id); }); });
+      return out;
+    },
+    // 스테이지 동안 카드를 얻는다: 보유 카드에 넣고(처음이면) 스테이지 덱에 넣는다. 반환: 처음 얻은 카드인지
+    gainCard: function (id) {
+      var d = St.data, r = d.run, isNew = !St.owns(id);
+      if (isNew) St.addCard(id);
+      if (r && r.decks) {
+        var o = D.cardById[id].owner;
+        (r.decks[o] = r.decks[o] || []).push(id);
+      }
+      return isNew;
+    },
+    // 제거: 스테이지 덱에서 한 장. 값은 스테이지 안에서 쓸 때마다 오른다(상점). 휴식의 '정리'는 공짜
+    removeCost: function () { var r = St.data.run; return eco().removeCost + eco().removeStep * ((r && r.removed) || 0); },
+    canRemove: function () { return St.runDeckList().length > eco().runDeckMin; },
+    removeFromRun: function (id) {
+      var rd = St.runDecks();
+      if (!rd || !St.canRemove()) return false;
+      var o = D.cardById[id].owner, i = (rd[o] || []).indexOf(id);
+      if (i < 0) return false;
+      rd[o].splice(i, 1);
+      return true;
+    },
+    shopRemove: function (id) {
+      var d = St.data, s = d.run.shop, cost = St.removeCost();
+      if (!s || d.gold < cost || !St.removeFromRun(id)) return false;
+      d.gold -= cost;
+      d.run.removed = (d.run.removed || 0) + 1;
+      St.save();
+      return true;
+    },
+    // 복제: 스테이지 덱의 카드 한 장을 한 장 더(상점마다 한 번)
+    shopDuplicate: function (id) {
+      var d = St.data, s = d.run.shop, cost = eco().dupCost, rd = St.runDecks();
+      if (!s || s.duped || d.gold < cost || !St.inRunDeck(id)) return false;
+      d.gold -= cost;
+      s.duped = true;
+      rd[D.cardById[id].owner].push(id);
+      St.save();
+      return true;
+    },
+    // 휴식의 정리: 한 장을 공짜로 뺀다
+    // 반환: 실패하면 false, 성공하면 { info: 스테이지 클리어 정보 또는 null }
+    restPurge: function (id) {
+      var r = St.data.run;
+      if (!r || !r.purges || !St.removeFromRun(id)) return false;
+      r.purges = 0;
+      return { info: St.advance() };
+    },
+
+    // 자동 구성: 등급이 높은 카드부터 최대 size(기본 autoBuildSize)장, 공격 카드는 최소 3장
+    autoBuild: function (owner, size) {
+      size = size || eco().autoBuildSize;
       var list = St.ownedOf(owner).map(function (id) { return D.cardById[id]; });
       list.sort(function (a, b) { return rarityIdx(b.rarity) - rarityIdx(a.rarity) || (a.id < b.id ? -1 : 1); });
-      var pick = list.slice(0, eco().autoBuildSize);
-      var rest = list.slice(eco().autoBuildSize);
+      var pick = list.slice(0, size);
+      var rest = list.slice(size);
       var attacks = function () { return pick.filter(function (c) { return c.type === 'attack'; }).length; };
-      while (attacks() < 3) {
+      while (attacks() < Math.min(3, Math.ceil(size / 2))) {
         var a = rest.filter(function (c) { return c.type === 'attack'; })[0];
         var drop = pick.slice().reverse().filter(function (c) { return c.type !== 'attack'; })[0];
         if (!a || !drop) break;
@@ -184,8 +253,8 @@
 
     // 전투 덱: 강화한 카드는 단계에 맞게 'K01+' · 'K01+2' · 'K01+3' 으로 바꿔 넣는다
     battleDeck: function (party) {
-      var d = St.data, ids = [];
-      party.concat(['common']).forEach(function (o) { ids = ids.concat(d.decks[o] || []); });
+      var d = St.data, ids = [], src = St.runDecks() || d.decks;
+      party.concat(['common']).forEach(function (o) { ids = ids.concat(src[o] || []); });
       return ids.map(function (id) { return G.Upgrade.idOf(id, d.upgraded); });
     },
 
@@ -234,7 +303,9 @@
       d.party = d.party.filter(function (id) { return !St.isDead(id); });
       if (!d.party.length) d.party = St.living().slice(0, 3);
       var map = St.genMap(def);
-      d.run = { stage: n, col: 0, path: [], map: map, hp: hp, pending: null, shop: null, upgrades: 0, replay: n <= d.clearedStage };
+      var decks = {};
+      St.living().concat(['common']).forEach(function (o) { decks[o] = (d.decks[o] || []).slice(); });
+      d.run = { stage: n, col: 0, path: [], map: map, hp: hp, pending: null, shop: null, upgrades: 0, purges: 0, removed: 0, decks: decks, replay: n <= d.clearedStage };
       St.autoPick();
       St.save();
       return d.run;
@@ -533,8 +604,11 @@
           return { died: died, wiped: true };
         }
       }
+      // 19단계: 지면 골드 일부를 잃는다(모드마다 비율). 그 스테이지에서 얻은 카드는 보유 카드에 남지만 스테이지 덱은 준비 덱으로 돌아간다
+      var lossPct = St.mode().defeatGold != null ? St.mode().defeatGold : eco().defeatGold, lost = Math.floor(St.data.gold * lossPct);
+      St.data.gold -= lost;
       St.startStage(n);
-      return { died: died, wiped: false };
+      return { died: died, wiped: false, goldLost: lost };
     },
 
     // ================= 보상 =================
@@ -550,12 +624,25 @@
       return w;
     },
 
-    // 아직 없는 카드 중 보유 캐릭터·공용 카드
+    // 보상 후보(19단계): 편성한 동료와 공용 카드 중 스테이지 덱에 없는 카드. 보유한 카드도 다시 나온다(스테이지 덱을 키우려고)
+    // 스테이지 밖(이벤트 시험 등)에서는 예전처럼 보유 캐릭터의 미보유 카드
     candidatePool: function (exclude) {
-      var d = St.data;
+      var d = St.data, r = d.run;
+      if (r && r.decks) {
+        var party = d.party.filter(function (id) { return !St.isDead(id); });
+        return D.cards.filter(function (c) {
+          return (c.owner === 'common' || party.indexOf(c.owner) >= 0) && !c.duo && c.owner !== 'none' && !St.inRunDeck(c.id) && exclude.indexOf(c.id) < 0;
+        });
+      }
       return D.cards.filter(function (c) {
         return (c.owner === 'common' || (d.characters.indexOf(c.owner) >= 0 && !St.isDead(c.owner))) && !St.owns(c.id) && exclude.indexOf(c.id) < 0;
       });
+    },
+    // 같은 등급 안에서는 아직 보유하지 않은 카드가 더 자주 나온다
+    pickCandidate: function (at) {
+      var w = at.map(function (c) { return St.owns(c.id) ? 1 : eco().newCardWeight; }), total = w.reduce(function (a, b) { return a + b; }, 0), roll = G.rng.next() * total;
+      for (var i = 0; i < at.length; i++) { roll -= w[i]; if (roll < 0) return at[i]; }
+      return at[at.length - 1];
     },
 
     // 등급을 굴리고, 그 등급에 남은 카드가 없으면 한 단계씩 낮추되 보상의 최저 등급은 지킨다(그래도 없으면 높인다)
@@ -574,7 +661,7 @@
         var found = null;
         for (var j = 0; j < order.length && !found; j++) {
           var at = pool.filter(function (c) { return rarityIdx(c.rarity) === order[j]; });
-          if (at.length) found = G.rng.pick(at);
+          if (at.length) found = St.pickCandidate(at);
         }
         if (!found) break;
         out.push(found.id);
@@ -594,7 +681,7 @@
     takeReward: function (cardId) {
       var d = St.data, r = d.run;
       if (!r || !r.pending) return null;
-      if (cardId && r.pending.cards.indexOf(cardId) >= 0) St.addCard(cardId);
+      if (cardId && r.pending.cards.indexOf(cardId) >= 0) St.gainCard(cardId);
       else d.gold += eco().skipGold;
       r.pending = null;
       return St.advance();
@@ -606,6 +693,7 @@
       r.col++;
       r.shop = null;
       r.upgrades = 0;
+      r.purges = 0;
       if (r.col >= r.map.length) return St.clearStage();
       St.autoPick();
       St.save();
@@ -623,6 +711,10 @@
     restPct: function () { var a = St.ascMods(); return a.restPct != null ? a.restPct : eco().restPct; },
     restUpgrade: function () {
       St.data.run.upgrades = 1;
+      St.save();
+    },
+    restPurgeStart: function () {
+      St.data.run.purges = 1;
       St.save();
     },
     healAll: function (pct) {
@@ -658,10 +750,10 @@
     },
     buy: function (id) {
       var d = St.data, s = d.run.shop, p = St.price(id);
-      if (!s || s.cards.indexOf(id) < 0 || s.sold.indexOf(id) >= 0 || d.gold < p || St.owns(id)) return false;
+      if (!s || s.cards.indexOf(id) < 0 || s.sold.indexOf(id) >= 0 || d.gold < p || St.inRunDeck(id)) return false;
       d.gold -= p;
       s.sold.push(id);
-      St.addCard(id);
+      St.gainCard(id);
       St.save();
       return true;
     },
@@ -735,7 +827,7 @@
         }
         case 'card': {
           var id = St.rollEventCards(1, op.minRarity, op.rarity)[0];
-          if (id) { St.addCard(id); res.log.push('카드 획득: ' + D.cardById[id].name + ' (' + G.RARITY_NAME[D.cardById[id].rarity] + ')'); res.gotCard = id; }
+          if (id) { St.gainCard(id); res.log.push('카드 획득: ' + D.cardById[id].name + ' (' + G.RARITY_NAME[D.cardById[id].rarity] + ')'); res.gotCard = id; }
           else { d.gold += 30; res.log.push('얻을 카드가 없어 골드 +30'); }
           break;
         }
@@ -813,7 +905,7 @@
         } else at = pool.filter(function (c) { return rarityIdx(c.rarity) >= rarityIdx(minRarity || 'common'); });
         if (!at.length) at = pool;
         if (!at.length) break;
-        out.push(G.rng.pick(at).id);
+        out.push(St.pickCandidate(at).id);
       }
       return out;
     },
@@ -825,7 +917,7 @@
     eventTakeCard: function (id) {
       var res = St.node().result;
       if (!res || !res.cards) return false;
-      if (id && res.cards.indexOf(id) >= 0) { St.addCard(id); res.log.push('카드 획득: ' + D.cardById[id].name); }
+      if (id && res.cards.indexOf(id) >= 0) { St.gainCard(id); res.log.push('카드 획득: ' + D.cardById[id].name); }
       res.cards = null;
       St.save();
       return true;
@@ -933,7 +1025,7 @@
         joined = def.join;
         d.characters.push(def.join);
         D.cards.forEach(function (c) { if (c.basic && c.owner === def.join && !St.owns(c.id)) d.cards.push(c.id); });
-        d.decks[def.join] = St.ownedOf(def.join);
+        d.decks[def.join] = St.starterDeck(def.join);
         if (d.party.length < 3) d.party.push(def.join);
       }
       var ending = n === D.stages.length;

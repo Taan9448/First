@@ -355,7 +355,7 @@
     if (r.pending) return Meta.reward();
     var node = St.node();
     if (!node) return Meta.map();
-    if (node.type === 'rest') return r.upgrades ? Meta.upgrade() : Meta.rest();
+    if (node.type === 'rest') return r.upgrades ? Meta.upgrade() : r.purges ? (St.data.run.purges = 0, Meta.rest()) : Meta.rest();
     if (node.type === 'shop') return Meta.shop();
     if (node.type === 'event' && !(node.result && node.result.fight && !node.result.cards && !r.upgrades)) return Meta.event();
     if (node.type === 'treasure' && !(node.result && node.result.ambush)) return Meta.treasure();
@@ -403,7 +403,7 @@
       return;
     }
     var m = UI.modal('<h2>패배…</h2>' + (names ? '<p class="died">' + names + '은(는) 돌아오지 못했다.</p>' : '') +
-      '<p>스테이지를 처음부터 다시 시작한다.<br>얻은 카드·골드·유물은 그대로 남는다.</p>' +
+      '<p>스테이지를 처음부터 다시 시작한다. 스테이지 덱은 준비 덱으로 돌아가고,<br>골드 ' + (lost.goldLost || 0) + '을(를) 잃었다. 처음 얻은 카드·강화·유물은 남는다.</p>' +
       '<div class="row" style="justify-content:center"><button class="btn gold ok">맵으로</button></div>', 'result lose');
     m.querySelector('.ok').onclick = function () { UI.closeModal(m); Meta.map(); };
   }
@@ -426,7 +426,7 @@
       var deckSize = St.battleDeck(pick).length;
       el.innerHTML = topbar('파티 편성') +
         '<div class="meta-body"><span class="ribbon">출전할 동료를 최대 3명 고른다</span><div class="row heroes" style="justify-content:center;gap:14px">' + heroes + locked + '</div>' +
-        '<div class="deck-count" data-tip="전투 덱 = 고른 동료들의 덱 + 공용 덱 ' + ((d.decks.common || []).length) + '장<br>덱마다 ' + e.deckMin + '~' + e.deckMax + '장 (오른쪽 위 덱 메뉴에서 편집)">' +
+        '<div class="deck-count" data-tip="' + (St.runDecks() ? '이번 스테이지 덱 = 고른 동료들의 스테이지 덱 + 공용 스테이지 덱' : '전투 덱 = 고른 동료들의 준비 덱 + 공용 준비 덱 ' + ((d.decks.common || []).length) + '장<br>준비 덱마다 ' + e.deckMin + '~' + e.deckMax + '장 (오른쪽 위 덱 메뉴에서 편집)') + '">' +
         UI.icon('deck') + '<b>' + deckSize + '</b><span>장</span></div>' +
         '<div class="row"><button class="btn back">뒤로</button><button class="btn gold ok" ' + (pick.length ? '' : 'disabled') + '>' + okLabel + '</button></div></div>';
       backdrop(el, runTheme());
@@ -482,16 +482,18 @@
     var skr = el.querySelector('.skip-relic');
     if (skr) skr.onclick = function () { St.takeRelic(null); el.querySelector('.relic-tiles.choose').innerHTML = '<p class="dim">유물을 받지 않았다.</p>'; skr.remove(); };
     var box = el.querySelector('.reward-cards');
+    var runSize = St.runDeckList().length;
+    el.querySelector('.deck-note').textContent = '고른 카드는 이번 스테이지 덱(지금 ' + runSize + '장)에 들어간다. 덱이 두꺼워지면 좋은 카드가 덜 잡힌다.';
     p.cards.forEach(function (id) {
-      var c = UI.cardEl(D.cardById[id], { static: true });
+      var c = UI.cardEl(St.cardDef(id), { static: true }), isNew = !St.owns(id);
+      if (isNew) c.appendChild(UI.el('div', 'ctemp new', '<span>NEW</span>'));
       c.onclick = function () {
         chosen = id;
         UI.$$('.card', box).forEach(function (x) { x.classList.toggle('selected', x === c); });
         el.querySelector('.take').disabled = false;
-        var owner = D.cardById[id].owner, deck = St.data.decks[owner] || [];
-        el.querySelector('.deck-note').textContent = deck.length < D.economy.deckMax ?
-          (owner === 'common' ? '공용' : charDef(owner).name) + ' 덱에 바로 들어간다 (' + (deck.length + 1) + '/' + D.economy.deckMax + ')' :
-          '덱이 가득 차서 보유만 한다. 오른쪽 위 \'덱\'에서 바꿔 넣을 수 있다.';
+        var owner = D.cardById[id].owner;
+        el.querySelector('.deck-note').textContent = (owner === 'common' ? '공용' : charDef(owner).name) + ' 카드 · 스테이지 덱 ' + runSize + ' → ' + (runSize + 1) + '장' +
+          (isNew ? ' · 처음 얻는 카드라 보유 카드에도 남는다' : '');
       };
       c.ondblclick = function () { finish(id); };
       box.appendChild(c);
@@ -522,6 +524,8 @@
       (mods.noRestHeal ? '혈마의 관: 휴식으로 회복할 수 없다' : '동료 전원 체력 ' + e.restPct * 100 + '% 회복') + '</small></button>' +
       '<button class="choice up" ' + (St.upgradable().length ? '' : 'disabled') + '><i class="ico" style="' + UI.iconStyle('anvil') + '"></i><span>강화</span><small>' +
       (St.upgradable().length ? '보유 카드 1장 강화' : '강화할 카드가 없다') + '</small></button>' +
+      '<button class="choice purge" ' + (St.canRemove() ? '' : 'disabled') + '><i class="ico" style="' + UI.iconStyle('scroll') + '"></i><span>정리</span><small>' +
+      (St.canRemove() ? '스테이지 덱에서 카드 1장 빼기' : '덱이 ' + e.runDeckMin + '장이라 더 뺄 수 없다') + '</small></button>' +
       '</div><div class="panel-box"><div class="party-row">' + d.characters.map(miniHero).join('') + '</div></div>' +
       '<div class="row"><button class="btn party">파티 편성</button><button class="btn back">맵으로</button></div></div>';
     backdrop(el, runTheme());
@@ -532,6 +536,13 @@
       m.querySelector('.ok').onclick = function () { UI.closeModal(m); nodeDone(info); };
     };
     el.querySelector('.up').onclick = function () { St.restUpgrade(); Meta.upgrade(); };
+    el.querySelector('.purge').onclick = function () {
+      St.restPurgeStart();
+      Meta.pickRunCard('정리', '스테이지 덱에서 뺄 카드 1장을 고른다. 이번 스테이지에서만 빠지고, 다음 스테이지에는 준비 덱 그대로 돌아온다.', '빼기', function (id) {
+        var out = St.restPurge(id);
+        if (out) { SND('buff'); nodeDone(out.info); }
+      }, function () { St.data.run.purges = 0; St.save(); Meta.rest(); });
+    };
     el.querySelector('.party').onclick = function () { Meta.party(Meta.rest, '확인', Meta.rest); };
     el.querySelector('.back').onclick = function () { Meta.map(); };
     UI.show('camp');
@@ -549,7 +560,7 @@
     if (!r || !r.upgrades) return after();
     var owners = ['all'].concat(d.characters, ['common']);
     var list = St.upgradable().filter(function (id) { return upFilter === 'all' || D.cardById[id].owner === upFilter; });
-    var inDeck = function (id) { var o = D.cardById[id].owner; return (d.decks[o] || []).indexOf(id) >= 0; };
+    var inDeck = function (id) { return St.inRunDeck(id); };
     list.sort(function (a, b) { return (inDeck(b) - inDeck(a)) || (a < b ? -1 : 1); });
     el.innerHTML = topbar('카드 강화') + '<div class="meta-body">' +
       '<h1 class="big-title">카드 강화</h1><p class="dim">카드 1장을 골라 한 단계 강화한다(최대 ' + G.Upgrade.MAX + '단계). 2단계부터는 수치와 함께 각인이 붙는다. 강화는 그 카드에 영구히 남는다. (남은 강화 ' + r.upgrades + ')</p>' +
@@ -736,6 +747,40 @@
     });
   };
 
+  // ================= 스테이지 덱에서 카드 고르기(19단계: 정리·제거·복제) =================
+  Meta.pickRunCard = function (title, desc, okLabel, onPick, onCancel) {
+    var el = screen('camp'), chosen = null, rd = St.runDecks() || {};
+    var owners = St.data.party.concat(['common']).concat(Object.keys(rd).filter(function (o) { return o !== 'common' && St.data.party.indexOf(o) < 0; }));
+    el.innerHTML = topbar(title) + '<div class="meta-body">' +
+      '<h1 class="big-title">' + title + '</h1><p class="dim">' + U.esc(desc) + '</p>' +
+      '<div class="pick-groups"></div>' +
+      '<div class="row"><button class="btn back">취소</button><button class="btn gold ok" disabled>' + okLabel + '</button></div></div>';
+    backdrop(el, runTheme());
+    var wrap = el.querySelector('.pick-groups');
+    owners.forEach(function (o) {
+      var list = (rd[o] || []).slice().sort();
+      if (!list.length) return;
+      var inParty = o === 'common' || St.data.party.indexOf(o) >= 0;
+      wrap.appendChild(UI.el('h3', 'pick-h', (o === 'common' ? '공용' : charDef(o).name) + ' <span class="dim">' + list.length + '장' + (inParty ? '' : ' · 지금 편성 밖') + '</span>'));
+      var grid = UI.el('div', 'up-grid pick-grid');
+      list.forEach(function (id) {
+        var c = UI.cardEl(St.cardDef(id), { static: true });
+        c.classList.add('mini');
+        c.onclick = function () {
+          chosen = id;
+          UI.$$('.card', wrap).forEach(function (x) { x.classList.toggle('selected', x === c); });
+          el.querySelector('.ok').disabled = false;
+        };
+        c.ondblclick = function () { chosen = id; onPick(id); };
+        grid.appendChild(c);
+      });
+      wrap.appendChild(grid);
+    });
+    el.querySelector('.ok').onclick = function () { if (chosen) onPick(chosen); };
+    el.querySelector('.back').onclick = onCancel;
+    UI.show('camp');
+  };
+
   // ================= 상점 =================
   Meta.shop = function () {
     var d = St.data, s = St.openShop(), el = screen('camp'), e = D.economy;
@@ -753,6 +798,8 @@
       '<div class="row">' +
       '<button class="btn heal" ' + (s.healed || d.gold < e.healCost ? 'disabled' : '') + '>치료: 전원 ' + e.healPct * 100 + '% 회복 (' + e.healCost + ' 골드)' + (s.healed ? ' · 완료' : '') + '</button>' +
       '<button class="btn refresh" ' + (d.gold < e.refreshCost ? 'disabled' : '') + '>진열 새로고침 (' + e.refreshCost + ' 골드)</button>' +
+      '<button class="btn remove" ' + (d.gold < St.removeCost() || !St.canRemove() ? 'disabled' : '') + ' data-tip="스테이지 덱에서 한 장을 뺀다. 이 스테이지에서 쓸 때마다 ' + e.removeStep + ' 골드씩 오른다">카드 제거 (' + St.removeCost() + ' 골드)</button>' +
+      '<button class="btn dup" ' + (s.duped || d.gold < e.dupCost ? 'disabled' : '') + ' data-tip="스테이지 덱의 카드 한 장을 한 장 더. 상점마다 한 번">카드 복제 (' + e.dupCost + ' 골드)' + (s.duped ? ' · 완료' : '') + '</button>' +
       '<button class="btn party">파티 편성</button>' +
       '<button class="btn gold leave">상점 나가기</button></div></div>';
     backdrop(el, runTheme());
@@ -760,7 +807,8 @@
     s.cards.forEach(function (id) {
       var sold = s.sold.indexOf(id) >= 0, price = St.price(id);
       var wrap = UI.el('div', 'shop-item');
-      var c = UI.cardEl(D.cardById[id], { static: true });
+      var c = UI.cardEl(St.cardDef(id), { static: true });
+      if (!St.owns(id)) c.appendChild(UI.el('div', 'ctemp new', '<span>NEW</span>'));
       if (sold) c.classList.add('unplayable');
       wrap.appendChild(c);
       var tag = UI.el('div', 'price ' + (sold ? 'sold' : d.gold < price ? 'poor' : ''),
@@ -780,6 +828,18 @@
     };
     el.querySelector('.heal').onclick = function () { if (St.shopHeal()) Meta.shop(); };
     el.querySelector('.refresh').onclick = function () { if (St.shopRefresh()) Meta.shop(); };
+    el.querySelector('.remove').onclick = function () {
+      Meta.pickRunCard('카드 제거', '스테이지 덱에서 뺄 카드를 고른다(' + St.removeCost() + ' 골드). 다음 스테이지에는 준비 덱 그대로 돌아온다.', '제거', function (id) {
+        if (St.shopRemove(id)) SND('coin');
+        Meta.shop();
+      }, Meta.shop);
+    };
+    el.querySelector('.dup').onclick = function () {
+      Meta.pickRunCard('카드 복제', '스테이지 덱에서 한 장 더 넣을 카드를 고른다(' + e.dupCost + ' 골드).', '복제', function (id) {
+        if (St.shopDuplicate(id)) SND('coin');
+        Meta.shop();
+      }, Meta.shop);
+    };
     el.querySelector('.party').onclick = function () { Meta.party(Meta.shop, '확인', Meta.shop); };
     el.querySelector('.leave').onclick = function () { nodeDone(St.leaveShop()); };
     UI.show('camp');

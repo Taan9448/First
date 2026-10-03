@@ -1250,3 +1250,11 @@ body.fx-low .hand .card .cin, body.fx-low .intent, body.fx-low .title-bg, body.f
 @media (prefers-reduced-motion: reduce) {
   .hand .card .cin, .intent, .title-bg, .lb-bg, .logo, .token { animation: none !important; }
 }
+
+/* 19단계: 스테이지 덱 — 처음 얻는 카드 표시, 정리·제거·복제 고르기 */
+.card .ctemp.new span { background: var(--gold); color: #2a1400; }
+.pick-groups { width: min(1100px, 92vw); max-height: 56vh; overflow: auto; display: flex; flex-direction: column; gap: 6px; }
+.pick-groups .pick-h { margin: 6px 0 0; font-size: 1em; }
+.pick-groups .pick-grid { max-height: none; overflow: visible; --ch: 130px; padding: 4px 10px; }
+.pick-grid .card.selected .cin { filter: drop-shadow(0.15em 0 0 var(--gold)) drop-shadow(-0.15em 0 0 var(--gold)) drop-shadow(0 0.15em 0 var(--gold)) drop-shadow(0 -0.15em 0 var(--gold)); }
+.deck-body .grid.run { display: flex; flex-wrap: wrap; gap: 10px; --ch: 140px; }

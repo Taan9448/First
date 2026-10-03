@@ -160,6 +160,13 @@ async function fight(b) {
 // ---------------------------------------------------------------- 캠페인
 function rarityIdx(id) { return G.RARITIES.indexOf(D.cardById[id].rarity); }
 function rebuildDecks() { const d = St.data; d.characters.concat(['common']).forEach(o => { d.decks[o] = St.autoBuild(o); }); }
+// 19단계: 스테이지 덱을 키울지 — 고급 이상이거나 덱이 얇으면 받는다
+function wantCard(id) { return rarityIdx(id) >= 1 || St.runDeckList().length < 14; }
+// 제거할 카드: 기본 카드 중 일반 공격·방어 순
+function worstCard() {
+  const list = St.battleDeck(St.data.party).map(x => x.split('+')[0]).filter(id => D.cardById[id].basic);
+  return list.sort((a, b) => (D.cardById[a].type === 'attack') - (D.cardById[b].type === 'attack') || (a < b ? -1 : 1))[0] || null;
+}
 function chooseParty(order) { St.setParty(order.filter(id => St.data.characters.includes(id)).slice(0, 3)); }
 function avgHp() {
   const d = St.data, hp = d.characters.map(id => d.run.hp[id] / D.characters.find(c => c.id === id).hp);
@@ -168,7 +175,7 @@ function avgHp() {
 // 강화: 덱에 든 카드 중 등급이 높은 것부터
 function useUpgrades() {
   while (St.data.run.upgrades) {
-    const d = St.data, inDeck = id => (d.decks[D.cardById[id].owner] || []).includes(id);
+    const inDeck = id => St.inRunDeck(id);
     const list = St.upgradable().sort((a, b) => (inDeck(b) - inDeck(a)) || rarityIdx(b) - rarityIdx(a));
     if (!list.length) { St.skipUpgrade(); break; }
     St.upgradeCard(list[0]);
@@ -181,6 +188,7 @@ async function expedition(order) {
   for (let n = 1; n <= 10; n++) {
     const rec = { stage: n, tries: 0, lostAt: [], turns: [], forced: false };
     chooseParty(order);
+    rebuildDecks();
     St.startStage(n);
     let done = false;
     while (!done) {
@@ -203,9 +211,10 @@ async function expedition(order) {
       }
       if (node.type === 'shop') {
         const s = St.openShop();
-        s.cards.slice().sort((a, b) => rarityIdx(b) - rarityIdx(a)).forEach(id => { if (St.data.gold - St.price(id) >= 0) St.buy(id); });
+        s.cards.slice().sort((a, b) => rarityIdx(b) - rarityIdx(a)).forEach(id => { if (St.data.gold - St.price(id) >= 0 && (rarityIdx(id) >= 2 || St.runDeckList().length < 16)) St.buy(id); });
+        const w = worstCard();
+        if (w && St.data.gold >= St.removeCost() + 40 && St.runDeckList().length > 12) St.shopRemove(w);
         if (St.leaveShop()) done = true;
-        rebuildDecks();
         continue;
       }
       if (node.type === 'treasure' && !St.openTreasure().ambush) { if (St.leaveTreasure()) done = true; continue; }
@@ -214,7 +223,6 @@ async function expedition(order) {
         const res = St.eventChoose(St.canChoose(ev.choices[0]) ? 0 : 1);
         if (res.cards) St.eventTakeCard(res.cards.sort((a, b) => rarityIdx(b) - rarityIdx(a))[0]);
         useUpgrades();
-        rebuildDecks();
         if (!res.fight && St.eventFinish()) done = true;
         continue;
       }
@@ -230,9 +238,8 @@ async function expedition(order) {
         if (res.ending) { done = true; break; }
         const p = St.data.run.pending;
         if (p.relicChoice && p.relicChoice.length) St.takeRelic(p.relicChoice[0]);
-        const pick = p.cards.slice().sort((a, b) => rarityIdx(b) - rarityIdx(a))[0] || null;
-        const clear = St.takeReward(pick);
-        rebuildDecks();
+        const best = p.cards.slice().sort((a, b) => rarityIdx(b) - rarityIdx(a))[0] || null;
+        const clear = St.takeReward(best && wantCard(best) ? best : null);
         if (clear) done = true;
       } else {
         rec.tries++;

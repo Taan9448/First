@@ -3,7 +3,7 @@
 (function () {
   'use strict';
   var G = Game;
-  var VERSION = 5;
+  var VERSION = 6;
   var memory = {};
 
   function store() {
@@ -48,6 +48,26 @@
       var map = {};
       if (Array.isArray(d.upgraded)) d.upgraded.forEach(function (id) { map[id] = 1; });
       d.upgraded = map;
+      return d;
+    },
+    // v5 → v6 (19단계): 준비 덱이 4~8장으로 줄었다. 넘치면 등급이 높은 카드부터 8장을 남기고, 진행 중인 스테이지에는 스테이지 덱을 만든다
+    5: function (d) {
+      var E = G.Data.economy, byId = G.Data.cardById, R = G.RARITIES || [];
+      var rank = function (id) { return byId[id] ? R.indexOf(byId[id].rarity) : -1; };
+      d.decks = d.decks || {};
+      Object.keys(d.decks).forEach(function (o) {
+        var deck = (d.decks[o] || []).filter(function (id) { return byId[id]; });
+        if (deck.length > E.deckMax) deck = deck.slice().sort(function (a, b) { return rank(b) - rank(a) || (a < b ? -1 : 1); }).slice(0, E.deckMax);
+        var owned = (d.cards || []).filter(function (id) { return byId[id] && byId[id].owner === o && deck.indexOf(id) < 0; });
+        while (deck.length < E.deckMin && owned.length) deck.push(owned.shift());
+        d.decks[o] = deck;
+      });
+      if (d.run) {
+        d.run.decks = {};
+        Object.keys(d.decks).forEach(function (o) { d.run.decks[o] = d.decks[o].slice(); });
+        d.run.purges = 0;
+        d.run.removed = 0;
+      }
       return d;
     }
   };
@@ -145,6 +165,8 @@
       d.buffs = (d.buffs || []).filter(function (b) {
         return b && b.battles > 0 && (!b.mirror || chars.indexOf(b.mirror) >= 0) && (!b.card || cards[b.card]);
       });
+      if (d.run && d.run.decks) Object.keys(d.run.decks).forEach(function (k) { d.run.decks[k] = (d.run.decks[k] || []).filter(okCard); });
+      if (d.run && !d.run.decks) d.run = null;
       if (d.run && (!Array.isArray(d.run.map) || !d.run.map.every(function (col) { return Array.isArray(col) && col.every(function (n) { return n && Array.isArray(n.next); }); }))) d.run = null;
       d.codex = d.codex || { monsters: {} };
       d.codex.monsters = d.codex.monsters || {};

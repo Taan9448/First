@@ -42,6 +42,7 @@ function invariants(where) {
   check(new Set(d.cards).size === d.cards.length, where + ': 카드 중복 보유');
   Object.keys(d.decks).forEach(o => {
     check(d.decks[o].length <= e.deckMax, where + ': ' + o + ' 덱 ' + d.decks[o].length + '장 > 최대');
+    if (d.run && d.run.decks) check(St.runDeckList().length >= e.runDeckMin || St.runDeckList().length >= 10, where + ': 스테이지 덱이 너무 적다');
     d.decks[o].forEach(id => check(d.cards.includes(id), where + ': 덱에 미보유 카드 ' + id));
   });
   check(d.party.length >= 1 && d.party.length <= 3, where + ': 파티 인원');
@@ -88,7 +89,7 @@ function invariants(where) {
     G.Save.clear();
     St.newGame();
     check(St.data.cards.length === 23, '새 게임 보유 카드 23장 (' + St.data.cards.length + ')');
-    check(St.data.decks.kai.length === 8 && St.data.decks.common.length === 15, '시작 덱 카이 8 + 공용 15');
+    check(St.data.decks.kai.length === 5 && St.data.decks.common.length === 5, '시작 준비 덱 하린 5 + 공용 5');
     invariants('새 게임');
 
     for (let n = 1; n <= 10; n++) {
@@ -158,7 +159,7 @@ function invariants(where) {
           continue;
         }
         const opts = St.battleOptions();
-        check(opts.deck.length >= 12, '전투 덱 12장 이상 (' + opts.deck.length + ')');
+        check(opts.deck.length >= 10, '전투 덱 10장 이상 (' + opts.deck.length + ')');
         if (opts.monsters.some(id => D.monsterById[id].mirror)) mirrors++;
         const b = G.Battle.create(opts);
         if (tries >= 3) { await b.start(); await b.debugKillAll(); kills++; }
@@ -187,7 +188,8 @@ function invariants(where) {
           }
           const p = St.data.run.pending;
           check(p && p.cards.length + p.fill === St.rewardCount(), '보상 후보 자리 수');
-          p.cards.forEach(id => check(!St.owns(id), '보상에 이미 가진 카드 ' + id));
+          p.cards.forEach(id => check(!St.inRunDeck(id), '보상에 스테이지 덱에 이미 있는 카드 ' + id));
+          p.cards.forEach(id => { const o = D.cardById[id].owner; check(o === 'common' || St.data.party.includes(o), '보상은 편성한 동료·공용 카드 ' + id); });
           if (p.kind === 'boss') p.cards.forEach(id => check(['rare', 'epic', 'legendary'].includes(D.cardById[id].rarity), '보스 보상은 희귀 이상 (' + id + ')'));
           if (p.kind === 'elite') p.cards.forEach(id => check(D.cardById[id].rarity !== 'common', '정예 보상은 고급 이상 (' + id + ')'));
           if (p.relic) check(D.relicById[p.relic], '정예 유물 ID (' + p.relic + ')');
@@ -199,13 +201,13 @@ function invariants(where) {
           }
           const pick = G.rng.next() < 0.85 ? p.cards[0] : null;
           const clear = St.takeReward(pick);
-          if (pick) check(St.owns(pick), '보상 카드 획득');
+          if (pick) check(St.owns(pick) && (clear || St.inRunDeck(pick)), '보상 카드 획득(보유 + 스테이지 덱)');
           if (clear) {
             check(clear.stage === n && clear.first, '첫 클리어 정보');
             const def = St.stageDef(n);
             if (def.join) {
               check(clear.joined === def.join && St.data.characters.includes(def.join), def.join + ' 합류');
-              check(St.data.decks[def.join].length === 8, def.join + ' 기본 덱 8장');
+              check(St.data.decks[def.join].length === 5, def.join + ' 시작 준비 덱 5장');
             }
             done = true;
           }
@@ -213,8 +215,9 @@ function invariants(where) {
         } else {
           losses++; tries++;
           const goldBefore = St.data.gold, cardsBefore = St.data.cards.length;
-          St.battleLost(b);
-          check(St.data.run.col === 0 && St.data.gold === goldBefore && St.data.cards.length === cardsBefore, '패배 → 처음부터, 카드·골드 유지');
+          const lost = St.battleLost(b);
+          check(St.data.run.col === 0 && St.data.gold === goldBefore - lost.goldLost && lost.goldLost === Math.floor(goldBefore * D.economy.defeatGold) && St.data.cards.length === cardsBefore, '패배 → 처음부터, 보유 카드 유지 · 골드 ' + D.economy.defeatGold * 100 + '% 잃음');
+          check(JSON.stringify(St.data.run.decks.common) === JSON.stringify(St.data.decks.common), '패배 → 스테이지 덱은 준비 덱으로');
           invariants('스테이지 ' + n + ' 패배 뒤');
         }
       }
@@ -288,6 +291,34 @@ function invariants(where) {
   check(St.battleOptions().deck.includes('D01'), '전투 덱에 합동기');
   check(St.battleOptions().party.every(p => Array.isArray(p.traits)), '전투에 특성 전달');
   St.abandon();
+
+  // 19단계: 스테이지 덱 — 제거·복제·정리, 준비 덱은 그대로
+  {
+    St.data.party = ['kai'];
+    St.data.gold = 500;
+    St.startStage(1); St.autoPick();
+    const before = St.runDeckList().length, prep = St.data.decks.kai.slice();
+    St.data.run.shop = St.openShop();
+    const c1 = St.removeCost();
+    check(St.shopRemove(prep[0]) && St.runDeckList().length === before - 1 && St.data.gold === 500 - c1, '상점 제거: 스테이지 덱에서 1장 · 골드');
+    check(St.removeCost() === c1 + D.economy.removeStep, '제거 값은 쓸 때마다 오른다');
+    check(St.data.decks.kai.join() === prep.join(), '제거해도 준비 덱은 그대로');
+    check(St.shopDuplicate('C01') && St.runDeckList().filter(id => id === 'C01').length === 2 && !St.shopDuplicate('C02'), '복제: 한 장 더, 상점마다 한 번');
+    check(St.battleOptions().deck.filter(id => id.indexOf('C01') === 0).length === 2, '복제한 카드는 전투 덱에 두 장');
+    St.restPurgeStart();
+    const n0 = St.runDeckList().length;
+    check(St.restPurge('C02') && St.runDeckList().length === n0 - 1, '휴식 정리: 공짜로 1장 빼기');
+    while (St.runDeckList().length > D.economy.runDeckMin) St.removeFromRun(St.runDeckList()[0]);
+    check(!St.canRemove() && !St.removeFromRun(St.runDeckList()[0]), '스테이지 덱 최소 장수 아래로는 뺄 수 없다');
+    St.abandon();
+    check(!St.runDecks() && St.battleDeck(['kai']).length === St.data.decks.kai.length + St.data.decks.common.length, '스테이지 밖에서는 준비 덱으로 싸운다');
+    // v5 → v6: 넘치는 준비 덱은 8장으로, 진행 중인 스테이지에는 스테이지 덱
+    const v5 = { version: 5, gold: 1, clearedStage: 2, characters: ['kai'], party: ['kai'], cards: D.cards.filter(c => c.owner === 'kai').map(c => c.id).slice(0, 12),
+      decks: { kai: D.cards.filter(c => c.owner === 'kai').map(c => c.id).slice(0, 12) }, relics: [], upgraded: {}, codex: { monsters: {} }, flags: {},
+      run: { stage: 3, col: 0, path: [], map: [[{ type: 'battle', next: [] }]], hp: { kai: 10 } } };
+    const m6 = G.Save.sanitize(G.Save.migrate(JSON.parse(JSON.stringify(v5))));
+    check(m6.decks.kai.length === D.economy.deckMax && m6.run && m6.run.decks.kai.length === D.economy.deckMax, 'v5 → v6: 준비 덱 8장 · 스테이지 덱');
+  }
 
   // 저장 v1 → v2: 진행 중인 스테이지는 지우고 카드·골드·동료·유물은 유지
   const v1 = { version: 1, gold: 77, clearedStage: 3, characters: ['kai', 'bram'], party: ['kai'], cards: ['K01', 'C01'], decks: { kai: ['K01'], common: ['C01'] },

@@ -220,13 +220,28 @@
     if (inBattle()) return;
     var d = St().data;
     if (deckOwner !== 'common' && d.characters.indexOf(deckOwner) < 0) deckOwner = d.characters[0];
-    var m = win('덱 편집', '<div class="deck-body"></div>', 'deckwin');
+    var m = win(St().runDecks() ? '스테이지 덱' : '덱 편집 · 준비 덱', '<div class="deck-body"></div>', 'deckwin');
     renderDeck(m);
   };
 
   function renderDeck(m) {
     var d = St().data, e = D.economy, body = m.querySelector('.deck-body');
     var owners = d.characters.concat(['common']);
+    // 19단계: 스테이지 중에는 준비 덱을 바꿀 수 없고, 이번 스테이지 덱을 보여 준다
+    var rd = St().runDecks();
+    if (rd) {
+      var ro = owners.filter(function (o) { return rd[o]; });
+      if (ro.indexOf(deckOwner) < 0) deckOwner = ro[0];
+      var cur = (rd[deckOwner] || []).slice().sort(function (a, b) { return a < b ? -1 : 1; });
+      body.innerHTML = tabs(ro.map(function (o) { return [o, ownerName(o) + ' (' + rd[o].length + ')']; }), deckOwner) +
+        '<p class="dim">스테이지 중에는 준비 덱을 바꿀 수 없다. 이번 스테이지 덱은 보상·상점·이벤트로 늘고, 상점의 제거와 휴식의 정리로 줄어든다. 스테이지 전체 ' + St().runDeckList().length + '장 · 지금 편성으로 싸우는 덱 ' + St().battleDeck(d.party).length + '장.</p>' +
+        '<div class="grid in run"></div>';
+      var g = body.querySelector('.grid.in');
+      if (!cur.length) g.innerHTML = '<p class="dim">비어 있다</p>';
+      cur.forEach(function (id) { g.appendChild(UI.cardEl(St().cardDef(id), { static: true })); });
+      UI.$$('.tab', body).forEach(function (b) { b.onclick = function () { deckOwner = b.getAttribute('data-tab'); renderDeck(m); }; });
+      return;
+    }
     var deck = d.decks[deckOwner] || (d.decks[deckOwner] = []);
     var rest = St().ownedOf(deckOwner).filter(function (id) { return deck.indexOf(id) < 0; });
     var sort = function (a, b) {
@@ -235,7 +250,7 @@
     };
     rest.sort(sort);
     body.innerHTML = tabs(owners.map(function (o) { return [o, ownerName(o) + ' (' + (d.decks[o] || []).length + ')']; }), deckOwner) +
-      '<p class="dim">카드를 누르면 덱에 넣거나 뺀다. 덱은 ' + e.deckMin + '~' + e.deckMax + '장. 전투 덱 = 편성한 캐릭터들의 덱 + 공용 덱.</p>' +
+      '<p class="dim">준비 덱: 스테이지에 들고 들어가는 카드. 카드를 누르면 넣거나 뺀다. 덱마다 ' + e.deckMin + '~' + e.deckMax + '장. 스테이지 덱 = 편성한 동료들의 준비 덱 + 공용 준비 덱, 스테이지 안에서 얻은 카드는 거기에 더해진다.</p>' +
       '<div class="deck-cols"><div><h3>덱 <b class="cnt">' + deck.length + '/' + e.deckMax + '</b></h3><div class="grid in"></div></div>' +
       '<div><h3>보유 (덱 밖) ' + rest.length + '장</h3><div class="grid out"></div></div></div>' +
       '<div class="row"><button class="btn auto">자동 구성</button><span class="msg dim"></span></div>';

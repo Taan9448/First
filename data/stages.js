@@ -109,6 +109,14 @@ Game.Data.economy = {
   mirrorGold: 30,         // 거울 속 그림자를 쓰러뜨리면 추가 골드
   downedPct: 0.25,        // 쓰러진 캐릭터는 전투 승리 후 이 비율로 복귀
   shopSize: 5,
-  deckMin: 6, deckMax: 20,
-  autoBuildSize: 15      // 자동 구성은 등급 순으로 이만큼
+  // 19단계 덱빌딩: 준비 덱(캐릭터마다·공용) 4~8장, 처음과 합류할 때는 시작 카드 5장
+  deckMin: 4, deckMax: 8,
+  autoBuildSize: 8,       // 자동 구성은 등급 순으로 이만큼
+  startDeck: 5,
+  starterCommon: ['C01', 'C02', 'C03', 'C05', 'C07'],
+  runDeckMin: 6,          // 스테이지 덱은 이보다 적게 줄일 수 없다
+  removeCost: 50, removeStep: 25,   // 상점 카드 제거: 50, 그 스테이지에서 한 번 쓸 때마다 +25
+  dupCost: 75,            // 상점 카드 복제(상점마다 한 번)
+  newCardWeight: 1.6,     // 보상 후보: 같은 등급 안에서 아직 없는 카드가 나올 가중치
+  defeatGold: 0.15        // 지면 가진 골드의 이만큼을 잃는다
 };
