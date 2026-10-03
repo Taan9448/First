@@ -40,7 +40,9 @@ section('데이터');
   const rs = ur.split(',').map(x => x.trim().slice(2).split('-').map(h => parseInt(h, 16))).map(a => [a[0], a[1] == null ? a[0] : a[1]]);
   const missing = new Set();
   ['index.html', 'css/style.css'].concat(fs.readdirSync(path.join(ROOT, 'data')).map(f => 'data/' + f), fs.readdirSync(path.join(ROOT, 'js')).map(f => 'js/' + f)).forEach(f => {
-    for (const ch of fs.readFileSync(path.join(ROOT, f), 'utf8')) {
+    let src = fs.readFileSync(path.join(ROOT, f), 'utf8');
+    if (f.endsWith('.js')) src = src.replace(/(^|\s)\/\/.*$/gm, '');   // 화면에 나오지 않는 // 주석은 뺀다
+    for (const ch of src) {
       const cp = ch.codePointAt(0);
       if (cp >= 0x20 && cp !== 0xfeff && !rs.some(r => cp >= r[0] && cp <= r[1])) missing.add(ch);
     }

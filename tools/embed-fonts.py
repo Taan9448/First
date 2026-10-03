@@ -16,7 +16,10 @@ def charset():
     s = set(chr(c) for c in range(0x20, 0x7f))
     files = glob.glob(os.path.join(ROOT, 'data', '*.js')) + glob.glob(os.path.join(ROOT, 'js', '*.js')) + [os.path.join(ROOT, 'index.html'), os.path.join(ROOT, 'css', 'style.css')]
     for f in files:
-        s |= set(c for c in open(f, encoding='utf-8').read() if ord(c) >= 0x20 and c not in '﻿')
+        src = open(f, encoding='utf-8').read()
+        if f.endswith('.js'):   # 화면에 나오지 않는 // 주석은 뺀다(test-battle 과 같은 규칙)
+            src = re.sub(r'(^|\s)//.*$', '', src, flags=re.M)
+        s |= set(c for c in src if ord(c) >= 0x20 and c != '\ufeff')
     return ''.join(sorted(s))
 
 def ranges(text):
