@@ -8,7 +8,7 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 global.window = global;
 ['js/core.js', 'data/keywords.js', 'data/characters.js', 'data/cards.js', 'data/monsters.js', 'data/relics.js', 'data/items.js',
- 'data/upgrades.js', 'data/events.js', 'data/bonds.js', 'data/traits.js', 'data/ascension.js', 'data/modes.js', 'js/status.js', 'js/deck.js', 'js/upgrade.js', 'js/battle.js', 'js/effects.js', 'data/fx.js', 'js/fx-pixel.js'].forEach(f => {
+ 'data/upgrades.js', 'data/events.js', 'data/bonds.js', 'data/traits.js', 'data/ascension.js', 'data/modes.js', 'js/status.js', 'js/deck.js', 'js/upgrade.js', 'js/battle.js', 'js/effects.js', 'data/fx.js', 'js/fx-pixel.js', 'data/music.js', 'js/music.js'].forEach(f => {
   vm.runInThisContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), { filename: f });
 });
 const G = global.Game;
@@ -22,6 +22,17 @@ function section(name) { console.log('\n■ ' + name); }
 
 // ---------------------------------------------------------------- 데이터 검사
 section('데이터');
+// 25단계: 배경음악 곡 글자 · 화면 → 곡
+{
+  const errs = G.Music.validate();
+  check(errs.length === 0, '배경음악 곡 글자 (' + errs.slice(0, 5).join(' / ') + ')');
+  check(['lobby', 'forest', 'desert', 'snow', 'volcano', 'castle', 'boss', 'final'].every(id => G.Data.music[id]), '배경음악 8곡');
+  const ev = G.Music.parse({ inst: 'bass', notes: 'A2 - - . C3 - . .' });
+  check(ev[0].len === 3 && ev[0].notes[0] === 45 && ev[4].len === 2 && ev[4].notes[0] === 48 && !ev[1] && !ev[3], '곡 글자: 늘림·쉼 해석');
+  check(G.Music.token('Am', 'pad').notes.join() === '57,60,64' && G.Music.token('k+h', 'drums').drums.length === 2 && G.Music.token('X9', 'bass') === undefined, '곡 글자: 화음·북·잘못된 글자');
+  check(G.Music.forBattle({ monsters: ['astaroth'], nodeType: 'final' }) === 'final' && G.Music.forBattle({ monsters: ['treant'], nodeType: 'boss', theme: 'forest' }) === 'boss' &&
+    G.Music.forBattle({ monsters: ['slime'], nodeType: 'battle', theme: 'desert' }) === 'desert' && G.Music.forBattle({ monsters: ['slime'], nodeType: 'elite', theme: 'mirror' }) === 'castle', '전투 → 곡(혈마·보스·테마·거울의 방)');
+}
 // 24단계: 내장 글꼴(css/fonts.css)이 게임에 쓰는 글자를 모두 담는지 — 빠졌으면 python3 tools/embed-fonts.py 를 다시 돌린다
 {
   const css = fs.readFileSync(path.join(ROOT, 'css/fonts.css'), 'utf8');

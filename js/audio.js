@@ -73,6 +73,8 @@
   };
 
   G.Audio = {
+    // 25단계: 배경음악(js/music.js)이 같은 오디오 문맥을 쓴다
+    context: function () { var c = ctx(); if (c && c.state === 'suspended') c.resume(); return c; },
     setVolume: function (v) {
       volume = Math.max(0, Math.min(1, v));
       if (master) master.gain.value = volume;

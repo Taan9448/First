@@ -26,6 +26,7 @@
     G.FX.low = s.fx === 'low';
     document.body.classList.toggle('fx-low', G.FX.low);
     G.Audio.setVolume((s.volume == null ? 70 : s.volume) / 100);
+    if (G.Music) G.Music.setVolume((s.bgm == null ? 45 : s.bgm) / 100);
     // 24단계: 글자 크기 · 색약 표기 · 단축키 표시
     document.documentElement.style.setProperty('--ts', String(s.textScale || 1));
     document.body.classList.toggle('text-big', (s.textScale || 1) > 1);
@@ -389,6 +390,7 @@
     var m = win('설정',
       '<div class="settings">' +
       '<div class="set-row"><span>효과음 볼륨</span><div class="row"><input type="range" min="0" max="100" step="5" class="vol" value="' + s.volume + '"><b class="volv">' + s.volume + '</b></div></div>' +
+      '<div class="set-row"><span>배경음악 볼륨</span><div class="row"><input type="range" min="0" max="100" step="5" class="bgm" value="' + (s.bgm == null ? 45 : s.bgm) + '"><b class="bgmv">' + (s.bgm == null ? 45 : s.bgm) + '</b><small class="dim music-now"></small></div></div>' +
       '<div class="set-row"><span>이펙트 강도</span><div class="row"><button class="btn small fx-normal ' + (s.fx !== 'low' ? 'on' : '') + '">보통</button>' +
       '<button class="btn small fx-low ' + (s.fx === 'low' ? 'on' : '') + '">낮음</button><small class="dim">낮음: 파티클 30%, 흔들림·번쩍임 끔</small></div></div>' +
       '<div class="set-row"><span>전투 속도</span><div class="row"><button class="btn small sp1 ' + (s.speed !== 2 ? 'on' : '') + '">1x</button>' +
@@ -408,6 +410,11 @@
     var vol = m.querySelector('.vol');
     vol.oninput = function () { m.querySelector('.volv').textContent = vol.value; };
     vol.onchange = function () { s.volume = +vol.value; X.applySettings(s); G.Audio.play('coin'); };
+    var bgm = m.querySelector('.bgm');
+    bgm.oninput = function () { m.querySelector('.bgmv').textContent = bgm.value; s.bgm = +bgm.value; if (G.Music) G.Music.setVolume(s.bgm / 100); };
+    bgm.onchange = function () { s.bgm = +bgm.value; X.applySettings(s); };
+    var now = G.Music && G.Music.current(), song = now && G.Data.music[now];
+    if (song) m.querySelector('.music-now').textContent = '지금 곡: ' + song.name;
     m.querySelector('.fx-normal').onclick = function () { s.fx = 'normal'; X.applySettings(s); re(); };
     m.querySelector('.fx-low').onclick = function () { s.fx = 'low'; X.applySettings(s); re(); };
     m.querySelector('.sp1').onclick = function () { s.speed = 1; X.applySettings(s); re(); };

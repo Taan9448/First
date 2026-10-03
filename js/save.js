@@ -227,7 +227,7 @@
     },
 
     // ---------------- 설정 ----------------
-    DEFAULT_SETTINGS: { volume: 70, fx: 'normal', speed: 1, textScale: 1, cb: false, hotkeys: true },
+    DEFAULT_SETTINGS: { volume: 70, bgm: 45, fx: 'normal', speed: 1, textScale: 1, cb: false, hotkeys: true },
     loadSettings: function () {
       var s = null;
       try { s = JSON.parse(store().getItem(Save.SETTINGS_KEY)); } catch (e) { s = null; }

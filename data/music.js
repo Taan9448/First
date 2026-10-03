@@ -1,0 +1,126 @@
+// music.js — 배경음악 곡 데이터(25단계). 소리는 js/music.js 가 Web Audio 로 합성한다(음원 파일 없음)
+// 곡: { name, bpm, voices: [ { inst, vol, layer?, notes } ] }
+//   notes: 8분음표 한 칸씩 공백으로 구분한 글자. '|' 는 마디 구분(무시), '.' 쉼, '-' 앞 음을 늘림
+//     음표: 음이름+옥타브(A4, C#5, Bb3) · 화음(pad·stab): 'Am' 'F' 'G7' 'Bb' 'C#m' 'Esus4' 'F#dim'(+옥타브 숫자를 붙이면 그 옥타브, 기본 3)
+//     북(drums): k 큰북 · s 작은북 · h 닫힌 하이햇 · o 열린 하이햇 · t 탐 · b 태고 · g 징. '+' 로 겹친다(k+h)
+//   목소리마다 길이가 달라도 각자 되풀이한다(멜로디 16마디 위에 반주 8마디가 두 번 도는 식)
+//   layer: 'battle' 은 전투 중에만, 'calm' 은 전투가 아닐 때만 들린다(없으면 늘)
+//   inst: pluck(고쟁·비파 뜯는 소리) · flute(죽적) · erhu(이호) · bell(종) · pad(현악 바탕) · stab(짧은 화음) · bass · subbass · brass(금관) · drums
+// 화면 → 곡: 타이틀·로비·스토리 lobby, 던전·보상·휴식 그 스테이지 테마, 전투는 같은 테마 + 전투 층, 보스전 boss, 혈마 final
+(function () {
+  var R = '. . . . . . . .';           // 쉬는 마디
+  var bars = function () { return Array.prototype.slice.call(arguments).join(' | '); };
+  var rest = function (n) { var a = []; for (var i = 0; i < n; i++) a.push(R); return a.join(' | '); };
+  var hold = function (chord) { return chord + ' - - - - - - -'; };   // 한 마디 내내 누르는 화음
+
+  Game.Data.music = {
+    lobby: {
+      name: '청운의 밤', bpm: 72,
+      voices: [
+        { inst: 'pad', vol: 0.07, notes: bars(hold('Am'), hold('F'), hold('C'), hold('G'), hold('Am'), hold('F'), hold('Dm'), hold('E')) },
+        { inst: 'pluck', vol: 0.09, notes: bars('A3 E4 A4 C5 E5 C5 A4 E4', 'F3 C4 F4 A4 C5 A4 F4 C4', 'C4 G4 C5 E5 G5 E5 C5 G4', 'G3 D4 G4 B4 D5 B4 G4 D4',
+          'A3 E4 A4 C5 E5 C5 A4 E4', 'F3 C4 F4 A4 C5 A4 F4 C4', 'D4 A4 D5 F5 A5 F5 D5 A4', 'E3 B3 E4 G#4 B4 G#4 E4 B3') },
+        { inst: 'flute', vol: 0.1, notes: bars('E5 - - - D5 C5 D5 -', 'C5 - A4 - - - . .', 'G4 - C5 - D5 - E5 -', 'D5 - - - - - . .',
+          'E5 - G5 - A5 - G5 E5', 'D5 - C5 - A4 - C5 -', 'D5 - - - F5 - E5 D5', 'B4 - - - - - . .') + ' | ' + rest(8) },
+        { inst: 'bass', vol: 0.11, notes: bars('A2 - - - - - - -', 'F2 - - - - - - -', 'C3 - - - - - - -', 'G2 - - - - - - -', 'A2 - - - - - - -', 'F2 - - - - - - -', 'D2 - - - - - - -', 'E2 - - - - - - -') }
+      ]
+    },
+    // 1·2 스테이지 만독곡 — 무림의 독 골짜기. D 단조 오음계, 뜯는 소리 반복 위에 낮은 죽적
+    forest: {
+      name: '만독곡', bpm: 92,
+      voices: [
+        { inst: 'pad', vol: 0.05, notes: bars(hold('Dm'), hold('C'), hold('Bb'), hold('C'), hold('Dm'), hold('Bb'), hold('Gm'), hold('A')) },
+        { inst: 'pluck', vol: 0.09, notes: bars('D4 . A4 . F4 . A4 C5', 'C4 . G4 . E4 . G4 C5', 'Bb3 . F4 . D4 . F4 Bb4', 'C4 . G4 . E4 . G4 A4',
+          'D4 . A4 . F4 . A4 C5', 'Bb3 . F4 . D4 . F4 Bb4', 'G3 . D4 . Bb3 . D4 G4', 'A3 . E4 . C#4 . E4 A4') },
+        { inst: 'flute', vol: 0.1, notes: bars('A4 - - - C5 - D5 -', 'C5 - - - A4 - G4 -', 'F4 - - - G4 - A4 -', 'G4 - - - - - . .',
+          'A4 - C5 - D5 - F5 -', 'D5 - - - C5 - A4 -', 'G4 - Bb4 - A4 - G4 -', 'A4 - - - - - . .') + ' | ' + rest(8) },
+        { inst: 'bass', vol: 0.12, notes: bars('D2 - - - D2 - A2 -', 'C2 - - - C2 - G2 -', 'Bb1 - - - Bb1 - F2 -', 'C2 - - - C2 - G2 -',
+          'D2 - - - D2 - A2 -', 'Bb1 - - - Bb1 - F2 -', 'G1 - - - G1 - D2 -', 'A1 - - - A1 - E2 -') },
+        { inst: 'drums', vol: 0.16, layer: 'battle', notes: bars('k . h . s . h k', 'k . h . s . h h', 'k . h k s . h .', 'k . h . s t t t') }
+      ]
+    },
+    // 3·4 스테이지 타오르는 사막 — E 프리지안 도미넌트, 우드 같은 뜯는 소리와 다르부카
+    desert: {
+      name: '타오르는 사막', bpm: 100,
+      voices: [
+        { inst: 'pad', vol: 0.05, notes: bars(hold('E'), hold('F'), hold('G'), hold('F'), hold('E'), hold('Dm'), hold('F'), hold('E')) },
+        { inst: 'pluck', vol: 0.09, notes: bars('E3 . B3 E4 F4 . E4 B3', 'F3 . C4 F4 A4 . F4 C4', 'G3 . D4 G4 B4 . G4 D4', 'F3 . C4 F4 A4 . F4 C4',
+          'E3 . B3 E4 F4 . E4 B3', 'D3 . A3 D4 F4 . D4 A3', 'F3 . C4 F4 A4 . F4 C4', 'E3 . B3 E4 G#4 . E4 B3') },
+        { inst: 'erhu', vol: 0.085, notes: bars('E5 - F5 - G#5 - F5 E5', 'F5 - - - E5 - D5 -', 'D5 - E5 - F5 - G#5 -', 'F5 - E5 - - - . .',
+          'B4 - C5 - B4 - G#4 -', 'A4 - - - F4 - G#4 -', 'A4 - B4 - C5 - D5 -', 'E5 - - - - - . .') + ' | ' + rest(8) },
+        { inst: 'bass', vol: 0.12, notes: bars('E2 - - - E2 - - E2', 'F2 - - - F2 - - F2', 'G2 - - - G2 - - G2', 'F2 - - - F2 - - F2',
+          'E2 - - - E2 - - E2', 'D2 - - - D2 - - D2', 'F2 - - - F2 - - F2', 'E2 - - - E2 - - E2') },
+        { inst: 'drums', vol: 0.15, layer: 'battle', notes: bars('k . h s . h k .', 'k . h s h h s .') },
+        { inst: 'drums', vol: 0.08, layer: 'calm', notes: bars('k . . . . . h .', 'k . . . . . h h') }
+      ]
+    },
+    // 5·6 스테이지 얼어붙은 설원 — F 리디안, 느린 종소리와 넓은 바탕
+    snow: {
+      name: '얼어붙은 설원', bpm: 66,
+      voices: [
+        { inst: 'pad', vol: 0.07, notes: bars(hold('F'), hold('G'), hold('F'), hold('G'), hold('Dm'), hold('Em'), hold('F'), hold('G')) },
+        { inst: 'bell', vol: 0.07, notes: bars('F4 . C5 . E5 . A5 .', 'G4 . B4 . D5 . A5 .', 'F4 . C5 . E5 . A5 .', 'G4 . B4 . D5 . B5 .',
+          'D4 . A4 . F5 . A5 .', 'E4 . B4 . G5 . B5 .', 'F4 . C5 . E5 . A5 .', 'G4 . D5 . B5 . D6 .') },
+        { inst: 'flute', vol: 0.09, notes: rest(8) + ' | ' + bars('E5 - - - - - - -', 'D5 - - - B4 - - -', 'C5 - - - A4 - - -', 'B4 - - - - - - -',
+          'A4 - - - F5 - - -', 'E5 - - - D5 - - -', 'C5 - - - E5 - - -', 'D5 - - - - - - -') },
+        { inst: 'bass', vol: 0.1, notes: bars('F2 - - - - - - -', 'G2 - - - - - - -', 'F2 - - - - - - -', 'G2 - - - - - - -', 'D2 - - - - - - -', 'E2 - - - - - - -', 'F2 - - - - - - -', 'G2 - - - - - - -') },
+        { inst: 'drums', vol: 0.14, layer: 'battle', notes: bars('k . . h s . h .', 'k . k h s . h h') }
+      ]
+    },
+    // 7·8 스테이지 용암 화산 — C 화성 단조, 빠른 베이스 반복과 금관
+    volcano: {
+      name: '용암 화산', bpm: 132,
+      voices: [
+        { inst: 'stab', vol: 0.06, notes: bars('Cm . . Cm . . Cm .', 'Ab . . Ab . . Ab .', 'Bb . . Bb . . Bb .', 'G . . G . . G .') },
+        { inst: 'subbass', vol: 0.13, notes: bars('C2 C2 G2 C2 C2 C2 Bb2 G2', 'Ab1 Ab1 Eb2 Ab1 Ab1 Ab1 G2 Eb2', 'Bb1 Bb1 F2 Bb1 Bb1 Bb1 Ab2 F2', 'G1 G1 D2 G1 G1 G1 B1 D2') },
+        { inst: 'brass', vol: 0.075, notes: bars('C5 - - - Eb5 - D5 C5', 'Eb5 - - - - - . .', 'D5 - - - F5 - Eb5 D5', 'B4 - - - - - . .',
+          'G5 - - - F5 - Eb5 -', 'Ab5 - G5 - F5 - Eb5 -', 'F5 - Eb5 - D5 - Bb4 -', 'B4 - - - D5 - G4 -') + ' | ' + rest(4) },
+        { inst: 'drums', vol: 0.17, layer: 'battle', notes: bars('k . h k s . h .', 'k k h . s . h s', 'k . h k s . h .', 'k . t t s t t t') },
+        { inst: 'drums', vol: 0.1, layer: 'calm', notes: bars('t . . . t . . .', 't . . . t . t .') }
+      ]
+    },
+    // 9·10 스테이지 청운문 — G 단조 오음계, 고쟁 아르페지오 위에 이호, 전투에는 태고
+    castle: {
+      name: '청운문', bpm: 84,
+      voices: [
+        { inst: 'pad', vol: 0.06, notes: bars(hold('Gm'), hold('Eb'), hold('F'), hold('D'), hold('Gm'), hold('Eb'), hold('Cm'), hold('D')) },
+        { inst: 'pluck', vol: 0.09, notes: bars('G3 D4 G4 Bb4 D5 Bb4 G4 D4', 'Eb3 Bb3 Eb4 G4 Bb4 G4 Eb4 Bb3', 'F3 C4 F4 A4 C5 A4 F4 C4', 'D3 A3 D4 F#4 A4 F#4 D4 A3',
+          'G3 D4 G4 Bb4 D5 Bb4 G4 D4', 'Eb3 Bb3 Eb4 G4 Bb4 G4 Eb4 Bb3', 'C3 G3 C4 Eb4 G4 Eb4 C4 G3', 'D3 A3 D4 F#4 A4 F#4 D4 A3') },
+        { inst: 'erhu', vol: 0.09, notes: bars('D5 - - - Bb4 - C5 D5', 'G5 - - - F5 - Eb5 -', 'F5 - - - D5 - C5 -', 'D5 - - - - - . .',
+          'G5 - - - A5 - Bb5 -', 'A5 - G5 - F5 - D5 -', 'Eb5 - - - D5 - C5 -', 'D5 - - - - - . .') + ' | ' + rest(8) },
+        { inst: 'bass', vol: 0.12, notes: bars('G2 - - - G2 - D2 -', 'Eb2 - - - Eb2 - Bb1 -', 'F2 - - - F2 - C2 -', 'D2 - - - D2 - A1 -',
+          'G2 - - - G2 - D2 -', 'Eb2 - - - Eb2 - Bb1 -', 'C2 - - - C2 - G1 -', 'D2 - - - D2 - A1 -') },
+        { inst: 'drums', vol: 0.18, layer: 'battle', notes: bars('b . . b . . b .', 'b . b . s . . .', 'b . . b . . b .', 'b . b . s . s s') }
+      ]
+    },
+    // 보스전(정예 보스·중간 보스) — D 단조, 빠르고 무겁게
+    boss: {
+      name: '결전', bpm: 148,
+      voices: [
+        { inst: 'stab', vol: 0.065, notes: bars('Dm . . Dm . Dm . .', 'Bb . . Bb . Bb . .', 'C . . C . C . .', 'A . . A . A . .',
+          'Dm . . Dm . Dm . .', 'Bb . . Bb . Bb . .', 'Gm . . Gm . Gm . .', 'A . . A . A . .') },
+        { inst: 'subbass', vol: 0.13, notes: bars('D2 D2 D3 D2 D2 D3 D2 C3', 'Bb1 Bb1 Bb2 Bb1 Bb1 Bb2 Bb1 A2', 'C2 C2 C3 C2 C2 C3 C2 E2', 'A1 A1 A2 A1 A1 A2 C#2 E2',
+          'D2 D2 D3 D2 D2 D3 D2 C3', 'Bb1 Bb1 Bb2 Bb1 Bb1 Bb2 Bb1 A2', 'G1 G1 G2 G1 G1 G2 G1 Bb1', 'A1 A1 A2 A1 A1 A2 C#2 E2') },
+        { inst: 'brass', vol: 0.08, notes: bars('D5 - A4 - D5 - E5 F5', 'F5 - E5 - D5 - . .', 'E5 - C5 - E5 - F5 G5', 'E5 - - - C#5 - A4 -',
+          'A5 - - - G5 F5 E5 D5', 'F5 - - - D5 - Bb4 -', 'Bb4 - D5 - G5 - F5 E5', 'E5 - - - A4 - C#5 E5') },
+        { inst: 'drums', vol: 0.18, notes: bars('k h s h k k s h', 'k h s h k h s s', 'k h s h k k s h', 'k t s t k t t t') }
+      ]
+    },
+    // 혈마 단목천 — E 단조와 나폴리 화음(F), 합창 같은 바탕과 징·태고
+    final: {
+      name: '혈마', bpm: 120,
+      voices: [
+        { inst: 'pad', vol: 0.08, notes: bars(hold('Em'), hold('C'), hold('Am'), hold('B'), hold('Em'), hold('F'), hold('B'), hold('B')) },
+        { inst: 'subbass', vol: 0.13, notes: bars('E2 - - E2 - - E2 -', 'C2 - - C2 - - C2 -', 'A1 - - A1 - - A1 -', 'B1 - - B1 - - B1 -',
+          'E2 - - E2 - - E2 -', 'F2 - - F2 - - F2 -', 'B1 - - B1 - - B1 -', 'B1 - - B1 - - B1 B1') },
+        { inst: 'erhu', vol: 0.09, notes: bars('B4 - - - E5 - - -', 'G5 - - - F#5 - E5 -', 'E5 - - - C5 - A4 -', 'B4 - - - D#5 - F#5 -',
+          'G5 - - - B5 - A5 G5', 'F5 - - - E5 - C5 -', 'B4 - C5 - B4 - A4 -', 'B4 - - - - - - -') },
+        { inst: 'drums', vol: 0.19, notes: bars('g+b . . b k . s .', 'b . k b s . s s', 'b . . b k . s .', 'b . k b s t t t',
+          'b . . b k . s .', 'b . k b s . s s', 'b . . b k . s .', 'b t b t s s s s') }
+      ]
+    }
+  };
+
+  // 스테이지 테마 → 곡(거울의 방은 청운문)
+  Game.Data.MUSIC_FOR_THEME = { forest: 'forest', desert: 'desert', snow: 'snow', volcano: 'volcano', castle: 'castle', mirror: 'castle' };
+})();

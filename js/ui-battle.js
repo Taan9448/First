@@ -58,6 +58,7 @@
     $('.combo').classList.remove('on');
     field.classList.remove('zoom'); field.style.transform = '';
     UI.show('battle');
+    if (G.Music) G.Music.battle(battleOpts);   // 25단계: 테마 곡 + 전투 층, 보스·혈마는 따로
     battleOpts.cutin = !FX.low; // 16단계: 영웅·전설 카드 컷인(이펙트 '낮음'이면 생략)
     B = G.Battle.create(battleOpts);
     if (G.Extra) G.Extra.refreshMenu();
