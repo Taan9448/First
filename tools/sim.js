@@ -148,9 +148,23 @@ async function playTurn(b) {
   }
 }
 
+// 22단계 소모품: 위급하면 회복·부활·보호막, 정예·보스 첫 턴에는 공격·강화 소모품
+const ITEM_KIND = { I01: 'heal', I12: 'revive', I02: 'guard', I09: 'cleanse', I03: 'boss', I04: 'boss', I07: 'boss', I08: 'boss', I11: 'boss', I05: 'boss', I06: 'boss', I10: 'boss' };
+async function useItems(b) {
+  for (let i = b.items.length - 1; i >= 0 && !b.over(); i--) {
+    const k = ITEM_KIND[b.items[i]], allies = b.alive('ally');
+    const low = allies.some(h => h.hp / h.maxHp < 0.35), down = b.heroes.some(h => h.dead);
+    const danger = allies.reduce((s, h) => s + need(b, h), 0);
+    const ok = (k === 'heal' && low) || (k === 'revive' && down) || (k === 'guard' && danger > 15) ||
+      (k === 'cleanse' && allies.some(h => S.debuffKinds(h) >= 2)) || (k === 'boss' && b.opts.boss && b.turn === 1);
+    if (ok) await b.useItem(i);
+  }
+}
+
 async function fight(b) {
   await b.start();
   while (!b.over() && b.turn < 50) {
+    await useItems(b);
     await playTurn(b);
     if (!b.over()) await b.endTurn();
   }

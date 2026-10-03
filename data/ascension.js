@@ -10,7 +10,9 @@
 Game.Data.ascensionScale = { hpMult: 0.3, dmgMult: 0.12 };
 // 승천 원정의 스테이지 난이도: 이어진 카드·유물·성장 때문에 1 스테이지부터 기본 원정 막바지 수준에서 시작하고,
 // 스테이지마다 조금씩 오른다(기본 원정의 difficulty 표 대신 쓴다)
-Game.Data.ascensionCurve = { hp: 3.8, dmg: 2.1, hpPerStage: 0.04, dmgPerStage: 0.02 };
+Game.Data.ascensionCurve = { hp: 6.0, dmg: 2.6, hpPerStage: 0.05, dmgPerStage: 0.03 };
+// 23단계: 승천을 거듭할수록 유물·강화·성장이 쌓여 빨리 강해지므로, 단계마다 곱으로 더 강해진다(승천 1은 ×1, 2는 ×hp, 3은 ×hp² …, 최대 cap)
+Game.Data.ascensionGrowth = { hp: 1.45, dmg: 1.15, cap: 8 };
 Game.Data.ascension = [
   { n: 1, name: '강해진 적', desc: '모든 적 체력 +10%', mods: { hpMult: 0.10 } },
   { n: 2, name: '변이의 확산', desc: '적 변이 확률 2배', mods: { affixMult: 2 } },

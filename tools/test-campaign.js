@@ -445,12 +445,17 @@ function invariants(where) {
     G.Save.use(1);
     const l1 = G.Save.peek(1);
     check(!!l1 && (l1.mode === 'normal' && l1.gold === 42 && l1.version === G.Save.VERSION), '예전 저장 → 1번 칸, 노말 모드');
-    // 하드: 적 체력·피해 1.5배
+    // 하드: 적 체력·피해 배율 + 규칙(23단계)
     G.Save.use(2); St.load();
     const hm = St.enemyMods(3);
     G.Save.use(3); St.load();
     const nm = St.enemyMods(3);
     check(Math.abs((1 + hm.hpMult) - (1 + nm.hpMult) * D.modes.hard.enemyHp) < 1e-9 && Math.abs((1 + hm.dmgMult) - (1 + nm.dmgMult) * D.modes.hard.enemyDmg) < 1e-9 && D.modes.hard.enemyHp > 1, '하드 모드 적 보정');
+    G.Save.use(2); St.load();
+    const ha = St.ascMods();
+    check(hm.eliteStr === D.modes.hard.rules.eliteStr && hm.triggerStr >= D.modes.hard.rules.triggerStr && ha.restPct === D.modes.hard.rules.restPct && ha.affixMult === D.modes.hard.rules.affixMult && ha.shopPriceMult === D.modes.hard.rules.shopPriceMult, '하드 모드 규칙(정예 힘·회복·변이·상점가)');
+    check(hm.bossHpMult > 0 && D.difficulty.bossHp.length === 10, '정예·보스 체력 추가 보정');
+    G.Save.use(3); St.load();
     // 하드코어: 쓰러진 채 이기면 그 동료는 죽는다
     const d = St.data;
     d.characters = ['kai', 'bram', 'lyra', 'sera']; ['bram', 'lyra', 'sera'].forEach(id => { d.decks[id] = []; });

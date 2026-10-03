@@ -53,6 +53,8 @@
     if (em) {
       var k = 1 + (em.hpMult || 0) + (d.rank !== 'normal' ? em.bossHpMult || 0 : 0) + (d.rank === 'final' ? em.finalHpMult || 0 : 0);
       if (k !== 1) m.maxHp = m.hp = Math.max(1, Math.round(m.maxHp * k));
+      // 23단계(하드): 정예·보스는 힘을 갖고 시작한다
+      if (em.eliteStr && d.rank !== 'normal') m.status.strength = (m.status.strength || 0) + em.eliteStr;
     }
     var a = affix && G.Data.affixes[affix];
     if (a) {

@@ -58,18 +58,21 @@
     // 1단계부터 lv 단계까지의 규칙을 합친다: 비율은 더하고, 배율은 곱하고, 나머지는 높은 단계 값
     ascMods: function (lv) {
       if (lv == null) lv = St.ascLevel();
-      var m = { hpMult: 0, bossHpMult: 0, finalHpMult: 0, dmgMult: 0, triggerStr: 0, affixMult: 1, shopPriceMult: 1, goldMult: 1, doomMult: 1 };
-      var ADD = { hpMult: 1, bossHpMult: 1, finalHpMult: 1, dmgMult: 1, triggerStr: 1 }, MUL = { affixMult: 1, shopPriceMult: 1, goldMult: 1, doomMult: 1 };
+      var m = { hpMult: 0, bossHpMult: 0, finalHpMult: 0, dmgMult: 0, triggerStr: 0, eliteStr: 0, affixMult: 1, shopPriceMult: 1, goldMult: 1, doomMult: 1 };
+      var ADD = { hpMult: 1, bossHpMult: 1, finalHpMult: 1, dmgMult: 1, triggerStr: 1, eliteStr: 1 }, MUL = { affixMult: 1, shopPriceMult: 1, goldMult: 1, doomMult: 1 };
       var per = D.ascensionScale || {};
       m.hpMult += (per.hpMult || 0) * lv;
       m.dmgMult += (per.dmgMult || 0) * lv;
-      (D.ascension || []).forEach(function (a) {
-        if (a.n > lv) return;
-        Object.keys(a.mods).forEach(function (k) {
-          var v = a.mods[k];
-          if (ADD[k]) m[k] += v; else if (MUL[k]) m[k] *= v; else m[k] = v;
+      var merge = function (mods) {
+        Object.keys(mods || {}).forEach(function (k) {
+          var v = mods[k];
+          if (ADD[k]) m[k] = (m[k] || 0) + v; else if (MUL[k]) m[k] = (m[k] == null ? 1 : m[k]) * v;
+          else m[k] = m[k] == null ? v : Math.min(m[k], v);   // restPct · downedPct · rewardCards: 더 엄한 쪽
         });
-      });
+      };
+      (D.ascension || []).forEach(function (a) { if (a.n <= lv) merge(a.mods); });
+      // 23단계: 게임 모드의 규칙(하드)도 같은 방식으로 더한다
+      if (St.data) merge(St.mode().rules);
       return m;
     },
     // 전투에 넘길 적 강화 보정: 스테이지 난이도(data/stages.js 의 difficulty) + 승천
@@ -79,11 +82,15 @@
       if (St.ascLevel() > 0 && curve) {
         hp = curve.hp * (1 + curve.hpPerStage * (stage - 1));
         dmg = curve.dmg * (1 + curve.dmgPerStage * (stage - 1));
+        var gr = D.ascensionGrowth, lv = St.ascLevel() - 1;
+        if (gr && lv > 0) { hp *= Math.min(gr.cap || 99, Math.pow(gr.hp, lv)); dmg *= Math.min(gr.cap || 99, Math.pow(gr.dmg, lv)); }
       }
       // 게임 모드(15단계): 체력·피해 배율을 모두 곱한다
       var md = St.mode(), mh = md.enemyHp || 1, mdg = md.enemyDmg || 1;
-      return { hpMult: (a.hpMult + hp) * mh - 1, bossHpMult: a.bossHpMult * mh, finalHpMult: a.finalHpMult * mh, dmgMult: (a.dmgMult + dmg) * mdg - 1,
-        triggerStr: a.triggerStr, doomMult: a.doomMult };
+      // 23단계: 정예·보스 체력 보정(difficulty.bossHp, 보스전이 너무 빨리 끝나지 않게)
+      var bh = (dif.bossHp ? dif.bossHp[stage - 1] || 1 : 1) - 1;
+      return { hpMult: (a.hpMult + hp) * mh - 1, bossHpMult: (a.bossHpMult + bh * hp) * mh, finalHpMult: a.finalHpMult * mh, dmgMult: (a.dmgMult + dmg) * mdg - 1,
+        triggerStr: a.triggerStr, doomMult: a.doomMult, eliteStr: a.eliteStr || 0 };
     },
     maxAscension: function () { return Math.min((D.ascension || []).length, ((St.data.ascension || {}).best || 0) + 1); },
     // 새 원정: 엔딩을 본 뒤 승천 단계를 골라 1 스테이지부터. 카드·강화·유물·골드·동료·성장·친밀도·도감은 그대로
