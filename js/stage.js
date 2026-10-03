@@ -635,7 +635,8 @@
       if (d.flags.daily) { d.flags.daily.wins++; if (fightType === 'elite') d.flags.daily.elites++; }
       if (node.type === 'final') {
         var info = St.clearStage();
-        d.flags.ended = true;
+        if (info.ending) d.flags.ended = true;
+        if (info.riftEnding) d.flags.riftEnded = true;   // 31단계: 세계의 틈 끝(13 스테이지)
         St.save();
         return { ending: true, clear: info };
       }
@@ -1117,7 +1118,9 @@
         d.decks[def.join] = St.starterDeck(def.join);
         if (d.party.length < 3) d.party.push(def.join);
       }
-      var ending = n === D.stages.length;
+      // 31단계: 엔딩은 본편 마지막(10 스테이지). 세계의 틈 마지막(13)은 두 번째 엔딩
+      var main = D.MAIN_STAGES || D.stages.length;
+      var ending = n === main, riftEnding = n > main && n === D.stages.length;
       if (ending) {
         d.ascension = d.ascension || { current: 0, best: 0 };
         d.ascension.best = Math.max(d.ascension.best || 0, d.ascension.current || 0);
@@ -1125,7 +1128,7 @@
       }
       d.run = null;
       St.save();
-      return { stage: n, first: first, joined: joined, ending: ending, ascension: St.ascLevel() };
+      return { stage: n, first: first, joined: joined, ending: ending, riftEnding: riftEnding, ascension: St.ascLevel() };
     },
 
     // ================= 26단계: 시작 선물 =================

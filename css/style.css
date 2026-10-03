@@ -547,6 +547,7 @@ span.gold.bump { animation: popIn 0.4s steps(4); }
 .field[data-theme="snow"] { --fl0: #dfeaf4; --fl1: #6f86a0; --haze: rgba(220, 240, 255, 0.3); --mote: #ffffff; --glow: rgba(200, 240, 255, 0.25); }
 .field[data-theme="volcano"] { --fl0: #4a2420; --fl1: #140808; --haze: rgba(255, 110, 50, 0.22); --mote: #ffb04a; --glow: rgba(255, 140, 70, 0.25); }
 .field[data-theme="castle"] { --fl0: #4a3a48; --fl1: #100a14; --haze: rgba(220, 70, 90, 0.22); --mote: #ff8a9a; --glow: rgba(255, 110, 130, 0.22); }
+.field[data-theme="rift"] { --fl0: #2e2846; --fl1: #06040e; --haze: rgba(140, 90, 255, 0.22); --mote: #9af0e0; --glow: rgba(120, 240, 210, 0.2); }
 .field .floor { position: absolute; left: 0; right: 0; bottom: 0; height: calc(var(--ch) * 0.78 + 26px + 84px); z-index: 0; pointer-events: none;
   background:
     linear-gradient(transparent 0 7%, rgba(0, 0, 0, 0.18) 7% 8%, transparent 8% 19%, rgba(0, 0, 0, 0.16) 19% 20.5%, transparent 20.5% 37%, rgba(0, 0, 0, 0.14) 37% 39%, transparent 39% 61%, rgba(0, 0, 0, 0.12) 61% 64%, transparent 64%),

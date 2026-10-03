@@ -47,7 +47,10 @@
     // 오늘의 원정
     A('A29', '오늘의 원정', '오늘의 원정에 나선다.', { stat: 'dailyPlays', n: 1 }),
     A('A30', '오늘의 승자', '오늘의 원정을 끝까지 마친다.', { on: 'daily', cleared: true }, 'B06'),
-    A('A31', '한결같이', '오늘의 원정을 7번 마친다.', { stat: 'dailyClears', n: 7 })
+    A('A31', '한결같이', '오늘의 원정을 7번 마친다.', { stat: 'dailyClears', n: 7 }),
+    // 31단계: 세계의 틈
+    A('A32', '틈 너머로', '세계의 틈 11 스테이지를 돌파한다.', { on: 'stageClear', stage: 11 }),
+    A('A33', '천외로', '세계의 틈을 닫는다(13 스테이지 돌파).', { on: 'stageClear', stage: 13 })
   ];
   Game.Data.achievements = list;
   Game.Data.achievementById = Game.util.byId(list);

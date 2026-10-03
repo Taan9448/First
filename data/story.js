@@ -230,7 +230,8 @@
         ['kai', '단목천. 당신이 훔친 건 비급만이 아니야. 사부님의 이름, 내 이름, 두 세계의 평화. 전부 돌려받겠어!']
       ])
     ] },
-    { n: 11, title: '에필로그', en: 'EPILOGUE', scenes: [
+    // 31단계: 에필로그 장 번호를 11 → 20으로 옮겼다(11~13은 세계의 틈 스테이지의 장)
+    { n: 20, title: '에필로그', en: 'EPILOGUE', scenes: [
       S('epilogue', 'epilogue', 'castle', null, [
         [N, '혈마가 흩어지자 붉은 안개가 걷히고, 청운봉에 다시 푸른 구름이 걸렸다.'],
         [N, '청운자는 모든 제자 앞에서 하린의 누명을 벗기고, 그녀를 내문 제자로 맞았다.'],
@@ -248,6 +249,86 @@
         ['ciel', '바람이 거꾸로 불어. …괜찮아, 화살은 맞바람에도 날아가.'],
         ['kai', '몇 번이든 베어 주지. 우리는 여섯이니까.']
       ])
+    ] },
+    // ---------------- 31단계: 세계의 틈(엔딩 뒤) ----------------
+    { n: 11, title: '제11장 · 틈의 관문', en: 'CHAPTER 11', scenes: [
+      S('c11-intro', 'intro', 'rift', null, [
+        [N, '혈마가 흩어진 지 한 달. 청운봉 하늘에 다시 붉은 금이 그어졌다.'],
+        ['ciel', '바람이 거꾸로 불어. 틈이 숨을 쉬고 있어.'],
+        ['lyra', '닫힌 게 아니었어! 틈 안쪽에서 뭔가가 계속 넓히고 있어.'],
+        ['kai', '그럼 들어가서 닫자. 이번엔 우리가 문을 걸어 잠글 차례야.'],
+        [N, '여섯은 틈 속으로 걸어 들어갔다. 발밑에 무림의 바위와 엘단의 모래가 뒤섞여 떠 있었다.']
+      ]),
+      S('c11-boss', 'boss', 'rift', 'rift_warden', [
+        [N, '허공에 뜬 거대한 관문 앞에서 돌로 된 수문장이 눈을 떴다.'],
+        ['rift_warden', '……천외검선의 이름으로. 이 문을 지나는 자는 없다.'],
+        ['kai', '천외검선? 검결을 남기신 분이 이 문을 세우셨다고?'],
+        ['bram', '……눈이 붉다. 저것도 물들었다.']
+      ]),
+      S('c11-outro', 'outro', 'rift', 'rift_warden', [
+        [N, '수문장이 무너지며 붉은 기운이 빠져나갔다. 돌 얼굴에 마지막 빛이 떠올랐다.'],
+        ['rift_warden', '검결을 이은 아이여… 혈마는 아직 이 틈 깊은 곳에 있다. 문을 닫아 다오.'],
+        ['kai', '약속할게요. 천외검선께서 시작하신 일, 제가 끝낼게요.'],
+        ['sera', '혈마… 단목천이 힘을 빌렸다던 그 고대의 마물이요?']
+      ])
+    ] },
+    { n: 12, title: '제12장 · 부서진 두 세계', en: 'CHAPTER 12', scenes: [
+      S('c12-intro', 'intro', 'rift', null, [
+        [N, '틈의 안쪽. 무너진 청운문 전각과 엘단 기사단의 성벽이 뒤엉켜 거꾸로 떠 있다.'],
+        ['bram', '……저 성벽. 은빛 기사단의 성이다. 내가 지키지 못한.'],
+        ['nox', '저기 당가 정원의 돌다리도 있네. 틈이 두 세계를 조금씩 뜯어 먹고 있었던 거야.'],
+        ['ciel', '정령들이 울어. 잃어버린 것들이 전부 여기 쌓여 있대.']
+      ]),
+      S('c12-boss', 'boss', 'rift', 'echo_colossus', [
+        [N, '잔해들이 한데 모여 일어섰다. 한 손에는 청운문의 대검, 한 손에는 은빛 방패.'],
+        ['bram', '……방패는 저렇게 쓰는 게 아니다.'],
+        ['kai', '검도 마찬가지예요. 제대로 보여 줘요, 브리아!']
+      ]),
+      S('c12-outro', 'outro', 'rift', null, [
+        [N, '거상이 무너지자 은빛 방패 하나가 브리아의 발치로 굴러왔다.'],
+        ['bram', '……기사단장의 방패다. 이제야 돌려받았다.'],
+        ['lyra', '틈 한가운데서 맥박이 뛰어. 저 아래야. 전부 저기서 시작된 거야.']
+      ])
+    ] },
+    { n: 13, title: '제13장 · 혈마의 근원', en: 'CHAPTER 13', scenes: [
+      S('c13-intro', 'intro', 'rift', null, [
+        [N, '틈의 밑바닥. 핏빛 바다 위에서 거대한 심장이 고동친다.'],
+        ['sera', '이 기운… 사부님 몸속에 있던 혈고와 같아요. 모든 혈고의 뿌리예요.'],
+        ['nox', '뿌리를 뽑으면 열매도 시들지. 당가 정원사가 늘 하던 말이야.']
+      ]),
+      S('c13-mid', 'mid', 'rift', 'danmok_shade', [
+        [N, '심장 앞에 낯익은 그림자가 서 있었다.'],
+        ['danmok_shade', '사매… 아직도 내 길을 막는가. 혈마는 나를 버렸다. 이번엔 너를 먹겠지.'],
+        ['kai', '사형. 이번엔 끝까지 볼게요. 당신이 고른 길의 끝을.']
+      ]),
+      S('c13-midout', 'midout', 'rift', 'danmok_shade', [
+        [N, '그림자가 흩어지며 한마디를 남겼다.'],
+        ['danmok_shade', '……미안하다, 하린.'],
+        ['kai', '……네. 들었어요, 사형.']
+      ]),
+      S('c13-boss', 'boss', 'rift', 'blood_demon', [
+        [N, '심장이 갈라지며 고대 혈마가 깨어났다. 천 년 전 두 세계를 갈라놓은 바로 그 마물이다.'],
+        ['blood_demon', '작은 검이여. 두 세계는 원래 하나였다. 나는 그 하나를 먹으려 했을 뿐.'],
+        ['ciel', '세상이 둘이 된 건 너 때문이었구나. 그럼 이번엔 둘이 힘을 합쳐 너를 끝낼게.'],
+        ['kai', '검은 하나, 길은 둘, 동료는 여섯. 천외검결 — 마지막 초식이다!']
+      ]),
+      S('c13-outro', 'outro', 'rift', null, [
+        [N, '혈마의 심장이 산산이 부서지고, 붉은 바다가 빛으로 바뀌었다.'],
+        ['lyra', '틈이… 아문다! 공식도 마법진도 없이, 저절로!'],
+        ['sera', '혈고의 뿌리가 사라졌어요. 이제 아무도 그 저주에 시달리지 않아요.']
+      ])
+    ] },
+    { n: 21, title: '세계의 틈 · 에필로그', en: 'TRUE EPILOGUE', scenes: [
+      S('rift-epilogue', 'epilogue', 'rift', null, [
+        [N, '두 세계 사이의 틈은 작은 길 하나만 남기고 아물었다. 바람과 정령만 오갈 수 있는 길이었다.'],
+        ['bram', '……기사단의 방패를 청운봉에 걸어 두겠다. 두 세계를 함께 지킨 증표로.'],
+        ['lyra', '그 길, 내가 지도로 그릴게! 이름은 뭐로 하지?'],
+        ['nox', '당가에선 좋은 길에 이름을 안 붙여. 소문나면 막히거든.'],
+        ['sera', '그래도 기도는 붙여 둘래요. 이 길을 지나는 모두가 무사하기를.'],
+        ['ciel', '정령들이 이름을 지어 줬어. 하늘 밖의 길, 천외로.'],
+        ['kai', '천외로… 좋다. 사부님께도, 천외검선께도 꼭 전할게.'],
+        [N, '그날 이후 무림과 엘단의 사람들은 그 길을 「천외로」라 불렀다.']
+      ])
     ] }
   ];
 
@@ -257,5 +338,5 @@
     ch.scenes.forEach(function (sc) { sc.chapter = ch.n; Game.Data.storyById[sc.id] = sc; });
   });
   // 스테이지를 시작할 때 보이는 장 제목 카드의 영문 이름
-  Game.Data.STAGE_EN = ['VALLEY OF TEN THOUSAND POISONS', 'BLACK WIND FORTRESS', 'SEA OF SAND', 'TOMB OF THE PHARAOH', 'BLIZZARD PASS', 'FROST PALACE', 'BURNING CANYON', 'NEST OF THE FIRE DRAGON', 'GATE OF CHEONGUN', 'ALTAR OF THE BLOOD DEMON'];
+  Game.Data.STAGE_EN = ['VALLEY OF TEN THOUSAND POISONS', 'BLACK WIND FORTRESS', 'SEA OF SAND', 'TOMB OF THE PHARAOH', 'BLIZZARD PASS', 'FROST PALACE', 'BURNING CANYON', 'NEST OF THE FIRE DRAGON', 'GATE OF CHEONGUN', 'ALTAR OF THE BLOOD DEMON', 'GATE OF THE RIFT', 'SHATTERED WORLDS', 'ORIGIN OF THE BLOOD DEMON'];
 })();

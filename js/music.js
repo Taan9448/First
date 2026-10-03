@@ -286,7 +286,7 @@
     },
     forBattle: function (opts) {
       var mons = (opts.monsters || []).map(function (m) { return G.Data.monsterById[m]; }).filter(Boolean);
-      if (mons.some(function (m) { return m.rank === 'final'; })) return 'final';
+      if (mons.some(function (m) { return m.rank === 'final'; })) return mons.some(function (m) { return m.rank === 'final' && m.theme === 'rift'; }) ? 'riftFinal' : 'final';   // 31단계: 고대 혈마
       if (opts.nodeType === 'boss' || opts.nodeType === 'midboss' || (!opts.nodeType && mons.some(function (m) { return m.rank === 'boss'; }))) return 'boss';
       var theme = opts.theme || (mons[mons.length - 1] || {}).theme;
       return G.Data.MUSIC_FOR_THEME[theme] || 'forest';

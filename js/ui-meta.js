@@ -925,7 +925,7 @@
       confirmBox((lv ? '승천 ' + lv : '기본') + ' 원정을 시작할까요? 스테이지 진행이 처음부터 시작된다.', '원정 시작', function () {
         if (St.newExpedition(lv)) {
           UI.wipe();
-          var sc = lv > 0 && St.sceneFor('ascend', 11);
+          var sc = lv > 0 && St.sceneFor('ascend', 20);
           if (sc) Meta.scene(sc, function () { Meta.map(1); }); else Meta.map(1);
         }
       });
@@ -950,10 +950,10 @@
       '<span class="ribbon">STAGE ' + info.stage + ' CLEAR</span>' +
       '<h1 class="big-title">' + D.STAGE_NAME[info.stage - 1] + ' 돌파!</h1>' +
       (info.first ? '' : '<p class="dim">이미 클리어한 스테이지를 다시 깼다.</p>') + join +
-      '<div class="row"><button class="btn gold ok">' + (info.ending ? '엔딩 보기' : '맵으로') + '</button></div></div>';
+      '<div class="row"><button class="btn gold ok">' + (info.ending || info.riftEnding ? '엔딩 보기' : '맵으로') + '</button></div></div>';
     backdrop(el, St.stageDef(info.stage).theme);
     if (info.joined) el.querySelector('.join .sp').appendChild(UI.spriteEl(info.joined, 1.6));
-    el.querySelector('.ok').onclick = function () { if (info.ending) Meta.ending(); else Meta.map(info.stage < D.stages.length ? info.stage + 1 : info.stage); };
+    el.querySelector('.ok').onclick = function () { if (info.riftEnding) Meta.ending('rift'); else if (info.ending) Meta.ending(); else Meta.map(info.stage < D.stages.length ? info.stage + 1 : info.stage); };
     UI.show('clear');
   };
 
@@ -991,21 +991,28 @@
     m.querySelector('.ok').onclick = function () { UI.closeModal(m); Meta.title(); };
   };
 
-  Meta.ending = function () {
-    var ep = St.sceneFor('epilogue', 11);
-    if (ep) return Meta.scene(ep, Meta.ending);
+  // 31단계: kind 'rift' 는 세계의 틈(13 스테이지)을 끝낸 두 번째 엔딩
+  Meta.ending = function (kind) {
+    var rift = kind === 'rift';
+    var ep = St.sceneFor('epilogue', rift ? 21 : 20);   // 31단계: 장 번호 20 = 에필로그, 21 = 세계의 틈 에필로그
+    if (ep) return Meta.scene(ep, function () { Meta.ending(kind); });
     var el = screen('ending');
+    var story = rift ?
+      '<p>고대 혈마가 흩어지고, 세계의 틈이 조용히 아물었다. 두 세계 사이에는 이제 바람이 지나는 작은 길 하나만 남았다.</p>' +
+      '<p class="dim">승천 원정에서는 10 스테이지를 다시 깨면 틈이 다시 열린다.</p>' :
+      '<p>청운봉에 다시 푸른 구름이 걸렸다. 두 세계를 잇는 검, 천외검결의 이야기는 이렇게 끝났다.</p>' +
+      '<p class="dim">로비의 \'스토리\'에서 지나온 장면을 다시 볼 수 있다. 지도 가운데 <b>세계의 틈</b>이 열렸다.</p>';
     el.innerHTML = '<div class="title-bg"></div><div class="title-shade"></div>' +
-      '<div class="title-wrap"><div class="logo-sub">THE END</div><h1 class="logo">원정 완료</h1><div class="logo-line"></div><div class="lineup"></div>' +
-      '<div class="story frame gold"><p>청운봉에 다시 푸른 구름이 걸렸다. 두 세계를 잇는 검, 천외검결의 이야기는 이렇게 끝났다.</p>' +
-      '<p class="dim">로비의 \'스토리\'에서 지나온 장면을 다시 볼 수 있다.</p>' + (St.ascLevel() ? '<p class="asc-done">승천 ' + St.ascLevel() + ' 원정 완료!</p>' : '') +
+      '<div class="title-wrap"><div class="logo-sub">' + (rift ? 'TRUE END' : 'THE END') + '</div><h1 class="logo">' + (rift ? '틈을 닫다' : '원정 완료') + '</h1><div class="logo-line"></div><div class="lineup"></div>' +
+      '<div class="story frame gold">' + story + (St.ascLevel() ? '<p class="asc-done">승천 ' + St.ascLevel() + ' 원정 완료!</p>' : '') +
       '<p class="dim">플레이해 주셔서 감사합니다. 카드·유물·성장을 그대로 가지고 더 어려운 <b>승천</b> 원정을 떠날 수 있다.</p></div>' +
-      '<div class="menu"><button class="btn gold big asc">새 원정 (승천)</button><button class="btn big ok">로비로</button></div></div>';
-    G.Art.scene('castle').then(function (u) { if (u) el.querySelector('.title-bg').style.backgroundImage = 'url(' + u + ')'; });
+      '<div class="menu">' + (rift ? '' : '<button class="btn gold big rift">세계의 틈으로</button>') + '<button class="btn gold big asc">새 원정 (승천)</button><button class="btn big ok">로비로</button></div></div>';
+    G.Art.scene(rift ? 'rift' : 'castle').then(function (u) { if (u) el.querySelector('.title-bg').style.backgroundImage = 'url(' + u + ')'; });
     var line = el.querySelector('.lineup');
-    D.characters.forEach(function (c) { var w = UI.el('div', 'slot'); w.appendChild(UI.spriteEl(c.id, 1.1)); line.appendChild(w); });
+    D.characters.forEach(function (c) { if (St.data.characters.indexOf(c.id) < 0) return; var w = UI.el('div', 'slot'); w.appendChild(UI.spriteEl(c.id, 1.1)); line.appendChild(w); });
     el.querySelector('.ok').onclick = function () { Meta.lobby(); };
     el.querySelector('.asc').onclick = function () { Meta.ascend(); };
+    if (el.querySelector('.rift')) el.querySelector('.rift').onclick = function () { Meta.map((D.MAIN_STAGES || 10) + 1); };
     UI.show('ending');
   };
 })();

@@ -209,10 +209,11 @@ function useUpgrades() {
   }
 }
 
-// 한 원정(스테이지 1~10). 진행 상태는 이어진다
+// 한 원정(스테이지 1~10, 6번째 인자가 rift 면 세계의 틈 11~13까지). 진행 상태는 이어진다
+const LAST = process.argv[6] === 'rift' ? D.stages.length : (D.MAIN_STAGES || 10);
 async function expedition(order) {
   const out = [];
-  for (let n = 1; n <= 10; n++) {
+  for (let n = 1; n <= LAST; n++) {
     const rec = { stage: n, tries: 0, lostAt: [], turns: [], forced: false };
     chooseParty(order);
     rebuildDecks();
@@ -296,9 +297,9 @@ async function campaign(seed, order, ascMax, mode) {
 }
 
 (async () => {
-  // node tools/sim.js [캠페인 수] [시드] [승천 최고 단계]
+  // node tools/sim.js [캠페인 수] [시드] [승천 최고 단계] [normal|hard] [rift]
   const N = +(process.argv[2] || 12), seed0 = +(process.argv[3] || 1), ascMax = +(process.argv[4] || 0), mode = process.argv[5] || 'normal';
-  const mk = () => { const a = []; for (let n = 1; n <= 10; n++) a.push({ attempts: 0, first: 0, within3: 0, forced: 0, lost: {}, turns: [], left: [], lostTurn: [] }); return a; };
+  const mk = () => { const a = []; for (let n = 1; n <= LAST; n++) a.push({ attempts: 0, first: 0, within3: 0, forced: 0, lost: {}, turns: [], left: [], lostTurn: [] }); return a; };
   const byAsc = []; for (let lv = 0; lv <= ascMax; lv++) byAsc.push(mk());
   const byOrder = PARTY_ORDERS.map(() => ({ runs: 0, fails: 0 }));
   const perRun = byAsc.map(() => []); // 원정마다 진 횟수(기본 원정 전체 · 승천 단계별)

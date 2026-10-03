@@ -1,4 +1,4 @@
-// monsters.js — 몬스터 57종(테마 51 + 거울의 그림자 6 — 30단계에 그림자 시엘. 28단계에 테마마다 일반 2 · 정예 1 추가)과 행동 패턴. 15단계: 1~2장(만독곡)·9~10장(청운문)은 무림 몬스터
+// monsters.js — 몬스터 67종(테마 51 + 세계의 틈 10 + 거울의 그림자 6 — 30단계에 그림자 시엘, 31단계에 세계의 틈. 28단계에 테마마다 일반 2 · 정예 1 추가)과 행동 패턴. 15단계: 1~2장(만독곡)·9~10장(청운문)은 무림 몬스터
 // 형식은 GAME_DESIGN.md 2.3절. 행동 효과의 대상 기본값은 예고 때 정한 아군 1명('target').
 // 'allAllies' = 아군(플레이어 파티) 전체, 'self' = 자신, 'allMonsters' = 몬스터 전체.
 (function () {
@@ -214,6 +214,52 @@
       { flying: mv('어검 삼연', [dmg(7, { times: 3 })]), wall: mv('검막', [blk(18), selfSt('thornsTemp', 4)]), execute: mv('귀검일섬', [dmg(26)]) },
       ['flying', 'wall', 'execute'], { desc: '죽어서도 검을 놓지 못한 청운문의 옛 호법. 검이 스스로 날아다닌다.' }),
 
+    // ---------------- 31단계: 세계의 틈 (엔딩 뒤 11~13장) — 두 세계의 파편과 고대 혈마의 잔재 ----------------
+    M('rift_wisp', '틈새 혼불', 'rift', 'normal', 48,
+      { flicker: mv('혼불 튀기기', [dmg(5, { times: 2 })]), hex: mv('넋 흔들기', [st('vulnerable', 2), st('weak', 1)]) },
+      ['flicker', 'hex'], { desc: '틈 사이를 떠도는 넋의 불꽃. 무림의 원귀인지 엘단의 정령인지 아무도 모른다.' }),
+    M('void_hound', '공허 사냥개', 'rift', 'normal', 64,
+      { bite: mv('공허 물기', [dmg(12)]), pounce: mv('덮치기', [dmg(6, { times: 2 })]), howl: mv('틈의 울음', [selfSt('strength', 2)]) },
+      ['pounce', 'bite', 'howl'], { desc: '빛을 삼키는 털을 가진 사냥개. 틈을 건너는 자의 냄새를 쫓는다.' }),
+    M('shard_golem', '세계 파편 골렘', 'rift', 'normal', 96,
+      { slam: mv('파편 내려치기', [dmg(16)]), harden: mv('파편 두르기', [blk(16)]) },
+      ['harden', 'slam'], { startStatus: { thorns: 2 }, desc: '청운봉의 바위와 엘단의 얼음이 뒤엉켜 생긴 골렘. 몸에 두 세계의 결이 섞여 있다.' }),
+    M('echo_swordsman', '메아리 검객', 'rift', 'normal', 72,
+      { triple: mv('잔영 삼검', [dmg(5, { times: 3 })]), stance: mv('기수식', [blk(10), selfSt('strength', 1)]) },
+      ['triple', 'stance'], { desc: '틈에 갇힌 옛 무림 고수의 잔상. 검로만 남아 끝없이 같은 초식을 되풀이한다.' }),
+    M('echo_mage', '메아리 마법사', 'rift', 'normal', 62,
+      { flame: mv('잔상 화염', [dmgAll(6), allSt('burn', 1)]), frost: mv('잔상 서리', [st('chill', 2), dmg(5)]), ward: mv('잔상 결계', [blk(10)]) },
+      ['flame', 'frost', 'ward'], { desc: '엘단의 옛 마법사가 남긴 메아리. 주문의 끝맺음만 영원히 되뇐다.' }),
+    M('blood_seed', '혈마의 씨앗', 'rift', 'normal', 54,
+      { pulse: mv('혈맥 고동', [dmgAll(5)]), spit: mv('핏물 뱉기', [dmg(7), st('poison', 2)]), grow: mv('자라기', [selfSt('strength', 2), { op: 'heal', value: 6, target: 'self' }]) },
+      ['pulse', 'spit', 'grow'], { desc: '고대 혈마가 틈 곳곳에 심어 둔 씨앗. 두 세계의 피를 빨며 자란다.' }),
+    M('rift_warden', '틈의 파수꾼', 'rift', 'elite', 190,
+      { gate: mv('관문 내려치기', [dmg(24)]), beam: mv('틈새 광선', [dmgAll(9), allSt('vulnerable', 1)]), seal: mv('봉인 결계', [blk(22), allSt('weak', 1)]) },
+      ['beam', 'gate', 'seal'], { desc: '천외검선이 세계의 틈에 세워 둔 수문장. 혈마의 기운에 물들어 이제는 누구도 들이지 않는다.' }),
+    M('echo_colossus', '두 세계의 거상', 'rift', 'boss', 300,
+      { blade: mv('청운 대검', [dmg(20)]), aegis: mv('은빛 대방패', [blk(26), selfSt('strength', 1)]),
+        quake: mv('세계 진동', [dmgAll(9), allSt('weak', 1)]), duo: mv('검과 방패', [dmg(8, { times: 2 }), blk(10)]) },
+      ['blade', 'quake', 'aegis', 'duo'],
+      { triggers: [{ hpBelow: 0.5, name: '두 세계 합일', effects: [blk(20)], pattern: ['duo', 'quake', 'blade', 'duo'], everyTurn: [selfSt('strength', 1)] }],
+        desc: '틈으로 떨어진 두 세계의 잔해가 뭉쳐 일어선 거상. 한 손에 청운문의 검, 한 손에 은빛 기사단의 방패를 쥐었다.' }),
+    M('danmok_shade', '단목천의 잔영', 'rift', 'boss', 280,
+      { cut: mv('혈마참 · 잔영', [dmg(18)]), clones: mv('혈영분신', [summon('echo_swordsman')]),
+        drain: mv('흡정대법', [dmg(14, { lifesteal: true })]), guard: mv('혈강기', [blk(20), selfSt('strength', 1)]) },
+      ['cut', 'clones', 'drain', 'guard'],
+      { desc: '혈마에게 먹힌 단목천의 마지막 그림자. 원망만 남아 사매의 길을 막는다.' }),
+    M('blood_demon', '고대 혈마', 'rift', 'final', 460,
+      { claw: mv('혈마조', [dmg(20)]), wave: mv('혈해파동', [dmgAll(8), allSt('vulnerable', 1)]),
+        seeds: mv('씨앗 뿌리기', [summon('blood_seed')]), shell: mv('혈각', [blk(24)]),
+        devour: mv('혈식', [dmg(16, { lifesteal: true })]), tear: mv('틈 찢기', [dmgAll(7), allSt('chill', 1), sand(1)]),
+        storm: mv('혈우', [dmg(5, { times: 4 })]), doom: mv('세계 잠식', [dmgAll(32)]) },
+      ['claw', 'wave', 'seeds', 'shell'],
+      { triggers: [
+          { hpBelow: 0.6, name: '2페이즈 — 틈을 삼키다', effects: [blk(20)], pattern: ['tear', 'devour', 'storm', 'wave', 'devour'] },
+          { hpBelow: 0.3, name: '3페이즈 — 세계 잠식', effects: [blk(15), selfSt('doom', 5)],
+            pattern: ['storm', 'devour', 'storm', 'devour', 'storm', 'doom'], everyTurn: [selfSt('strength', 1)] }
+        ],
+        desc: '천 년 전 두 세계를 갈라놓은 마물. 단목천이 빌린 힘의 주인으로, 틈 깊은 곳에서 다시 깨어났다.' }),
+
     // ---------------- 거울의 방 (이벤트 E13): 파티 캐릭터의 그림자 ----------------
     // 그 캐릭터의 대표 카드를 흉내 낸다. 스테이지에 맞춰 체력·힘이 오른다(scaleByStage)
     M('shadow_kai', '그림자 하린', 'mirror', 'elite', 70,
@@ -260,7 +306,12 @@
     sphinx: { startStatus: { spellward: 3 } },
     frost_wyvern: { triggers: [{ hpBelow: 0.5, name: '빙결 포효', effects: [allSt('chill', 3), blk(10)] }] },
     djinn: { startStatus: { scorch: 1 } },
-    ghost_sword: { startStatus: { riposte: 4 }, triggers: [{ hpBelow: 0.4, name: '만검귀종', effects: [selfSt('strength', 3)] }] }
+    ghost_sword: { startStatus: { riposte: 4 }, triggers: [{ hpBelow: 0.4, name: '만검귀종', effects: [selfSt('strength', 3)] }] },
+    // 31단계 세계의 틈
+    rift_warden: { startStatus: { spellward: 4 }, triggers: [{ hpBelow: 0.5, name: '틈 폭주', effects: [selfSt('strength', 3)] }] },
+    echo_colossus: { startStatus: { riposte: 6 } },
+    danmok_shade: { startStatus: { spellward: 4 }, triggers: [{ hpBelow: 0.5, name: '원망', effects: [selfSt('strength', 3), blk(15)] }] },
+    blood_demon: { startStatus: { vengeance: 2, scorch: 1 } }
   };
   list.forEach(function (m) {
     var r = RULES[m.id];

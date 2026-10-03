@@ -249,8 +249,8 @@ function invariants(where) {
     const m = St.ascMods(10);
     check(m.restPct === 0.25 && m.downedPct === 0.1 && m.rewardCards === 2 && m.affixMult === 2 && m.doomMult === 2 && m.triggerStr === 2, '승천 10 규칙 누적');
     check(St.enemyMods(1).hpMult > St.enemyMods(1).dmgMult && St.enemyMods(10).hpMult > St.enemyMods(1).hpMult, '승천 적 보정은 스테이지가 오를수록 큼');
-    // 승천 1 원정을 빠르게(전투는 즉시 승리) 끝까지
-    for (let n = 1; n <= 10; n++) {
+    // 승천 1 원정을 빠르게(전투는 즉시 승리) 끝까지. 31단계: 이어서 세계의 틈(11~13)
+    const quick = async (n) => {
       St.startStage(n);
       let guard = 0, end = null;
       while (!end && guard++ < 60) {
@@ -274,10 +274,27 @@ function invariants(where) {
         check(St.data.run.pending.cards.length + St.data.run.pending.fill === St.rewardCount(), '승천 보상 후보 수');
         end = St.takeReward(null);
       }
+      return end;
+    };
+    for (let n = 1; n <= 10; n++) {
+      if (n === 10) check(!St.canEnter(11) || G.debug, '10 스테이지 전에는 세계의 틈이 잠겨 있다');
+      const end = await quick(n);
       check(end && end.stage === n, '승천 1 · ' + n + ' 스테이지 클리어');
+      if (n === 10) check(end.ending && !end.riftEnding, '10 스테이지가 본편 엔딩');
     }
     check(d.flags.ended && d.ascension.best === 1 && St.maxAscension() === 2, '승천 1 클리어 → 최고 기록 1, 승천 2 열림');
     invariants('승천 1 뒤');
+    // 31단계: 세계의 틈 — 엔딩 뒤 11 스테이지가 열리고, 13 스테이지(최종 보스 고대 혈마)가 두 번째 엔딩
+    check(St.canEnter(11) && !St.canEnter(12), '엔딩 뒤 세계의 틈 11 스테이지가 열린다');
+    check(St.stageDef(13).boss === 'blood_demon' && St.stageDef(13).midboss === 'danmok_shade' && St.stageDef(12).boss === 'echo_colossus', '세계의 틈 보스');
+    for (let n = 11; n <= 13; n++) {
+      const end = await quick(n);
+      check(end && end.stage === n && !end.ending, '세계의 틈 · ' + n + ' 스테이지 클리어');
+      if (n === 13) check(end.riftEnding && d.flags.riftEnded && d.flags.ended && d.clearedStage === 13, '13 스테이지 → 두 번째 엔딩');
+    }
+    check(St.sceneFor('epilogue', 21) && St.sceneFor('epilogue', 21).id === 'rift-epilogue', '세계의 틈 에필로그는 장 21');
+    check(D.storyById['rift-epilogue'] && D.storyById['c11-intro'] && D.storyById['c13-mid'] && D.storyById['c13-midout'], '세계의 틈 장면');
+    invariants('세계의 틈 뒤');
   }
 
   // 성장·친밀도·합동기
@@ -397,7 +414,7 @@ function invariants(where) {
   }
 
   // 스토리(13단계): 데이터 검사
-  const heroIds = D.characters.map(c => c.id), themes = ['forest', 'desert', 'snow', 'volcano', 'castle'];
+  const heroIds = D.characters.map(c => c.id), themes = ['forest', 'desert', 'snow', 'volcano', 'castle', 'rift'];
   D.story.forEach(ch => ch.scenes.forEach(sc => {
     check(themes.includes(sc.bg), '장면 배경 테마: ' + sc.id);
     check(!sc.right || heroIds.includes(sc.right) || D.monsterById[sc.right], '장면 상대: ' + sc.id);
@@ -406,7 +423,7 @@ function invariants(where) {
   }));
   for (let n = 1; n <= D.stages.length; n++) {
     const kinds = D.story.find(c => c.n === n).scenes.map(s => s.kind);
-    check(kinds.includes('intro') && kinds.includes('boss') && (n === D.stages.length || kinds.includes('outro')), n + '장 도입·결전·결말');
+    check(kinds.includes('intro') && kinds.includes('boss') && (n === D.MAIN_STAGES || kinds.includes('outro')), n + '장 도입·결전·결말');
   }
   check(D.storyById['c10-mid'] && D.storyById['c10-midout'] && D.storyById.epilogue && D.storyById.prologue, '중간 보스·에필로그·프롤로그 장면');
   // 스토리: 처음 한 번만 나오고, 본 장면은 저장된다(승천 장면은 매번)
@@ -415,7 +432,7 @@ function invariants(where) {
   check(St.sceneFor('intro', 1).id === 'c1-intro' && St.sceneFor('prologue', 0).id === 'prologue', '장면 찾기');
   St.markStory('c1-intro');
   check(!St.sceneFor('intro', 1) && St.sceneFor('boss', 1), '본 장면은 다시 나오지 않는다');
-  check(St.sceneFor('ascend', 11) && (St.markStory('ascend'), St.sceneFor('ascend', 11)), '승천 장면은 매번');
+  check(St.sceneFor('ascend', 20) && (St.markStory('ascend'), St.sceneFor('ascend', 20)), '승천 장면은 매번');
   const sp = St.storyProgress();
   check(sp.seen === 1 && sp.total > 30, '스토리 진행률 (' + sp.seen + '/' + sp.total + ')');
   St.save();
@@ -464,7 +481,7 @@ function invariants(where) {
     G.Save.use(2); St.load();
     const ha = St.ascMods();
     check(hm.eliteStr === D.modes.hard.rules.eliteStr && hm.triggerStr >= D.modes.hard.rules.triggerStr && ha.restPct === D.modes.hard.rules.restPct && ha.affixMult === D.modes.hard.rules.affixMult && ha.shopPriceMult === D.modes.hard.rules.shopPriceMult, '하드 모드 규칙(정예 힘·회복·변이·상점가)');
-    check(hm.bossHpMult > 0 && D.difficulty.bossHp.length === 10, '정예·보스 체력 추가 보정');
+    check(hm.bossHpMult > 0 && D.difficulty.bossHp.length === D.stages.length && D.difficulty.hp.length === D.stages.length && D.difficulty.dmg.length === D.stages.length, '정예·보스 체력 추가 보정(스테이지마다)');
     G.Save.use(3); St.load();
     // 하드코어: 쓰러진 채 이기면 그 동료는 죽는다
     const d = St.data;

@@ -5,7 +5,7 @@
   var St = function () { return G.Stage; };
 
   var X = G.Extra = {};
-  var THEMES = ['forest', 'desert', 'snow', 'volcano', 'castle', 'mirror'];
+  var THEMES = ['forest', 'desert', 'snow', 'volcano', 'castle', 'rift', 'mirror'];
   var RANK = { normal: '일반', elite: '정예', boss: '보스', final: '최종 보스' };
   var OWNERS = ['kai', 'bram', 'lyra', 'sera', 'nox', 'ciel', 'common'];
 

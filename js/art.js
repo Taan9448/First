@@ -192,6 +192,33 @@
         '<rect y="112" width="400" height="12" fill="#c03040" opacity="0.18"/>' +
         '<rect y="120" width="400" height="30" fill="#2a2030"/><rect y="120" width="400" height="3" fill="#5a3a4a"/>' +
         '<path d="M0 134 H400 M0 142 H400" stroke="#3a2a3a" stroke-width="2"/>';
+    },
+    // 31단계 세계의 틈: 별이 뜬 허공, 가운데 소용돌이 균열, 거꾸로 떠 있는 두 세계의 파편(청운문 전각 · 엘단 성벽), 떠 있는 바닥 섬
+    rift: function () {
+      var o = sky('#05030f', '#1c1238');
+      var r = frnd(21);
+      for (var i = 0; i < 46; i++) o += '<rect x="' + (r() * 400).toFixed(0) + '" y="' + (r() * 110).toFixed(0) + '" width="1.5" height="1.5" fill="' + (i % 3 ? '#8a7ac8' : '#e8f8ff') + '"/>';
+      // 소용돌이 균열
+      o += '<ellipse cx="200" cy="56" rx="78" ry="40" fill="#3a1a7a" opacity="0.45"/><ellipse cx="200" cy="56" rx="52" ry="26" fill="#6a2ac0" opacity="0.4"/>' +
+        '<ellipse cx="200" cy="56" rx="30" ry="15" fill="#5ef0d0" opacity="0.28"/>' +
+        '<path d="M140 56 Q170 30 200 40 T262 52 M146 66 Q180 80 214 70 T258 62" fill="none" stroke="#c8a0ff" stroke-width="2" opacity="0.7"/>' +
+        '<path d="M192 18 L204 34 L194 46 L210 62 L198 78 L206 94" fill="none" stroke="#1a0630" stroke-width="7"/>' +
+        '<path d="M192 18 L204 34 L194 46 L210 62 L198 78 L206 94" fill="none" stroke="#e8c0ff" stroke-width="2.5"/>';
+      // 거꾸로 떠 있는 청운문 전각(왼쪽 위)과 엘단 성벽(오른쪽 위)
+      o += '<path d="M30 18 L96 18 L88 30 L38 30 Z" fill="#2a2038"/><rect x="44" y="30" width="38" height="12" fill="#4a1a22"/><path d="M36 42 Q48 48 62 48 Q76 48 90 42 Z" fill="#1a1a2a"/>' +
+        '<rect x="50" y="30" width="3" height="12" fill="#8a2a2a"/><rect x="73" y="30" width="3" height="12" fill="#8a2a2a"/>';
+      o += '<path d="M300 22 L372 14 L366 34 L306 40 Z" fill="#3a4a6a"/>' + [306, 320, 334, 348, 362].map(function (x) { return '<rect x="' + x + '" y="' + (36 - (x - 300) * 0.1).toFixed(0) + '" width="7" height="6" fill="#5a6a8a"/>'; }).join('') +
+        '<rect x="330" y="22" width="10" height="10" fill="#9ab8e8" opacity="0.6"/>';
+      // 떠 있는 작은 바위 조각
+      [[120, 80, 10], [282, 86, 8], [70, 96, 6], [336, 70, 6], [160, 102, 5]].forEach(function (q) {
+        o += '<path d="M' + (q[0] - q[2]) + ' ' + q[1] + ' L' + (q[0] + q[2]) + ' ' + q[1] + ' L' + (q[0] + q[2] * 0.4) + ' ' + (q[1] + q[2]) + ' L' + (q[0] - q[2] * 0.5) + ' ' + (q[1] + q[2] * 0.8) + ' Z" fill="#2a2440"/>' +
+          '<rect x="' + (q[0] - q[2]) + '" y="' + (q[1] - 1) + '" width="' + q[2] * 2 + '" height="2" fill="#5ef0d0" opacity="0.6"/>';
+      });
+      // 바닥: 무림의 바위와 엘단의 모래가 섞인 떠 있는 땅
+      o += '<rect y="112" width="400" height="10" fill="#7a3ad0" opacity="0.18"/>' +
+        '<rect y="120" width="400" height="30" fill="#1e1a30"/><rect y="120" width="200" height="3" fill="#4a4a62"/><rect x="200" y="120" width="200" height="3" fill="#a88a5a"/>' +
+        '<path d="M0 136 Q60 130 130 136 T260 134 T400 136" fill="none" stroke="#5ef0d0" stroke-width="1.5" opacity="0.5"/>';
+      return o;
     }
   };
 
@@ -225,6 +252,17 @@
         o += '<path d="M' + x + ' 40 L' + (x + w * 0.2) + ' ' + (40 - h) + ' L' + (x + w * 0.7) + ' ' + (40 - h * 0.8) + ' L' + (x + w) + ' 40 Z" fill="#2a1414"/>' +
           '<path d="M' + (x + w * 0.3) + ' 40 L' + (x + w * 0.45) + ' ' + (40 - h * 0.6) + '" stroke="#ff6a2a" stroke-width="1.2"/>';
       }
+      return o;
+    },
+    // 31단계 세계의 틈: 떠 있는 돌 조각과 빛나는 균열 틈새
+    rift: function () {
+      var r = frnd(23), o = '';
+      for (var i = 0; i < 14; i++) {
+        var x = r() * 400, w = 10 + r() * 18, h = 4 + r() * 10;
+        o += '<path d="M' + x + ' 40 L' + (x + w * 0.25) + ' ' + (40 - h) + ' L' + (x + w * 0.8) + ' ' + (40 - h * 0.7) + ' L' + (x + w) + ' 40 Z" fill="' + (i % 2 ? '#241e38' : '#2e2846') + '"/>';
+        if (i % 3 === 0) o += '<path d="M' + (x + w * 0.4) + ' 40 L' + (x + w * 0.5) + ' ' + (40 - h * 0.5) + '" stroke="#5ef0d0" stroke-width="1.2"/>';
+      }
+      for (i = 0; i < 7; i++) o += '<rect x="' + (r() * 400).toFixed(0) + '" y="' + (26 + r() * 10).toFixed(0) + '" width="2" height="2" fill="#c8a0ff"/>';
       return o;
     },
     castle: function () {

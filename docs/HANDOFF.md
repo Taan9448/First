@@ -3,13 +3,14 @@
 이 문서를 새 Claude Code 세션의 첫 메시지로 붙여넣고 "이 요약대로 처음부터 만들어 줘. 먼저 GAME_DESIGN.md부터 작성해서 저장소에 커밋해 줘"라고 요청한다.
 아래 내용은 이전 세션에서 7단계까지 만들면서 확정한 결정 사항이다. 세부 수치(카드 192장 목록, 몬스터 수치)는 이전 GAME_DESIGN.md에 있었고, 여기에는 규칙과 방향만 적는다.
 
-## 0. 최근 진행(19~26단계, 2026-10) — 먼저 읽을 것
+## 0. 최근 진행(19~31단계, 2026-10) — 먼저 읽을 것
 아래 1~11장은 v0.7 재구축 때의 요약이다. 그 뒤 게임은 크게 바뀌었으니 최신 규칙은 `GAME_DESIGN.md`(16장 단계표, 17.20~17.27 결정 사항)를 기준으로 한다.
 - 19 덱빌딩 재설계(준비 덱 4~8장 + 스테이지 덱, 카드 제거·복제, 저장 v6) · 20 전투 깊이(보존·선천성·버리기·미리 보기, 적 가중치 AI, 보스 규칙) · 21 캐릭터 고유 자원 · 22 유물 사건 훅·소모품·이벤트 30종
 - 23 난이도 재조정(규칙형 하드, 승천 곡선 ×6.0 + 단계마다 곱) · 24 편의(단축키, 턴 되돌리기, 전투 기록, 내장 글꼴 `css/fonts.css`, 저장 내보내기·가져오기, 색약 표기) · 25 배경음악 8곡(`data/music.js`) · 26 업적·시작 선물·오늘의 원정·기록(`js/profile.js`)
 - 27(남음): 그래픽 — 영웅 도트 교체, 오로라 광채, 스킬 연출. 사용자가 GIF 움직임을 git 브랜치나 PNG 시트로 다시 올려 주면 시작한다. 남의 GIF를 따라 그린 데이터는 저작권 때문에 커밋하지 않는다(`tools/hero-trace` 스크립트만)
 - 29 카드 247장 · 유물 65종 · 소모품 18종 · 이벤트 40종. 새 효과 종류 없이 데이터만 늘렸다. **새 소모품을 넣으면 `tools/sim.js`의 `ITEM_KIND`에도 넣는다**(빠지면 sim이 경고하고, 칸만 차지해 밸런스 결과가 나빠진다)
 - 30 여섯째 동료 **시엘**(id `ciel`, 카드 번호 `A`, 5 스테이지 합류, 고유 자원 조준). 동료를 늘릴 때 고칠 곳: characters · cards(OWNER) · traits · bonds(짝 연계·합동기·대화) · monsters(그림자) · stages(join) · story · puppet-heroes(그림) · fx(byOwner) · ui-extra(OWNERS) · sim(PARTY_ORDERS, 자원 계산) · test-battle(카드 번호 정규식 `[KBLSNAC]`) · doc-upgrades 정규식
+- 31 **세계의 틈**(스테이지 11~13, 테마 `rift`). 본편 끝은 `Data.MAIN_STAGES = 10`(엔딩·승천 기록), 13은 두 번째 엔딩(`flags.riftEnded`). 에필로그 장 번호는 20, 세계의 틈 에필로그는 21. 스테이지별 표(difficulty·mapPos·STAGE_NAME·STAGE_EN)는 13칸. 몬스터 그림 `js/sprites-rift.js`(pixel-sculpt 뒤에 로드). sim 은 `rift` 인자로 13까지
 - 글자를 새로 넣으면 `python3 tools/embed-fonts.py`(빠지면 `test-battle`이 알려 준다). 테스트: `node tools/test-battle.js`, `node tools/test-campaign.js`, 밸런스: `node tools/sim.js 12 1 0 normal|hard`
 
 ## 1. 기본 조건

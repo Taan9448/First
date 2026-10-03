@@ -93,7 +93,7 @@ G.Data.monsters.forEach(m => {
   });
   if (m.onDeath) walk(m.onDeath, m.id + ' onDeath');
 });
-check(G.Data.monsters.length === 57, '몬스터 57종 (현재 ' + G.Data.monsters.length + ')');
+check(G.Data.monsters.length === 67, '몬스터 67종 (현재 ' + G.Data.monsters.length + ')');
 check(G.Data.monsters.filter(m => m.mirror).length === 6, '거울 속 그림자 6종');
 
 // 강화 카드: 200장 모두 무언가 바뀌고, 설명의 {dN}·{+…} 가 올바르다

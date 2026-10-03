@@ -121,6 +121,35 @@
     }
   };
 
+  // 31단계: 세계의 틈 — D 리디아(G#), 종 아르페지오가 허공에 떠다니고 죽적이 길게 운다. 전투에는 탐과 하이햇
+  Game.Data.music.rift = {
+    name: '세계의 틈', bpm: 90,
+    voices: [
+      { inst: 'pad', vol: 0.07, notes: bars(hold('D'), hold('E'), hold('C#m'), hold('Bm'), hold('D'), hold('E'), hold('F#m'), hold('E')) },
+      { inst: 'bell', vol: 0.06, notes: bars('D4 . A4 . F#5 . G#5 .', 'E4 . B4 . G#5 . B5 .', 'C#4 . G#4 . E5 . G#5 .', 'B3 . F#4 . D5 . F#5 .',
+        'D4 . A4 . F#5 . A5 .', 'E4 . B4 . G#5 . E5 .', 'F#4 . C#5 . A5 . F#5 .', 'E4 . G#4 . B4 . D5 .') },
+      { inst: 'flute', vol: 0.08, notes: bars('F#5 - - - G#5 - A5 -', 'B5 - - - G#5 - E5 -', 'E5 - - - G#5 - C#6 -', 'B5 - - - - - . .',
+        'A5 - - - G#5 - F#5 -', 'E5 - G#5 - B5 - - -', 'C#6 - - - A5 - F#5 -', 'G#5 - - - - - . .') + ' | ' + rest(8) },
+      { inst: 'subbass', vol: 0.11, notes: bars('D2 - - - - - A1 -', 'E2 - - - - - B1 -', 'C#2 - - - - - G#1 -', 'B1 - - - - - F#1 -',
+        'D2 - - - - - A1 -', 'E2 - - - - - B1 -', 'F#2 - - - - - C#2 -', 'E2 - - - - - B1 -') },
+      { inst: 'drums', vol: 0.16, layer: 'battle', notes: bars('k . h . t . h .', 'k . h k s . h .', 'k . h . t . h t', 'k . h k s . t t') }
+    ]
+  };
+  // 31단계: 고대 혈마 — C# 단조와 D 장화음(나폴리), 징·태고 위로 금관과 종이 부딪친다
+  Game.Data.music.riftFinal = {
+    name: '고대 혈마', bpm: 132,
+    voices: [
+      { inst: 'pad', vol: 0.08, notes: bars(hold('C#m'), hold('A'), hold('F#m'), hold('G#'), hold('C#m'), hold('D'), hold('G#'), hold('G#')) },
+      { inst: 'subbass', vol: 0.13, notes: bars('C#2 C#2 C#3 C#2 C#2 C#3 C#2 B1', 'A1 A1 A2 A1 A1 A2 A1 G#1', 'F#1 F#1 F#2 F#1 F#1 F#2 F#1 A1', 'G#1 G#1 G#2 G#1 G#1 G#2 B#1 D#2',
+        'C#2 C#2 C#3 C#2 C#2 C#3 C#2 B1', 'D2 D2 D3 D2 D2 D3 D2 C#2', 'G#1 G#1 G#2 G#1 G#1 G#2 G#1 G#1', 'G#1 G#1 G#2 G#1 B#1 D#2 G#2 G#2') },
+      { inst: 'brass', vol: 0.08, notes: bars('C#5 - G#4 - C#5 - D#5 E5', 'E5 - C#5 - A4 - . .', 'F#5 - E5 - C#5 - A4 -', 'G#4 - - - B#4 - D#5 -',
+        'E5 - - - G#5 F#5 E5 D#5', 'D5 - - - A4 - F#4 -', 'G#4 - B#4 - D#5 - G#5 -', 'G#5 - - - - - . .') },
+      { inst: 'bell', vol: 0.05, notes: bars('C#6 . . . G#5 . . .', 'A5 . . . E5 . . .', 'F#5 . . . C#6 . . .', 'G#5 . . . D#6 . . .') },
+      { inst: 'drums', vol: 0.19, notes: bars('g+b . . b k . s .', 'b . k b s . s s', 'b . . b k . s .', 'b . k b s t t t',
+        'b . . b k . s .', 'b . k b s . s s', 'b . . b k . s .', 'b t b t s s s s') }
+    ]
+  };
+
   // 스테이지 테마 → 곡(거울의 방은 청운문)
-  Game.Data.MUSIC_FOR_THEME = { forest: 'forest', desert: 'desert', snow: 'snow', volcano: 'volcano', castle: 'castle', mirror: 'castle' };
+  Game.Data.MUSIC_FOR_THEME = { forest: 'forest', desert: 'desert', snow: 'snow', volcano: 'volcano', castle: 'castle', rift: 'rift', mirror: 'castle' };
 })();
