@@ -94,6 +94,8 @@
     this.monsters = opts.monsters.map(function (id, i) { return makeMonster(id, affixes[i], opts.stage, em); });
     this.startEffects = opts.startEffects || [];  // 이벤트가 남긴 전투 시작 효과 [{ name, effects }]
     this.relics = (opts.relics || []).map(function (id) { return G.Data.relicById[id]; }).filter(Boolean);
+    this.items = (opts.items || []).filter(function (id) { return G.Data.itemById && G.Data.itemById[id]; });   // 22단계: 소모품 칸
+    this.itemsUsed = [];
     this.mods = mergeMods(this.relics);
     // 전투 전체에 걸리는 특성(첫 턴 에너지·드로우, N턴마다 에너지)은 유물 보정에 더한다
     var mods = this.mods;
@@ -178,6 +180,31 @@
     }
   };
   P.relicFx = function (id) { this.emit('relic:trigger', { id: id }); };
+  // 22단계: 전투 중 사건마다 발동하는 유물. hook = { on, effects, every(전투 누적 n번마다), nth(이번 턴 n번째 카드일 때), perTurn(턴당 최대 횟수) }
+  // extra.target 은 사건의 주인공(맞은 아군, 디버프를 받은 적 등). 효과는 시전자 없이 돈다
+  P.relicEvent = async function (on, extra) {
+    extra = extra || {};
+    this.relicCount = this.relicCount || {};
+    this.relicTurnCount = this.relicTurnCount || {};
+    for (var i = 0; i < this.relics.length && !this.over(); i++) {
+      var r = this.relics[i], hooks = r.hooks || [];
+      for (var j = 0; j < hooks.length && !this.over(); j++) {
+        var h = hooks[j];
+        if (h.on !== on) continue;
+        var key = r.id + ':' + j;
+        if (h.every) { this.relicCount[key] = (this.relicCount[key] || 0) + 1; if (this.relicCount[key] % h.every) continue; }
+        if (h.nth && this.cardsThisTurn !== h.nth) continue;
+        if (h.perTurn) { var used = this.relicTurnCount[key] || 0; if (used >= h.perTurn) continue; this.relicTurnCount[key] = used + 1; }
+        this.relicFx(r.id);
+        await this.run(h.effects, { src: null, target: extra.target || null, isCard: false, isRelic: true, defTarget: 'none', pre: {} });
+      }
+    }
+  };
+  // 동기 지점(상태 부여·자원 계산 중)에서 생긴 사건은 쌓아 두었다가 다음 비동기 지점에서 처리한다
+  P.queueRelic = function (on, extra) { (this.relicQueue = this.relicQueue || []).push([on, extra]); };
+  P.flushRelics = async function () {
+    while (this.relicQueue && this.relicQueue.length && !this.over()) { var q = this.relicQueue.shift(); await this.relicEvent(q[0], q[1]); }
+  };
   P.relicWith = function (mod) {
     var r = this.relics.filter(function (x) { return x.mods && x.mods[mod] != null; })[0];
     return r ? r.id : null;
@@ -209,6 +236,7 @@
     this.attacksThisTurn = 0;
     this.discardedTurn = 0;
     this.forceEnd = false;
+    this.relicTurnCount = {};
     this.lastType = null;
     this.discount = 0;
     this.doubleNext = false;
@@ -249,6 +277,7 @@
     // 손패 버림 (그 턴 한정 카드는 사라짐)
     var piles = this.piles;
     if (this.mods.emptyHandDraw && !piles.hand.length) { this.nextDraw += this.mods.emptyHandDraw; this.relicFx(this.relicWith('emptyHandDraw')); }
+    if (piles.hand.length) await this.relicEvent('turnEndHand');
     // 20단계: 보존 카드는 손패에 남는다
     var kept = [];
     piles.hand.forEach(function (c) {
@@ -259,6 +288,7 @@
     piles.hand = kept;
     this.emit('cards:discardHand', { kept: kept.length });
     await this.runHooks('turnEnd');
+    await this.relicEvent('turnEnd');
     if (this.mods.turnEndBlockIfNone) {
       var bare = this.alive('ally').filter(function (h) { return h.block === 0; });
       if (bare.length) this.relicFx(this.relicWith('turnEndBlockIfNone'));
@@ -289,6 +319,7 @@
       if (m.everyTurn.length) await this.run(m.everyTurn, this.monsterCtx(m));
       if (m.dead || this.over()) continue;
       await this.act(m);
+      await this.flushRelics();
       this.update();
       if (this.checkEnd()) return;
       await G.wait(T.between);
@@ -430,6 +461,12 @@
     if (def.type === 'attack' && !this.over()) await this.runHooks('onAttackCard');
     if ((def.type === 'skill' || def.type === 'power') && !this.over()) await this.runHooks('onSkillCard');
     if (!this.over()) await this.resourceAfterCard(def, caster, ctx);
+    var cardOn = { attack: 'attackCard', skill: 'skillCard', block: 'blockCard', heal: 'healCard', power: 'powerCard' }[def.type];
+    this.cardsThisTurn++;
+    if (cardOn && !this.over()) await this.relicEvent(cardOn);
+    if (!this.over()) await this.relicEvent('anyCard');
+    this.cardsThisTurn--;
+    if (!this.over()) await this.flushRelics();
     this.cardsThisTurn++;
     if (def.type === 'attack') { this.attacksThisTurn++; this.attacksBattle++; }
     if (!this.over()) await this.traitAfterCard(def, caster);
@@ -457,12 +494,33 @@
     return true;
   };
 
+  // ================= 22단계: 소모품 =================
+  // 내 턴에 카드를 쓰는 중이 아닐 때 에너지 없이 쓴다. 반환: 썼으면 true
+  P.canUseItem = function () { return this.phase === 'player' && !this.busy && !this.over(); };
+  P.useItem = async function (index) {
+    var id = this.items[index], def = id && G.Data.itemById[id];
+    if (!def || !this.canUseItem()) return false;
+    this.busy = true;
+    this.items.splice(index, 1);
+    this.itemsUsed.push(id);
+    this.emit('item:use', { id: id, def: def });
+    this.emit('fx:text', { text: def.name, kind: 'good' });
+    await G.wait(T.card);
+    await this.run(def.effects, { src: null, target: null, isCard: false, isItem: true, defTarget: 'none', pre: {} });
+    await this.flushRelics();
+    this.busy = false;
+    this.update();
+    this.checkEnd();
+    return true;
+  };
+
   // ================= 21단계: 캐릭터 고유 자원 =================
   P.gainRes = function (h, n) {
     if (!h || h.dead || !h.resMax || !n) return;
     var before = h.res;
     h.res = Math.max(0, Math.min(h.resMax, h.res + n));
     if (h.res !== before) this.emit('hero:res', { unit: h });
+    if (h.res >= h.resMax && before < h.resMax) this.queueRelic('resFull', { target: h });
   };
   // 카드를 쓴 뒤: 하린 검세(공격 카드) · 브리아 반격 자세(방어 카드) · 리라 원소 공명(모든 카드, 5가 차면 폭발)
   P.resourceAfterCard = async function (def, caster, ctx) {
@@ -523,6 +581,7 @@
     if (!inst.temp) this.piles.discard.push(inst);
     this.discardedTurn++;
     this.emit('cards:discard', { inst: inst });
+    if (!this.over()) await this.relicEvent('discard');
     // 버려지면(소연 '그림자 비수' 등): 그 카드의 주인이 효과를 낸다
     if (inst.def.onDiscard && !this.over()) {
       this.emit('fx:text', { unit: this.casterOf(inst), text: inst.def.name + '!', kind: 'good' });
@@ -542,6 +601,7 @@
     if (!inst.temp) this.piles.exhaust.push(inst);
     this.exhaustedBattle++;
     this.emit('cards:exhaust', { inst: inst });
+    if (!this.over()) await this.relicEvent('exhaust');
     if (!this.over()) await this.runHooks('onExhaust');
     this.update();
   };
@@ -665,6 +725,7 @@
   };
   // 적이 빙결되면(리라 특성) 카드 뽑기 — status.js 가 부른다
   P.onEnemyFrozen = function () {
+    this.queueRelic('freeze');
     var n = 0;
     this.alive('ally').forEach(function (h) { n += h.tm.onFreezeDraw || 0; });
     if (n && this.phase === 'player') this.drawCards(n);
@@ -744,6 +805,7 @@
       case 'discardedTurn': p = this.discardedTurn; break;
       case 'drawPile': p = this.piles.draw.length; break;
       case 'selfRes': p = src ? src.res || 0 : 0; break;
+      case 'hand': p = this.piles.hand.length; break;
     }
     var n = Math.floor((v.base || 0) + v.mult * p);
     return v.cap != null ? Math.min(n, v.cap) : n;
@@ -815,12 +877,14 @@
 
       case 'status':
         list = this.targets(spec, ctx);
+        if (e.ifHas) list = list.filter(function (u) { return S.has(u, e.ifHas); });   // 22단계: 그 상태가 있는 대상에게만
         list.forEach(function (u) {
           var sv = self.num(e.value, ctx, u);
           if (ctx.pair && ctx.pair.statusAdd && ctx.pair.statusAdd[e.status] && u.side === 'enemy') sv += ctx.pair.statusAdd[e.status];
           S.add(self, u, e.status, sv, ctx.src);
           // 독 표식(소연): 소연의 카드가 적에게 중독을 걸면 표식 +1(최대 5)
           if (e.status === 'poison' && u.side === 'enemy' && !u.dead && ctx.src && ctx.src.id === 'nox') S.set(u, 'venomMark', Math.min(5, S.get(u, 'venomMark') + 1));
+          if (u.side === 'enemy' && !u.dead && !ctx.isRelic && !ctx.isMonster && S.isDebuff(e.status)) self.queueRelic('enemyDebuff', { target: u });
         });
         this.update();
         return;
@@ -934,7 +998,11 @@
       }
       case 'scry': return this.scry(this.num(e.value, ctx));
       // 21단계: 고유 자원 얻기 · 모두 쓰기(시전자)
-      case 'res': this.gainRes(ctx.src, this.num(e.value, ctx)); this.update(); return;
+      case 'res':
+        if (e.target) { var rl = this.targets(e.target, ctx); for (i = 0; i < rl.length; i++) this.gainRes(rl[i], this.num(e.value, ctx)); }
+        else this.gainRes(ctx.src, this.num(e.value, ctx));
+        this.update();
+        return;
       case 'spendRes': ctx.spent = true; if (ctx.src && ctx.src.res) { ctx.src.res = 0; this.emit('hero:res', { unit: ctx.src }); } this.update(); return;
       case 'clearStatus':
         list = this.targets(spec, ctx);
@@ -1040,6 +1108,7 @@
     }
     // 특성: 공격받으면 보호막 / 처치하면 보호막·회복·에너지
     if (tgt.side === 'ally' && !tgt.dead && src && src.side === 'enemy' && tgt.tm.onHitBlock) this.addBlock(tgt, tgt.tm.onHitBlock);
+    if (tgt.side === 'ally' && !tgt.dead && src && src.side === 'enemy' && (loss > 0 || blocked > 0)) await this.relicEvent('heroHit', { target: tgt });
     // 반격 자세(브리아): 적의 공격에 맞으면 쌓인 수 × 3을 되갚는다
     if (tgt.side === 'ally' && tgt.id === 'bram' && !tgt.dead && tgt.res > 0 && src && src.side === 'enemy' && !src.dead && !ctx.isCounter) {
       var cn = tgt.res * 3;
@@ -1142,6 +1211,7 @@
       // 복수(20단계): 다른 몬스터가 쓰러지면 힘
       var self2 = this;
       this.alive('enemy').forEach(function (m) { if (S.has(m, 'vengeance')) { S.add(self2, m, 'strength', S.get(m, 'vengeance'), m); self2.emit('fx:text', { unit: m, text: '복수!', kind: 'bad' }); } });
+      if (this.alive('enemy').length) await this.relicEvent('kill', { target: u });
       if (this.mods.onKillDraw && this.alive('enemy').length) { this.relicFx(this.relicWith('onKillDraw')); this.drawCards(this.mods.onKillDraw); }
     } else {
       this.retarget();

@@ -1,10 +1,13 @@
-// relics.js — 유물 30종 (GAME_DESIGN.md 19.2절)
+// relics.js — 유물 50종 (GAME_DESIGN.md 19.2절, 22단계에 20종 추가)
 // hooks: [{ on, effects }] — on: battleStart · turnStart. 효과 목록은 카드와 같은 형식(시전자 없음)
+//   22단계: attackCard · skillCard · blockCard · healCard · powerCard · anyCard · turnEnd · turnEndHand · kill · exhaust · discard
+//           heroHit(아군이 맞음, target = 그 아군) · enemyDebuff(적에게 디버프, target = 그 적) · freeze · resFull(고유 자원이 가득 참)
+//   every(전투 누적 n번마다) · nth(이번 턴 n번째 카드일 때) · perTurn(턴마다 최대 횟수)
 // mods : 전투·진행 코드가 읽는 상시 보정값
 //   firstTurnEnergy, turnEnergy, everyN:{n,v}(N턴마다 에너지), firstTurnDraw, turnDraw, firstAttackBonus,
 //   statusAdd:{상태:+n}, statusMult:{상태:배}, healBonus, phoenix(처음 쓰러지는 아군 체력 비율), turnEndBlockIfNone,
 //   thirdCardBlock, turnFirstAttackCrit, freezeVuln, emptyHandDraw, onPowerDraw, onKillDraw, onCritBlock,
-//   goldMult, downedPct, winHeal, noRestHeal, shopPriceMult
+//   goldMult, downedPct, winHeal, noRestHeal, shopPriceMult, rewardCards(22단계: 카드 보상 후보 수)
 (function () {
   var st = function (s, v, t) { return { op: 'status', status: s, value: v, target: t }; };
   var R = function (id, name, rarity, icon, desc, x) { return Object.assign({ id: id, name: name, rarity: rarity, icon: icon, desc: desc }, x); };
@@ -42,7 +45,32 @@
     R('R27', '혈마의 관', 'boss', 'r_demoncrown', '매 턴 에너지 +1. 휴식으로 회복할 수 없다.', { mods: { turnEnergy: 1, noRestHeal: true } }),
     R('R28', '시간의 톱니바퀴', 'boss', 'r_gear', '매 턴 에너지 +1. 매 턴 뽑는 카드 -1.', { mods: { turnEnergy: 1, turnDraw: -1 } }),
     R('R29', '피의 계약서', 'boss', 'r_contract', '매 턴 에너지 +1. 전투 시작 시 아군 전체 체력 5 잃음.', { mods: { turnEnergy: 1 }, hooks: [{ on: 'battleStart', effects: [{ op: 'loseHp', value: 5, target: 'allAllies' }] }] }),
-    R('R30', '현자의 돌', 'boss', 'r_stone', '매 턴 에너지 +1. 상점 가격 +50%.', { mods: { turnEnergy: 1, shopPriceMult: 1.5 } })
+    R('R30', '현자의 돌', 'boss', 'r_stone', '매 턴 에너지 +1. 상점 가격 +50%.', { mods: { turnEnergy: 1, shopPriceMult: 1.5 } }),
+
+    // ---------------- 22단계: 사건마다 발동하는 유물 20종 ----------------
+    R('R31', '청운 검수', 'common', 'r_glove', '공격 카드를 4장 쓸 때마다(전투 누적) 카드 1장 뽑기.', { hooks: [{ on: 'attackCard', every: 4, effects: [{ op: 'draw', value: 1 }] }] }),
+    R('R32', '방패 휘장', 'common', 'r_crest', '방어 카드를 쓸 때마다 무작위 적에게 피해 2.', { hooks: [{ on: 'blockCard', effects: [{ op: 'damage', value: 2, target: 'randomEnemy' }] }] }),
+    R('R33', '향낭', 'common', 'r_herbs', '턴 종료 시 아군 전체 체력 1 회복.', { hooks: [{ on: 'turnEnd', effects: [{ op: 'heal', value: 1, target: 'allAllies' }] }] }),
+    R('R34', '먹물 벼루', 'common', 'r_book', '카드가 소멸할 때마다 체력 비율이 가장 낮은 아군에게 보호막 3.', { hooks: [{ on: 'exhaust', effects: [{ op: 'block', value: 3, target: 'lowestAlly' }] }] }),
+    R('R35', '비도 주머니', 'common', 'r_dagger', '카드를 효과로 버릴 때마다 무작위 적에게 피해 3.', { hooks: [{ on: 'discard', effects: [{ op: 'damage', value: 3, target: 'randomEnemy' }] }] }),
+    R('R36', '단전 수련서', 'common', 'r_mana', '전투 시작 시 동료 전원의 고유 자원 +2.', { hooks: [{ on: 'battleStart', effects: [{ op: 'res', value: 2, target: 'allAllies' }] }] }),
+
+    R('R37', '혈전의 깃발', 'uncommon', 'r_horn', '적을 처치할 때마다 에너지 +1.', { hooks: [{ on: 'kill', effects: [{ op: 'energy', value: 1 }] }] }),
+    R('R38', '응혈 부적', 'uncommon', 'r_amulet', '아군이 적의 공격에 맞으면 그 아군 보호막 4(턴마다 1번).', { hooks: [{ on: 'heroHit', perTurn: 1, effects: [{ op: 'block', value: 4, target: 'target' }] }] }),
+    R('R39', '오행 나침반', 'uncommon', 'r_mana', '스킬 카드를 3장 쓸 때마다(전투 누적) 에너지 +1.', { hooks: [{ on: 'skillCard', every: 3, effects: [{ op: 'energy', value: 1 }] }] }),
+    R('R40', '역린의 비늘', 'uncommon', 'r_scales', '적에게 디버프를 걸면 그 적에게 피해 2(턴마다 3번).', { hooks: [{ on: 'enemyDebuff', perTurn: 3, effects: [{ op: 'damage', value: 2, target: 'target' }] }] }),
+    R('R41', '신목 가지', 'uncommon', 'r_seed', '회복 카드를 쓸 때마다 무작위 적에게 피해 4.', { hooks: [{ on: 'healCard', effects: [{ op: 'damage', value: 4, target: 'randomEnemy' }] }] }),
+    R('R42', '얼음 사슬', 'uncommon', 'r_frost', '적이 빙결될 때마다 아군 전체 보호막 4.', { hooks: [{ on: 'freeze', effects: [{ op: 'block', value: 4, target: 'allAllies' }] }] }),
+    R('R43', '독룡 비늘', 'uncommon', 'r_needle', '턴 종료 시 중독된 적마다 중독 +1.', { hooks: [{ on: 'turnEnd', effects: [{ op: 'status', status: 'poison', value: 1, target: 'allEnemies', ifHas: 'poison' }] }] }),
+
+    R('R44', '천외검선의 검집', 'rare', 'r_dagger', '동료의 고유 자원이 가득 찰 때마다 카드 1장 뽑기, 에너지 +1.', { hooks: [{ on: 'resFull', effects: [{ op: 'draw', value: 1 }, { op: 'energy', value: 1 }] }] }),
+    R('R45', '공명석', 'rare', 'r_stone', '지속 카드를 쓸 때마다 아군 전체 보호막 5.', { hooks: [{ on: 'powerCard', effects: [{ op: 'block', value: 5, target: 'allAllies' }] }] }),
+    R('R46', '사천당가 비전서', 'rare', 'r_book', '카드를 효과로 버릴 때마다 무작위 적에게 중독 2.', { hooks: [{ on: 'discard', effects: [{ op: 'status', status: 'poison', value: 2, target: 'randomEnemy' }] }] }),
+    R('R47', '수정 거북 등딱지', 'rare', 'r_icecrown', '턴 종료 시 손패에 남은 카드 1장당 체력 비율이 가장 낮은 아군 보호막 2.', { hooks: [{ on: 'turnEndHand', effects: [{ op: 'block', value: { base: 0, per: 'hand', mult: 2 }, target: 'lowestAlly' }] }] }),
+    R('R48', '천둥새 깃털', 'rare', 'r_feather', '한 턴에 5번째 카드를 쓰면 적 전체에 피해 6.', { hooks: [{ on: 'anyCard', nth: 5, effects: [{ op: 'damage', value: 6, target: 'allEnemies' }] }] }),
+
+    R('R49', '태극 문양', 'boss', 'r_gear', '매 턴 에너지 +1. 카드 보상 후보가 3장에서 2장으로 준다.', { mods: { turnEnergy: 1, rewardCards: 2 } }),
+    R('R50', '혼돈의 주사위', 'boss', 'dice', '매 턴 에너지 +1. 턴 시작 시 손패의 비용이 0~2로 무작위로 바뀐다.', { mods: { turnEnergy: 1 }, hooks: [{ on: 'turnStart', effects: [{ op: 'randomizeCosts', min: 0, max: 2 }] }] })
   ];
 
   Game.Data.relics = list;

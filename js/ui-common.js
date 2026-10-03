@@ -77,6 +77,17 @@
       return '<span class="relic r-' + r.rarity + '" data-relic="' + id + '" data-tip="' + UI.relicTip(r) + '"><i class="ico" style="' + UI.iconStyle(r.icon) + '"></i></span>';
     }).join('');
   };
+  // 22단계: 소모품 칸(빈 칸 포함). usable 이면 누를 수 있다
+  UI.itemTip = function (it) { return '<b>' + it.name + '</b> · ' + ({ common: '일반', uncommon: '고급', rare: '희귀' })[it.rarity] + ' 소모품<br>' + U.esc(it.desc); };
+  UI.itemBar = function (ids, usable, slots) {
+    var out = '';
+    for (var i = 0; i < (slots || 3); i++) {
+      var it = ids[i] && G.Data.itemById[ids[i]];
+      out += it ? '<button class="item i-' + it.rarity + (usable ? ' usable' : '') + '" data-i="' + i + '" data-tip="' + UI.itemTip(it) + (usable ? '<br><span class=&quot;dim&quot;>누르면 쓴다</span>' : '') + '"><i class="ico" style="' + UI.iconStyle(it.icon) + '"></i></button>'
+        : '<span class="item empty"></span>';
+    }
+    return out;
+  };
   UI.relicTile = function (id, cls) {
     var r = G.Data.relicById[id];
     return '<button class="relic-tile ' + (r.rarity === 'boss' ? 'boss ' : '') + (cls || '') + '" data-id="' + id + '">' +

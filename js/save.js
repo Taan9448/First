@@ -182,6 +182,7 @@
         d.story = { seen: seen };
       }
       d.story.seen = d.story.seen.filter(function (id, i, a) { return byId[id] && a.indexOf(id) === i; });
+      d.items = (d.items || []).filter(function (id) { return G.Data.itemById && G.Data.itemById[id]; }).slice(0, G.Data.itemEconomy ? G.Data.itemEconomy.slots : 3);
       d.gold = Math.max(0, d.gold | 0);
       d.clearedStage = d.clearedStage | 0;
       d.mode = G.Data.modes && G.Data.modes[d.mode] ? d.mode : 'normal';

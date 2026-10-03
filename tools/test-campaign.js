@@ -8,7 +8,7 @@ const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
 global.window = global;
-['js/core.js', 'data/keywords.js', 'data/characters.js', 'data/cards.js', 'data/monsters.js', 'data/stages.js', 'data/relics.js',
+['js/core.js', 'data/keywords.js', 'data/characters.js', 'data/cards.js', 'data/monsters.js', 'data/stages.js', 'data/relics.js', 'data/items.js',
  'data/upgrades.js', 'data/events.js', 'data/bonds.js', 'data/traits.js', 'data/ascension.js', 'data/modes.js', 'data/story.js', 'js/status.js', 'js/deck.js', 'js/upgrade.js', 'js/battle.js', 'js/save.js', 'js/stage.js'].forEach(f => {
   vm.runInThisContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), { filename: f });
 });
@@ -233,7 +233,7 @@ function invariants(where) {
   }
 
   if (N >= 3) {
-    check(eventsSeen.size === 15, '이벤트 15종 모두 등장 (' + eventsSeen.size + ')');
+    check(eventsSeen.size >= 22, '이벤트 대부분 등장 (' + eventsSeen.size + '/30)');
     ['battle', 'elite', 'event', 'rest', 'shop', 'boss', 'midboss', 'final'].forEach(t => check(typesSeen.has(t), '노드 종류 등장: ' + t));
   }
 
@@ -291,6 +291,38 @@ function invariants(where) {
   check(St.battleOptions().deck.includes('D01'), '전투 덱에 합동기');
   check(St.battleOptions().party.every(p => Array.isArray(p.traits)), '전투에 특성 전달');
   St.abandon();
+
+  // 22단계: 이벤트 30종의 선택지를 모두 실행해 본다(테마 이벤트는 그 테마 스테이지에서), 소모품
+  {
+    check(D.events.length === 30, '이벤트 30종');
+    St.data.party = ['kai']; St.data.gold = 999;
+    const stageOfTheme = th => D.stages.findIndex(s => s.theme === th) + 1;
+    let ran = 0;
+    D.events.forEach(ev => {
+      ev.choices.forEach((ch, ci) => {
+        St.startStage(ev.themes ? stageOfTheme(ev.themes[0]) : 1); St.autoPick();
+        const node = St.node(); node.type = 'event'; node.event = ev.id; node.result = null;
+        St.data.gold = 999; St.data.items = [];
+        let res = null;
+        try { res = St.eventChoose(ci); } catch (e) { check(false, ev.id + ' 선택지 ' + ci + ' 오류: ' + e.message); }
+        if (res) {
+          ran++;
+          if (res.cards) St.eventTakeCard(res.cards[0]);
+          while (St.data.run.purges) St.eventPurge(St.runDeckList()[0]);
+          while (St.data.run.dups) St.eventDup(St.runDeckList()[0]);
+        }
+      });
+    });
+    check(ran === D.events.reduce((a, e) => a + e.choices.length, 0), '이벤트 선택지 모두 실행 (' + ran + ')');
+    // 테마 이벤트는 다른 테마에서 나오지 않는다
+    St.startStage(1);
+    const themed = St.data.run.map.flat().filter(n => n.event).map(n => D.eventById[n.event]).filter(e => e.themes);
+    check(themed.every(e => e.themes.includes('forest')), '만독곡에는 만독곡 이벤트만');
+    // 소모품: 칸 3개, 전투 중 사용
+    St.data.items = [];
+    check(St.addItem('I02') && St.addItem('I05') && St.addItem('I06') && !St.addItem('I01'), '소모품 칸 3개');
+    St.abandon();
+  }
 
   // 19단계: 스테이지 덱 — 제거·복제·정리, 준비 덱은 그대로
   {

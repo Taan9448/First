@@ -19,7 +19,7 @@
     newGame: function (mode) {
       var d = {
         version: G.Save.VERSION, gold: 0, clearedStage: 0, run: null, mode: D.modes && D.modes[mode] ? mode : 'normal', dead: [],
-        characters: ['kai'], party: ['kai'], cards: [], decks: {}, relics: [], upgraded: {},
+        characters: ['kai'], party: ['kai'], cards: [], decks: {}, relics: [], items: [], upgraded: {},
         growth: {}, bonds: {}, talks: {}, ascension: { current: 0, best: 0 }, eventsSeen: [], buffs: [],
         codex: { monsters: {} }, flags: { tutorialDone: false }, story: { seen: [] }
       };
@@ -148,6 +148,33 @@
       return true;
     },
 
+    // ================= 소모품(22단계) =================
+    items: function () { return St.data.items || (St.data.items = []); },
+    itemRoom: function () { return St.items().length < D.itemEconomy.slots; },
+    addItem: function (id) {
+      if (!id || !D.itemById[id] || !St.itemRoom()) return false;
+      St.items().push(id);
+      return true;
+    },
+    dropItem: function (index) { St.items().splice(index, 1); St.save(); },
+    rollItem: function () {
+      var w = D.itemEconomy.weights[(St.data.run && St.data.run.stage > 4) ? 1 : 0], names = ['common', 'uncommon', 'rare'];
+      var total = w[0] + w[1] + w[2], roll = G.rng.next() * total, k = 0;
+      while (k < 2 && roll >= w[k]) { roll -= w[k]; k++; }
+      var at = D.items.filter(function (it) { return it.rarity === names[k]; });
+      return (at.length ? G.rng.pick(at) : G.rng.pick(D.items)).id;
+    },
+    itemPrice: function (id) { return Math.round(D.itemEconomy.price[D.itemById[id].rarity] * (St.mods().shopPriceMult || 1) * St.ascMods().shopPriceMult); },
+    buyItem: function (i) {
+      var d = St.data, s = d.run.shop, id = s && s.items && s.items[i];
+      if (!id || s.itemSold[i] || !St.itemRoom() || d.gold < St.itemPrice(id)) return false;
+      d.gold -= St.itemPrice(id);
+      s.itemSold[i] = true;
+      St.addItem(id);
+      St.save();
+      return true;
+    },
+
     // ================= 카드·덱 =================
     owns: function (id) { return St.data.cards.indexOf(id) >= 0; },
     ownedOf: function (owner) {
@@ -224,6 +251,19 @@
       St.save();
       return true;
     },
+    // 이벤트의 정리·복제(22단계): 남은 기회(run.purges / run.dups)를 쓴다
+    eventPurge: function (id) {
+      var r = St.data.run;
+      if (!r || !r.purges || !St.removeFromRun(id)) return false;
+      r.purges--; St.save(); return true;
+    },
+    eventDup: function (id) {
+      var r = St.data.run, rd = St.runDecks();
+      if (!r || !r.dups || !St.inRunDeck(id)) return false;
+      rd[D.cardById[id].owner].push(id);
+      r.dups--; St.save(); return true;
+    },
+    skipEventDeck: function () { var r = St.data.run; if (r) { r.purges = 0; r.dups = 0; St.save(); } },
     // 휴식의 정리: 한 장을 공짜로 뺀다
     // 반환: 실패하면 false, 성공하면 { info: 스테이지 클리어 정보 또는 null }
     restPurge: function (id) {
@@ -315,6 +355,7 @@
     // 입구 → 경로 모듈을 무작위로 이은 중간 구역 → 야영지 → 마지막 방. 방: { type, lane, module, next:[다음 열 방 번호], known }
     genMap: function (def) {
       var R = D.mapRules, counts = {};
+      St._genTheme = def.theme;
       var pickW = function (pool) {
         var keys = Object.keys(pool), total = 0;
         keys.forEach(function (k) { total += pool[k]; });
@@ -364,6 +405,7 @@
         });
       });
       St.linkMap(map);
+      St._genTheme = null;
       return map;
     },
 
@@ -421,8 +463,11 @@
     // 한 원정에서 같은 이벤트는 다시 나오지 않는다(다 쓰면 처음부터)
     pickEvent: function () {
       var d = St.data, seen = d.eventsSeen = d.eventsSeen || [];
-      var free = D.events.filter(function (e) { return seen.indexOf(e.id) < 0; });
-      if (!free.length) { seen.length = 0; free = D.events.slice(); }
+      // 22단계: 테마 이벤트는 그 테마의 스테이지에서만
+      var theme = St._genTheme || (d.run ? (St.stageDef(d.run.stage) || {}).theme : null);
+      var ok = function (e) { return !e.themes || !theme || e.themes.indexOf(theme) >= 0; };
+      var free = D.events.filter(function (e) { return seen.indexOf(e.id) < 0 && ok(e); });
+      if (!free.length) { seen.length = 0; free = D.events.filter(ok); }
       var e = G.rng.pick(free);
       seen.push(e.id);
       return e.id;
@@ -531,6 +576,7 @@
         monsters: monsters,
         affixes: affixes,
         relics: (d.relics || []).slice(),
+        items: (d.items || []).slice(),
         startEffects: startEffects,
         deck: St.battleDeck(party).concat(St.duoDeck(party), extra),
         gold: d.gold,
@@ -568,6 +614,7 @@
       battle.monsters.forEach(function (m) { St.markSeen([m.id]); });
       battle.kills.forEach(function (id) { d.codex.monsters[id].kills++; });
       d.gold = Math.max(0, d.gold + battle.goldDelta);
+      if (battle.items) d.items = battle.items.slice();   // 쓴 소모품은 사라진다
       // 이벤트 효과는 이긴 전투 수만큼 줄어든다
       d.buffs = (d.buffs || []).filter(function (b) { return --b.battles > 0; });
       if (node.type === 'final') {
@@ -584,6 +631,8 @@
       p.gold = Math.round(p.gold * (mods.goldMult || 1) * asc.goldMult) + (battle.affixKills || 0) * 5 + mirrors * eco().mirrorGold;
       if (node.type === 'treasure' && node.result) p.gold += node.result.gold; // 보물 방 매복을 이기면 상자 골드
       if (kind === 'elite') { p.relic = St.rollRelic('elite'); St.addRelic(p.relic); }
+      // 22단계: 소모품 — 빈 칸이 있으면 확률로 하나
+      if (St.itemRoom() && G.rng.chance(D.itemEconomy.drop[kind] || 0)) { p.item = St.rollItem(); if (p.item) St.addItem(p.item); }
       if (kind === 'boss') p.relicChoice = St.rollRelicChoice(r.stage);
       d.gold += p.gold + p.fill * eco().fillGold;
       St.save();
@@ -594,6 +643,7 @@
     // 반환: { died: [...], wiped: bool }
     battleLost: function (battle) {
       battle.monsters.forEach(function (m) { St.markSeen([m.id]); });
+      if (battle.items) St.data.items = battle.items.slice();   // 진 전투에서 쓴 소모품도 사라진다
       var n = St.data.run.stage, died = [];
       if (St.mode().permadeath) {
         died = battle.heroes.map(function (h) { return h.id; });
@@ -669,7 +719,7 @@
       return out;
     },
 
-    rewardCount: function () { return St.ascMods().rewardCards || 3; },
+    rewardCount: function () { return Math.min(St.ascMods().rewardCards || 3, St.mods().rewardCards || 3); },
     rollReward: function (kind) {
       var g = eco().gold[kind], stage = St.data.run.stage;
       var count = St.rewardCount();
@@ -694,6 +744,7 @@
       r.shop = null;
       r.upgrades = 0;
       r.purges = 0;
+      r.dups = 0;
       if (r.col >= r.map.length) return St.clearStage();
       St.autoPick();
       St.save();
@@ -729,6 +780,8 @@
       var r = St.data.run;
       if (!r.shop) {
         r.shop = { cards: St.rollCards(eco().shopSize, 'shop', r.stage), sold: [], healed: false, relic: St.rollRelic('shop'), relicSold: false };
+        r.shop.items = []; r.shop.itemSold = [];
+        for (var ii = 0; ii < D.itemEconomy.shop; ii++) r.shop.items.push(St.rollItem());
         St.save();
       }
       return r.shop;
@@ -859,6 +912,20 @@
           res.log.push('다음 전투에 ' + D.monsterById['shadow_' + m].name + ' 등장');
           break;
         }
+        case 'item': {
+          var iid = op.id || (op.rarity ? (G.rng.pick(D.items.filter(function (x) { return x.rarity === op.rarity; })) || {}).id : null) || St.rollItem();
+          if (St.addItem(iid)) { res.log.push('소모품 획득: ' + D.itemById[iid].name); res.item = iid; }
+          else { d.gold += 25; res.log.push('소모품 칸이 가득 차 골드 +25'); }
+          break;
+        }
+        case 'purge':
+          r.purges = (r.purges || 0) + 1;
+          res.log.push('스테이지 덱에서 카드 1장 빼기');
+          break;
+        case 'dup':
+          r.dups = (r.dups || 0) + 1;
+          res.log.push('스테이지 덱의 카드 1장 복제');
+          break;
         case 'exp':
           party.forEach(function (id) { St.growthOf(id).exp += op.value; });
           res.log.push('파티 전원 경험치 +' + op.value);

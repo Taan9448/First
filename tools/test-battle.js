@@ -7,7 +7,7 @@ const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
 global.window = global;
-['js/core.js', 'data/keywords.js', 'data/characters.js', 'data/cards.js', 'data/monsters.js', 'data/relics.js',
+['js/core.js', 'data/keywords.js', 'data/characters.js', 'data/cards.js', 'data/monsters.js', 'data/relics.js', 'data/items.js',
  'data/upgrades.js', 'data/events.js', 'data/bonds.js', 'data/traits.js', 'data/ascension.js', 'data/modes.js', 'js/status.js', 'js/deck.js', 'js/upgrade.js', 'js/battle.js', 'js/effects.js', 'data/fx.js', 'js/fx-pixel.js'].forEach(f => {
   vm.runInThisContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), { filename: f });
 });
@@ -132,9 +132,9 @@ HEROES.forEach(id => {
 });
 check(traitN === 50, '특성 50개 (' + traitN + ')');
 
-// 이벤트 15종
-check(G.Data.events.length === 15, '이벤트 15종');
-const EVENT_OPS = ['gold', 'hp', 'card', 'cardChoice', 'relic', 'upgrade', 'buff', 'curse', 'mirror', 'exp', 'bond', 'chance', 'fight', 'cutNext'];
+// 이벤트 30종(22단계)
+check(G.Data.events.length === 30, '이벤트 30종');
+const EVENT_OPS = ['gold', 'hp', 'card', 'cardChoice', 'relic', 'upgrade', 'buff', 'curse', 'mirror', 'exp', 'bond', 'chance', 'fight', 'cutNext', 'item', 'purge', 'dup'];
 G.Data.events.forEach(ev => {
   check(ev.choices.length >= 2, ev.id + ': 선택지 2개 이상');
   (function w(list) {
@@ -471,7 +471,55 @@ function handCard(b, id) {
   check(!b.heroes[1].dead && b.heroes[1].hp === 28, '부활 → 카이 체력 40% = 28');
 
   // ---------------------------------------------------------------- 유물·변이
-  check(G.Data.relics.length === 30, '유물 30종');
+  check(G.Data.relics.length === 50, '유물 50종');
+  // 22단계: 소모품
+  {
+    const ib = await newBattle(['kai'], ['slime', 'slime'], ['C01'], { items: ['I02', 'I05', 'I03'] });
+    const e0 = ib.energy;
+    check(await ib.useItem(1) && ib.energy === e0 + 2 && ib.items.length === 2, '공청석유: 에너지 +2, 칸에서 사라진다');
+    check(await ib.useItem(0) && ib.heroes[0].block === 12, '금강단: 아군 전체 보호막 12');
+    const hp0 = ib.monsters.map(m => m.hp);
+    await ib.useItem(0);
+    check(ib.monsters.every((m, i) => m.dead || m.hp <= hp0[i] - 10) && ib.items.length === 0 && ib.itemsUsed.length === 3, '폭염부: 적 전체 10 + 화상');
+    check(G.Data.items.length === 12, '소모품 12종');
+  }
+  // 22단계: 사건 유물
+  {
+    let rb = await newBattle(['kai'], ['slime', 'slime'], ['C01'], { relics: ['R31'] });
+    rb.energy = 20; rb.piles.draw = [G.Deck.inst('C01'), G.Deck.inst('C01')];
+    const h0 = rb.piles.hand.length;
+    for (let i = 0; i < 4; i++) await rb.play(handCard(rb, 'C04'), rb.alive('enemy')[0]);
+    check(rb.piles.hand.length === h0 + 1, '청운 검수: 공격 카드 4장마다 1장 뽑기');
+    rb = await newBattle(['bram'], ['treant'], ['C01'], { relics: ['R32'] });
+    rb.energy = 5; let mh = rb.monsters[0].hp;
+    await rb.play(handCard(rb, 'B02'), null);
+    check(rb.monsters[0].hp === mh - 2, '방패 휘장: 방어 카드마다 무작위 적 피해 2');
+    rb = await newBattle(['kai'], ['slime', 'slime'], ['C01'], { relics: ['R37'] });
+    rb.energy = 0;
+    await rb.die(rb.monsters[0]);
+    check(rb.energy === 1, '혈전의 깃발: 처치하면 에너지 +1');
+    rb = await newBattle(['kai'], ['treant'], ['C01'], { relics: ['R38'] });
+    const hp1 = rb.heroes[0].hp;
+    await rb.hit(rb.monsters[0], rb.heroes[0], 5, {}, rb.monsterCtx(rb.monsters[0]));
+    check(rb.heroes[0].block === 4, '응혈 부적: 맞으면 보호막 4 (' + rb.heroes[0].block + ')');
+    await rb.hit(rb.monsters[0], rb.heroes[0], 5, {}, rb.monsterCtx(rb.monsters[0]));
+    check(rb.heroes[0].block === 0 && rb.heroes[0].hp === hp1 - 6, '응혈 부적: 턴마다 1번');
+    rb = await newBattle(['nox'], ['treant'], ['C01'], { relics: ['R40'] });
+    rb.energy = 5; mh = rb.monsters[0].hp;
+    await rb.play(handCard(rb, 'N03'), rb.heroes[0]);
+    await rb.play(handCard(rb, 'C09'), rb.monsters[0]);
+    check(rb.monsters[0].hp < mh - 3, '역린의 비늘: 디버프를 걸면 그 적에게 피해 2');
+    rb = await newBattle(['kai'], ['slime', 'slime'], ['C01'], { relics: ['R48'] });
+    rb.energy = 20; const sum = () => rb.monsters.reduce((a, m) => a + Math.max(0, m.hp), 0); let s0 = sum();
+    for (let i = 0; i < 5; i++) await rb.play(handCard(rb, 'K06'), null);
+    check(sum() === s0 - 12, '천둥새 깃털: 한 턴 5번째 카드에 적 전체 6');
+    rb = await newBattle(['kai', 'bram'], ['treant'], ['C01'], { relics: ['R36'] });
+    check(rb.heroes[0].res === 2 && rb.heroes[1].res === 2, '단전 수련서: 시작 시 고유 자원 +2');
+    rb = await newBattle(['kai'], ['treant'], ['C01'], { relics: ['R44'] });
+    rb.heroes[0].res = 4; rb.energy = 5; rb.piles.draw = [G.Deck.inst('C01')]; const hh = rb.piles.hand.length;
+    await rb.play(handCard(rb, 'K01'), rb.monsters[0]);
+    check(rb.energy === 5 && rb.piles.hand.length === hh + 1, '천외검선의 검집: 자원이 차면 1장 + 에너지 1 (' + rb.energy + ')');
+  }
   G.Data.relics.forEach(r => (r.hooks || []).forEach(h => walk(h.effects, r.id)));
   b = await newBattle(['kai'], ['treant'], ['C01'], { relics: ['R01', 'R03', 'R08'] });
   check(b.energy === 4, '여명의 모래시계: 첫 턴 에너지 4 (실제 ' + b.energy + ')');

@@ -135,6 +135,15 @@
     UI.setNum($('.cnt-exhaust'), B.piles.exhaust.length, '.pilebtn');
     UI.setNum($('.turn'), B.turn, '.turn-badge');
     UI.setNum($('.goldv'), B.gold + B.goldDelta, '.gold');
+    // 22단계: 소모품 칸
+    var ib = $('.item-bar'), ik = B.items.join(',') + B.canUseItem();
+    if (ib._k !== ik) {
+      ib.innerHTML = UI.itemBar(B.items, B.canUseItem(), (G.Data.itemEconomy || {}).slots);
+      UI.$$('.item.usable', ib).forEach(function (btn) {
+        btn.onclick = function () { if (B && B.canUseItem()) { selected = null; clearAim(); SND.play('buff'); B.useItem(+btn.getAttribute('data-i')); } };
+      });
+      ib._k = ik;
+    }
     $('.endturn').disabled = B.phase !== 'player' || B.busy;
     var canAny = B.phase === 'player' && B.piles.hand.some(function (c) { return B.canPlay(c).ok; });
     $('.endturn').classList.toggle('ready', B.phase === 'player' && !B.busy && !canAny);

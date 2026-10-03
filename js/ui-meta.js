@@ -174,12 +174,13 @@
       (r ? '<button class="btn small ghost view">' + UI.icon('map') + (dungeon ? '월드맵' : '던전 지도') + '</button>' : '') +
       (d.flags.ended ? '<button class="btn small cyan ascend">새 원정</button>' : '') + '<button class="btn small ghost to-title">' + UI.icon('home') + '로비</button>') +
       '<div class="map-layout"><div class="map-frame"><div class="map-canvas"></div></div><aside class="map-side frame"></aside></div>' +
-      '<div class="map-bottom"><div class="party-row"></div><div class="relic-bar"></div></div>';
+      '<div class="map-bottom"><div class="party-row"></div><div class="items-row item-bar"></div><div class="relic-bar"></div></div>';
     var common = function () {
       renderSide(el.querySelector('.map-side'), mapSel, dungeon);
       el.querySelector('.party-row').innerHTML = d.party.map(miniHero).join('');
       fillSprites(el.querySelector('.party-row'), 0.6);
       el.querySelector('.map-bottom .relic-bar').innerHTML = UI.relicBar(d.relics);
+      el.querySelector('.map-bottom .items-row').innerHTML = UI.itemBar(St.items(), false, D.itemEconomy.slots);
       el.querySelector('.to-title').onclick = function () { Meta.lobby(); };
       if (el.querySelector('.view')) el.querySelector('.view').onclick = function () { mapView = dungeon ? 'world' : 'dungeon'; Meta.map(r.stage); };
       if (el.querySelector('.ascend')) el.querySelector('.ascend').onclick = function () { Meta.ascend(); };
@@ -357,7 +358,7 @@
     if (!node) return Meta.map();
     if (node.type === 'rest') return r.upgrades ? Meta.upgrade() : r.purges ? (St.data.run.purges = 0, Meta.rest()) : Meta.rest();
     if (node.type === 'shop') return Meta.shop();
-    if (node.type === 'event' && !(node.result && node.result.fight && !node.result.cards && !r.upgrades)) return Meta.event();
+    if (node.type === 'event' && !(node.result && node.result.fight && !node.result.cards && !r.upgrades && !r.purges && !r.dups)) return Meta.event();
     if (node.type === 'treasure' && !(node.result && node.result.ambush)) return Meta.treasure();
     // 스토리(13단계): 중간 보스·마지막 전투 직전 장면(처음 한 번)
     var kind = node.type === 'midboss' ? 'mid' : r.col === r.map.length - 1 ? 'boss' : null;
@@ -456,6 +457,7 @@
     var chosen = null;
     var relicPart = '';
     if (p.relic) relicPart += '<span class="ribbon cyan">유물 획득</span><div class="relic-tiles">' + UI.relicTile(p.relic, 'static') + '</div>';
+    if (p.item && D.itemById[p.item]) relicPart += '<p class="gain item-gain">' + UI.itemBar([p.item], false, 1) + ' 소모품 <b>' + D.itemById[p.item].name + '</b> 획득 <span class="dim">— ' + U.esc(D.itemById[p.item].desc) + '</span></p>';
     if (p.relicChoice && p.relicChoice.length) {
       relicPart += '<span class="ribbon red">유물 1개를 고른다</span><div class="relic-tiles choose">' +
         p.relicChoice.map(function (id) { return UI.relicTile(id); }).join('') + '</div>' +
@@ -627,13 +629,15 @@
         (res.log.length ? '<ul class="event-log">' + res.log.map(function (l) { return '<li>' + U.esc(l) + '</li>'; }).join('') + '</ul>' : '');
     }
     body += '</div></div>';
-    var waiting = res && (res.cards || r.upgrades);
+    var waiting = res && (res.cards || r.upgrades || r.purges || r.dups);
     el.innerHTML = topbar('이벤트') + '<div class="meta-body">' +
       '<span class="ribbon">이벤트</span><h1 class="big-title">' + U.esc(ev.name) + '</h1>' + body +
       (res && res.cards ? '<span class="ribbon">카드 1장을 고른다</span><div class="row reward-cards"></div><button class="btn small skip-card">받지 않기</button>' : '') +
       (res && res.relic ? '<div class="relic-tiles">' + UI.relicTile(res.relic, 'static') + '</div>' : '') +
+      (res && res.item && D.itemById[res.item] ? '<p class="gain item-gain">' + UI.itemBar([res.item], false, 1) + ' 소모품 <b>' + D.itemById[res.item].name + '</b></p>' : '') +
       (res && res.gotCard ? '<div class="row got-card"></div>' : '') +
       (res ? '<div class="row">' + (r.upgrades ? '<button class="btn gold up">카드 강화하기</button>' : '') +
+        (r.purges ? '<button class="btn gold epurge">카드 정리하기 (' + r.purges + ')</button>' : '') + (r.dups ? '<button class="btn gold edup">카드 복제하기</button>' : '') +
         '<button class="btn ' + (waiting ? '' : 'gold ') + 'next" ' + (waiting ? 'disabled' : '') + '>' + (res.fight ? '전투 시작' : '계속') + '</button></div>' :
         '<div class="row"><button class="btn back">맵으로</button></div>') + '</div>';
     backdrop(el, runTheme());
@@ -651,6 +655,14 @@
     }
     if (res && res.gotCard) el.querySelector('.got-card').appendChild(UI.cardEl(D.cardById[res.gotCard], { static: true }));
     if (el.querySelector('.up')) el.querySelector('.up').onclick = function () { Meta.upgrade(); };
+    if (el.querySelector('.epurge')) el.querySelector('.epurge').onclick = function () {
+      Meta.pickRunCard('카드 정리', '스테이지 덱에서 뺄 카드를 고른다. 이번 스테이지에서만 빠진다.', '빼기', function (id) { St.eventPurge(id); Meta.event(); },
+        function () { St.skipEventDeck(); Meta.event(); });
+    };
+    if (el.querySelector('.edup')) el.querySelector('.edup').onclick = function () {
+      Meta.pickRunCard('카드 복제', '스테이지 덱에서 한 장 더 넣을 카드를 고른다.', '복제', function (id) { St.eventDup(id); Meta.event(); },
+        function () { St.skipEventDeck(); Meta.event(); });
+    };
     if (el.querySelector('.next')) el.querySelector('.next').onclick = function () {
       if (res.fight) Meta.continueRun(); else nodeDone(St.eventFinish());
     };
@@ -794,7 +806,13 @@
     el.innerHTML = topbar('상점') + '<div class="meta-body">' +
       '<h1 class="big-title">떠돌이 상인</h1>' +
       '<span class="ribbon">카드</span><div class="row shop-cards"></div>' +
-      (relicHTML ? '<span class="ribbon cyan">유물</span><div class="relic-tiles">' + relicHTML + '</div>' : '') +
+      '<div class="row shop-extras">' +
+      (relicHTML ? '<div class="col"><span class="ribbon cyan">유물</span><div class="relic-tiles">' + relicHTML + '</div></div>' : '') +
+      ((s.items || []).length ? '<div class="col"><span class="ribbon">소모품 <span class="dim">(칸 ' + St.items().length + '/' + D.itemEconomy.slots + ')</span></span><div class="items-row shop-items">' + s.items.map(function (iid, i) {
+        var it = D.itemById[iid], sold = s.itemSold[i], ip = St.itemPrice(iid);
+        return '<div class="shop-item">' + UI.itemBar([iid], false, 1) + '<small>' + it.name + '</small><div class="price buy-item ' + (sold ? 'sold' : d.gold < ip || !St.itemRoom() ? 'poor' : '') + '" data-i="' + i + '">' +
+          (sold ? '구매함' : '<i class="ico" style="' + UI.iconStyle('gold') + '"></i>' + ip) + '</div></div>';
+      }).join('') + '</div></div>' : '') + '</div>' +
       '<div class="row">' +
       '<button class="btn heal" ' + (s.healed || d.gold < e.healCost ? 'disabled' : '') + '>치료: 전원 ' + e.healPct * 100 + '% 회복 (' + e.healCost + ' 골드)' + (s.healed ? ' · 완료' : '') + '</button>' +
       '<button class="btn refresh" ' + (d.gold < e.refreshCost ? 'disabled' : '') + '>진열 새로고침 (' + e.refreshCost + ' 골드)</button>' +
@@ -826,6 +844,9 @@
       if (d.gold < St.price(s.relic)) return;
       confirmBox(U.josa(D.relicById[s.relic].name, '을/를') + ' ' + St.price(s.relic) + ' 골드에 살까요?', '구매', function () { St.buyRelic(); Meta.shop(); });
     };
+    UI.$$('.buy-item', el).forEach(function (b) {
+      b.onclick = function () { if (St.buyItem(+b.getAttribute('data-i'))) { SND('coin'); Meta.shop(); } };
+    });
     el.querySelector('.heal').onclick = function () { if (St.shopHeal()) Meta.shop(); };
     el.querySelector('.refresh').onclick = function () { if (St.shopRefresh()) Meta.shop(); };
     el.querySelector('.remove').onclick = function () {
