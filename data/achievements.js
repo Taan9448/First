@@ -9,7 +9,7 @@
 //     { collect: 'heroes' | 'cards' | 'relics' | 'up3' | 'bond', n }   지금 저장 칸의 수집 수(up3: 3단계 강화 카드 수, bond: 가장 높은 친밀도)
 //   reward: 시작 선물 id — 업적을 달성하면 새 게임을 시작할 때 고를 수 있다
 (function () {
-  var A = function (id, name, desc, need, reward) { return { id: id, name: name, desc: desc, need: need, reward: reward || null }; };
+  var A = function (id, name, desc, need, reward, secret) { return { id: id, name: name, desc: desc, need: need, reward: reward || null, secret: !!secret }; };
   var BOSS = ['boss', 'midboss', 'final'], BIG = ['elite', 'boss', 'midboss', 'final'];
   var list = [
     // 누적
@@ -49,8 +49,9 @@
     A('A30', '오늘의 승자', '오늘의 원정을 끝까지 마친다.', { on: 'daily', cleared: true }, 'B06'),
     A('A31', '한결같이', '오늘의 원정을 7번 마친다.', { stat: 'dailyClears', n: 7 }),
     // 31단계: 세계의 틈
-    A('A32', '틈 너머로', '세계의 틈 11 스테이지를 돌파한다.', { on: 'stageClear', stage: 11 }),
-    A('A33', '천외로', '세계의 틈을 닫는다(13 스테이지 돌파).', { on: 'stageClear', stage: 13 })
+    // secret: 엔딩을 한 번이라도 보기 전에는 이름·설명이 '???'로 보인다
+    A('A32', '틈 너머로', '세계의 틈 11 스테이지를 돌파한다.', { on: 'stageClear', stage: 11 }, null, true),
+    A('A33', '천외로', '세계의 틈을 닫는다(13 스테이지 돌파).', { on: 'stageClear', stage: 13 }, null, true)
   ];
   Game.Data.achievements = list;
   Game.Data.achievementById = Game.util.byId(list);

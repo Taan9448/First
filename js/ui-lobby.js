@@ -73,7 +73,7 @@
       (heroes.length > 1 ? '<button class="btn icon ghost lb-swap" data-tip="다른 동료 보기">' + UI.icon('swap') + '</button>' : '') +
       '<div class="lb-voice"><span class="tag">VOICE</span><p></p></div>' +
       '<section class="lb-tiles">' +
-        tile('map', 't-small', '지도', 'WORLD MAP', '<div class="ti"><span>클리어 ' + d.clearedStage + '/' + D.stages.length + '</span></div>') +
+        tile('map', 't-small', '지도', 'WORLD MAP', '<div class="ti"><span>클리어 ' + d.clearedStage + '/' + St.stageCount() + '</span></div>') +
         tile('go', 't-wide hot', '원정', 'EXPEDITION', '<div class="ti"><span class="dim">' + D.THEME_NAME[def.theme] + '</span><b style="color:#fff;font-size:1.15em">STAGE ' + n + ' · ' + D.STAGE_NAME[n - 1] + '</b><span>' +
           (r ? '진행 중 · 눌러서 이어하기' : n <= d.clearedStage ? '다시 도전' : '지도에서 출발') + '</span></div>' + (asc ? '<span class="badge red">승천 ' + asc + '</span>' : '')) +
         tile('heroes', 't-wide', '동료', 'HEROES', '<div class="ti"><span>합류 ' + heroes.length + '/' + D.characters.length + ' · 최고 Lv ' + maxLevel() + '</span></div>') +

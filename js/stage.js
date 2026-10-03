@@ -345,6 +345,12 @@
     // ================= 스테이지 =================
     stageDef: function (n) { return D.stages[n - 1]; },
     canEnter: function (n) { return G.debug || n <= St.data.clearedStage + 1; },
+    // 31단계: 세계의 틈은 엔딩을 보기 전까지 지도·숫자·스토리·도감 어디에도 드러나지 않는다. 한 번 엔딩을 보면(riftSeen) 승천 원정에서도 보인다
+    riftKnown: function () {
+      var d = St.data;
+      return !!(G.debug || (d && (d.flags.riftSeen || d.flags.ended || d.flags.riftEnded || d.clearedStage >= (D.MAIN_STAGES || D.stages.length))));
+    },
+    stageCount: function () { return St.riftKnown() ? D.stages.length : (D.MAIN_STAGES || D.stages.length); },
 
     startStage: function (n) {
       var d = St.data, def = St.stageDef(n);
@@ -1122,6 +1128,7 @@
       var main = D.MAIN_STAGES || D.stages.length;
       var ending = n === main, riftEnding = n > main && n === D.stages.length;
       if (ending) {
+        d.flags.riftSeen = true;
         d.ascension = d.ascension || { current: 0, best: 0 };
         d.ascension.best = Math.max(d.ascension.best || 0, d.ascension.current || 0);
         if (G.Profile) G.Profile.ending({ mode: d.mode, asc: St.ascLevel() });
@@ -1237,6 +1244,7 @@
     },
 
     // ================= 스토리(13단계) =================
+    riftChapter: function (n) { return n === 21 || (n > (D.MAIN_STAGES || 99) && n <= D.stages.length); },
     storySeen: function (id) { return !!St.data && (St.data.story.seen || []).indexOf(id) >= 0; },
     markStory: function (id) {
       var sv = St.data.story;
@@ -1252,8 +1260,8 @@
       return sc;
     },
     storyProgress: function () {
-      var all = [];
-      (D.story || []).forEach(function (c) { c.scenes.forEach(function (x) { if (x.kind !== 'ascend') all.push(x.id); }); });
+      var all = [], known = St.riftKnown();
+      (D.story || []).forEach(function (c) { if (!known && St.riftChapter(c.n)) return; c.scenes.forEach(function (x) { if (x.kind !== 'ascend') all.push(x.id); }); });
       var seen = all.filter(function (id) { return St.storySeen(id); }).length;
       return { seen: seen, total: all.length, pct: all.length ? Math.round(seen / all.length * 100) : 0 };
     },

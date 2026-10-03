@@ -243,7 +243,9 @@ function invariants(where) {
     check(d.flags.ended && St.maxAscension() === 1, '엔딩 뒤 승천 1 열림');
     check(!St.newExpedition(2), '아직 열리지 않은 단계는 시작할 수 없음');
     const keep = JSON.stringify([d.cards, d.relics, d.gold, d.characters, d.growth, d.upgraded, d.codex]);
+    check(St.riftKnown() && St.stageCount() === 13, '엔딩 뒤 세계의 틈이 드러난다');
     check(St.newExpedition(1), '승천 1 원정 시작');
+    check(St.riftKnown() && !St.canEnter(11), '승천 원정: 세계의 틈은 보이지만 10을 다시 깨야 열린다');
     check(d.clearedStage === 0 && !d.run && !d.flags.ended && d.ascension.current === 1, '스테이지 진행만 처음부터');
     check(JSON.stringify([d.cards, d.relics, d.gold, d.characters, d.growth, d.upgraded, d.codex]) === keep, '카드·유물·골드·동료·성장·강화·도감 유지');
     const m = St.ascMods(10);
@@ -429,6 +431,12 @@ function invariants(where) {
   // 스토리: 처음 한 번만 나오고, 본 장면은 저장된다(승천 장면은 매번)
   St.newGame();
   check(St.data.story && St.data.story.seen.length === 0, '새 게임 스토리 기록 비어 있음');
+  // 31단계: 엔딩 전에는 세계의 틈이 드러나지 않는다(스테이지 수 10, 스토리 장면 수에서 빠짐)
+  {
+    const riftScenes = D.story.filter(c => St.riftChapter(c.n)).reduce((a, c) => a + c.scenes.length, 0);
+    const allScenes = D.story.reduce((a, c) => a + c.scenes.filter(x => x.kind !== 'ascend').length, 0);
+    check(!St.riftKnown() && St.stageCount() === 10 && riftScenes === 12 && St.storyProgress().total === allScenes - riftScenes, '엔딩 전에는 세계의 틈을 숨긴다');
+  }
   check(St.sceneFor('intro', 1).id === 'c1-intro' && St.sceneFor('prologue', 0).id === 'prologue', '장면 찾기');
   St.markStory('c1-intro');
   check(!St.sceneFor('intro', 1) && St.sceneFor('boss', 1), '본 장면은 다시 나오지 않는다');

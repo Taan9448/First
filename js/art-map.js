@@ -129,13 +129,18 @@
     s += poly(MURIM, 'none', 'stroke="' + K + '" stroke-width="4" stroke-linejoin="round"') + poly(ELDAN, 'none', 'stroke="' + K + '" stroke-width="4" stroke-linejoin="round"');
     // 세계의 틈: 두 갈래 균열(2장 → 3장, 8장 → 9장)
     s += rift(386, 420, 120) + rift(390, 150, 110);
-    // 31단계: 틈의 심연 — 두 균열 사이의 소용돌이와 떠 있는 파편 섬 셋
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 560" width="1000" height="560">' + s + '</svg>';
+  }
+
+  // 31단계: 틈의 심연 — 두 균열 사이의 소용돌이와 떠 있는 파편 섬 셋. 엔딩 전에는 그리지 않도록 지도 그림과 따로 둔다(지도 위 SVG 겹)
+  function riftLayer() {
+    var s = '';
     s += '<ellipse cx="390" cy="268" rx="62" ry="86" fill="#3a1a7a" opacity="0.35"/><ellipse cx="390" cy="268" rx="38" ry="58" fill="#6a2ac0" opacity="0.3"/><ellipse cx="390" cy="268" rx="18" ry="28" fill="#5ef0d0" opacity="0.25"/>';
     [[366, 344, 22], [416, 282, 20], [370, 222, 22]].forEach(function (q) {
       s += poly((q[0] - q[2]) + ',' + (q[1] + 6) + ' ' + (q[0] + q[2]) + ',' + (q[1] + 6) + ' ' + (q[0] + q[2] * 0.4) + ',' + (q[1] + 6 + q[2] * 0.8) + ' ' + (q[0] - q[2] * 0.5) + ',' + (q[1] + 6 + q[2] * 0.6), '#2a2440') +
         '<rect x="' + (q[0] - q[2]) + '" y="' + (q[1] + 4) + '" width="' + q[2] * 2 + '" height="3" fill="#5ef0d0" opacity="0.7"/>';
     });
-    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 560" width="1000" height="560">' + s + '</svg>';
+    return s;
   }
 
   function fogSvg() {
@@ -214,6 +219,7 @@
   G.ArtMap = {
     parchment: parchment,
     fogLayer: fogLayer,
+    riftLayer: riftLayer,
     world: function () { return G.Pixel.raster('map:world', worldSvg(), 500, 280, 16); },
     fog: function () { return G.Pixel.raster('map:fog', fogSvg(), 100, 70, 8); }
   };

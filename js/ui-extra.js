@@ -130,11 +130,13 @@
         grid.appendChild(el);
       });
     } else if (cs.tab === 'monsters') {
-      var seenN = Object.keys(d.codex.monsters).length;
-      html += '<div class="codex-sum">만난 몬스터 <b>' + seenN + '/' + D.monsters.length + '</b></div><div class="mon-list"></div>';
+      // 31단계: 엔딩 전에는 세계의 틈 몬스터를 목록·수에서 뺀다
+      var known = St().riftKnown(), shown = D.monsters.filter(function (mo) { return known || mo.theme !== 'rift'; });
+      var seenN = Object.keys(d.codex.monsters).filter(function (id) { return shown.some(function (mo) { return mo.id === id; }); }).length;
+      html += '<div class="codex-sum">만난 몬스터 <b>' + seenN + '/' + shown.length + '</b></div><div class="mon-list"></div>';
       body.innerHTML = html;
       var list = body.querySelector('.mon-list');
-      THEMES.forEach(function (t) {
+      THEMES.filter(function (t) { return known || t !== 'rift'; }).forEach(function (t) {
         list.appendChild(UI.el('div', 'theme-title', D.THEME_NAME[t]));
         D.monsters.filter(function (mo) { return mo.theme === t; }).forEach(function (mo) {
           var rec = d.codex.monsters[mo.id];
@@ -342,7 +344,8 @@
     var P = G.Profile;
     return '<div class="ach-list">' + D.achievements.map(function (a) {
       var on = P.has(a.id), pg = P.progress(a), b = a.reward && D.boonById[a.reward];
-      return '<div class="ach' + (on ? ' on' : '') + '"><i class="ach-mark"></i><div class="ach-t"><b>' + U.esc(a.name) + '</b><span>' + U.esc(a.desc) + '</span>' +
+      var hide = a.secret && !on && !P.stat('endings');   // 31단계: 세계의 틈 업적은 엔딩을 본 뒤에 드러난다
+      return '<div class="ach' + (on ? ' on' : '') + '"><i class="ach-mark"></i><div class="ach-t"><b>' + (hide ? '???' : U.esc(a.name)) + '</b><span>' + (hide ? '엔딩을 보면 드러난다.' : U.esc(a.desc)) + '</span>' +
         (b ? '<em' + (on ? '' : ' class="dim"') + '>시작 선물 · ' + U.esc(b.name) + ' — ' + U.esc(b.desc) + '</em>' : '') + '</div>' +
         (pg && !on ? '<div class="ach-pg"><i style="width:' + Math.round(pg[0] / pg[1] * 100) + '%"></i><small>' + pg[0] + '/' + pg[1] + '</small></div>' : '') +
         (on ? '<small class="ach-date">' + new Date(P.get().ach[a.id]).toLocaleDateString('ko-KR') + '</small>' : '') + '</div>';
@@ -365,7 +368,7 @@
     var all = D.cards.filter(function (c) { return c.owner !== 'none'; }).length;
     var talks = Object.keys(d.talks || {}).reduce(function (s, k) { return s + d.talks[k]; }, 0);
     return '<div class="stat-grid">' +
-      stat('클리어한 스테이지', d.clearedStage + '/' + D.stages.length, d.flags.ended ? '혈마를 쓰러뜨렸다' : '') +
+      stat('클리어한 스테이지', d.clearedStage + '/' + St().stageCount(), d.flags.ended ? '혈마를 쓰러뜨렸다' : '') +
       stat('승천', St().ascLevel() ? '승천 ' + St().ascLevel() : '기본', '최고 기록 ' + (d.ascension.best ? '승천 ' + d.ascension.best : '—')) +
       stat('동료', d.characters.length + '/' + D.characters.length) +
       stat('최고 레벨', 'Lv ' + Math.max.apply(null, d.characters.map(function (id) { return St().levelOf(id); }))) +

@@ -130,7 +130,8 @@
     var el = screen(), prog = St.storyProgress();
     el.onclick = null;
     el.classList.remove('narrating');
-    var cards = (D.story || []).map(function (ch) {
+    var known = St.riftKnown();   // 31단계: 엔딩 전에는 세계의 틈 장(11~13, 21)을 목록에서 뺀다
+    var cards = (D.story || []).filter(function (ch) { return known || !St.riftChapter(ch.n); }).map(function (ch) {
       var anySeen = ch.scenes.some(function (sc) { return sc.kind === 'ascend' ? St.data.ascension.best > 0 || St.ascLevel() > 0 : St.storySeen(sc.id); });
       var stageTheme = ch.n >= 1 && ch.n <= D.stages.length ? D.stages[ch.n - 1].theme : ch.n === 21 ? 'rift' : 'castle'; // 프롤로그·에필로그는 청운문, 31단계 세계의 틈 에필로그는 틈
       return '<div class="sc-card' + (anySeen ? '' : ' locked') + '" data-theme="' + stageTheme + '"><div class="sc-art"></div>' +

@@ -7,6 +7,8 @@
   var NODE_ICON = { battle: 'attack', elite: 'elite', event: 'event', rest: 'campfire', shop: 'shop', boss: 'crown', midboss: 'crown', final: 'crown' };
   function lastType(def) { return def.last; }
   var THEMES = ['forest', 'desert', 'snow', 'volcano', 'castle'];
+  // 31단계: 저장 칸 미리 보기의 스테이지 수(엔딩 전에는 본편 10)
+  function stageCountOf(d) { var main = D.MAIN_STAGES || D.stages.length; return d.flags.riftSeen || d.flags.ended || d.flags.riftEnded || d.clearedStage >= main ? D.stages.length : main; }
 
   function charDef(id) { return D.characters.filter(function (c) { return c.id === id; })[0]; }
   function screen(id) { return document.getElementById('screen-' + id); }
@@ -110,11 +112,11 @@
       }
       var md = D.modes[d.mode] || D.modes.normal;
       var alive = d.characters.filter(function (id) { return (d.dead || []).indexOf(id) < 0; });
-      var prog = d.flags.ended ? '엔딩 도달' : d.run ? '스테이지 ' + d.run.stage + ' 진행 중' : '스테이지 ' + Math.min(D.stages.length, d.clearedStage + 1) + ' 대기';
+      var prog = d.flags.riftEnded ? '세계의 틈을 닫음' : d.flags.ended ? '엔딩 도달' : d.run ? '스테이지 ' + d.run.stage + ' 진행 중' : '스테이지 ' + Math.min(D.stages.length, d.clearedStage + 1) + ' 대기';
       cards += '<div class="slot-card" data-n="' + n + '" style="--mc:' + md.color + '"><small>SLOT ' + n + '</small>' +
         '<span class="mode-chip">' + md.name + '</span><b>' + prog + '</b>' +
         '<div class="slot-heroes" data-heroes="' + d.characters.join(',') + '" data-dead="' + (d.dead || []).join(',') + '"></div>' +
-        '<div class="info-line"><span>클리어</span><span>' + d.clearedStage + '/' + D.stages.length + (d.ascension && d.ascension.current ? ' · 승천 ' + d.ascension.current : '') + '</span></div>' +
+        '<div class="info-line"><span>클리어</span><span>' + d.clearedStage + '/' + stageCountOf(d) + (d.ascension && d.ascension.current ? ' · 승천 ' + d.ascension.current : '') + '</span></div>' +
         '<div class="info-line"><span>동료</span><span>' + alive.length + '명' + ((d.dead || []).length ? ' · 사망 ' + d.dead.length : '') + '</span></div>' +
         '<div class="info-line"><span>골드 · 카드</span><span>' + d.gold + ' · ' + d.cards.length + '장</span></div>' +
         '<div class="row"><button class="btn gold go" data-n="' + n + '">이어하기</button><button class="btn small exp" data-n="' + n + '">내보내기</button><button class="btn small imp" data-n="' + n + '">가져오기</button><button class="btn small danger del" data-n="' + n + '">지우기</button></div></div>';
@@ -214,8 +216,8 @@
     G.ArtMap.world().then(function (u) { if (u) canvas.style.backgroundImage = 'url(' + u + ')'; });
 
     // 길: 클리어한 구간은 금빛
-    var route = '';
-    for (var i = 0; i < D.mapPos.length - 1; i++) {
+    var route = '', count = St.stageCount();   // 31단계: 엔딩 전에는 세계의 틈(11~13)을 숨긴다
+    for (var i = 0; i < Math.min(D.mapPos.length, count) - 1; i++) {
       var a = D.mapPos[i], b = D.mapPos[i + 1], done = i + 1 <= d.clearedStage;
       var ri = (D.riftAfter || []).indexOf(i + 1);
       // 세계의 틈을 건너는 길은 틈을 지나 보랏빛으로 굽는다(16단계)
@@ -225,8 +227,9 @@
     }
     // 잠긴 지역은 경계 그대로 안개로 덮는다
     var fog = '';
-    D.regions.forEach(function (rg, ri) { if (!St.canEnter(ri * 2 + 1)) fog += G.ArtMap.fogLayer(rg.theme, 11 + ri); });
-    canvas.innerHTML = '<svg class="map-route" viewBox="0 0 1000 560" preserveAspectRatio="none" shape-rendering="crispEdges">' + fog + route + '</svg>';
+    var regions = D.regions.filter(function (rg) { return rg.theme !== 'rift' || St.riftKnown(); });
+    regions.forEach(function (rg, ri) { if (!St.canEnter(ri * 2 + 1)) fog += G.ArtMap.fogLayer(rg.theme, 11 + ri); });
+    canvas.innerHTML = '<svg class="map-route" viewBox="0 0 1000 560" preserveAspectRatio="none" shape-rendering="crispEdges">' + (St.riftKnown() ? G.ArtMap.riftLayer() : '') + fog + route + '</svg>';
 
     // 세계 이름표(16단계)
     (D.worldLabels || []).forEach(function (wl) {
@@ -235,7 +238,7 @@
       canvas.appendChild(t);
     });
     // 지역 이름표
-    D.regions.forEach(function (rg, ri) {
+    regions.forEach(function (rg, ri) {
       var open = St.canEnter(ri * 2 + 1);
       var t = UI.el('div', 'region-tag' + (open ? '' : ' locked'),
         '<i style="background:' + D.THEME_COLOR[rg.theme] + '"></i>' + D.THEME_NAME[rg.theme] + (open ? '' : '<span class="lk"> · 잠김</span>'));
@@ -244,7 +247,7 @@
     });
 
     // 스테이지 표지
-    D.stages.forEach(function (def) {
+    D.stages.slice(0, count).forEach(function (def) {
       var n = def.n, p = D.mapPos[n - 1];
       var cleared = n <= d.clearedStage, open = St.canEnter(n), cur = r && r.stage === n;
       var last = lastType(def);
