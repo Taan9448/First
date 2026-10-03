@@ -454,8 +454,181 @@
       } };
   }
 
+  // ================= 27단계 연출 도구 =================
+  // 초승달 베기: 가운데(cx, cy) 반지름 r, 각도 a0 → a1, 굵기 th. 바깥 가장자리가 가장 밝다(pal 의 7 → 5 → 3)
+  function crescent(cx, cy, r, a0, a1, th, pal, a, edgePal) {
+    var span = Math.abs(a1 - a0), n = Math.max(8, Math.ceil(r * span * 1.6)), E = P[edgePal || pal];
+    for (var i = 0; i <= n; i++) {
+      var s = i / n, ang = a0 + (a1 - a0) * s, w = th * Math.sin(Math.PI * s);
+      for (var k = 0; k <= w; k += 0.6) {
+        var rr = r - k, x = cx + Math.cos(ang) * rr, y = cy + Math.sin(ang) * rr;
+        putA(x, y, k < 1 ? E[7] : k < w * 0.45 ? P[pal][5] : P[pal][3], a * (k < 1 ? 1 : 0.9));
+      }
+    }
+  }
+  // 하늘에서 떨어지는 거대한 검(끝이 아래, tip 이 칼끝)
+  function drawGreatSword(x, tip, len, w, a, pal) {
+    var Q = P[pal || 'holy'];
+    for (var j = 0; j < len; j++) {
+      var u = j / len, hw = Math.max(0.5, w * (u < 0.15 ? u / 0.15 : 1) * (1 - u * 0.15)), y = tip - j;
+      for (var i = -Math.ceil(hw) - 1; i <= Math.ceil(hw) + 1; i++) {
+        var ad = Math.abs(i);
+        if (ad > hw + 1) continue;
+        putA(x + i, y, ad > hw ? OL : i < -hw * 0.3 ? Q[3] : ad < 1 ? Q[7] : Q[5], a);
+      }
+    }
+    var gy = tip - len;
+    rect(x - w * 2.6, gy - 2, w * 5.2, 3, Q[4], a); rect(x - w * 2.6, gy - 2, w * 5.2, 1, Q[6], a);   // 코등이
+    rect(x - 1.5, gy - 9, 3, 7, HILT, a);                                                            // 손잡이
+    disc(x, gy - 10.5, 2.2, Q[4], a); disc(x - 0.5, gy - 11, 1, Q[7], a);                             // 칼자루 끝
+  }
+  // 붉은 별빛: 가로·세로 긴 빛줄기, 대각선 짧은 빛줄기
+  function starFlare(x, y, r, pal, a) {
+    var Q = P[pal];
+    line(x - r, y, x + r, y, Q[5], 2, a); line(x, y - r * 0.8, x, y + r * 0.8, Q[5], 2, a);
+    line(x - r * 1.3, y, x + r * 1.3, y, Q[7], 1, a); line(x, y - r, x, y + r, Q[7], 1, a);
+    var d = r * 0.42;
+    line(x - d, y - d, x + d, y + d, Q[4], 1, a * 0.8); line(x - d, y + d, x + d, y - d, Q[4], 1, a * 0.8);
+    disc(x, y, r * 0.22, Q[6], a); disc(x, y, r * 0.12, Q[7], a);
+  }
+  // 끝이 가는 직선 베기
+  function slashLine(x0, y0, x1, y1, w, pal, a) {
+    var L = Math.hypot(x1 - x0, y1 - y0), n = Math.max(4, Math.ceil(L)), Q = P[pal];
+    for (var i = 0; i <= n; i++) {
+      var u = i / n, ww = w * Math.sin(Math.PI * u), x = lerp(x0, x1, u), y = lerp(y0, y1, u);
+      disc(x, y, ww + 0.8, Q[3], a * 0.7); disc(x, y, ww, Q[5], a); if (ww > 0.6) disc(x, y, ww * 0.45, Q[7], a);
+    }
+  }
+
   var FXS = {
     fireOrb: orb('fire'), arcaneOrb: orb('arcane'), shadowOrb: orb('shadow'),
+    // 27단계 · 빙결 초승달(1번 참고): 시전자 앞에 얼음 초승달이 소용돌이친 뒤, 얼음 베기가 적을 엇갈려 가른다
+    frostCrescent: { ch: 'ice', sh: 'ice', hit: 0.55, dur: 1.9, dim: 0.35,
+      run: function (T, dt, st, c) {
+        var h = c.hero || { x: c.C.x, y: c.C.y, z: 1 };
+        if (T < 0.55) { heat('ice', h.x + 12 * h.z + rnd(-6, 6), h.y + rnd(-6, 6), 2.5, 0.8); if (Math.random() < 0.5) add({ kind: 'spark', x: h.x + 12 * h.z + rnd(-14, 14), y: h.y + rnd(-12, 12), life: 0.3, pal: 'ice', s: 2 }); }
+        if (T >= 0.55 && once(st, 'hit')) {
+          st.sl = [];
+          c.targets.forEach(function (b, k) {
+            for (var i = 0; i < 9; i++) {
+              var ang = rnd(0, Math.PI), L = rnd(26, 40) * b.z;
+              st.sl.push({ x: b.x + rnd(-5, 5) * b.z, y: b.y + rnd(-8, 6) * b.z, ang: ang, L: L, t0: 0.55 + i * 0.045 + k * 0.03 });
+            }
+            burst(b.x, b.y, 'ice', 30, 100 * b.z, { floor: b.foot + 2 }); ringFx(b.x, b.y, 3, 30 * b.z, 0.35, 'ice', 2); heat('ice', b.x, b.y, 12 * b.z, 1.1);
+          });
+          flash(0.22); shake(0.2, 2);
+        }
+        if (T > 0.6 && T < 1.4) c.targets.forEach(function (b) { if (Math.random() < 0.3) add({ x: b.x + rnd(-12, 12) * b.z, y: b.y + rnd(-14, 10) * b.z, vy: rnd(-30, -5), life: 0.5, pal: 'ice', hot: 7, cold: 4, s: 1 }); });
+      },
+      draw: function (T, st, c) {
+        var h = c.hero || { x: c.C.x, y: c.C.y, z: 1 };
+        if (T < 0.75) {
+          var a = T < 0.1 ? T / 0.1 : T > 0.6 ? (0.75 - T) / 0.15 : 1, cx = h.x + 12 * h.z, cy = h.y;
+          for (var k = 0; k < 3; k++) { var rot = T * 13 + k * 2.1; crescent(cx, cy, (9 + T * 16) * h.z, rot, rot + 2.3, 4.5 * h.z, 'ice', a, 'steel'); }
+        }
+        (st.sl || []).forEach(function (q) {
+          var t = T - q.t0;
+          if (t < 0 || t > 0.32) return;
+          var p = Math.min(1, t / 0.08), a = t < 0.2 ? 1 : (0.32 - t) / 0.12, dx = Math.cos(q.ang) * q.L / 2, dy = Math.sin(q.ang) * q.L / 2;
+          slashLine(q.x - dx, q.y - dy, q.x - dx + dx * 2 * p, q.y - dy + dy * 2 * p, 1.6, 'ice', a);
+        });
+      } },
+
+    // 27단계 · 천검강림(2번 참고): 시전자에게 금빛이 모인 뒤, 하늘에서 거대한 금빛 검 셋이 적에게 꽂힌다
+    skyBlades: { ch: 'holy', sh: 'holy', hit: 0.85, dur: 2.2, dim: 0.45,
+      run: function (T, dt, st, c) {
+        var h = c.hero || { x: c.C.x, y: c.C.y, z: 1 }, b = c.targets[0];
+        if (T < 0.5 && Math.random() < 0.7) converge(h.x, h.y, 'holy', 14);
+        if (!st.bl) {
+          st.bl = [];
+          c.targets.forEach(function (t, k) {
+            (k ? [0] : [-1, 0, 1]).forEach(function (o, i) { st.bl.push({ b: t, x: t.x + o * 15 * t.z, land: t.foot - 2, t0: 0.5 + i * 0.12 + k * 0.08, len: 50 * t.z, w: 3.6 * t.z }); });
+          });
+        }
+        st.bl.forEach(function (s, i) {
+          var u = clamp((T - s.t0) / 0.25, 0, 1);
+          s.tip = lerp(-10, s.land, u * u);
+          if (u >= 1 && once(st, 'land' + i)) {
+            var t = s.b;
+            ringFx(s.x, s.land, 3, 30 * t.z, 0.45, 'holy', 2, 0.35); burst(s.x, s.land - 4, 'steel', 22, 90 * t.z, { floor: t.foot + 2 });
+            burst(s.x, s.land - 6, 'holy', 18, 80 * t.z, { heat: 'holy' }); heat('holy', s.x, s.land - 4, 9 * t.z, 1.1);
+            flash(0.18); shake(0.18, 2 + (i === 1 ? 1 : 0));
+          }
+        });
+        if (T >= 0.95 && once(st, 'dome')) { c.targets.forEach(function (t) { ringFx(t.x, t.foot - 6, 4, 44 * t.z, 0.5, 'holy', 3, 0.6); for (var j = 0; j < 8; j++) beam(t.x, t.foot - 8, -Math.PI / 2 + rnd(-1.2, 1.2), rnd(24, 40) * t.z, 0.4, 'holy'); }); flash(0.35); shake(0.28, 3); }
+        if (T > 0.95 && T < 1.8) c.targets.forEach(function (t) { heat('holy', t.x + rnd(-18, 18) * t.z, t.foot - rnd(0, 4), rnd(2, 3.5), rnd(0.6, 0.9)); });
+      },
+      draw: function (T, st) {
+        (st.bl || []).forEach(function (s) {
+          if (T < s.t0 || T > 1.9) return;
+          var a = T > 1.6 ? (1.9 - T) / 0.3 : 1;
+          if (s.tip < s.land) line(s.x, s.tip - s.len - 16, s.x, s.tip - s.len, P.holy[5], 1, 0.5 * a);   // 떨어지는 빛줄기
+          drawGreatSword(s.x, s.tip, s.len, s.w, a, 'holy');
+        });
+      } },
+
+    // 27단계 · 혈성(3번 참고): 시전자에게 붉은 별빛이 번쩍이고, 핏빛 X자 베기와 세 줄 할퀴기가 적을 가른다
+    bloodStar: { ch: 'blood', sh: 'blood', hit: 0.5, dur: 2.0, dim: 0.55,
+      run: function (T, dt, st, c) {
+        var h = c.hero || { x: c.C.x, y: c.C.y, foot: c.C.y + 20, z: 1 };
+        if (T < 0.4 && Math.random() < 0.6) add({ kind: 'spark', x: h.x + rnd(-16, 16) * h.z, y: h.y + rnd(-16, 16) * h.z, life: 0.3, pal: 'blood', s: 2 });
+        [[0.5, 'x'], [0.95, 'claw']].forEach(function (ev) {
+          if (T >= ev[0] && once(st, ev[1])) {
+            c.targets.forEach(function (b) {
+              heat('blood', b.x, b.y, 12 * b.z, 1.2);
+              for (var i = 0; i < 26; i++) add({ x: b.x + rnd(-6, 6) * b.z, y: b.y + rnd(-8, 6) * b.z, vx: rnd(-70, 90) * b.z, vy: rnd(-90, 10), g: 220, drag: 0.02, life: rnd(0.5, 1.0), pal: 'blood', hot: 4, cold: 1, s: Math.random() < 0.4 ? 2 : 1, floor: b.foot + rnd(0, 4) });
+              ringFx(b.x, b.y, 3, 28 * b.z, 0.35, 'blood', 2);
+            });
+            flash(ev[1] === 'claw' ? 0.35 : 0.25); shake(0.22, ev[1] === 'claw' ? 3 : 2);
+          }
+        });
+        if (T > 0.5 && T < 1.8) c.targets.forEach(function (b) { heat('blood', b.x + rnd(-16, 16) * b.z, b.foot, rnd(2, 3), rnd(0.6, 0.85)); });
+      },
+      draw: function (T, st, c) {
+        var h = c.hero || { x: c.C.x, y: c.C.y, z: 1 };
+        if (T < 0.5) { var a = T < 0.08 ? T / 0.08 : T > 0.38 ? (0.5 - T) / 0.12 : 1; starFlare(h.x + 10 * h.z, h.y - 4 * h.z, (14 + T * 30) * h.z, 'blood', a); }
+        c.targets.forEach(function (b) {
+          var z = b.z, t = T - 0.5;
+          if (T > 0.35 && T < 0.55) { var u = (T - 0.35) / 0.15; slashLine(h.x + 10 * h.z, h.y, lerp(h.x, b.x, u), lerp(h.y, b.y, u), 1.2, 'blood', 0.9); }
+          if (t >= 0 && t < 0.45) {
+            var p = Math.min(1, t / 0.07), a2 = t < 0.3 ? 1 : (0.45 - t) / 0.15;
+            slashLine(b.x - 22 * z, b.y - 20 * z, b.x - 22 * z + 44 * z * p, b.y - 20 * z + 40 * z * p, 3 * z, 'blood', a2);
+            if (t > 0.06) { var p2 = Math.min(1, (t - 0.06) / 0.07); slashLine(b.x + 22 * z, b.y - 20 * z, b.x + 22 * z - 44 * z * p2, b.y - 20 * z + 40 * z * p2, 3 * z, 'blood', a2); }
+          }
+          var t3 = T - 0.95;
+          if (t3 >= 0 && t3 < 0.45) {
+            var p3 = Math.min(1, t3 / 0.08), a3 = t3 < 0.3 ? 1 : (0.45 - t3) / 0.15;
+            for (var j = -1; j <= 1; j++) crescent(b.x - 4 * z, b.y + j * 8 * z - 30 * z, 34 * z, Math.PI * 0.2, Math.PI * (0.2 + 0.6 * p3), 3 * z, 'blood', a3);
+          }
+        });
+      } },
+
+    // 27단계 · 초승달 연참(cap 참고): 적 둘레에서 먹빛·은빛 초승달 베기가 사방으로 몰아친다
+    crescentStorm: { ch: 'steel', sh: 'steel', hit: 0.12, dur: 1.7, dim: 0.3,
+      run: function (T, dt, st, c) {
+        if (!st.cr) {
+          st.cr = [];
+          c.targets.forEach(function (b, k) {
+            for (var i = 0; i < 7; i++) st.cr.push({ b: b, x: b.x + rnd(-8, 8) * b.z, y: b.y + rnd(-10, 6) * b.z, r: rnd(14, 22) * b.z, a0: rnd(0, Math.PI * 2), sp: rnd(2, 2.8) * (Math.random() < 0.5 ? -1 : 1), t0: 0.05 + i * 0.11 + k * 0.04, big: i === 6 });
+          });
+        }
+        st.cr.forEach(function (q, i) {
+          if (T >= q.t0 && once(st, 'c' + i)) {
+            sparks(q.x, q.y, 'steel', q.big ? 12 : 5, q.big ? 110 : 60); heat('steel', q.x, q.y, (q.big ? 10 : 5) * q.b.z, 0.9);
+            if (q.big) { flash(0.3); shake(0.25, 3); ringFx(q.x, q.y, 3, 34 * q.b.z, 0.4, 'steel', 2); } else shake(0.06, 1);
+          }
+        });
+      },
+      draw: function (T, st) {
+        (st.cr || []).forEach(function (q) {
+          var t = T - q.t0, life = q.big ? 0.4 : 0.24;
+          if (t < 0 || t > life) return;
+          var p = Math.min(1, t / 0.07), a = t < life * 0.6 ? 1 : (life - t) / (life * 0.4), r = q.big ? q.r * 1.6 : q.r;
+          crescent(q.x, q.y, r + 1.5, q.a0, q.a0 + q.sp * p, (q.big ? 6 : 4) * q.b.z + 1, 'ink', a * 0.85, 'ink');
+          crescent(q.x, q.y, r, q.a0, q.a0 + q.sp * p, (q.big ? 4.5 : 3) * q.b.z, 'steel', a);
+        });
+      } },
+
     ink: inkFx(false), goldInk: inkFx(true),
 
     iceLance: { ch: 'ice', sh: 'ice', hit: 0.28, dur: 1.8,

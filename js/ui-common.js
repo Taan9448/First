@@ -310,11 +310,13 @@
 
   // ---------------- 스프라이트 ----------------
   // size: 배율(그림 1픽셀 = var(--px) × 0.5 × 배율) 또는 { h: 화면 높이 px, max } — 그 높이에 맞춘다(max 배율 이하)
-  UI.spriteEl = function (spriteId, size) {
+  // native: 27단계 새 영웅 그림을 줄이지 않는다(전투 칸·컷인). 그 밖의 화면은 예전 그림과 키를 맞추려고 0.8배
+  UI.spriteEl = function (spriteId, size, native) {
     var sh = G.Pixel.sheet(spriteId);
     var e = UI.el('div', 'sprite' + (sh.frames === 3 ? ' legacy' : ''));
     if (size && typeof size === 'object') size = Math.min(size.max || 99, size.h / (sh.h * 4));
     size = size || 1;
+    if (sh.anims && !native) size *= 0.8;
     e.style.backgroundSize = (sh.frames || 3) * 100 + '% 100%';
     e.style.animationDelay = '-' + (Math.random() * 1.2).toFixed(2) + 's';
     e.style.width = 'calc(var(--px) * ' + (sh.w * size) + ')';
@@ -324,7 +326,55 @@
     e.style.left = 'calc(var(--px) * ' + ((0.5 - sh.anchor) * sh.w * size).toFixed(2) + ')';
     e._sheet = sh;
     e._size = size;
+    // 27단계: 동작이 여러 개인 영웅 그림(js/puppet.js)은 스크립트가 장면을 넘긴다. 칼을 휘두를 여백만큼 양옆을 겹쳐 자리는 예전 폭만 차지한다
+    if (sh.anims) {
+      e.classList.add('puppet');
+      var spare = Math.max(0, (sh.w - 34) * size / 2);
+      e.style.marginLeft = e.style.marginRight = 'calc(var(--px) * -' + spare.toFixed(2) + ')';
+      e._anim = { name: 'idle', t0: Date.now() - Math.random() * 800 };
+      ANIMATED.push(e);
+      drawAnim(e, Date.now());
+    }
     return e;
+  };
+  // ---------------- 27단계: 영웅 동작 ----------------
+  var ANIMATED = [];
+  function drawAnim(e, now) {
+    var sh = e._sheet, a = e._anim, A = sh.anims[a.name] || sh.anims.idle, idx;
+    if (e._fixed != null) idx = e._fixed;
+    else {
+      var fps = A.fps * (a.name === 'idle' ? 1 : (G.speed || 1)), f = Math.floor((now - a.t0) / 1000 * fps);
+      if (!A.loop && f >= A.n) { e._anim = { name: 'idle', t0: now }; A = sh.anims.idle; f = 0; }
+      if (e.parentNode && e.parentNode.closest && e.parentNode.closest('.dead')) f = 0;
+      idx = A.start + (A.loop ? f % A.n : Math.min(f, A.n - 1));
+    }
+    if (e._idx === idx) return;
+    e._idx = idx;
+    e.style.backgroundPosition = (sh.frames > 1 ? idx / (sh.frames - 1) * 100 : 0) + '% 0';
+  }
+  setInterval(function () {
+    var now = Date.now();
+    for (var i = ANIMATED.length - 1; i >= 0; i--) {
+      var e = ANIMATED[i];
+      if (!e.isConnected) { if (!e._keep || now - (e._born || 0) > 4000) ANIMATED.splice(i, 1); continue; }
+      drawAnim(e, now);
+    }
+  }, 50);
+  // name: 'attack' · 'skill' · 'hit'. 동작이 없는 그림이면 false
+  UI.playAnim = function (e, name) {
+    if (!e || !e._sheet || !e._sheet.anims || !e._sheet.anims[name]) return false;
+    e._anim = { name: name, t0: Date.now() };
+    e._fixed = null;
+    drawAnim(e, Date.now());
+    return true;
+  };
+  // 한 장면에 멈춰 둔다(컷인 얼굴: 얼굴 위치를 아는 대기 첫 장면). 여백 겹치기도 푼다
+  UI.holdPose = function (e) {
+    if (!e || !e._sheet || !e._sheet.anims) return false;
+    e._fixed = e._sheet.anims.idle.start;
+    e.style.marginLeft = e.style.marginRight = '0';
+    drawAnim(e, Date.now());
+    return true;
   };
 
   // ---------------- 카드 기울기 ----------------

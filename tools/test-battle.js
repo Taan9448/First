@@ -8,7 +8,7 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 global.window = global;
 ['js/core.js', 'data/keywords.js', 'data/characters.js', 'data/cards.js', 'data/monsters.js', 'data/relics.js', 'data/items.js',
- 'data/upgrades.js', 'data/events.js', 'data/bonds.js', 'data/traits.js', 'data/ascension.js', 'data/modes.js', 'js/status.js', 'js/deck.js', 'js/upgrade.js', 'js/battle.js', 'js/effects.js', 'data/fx.js', 'js/fx-pixel.js', 'data/music.js', 'js/music.js'].forEach(f => {
+ 'data/upgrades.js', 'data/events.js', 'data/bonds.js', 'data/traits.js', 'data/ascension.js', 'data/modes.js', 'js/status.js', 'js/deck.js', 'js/upgrade.js', 'js/battle.js', 'js/effects.js', 'data/fx.js', 'js/fx-pixel.js', 'data/music.js', 'js/music.js', 'js/puppet.js', 'js/puppet-heroes.js'].forEach(f => {
   vm.runInThisContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), { filename: f });
 });
 const G = global.Game;
@@ -22,6 +22,23 @@ function section(name) { console.log('\n■ ' + name); }
 
 // ---------------------------------------------------------------- 데이터 검사
 section('데이터');
+// 27단계: 새 영웅 그림 — 다섯 명 모두 대기 8 · 공격 8 · 스킬 16 · 맞음 2장면, 장면마다 몸이 그려지고 얼굴 칸에 피부색이 있다
+{
+  const P = G.Puppet;
+  ['kai', 'bram', 'lyra', 'sera', 'nox'].forEach(id => {
+    const d = P.designs[id];
+    check(!!d, id + ': 새 영웅 그림 설계');
+    if (!d) return;
+    const r = P.renderAll(d), ix = r.index;
+    check(ix.idle.n === 8 && ix.attack.n === 8 && ix.skill.n === 16 && ix.hit.n === 2 && r.frames.length === 34, id + ': 동작 장면 수');
+    const solid = r.frames.map(px => { let n = 0; for (let k = 3; k < px.length; k += 4) if (px[k] === 255) n++; return n; });
+    check(solid.every(n => n > 700 && n < r.w * r.h * 0.6), id + ': 장면마다 몸이 그려진다 (' + Math.min(...solid) + '~' + Math.max(...solid) + ')');
+    const f0 = r.frames[0], fx = Math.round(d.face[0]), fy = Math.round(d.face[1]), k = (fy * r.w + fx) * 4;
+    check(f0[k] > 200 && f0[k + 1] > 150 && f0[k + 2] > 120, id + ': 얼굴 위치(컷인)가 얼굴 위에 있다');
+    const changed = r.frames.slice(ix.attack.start, ix.attack.start + 8).some(px => px.some((v, j) => v !== r.frames[0][j]));
+    check(changed, id + ': 공격 동작이 대기와 다르다');
+  });
+}
 // 25단계: 배경음악 곡 글자 · 화면 → 곡
 {
   const errs = G.Music.validate();
@@ -42,6 +59,7 @@ section('데이터');
   ['index.html', 'css/style.css'].concat(fs.readdirSync(path.join(ROOT, 'data')).map(f => 'data/' + f), fs.readdirSync(path.join(ROOT, 'js')).map(f => 'js/' + f)).forEach(f => {
     let src = fs.readFileSync(path.join(ROOT, f), 'utf8');
     if (f.endsWith('.js')) src = src.replace(/(^|\s)\/\/.*$/gm, '');   // 화면에 나오지 않는 // 주석은 뺀다
+    if (f.endsWith('.css')) src = src.replace(/\/\*[\s\S]*?\*\//g, '');
     for (const ch of src) {
       const cp = ch.codePointAt(0);
       if (cp >= 0x20 && cp !== 0xfeff && !rs.some(r => cp >= r[0] && cp <= r[1])) missing.add(ch);

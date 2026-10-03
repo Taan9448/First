@@ -113,6 +113,10 @@
       if (s === size) return;
       size = s;
       var sh = sp._sheet;
+      if (sh.anims) {   // 27단계 새 그림은 장면이 커서(66줄) 예전 키에 맞춘다. 정수배라 도트가 고르다
+        s = Math.max(1, Math.round(s * 0.74));
+        sp.style.marginLeft = sp.style.marginRight = 'calc(var(--px) * -' + Math.max(0, (sh.w - 34) * s / 2).toFixed(2) + ')';
+      }
       sp.style.width = 'calc(var(--px) * ' + (sh.w * s) + ')';
       sp.style.height = 'calc(var(--px) * ' + (sh.h * s) + ')';
       sp.style.left = 'calc(var(--px) * ' + ((0.5 - sh.anchor) * sh.w * s).toFixed(2) + ')';
@@ -127,7 +131,7 @@
       box.style.animation = 'none'; void box.offsetWidth; box.style.animation = '';
     };
     say();
-    stage.onclick = function () { say(); sp.classList.remove('pose'); void sp.offsetWidth; sp.classList.add('pose'); setTimeout(function () { sp.classList.remove('pose'); }, 420); SND('click'); };
+    stage.onclick = function () { say(); if (UI.playAnim(sp, 'skill')) { SND('click'); return; } sp.classList.remove('pose'); void sp.offsetWidth; sp.classList.add('pose'); setTimeout(function () { sp.classList.remove('pose'); }, 420); SND('click'); };
     el.querySelector('.lb-voice').onclick = say;
     timers.push(setInterval(say, 9000));
     if (el.querySelector('.lb-swap')) el.querySelector('.lb-swap').onclick = function () {

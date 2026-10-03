@@ -8,8 +8,12 @@
       K25: 'dragon', K29: 'swords', K24: 'swords',
       B24: 'roc',
       N26: 'bloodBolt', N27: 'bloodBolt', N33: 'toxicNeedles',
-      K22: 'goldInk', K26: 'goldInk', K27: 'goldInk', K34: 'goldInk', B27: 'goldInk',
-      L25: 'fireOrb', L29: 'arcaneOrb'
+      K22: 'goldInk', K34: 'goldInk', B27: 'goldInk',
+      L25: 'fireOrb', L29: 'arcaneOrb',
+      // 27단계: 초승달 연참 · 혈성 · 천검강림 · 빙결 초승달
+      K27: 'crescentStorm', K20: 'crescentStorm', K37: 'crescentStorm', K26: 'bloodStar',
+      K18: 'skyBlades', S23: 'skyBlades', S36: 'skyBlades',
+      L23: 'frostCrescent', L36: 'frostCrescent', L17: 'frostCrescent'
     },
     // 회복 카드: 속성이 신성이면 금빛 기둥, 그 밖에는 초록 빛
     heal: { holy: 'holyHeal', other: 'natureHeal' },

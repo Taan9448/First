@@ -99,8 +99,8 @@
     field.appendChild(c);
     // 얼굴 클로즈업: 그림 좌표(56×64)의 얼굴 중심(약 54%, 31%)이 창 가운데 오도록 놓는다
     UI.$$('.cf-win', c).forEach(function (w, i) {
-      var sp = UI.spriteEl(ids[i], 4.2);
-      sp.classList.add('pose');
+      var sp = UI.spriteEl(ids[i], G.Pixel.sheet(ids[i]).anims ? 2.9 : 4.2, true);   // 27단계 새 그림은 머리가 커서 덜 키운다
+      if (!UI.holdPose(sp)) sp.classList.add('pose');
       w.appendChild(sp);
       var sw = sp.offsetWidth, sh = sp.offsetHeight, fc = sp._sheet.face || { x: 0.55, y: 0.31 };
       sp.style.left = Math.round(w.clientWidth / 2 - sw * fc.x) + 'px';
@@ -179,7 +179,7 @@
     e.innerHTML = '<div class="intent"></div>' + (u.side === 'ally' ? '<div class="incoming"></div>' : '') +
       '<div class="sprite-wrap"><div class="shadow"></div></div>' +
       '<div class="hpbar"><div class="ghost"></div><i></i><span></span><div class="blockbadge"></div></div>' + (u.side === 'ally' && u.resMax ? '<div class="resbar"></div>' : '') + '<div class="sts"></div><div class="uname"></div>';
-    var sp = UI.spriteEl(u.side === 'ally' ? u.id : u.def.sprite, u.side === 'enemy' ? u.size || u.def.size : 1);
+    var sp = UI.spriteEl(u.side === 'ally' ? u.id : u.def.sprite, u.side === 'enemy' ? u.size || u.def.size : 1, true);
     if (u.affix) {
       var ax = G.Data.affixes[u.affix];
       e.classList.add('affixed');
@@ -787,7 +787,9 @@
       if (d.caster) {
         var ce = unitEls[d.caster.uid], magic = FX.MAGIC[cur.el];
         setTimeout(function () {
-          pulseClass(ce && ce._sprite, 'pose', 380);
+          // 27단계: 새 영웅 그림은 공격·스킬 동작(희귀 이상·합동기는 스킬)
+          var big = def.rarity === 'rare' || def.rarity === 'epic' || def.rarity === 'legendary' || def.duo;
+          if (!(ce && UI.playAnim(ce._sprite, big ? 'skill' : def.type === 'attack' ? 'attack' : 'skill'))) pulseClass(ce && ce._sprite, 'pose', 380);
           pulseClass(ce, def.type === 'attack' && !magic ? 'lunge-r' : 'hop', 330);
         }, pkey ? gather : 0);
         // 마법 공격: 무기 끝에서 탄이 포물선으로 날아간다 (도트 연출이 없을 때)
@@ -850,6 +852,7 @@
         if (d.overkill > 0) setTimeout(function () { float(d.unit, '과잉 +' + d.overkill, 'over'); }, 120);
         if (d.unit.side === 'enemy' && !d.kind && (!d.src || d.src.side === 'ally')) { hits++; showHits(); }
         pulseClass(e._sprite, 'hit', 120);
+        if (d.unit.side === 'ally') UI.playAnim(e._sprite, 'hit');
         pulseClass(e._sprite, 'stop', 90);
         pulseClass(e, d.unit.side === 'enemy' ? 'knock-r' : 'knock-l', 240);
         FX.impact(p, el, d.crit);

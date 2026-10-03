@@ -1377,3 +1377,6 @@ body.cb .st .cb-lab.bu { background: #12324a; color: #c2ecff; }
 .daily-rows { display: flex; flex-direction: column; gap: 4px; }
 .daily-row { display: grid; grid-template-columns: 100px 1fr 50px 80px 80px; gap: 10px; align-items: center; padding: 6px 10px; background: rgba(94, 230, 255, 0.04); font-variant-numeric: tabular-nums; }
 .daily-row .ok { color: #9af0a6; } .daily-row .score { color: var(--gold2); text-align: right; }
+/* 27단계: 새 영웅 그림 — 장면은 스크립트가 넘긴다(대기 · 공격 · 스킬 · 맞음) */
+.sprite.puppet, .sprite.puppet.pose, .st-left.in .sprite.puppet { animation: none; }
+.unit.ally.dead .sprite.puppet { transform: rotate(90deg) translateX(20%); }

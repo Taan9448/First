@@ -19,6 +19,8 @@ def charset():
         src = open(f, encoding='utf-8').read()
         if f.endswith('.js'):   # 화면에 나오지 않는 // 주석은 뺀다(test-battle 과 같은 규칙)
             src = re.sub(r'(^|\s)//.*$', '', src, flags=re.M)
+        if f.endswith('.css'):  # CSS 주석도 뺀다
+            src = re.sub(r'/\*.*?\*/', '', src, flags=re.S)
         s |= set(c for c in src if ord(c) >= 0x20 and c != '\ufeff')
     return ''.join(sorted(s))
 
