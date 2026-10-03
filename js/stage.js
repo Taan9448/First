@@ -456,7 +456,9 @@
       var node = { type: type };
       if (type === 'battle') node.monsters = G.rng.pick(first ? def.easy : def.hard).slice();
       else if (type === 'elite' && !last) {
-        if (def.midElite) node.monsters = [def.midElite];
+        // 28단계: 스테이지마다 정예 후보(elites)가 있다. 중간 정예가 정해진 스테이지는 둘 중 하나, 아니면 55%로 정예 · 45%로 변이 무리
+        var pool = (def.elites || []).concat(def.midElite ? [def.midElite] : []);
+        if (pool.length && (def.midElite || G.rng.chance(0.55))) node.monsters = [G.rng.pick(pool)];
         else { // 정예 무리: 변이를 모두 붙인 일반 몬스터 조합
           node.monsters = G.rng.pick(def.hard).slice();
           var keys = Object.keys(D.affixes);

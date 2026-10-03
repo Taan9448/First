@@ -93,7 +93,7 @@ G.Data.monsters.forEach(m => {
   });
   if (m.onDeath) walk(m.onDeath, m.id + ' onDeath');
 });
-check(G.Data.monsters.length === 41, '몬스터 41종 (현재 ' + G.Data.monsters.length + ')');
+check(G.Data.monsters.length === 56, '몬스터 56종 (현재 ' + G.Data.monsters.length + ')');
 check(G.Data.monsters.filter(m => m.mirror).length === 5, '거울 속 그림자 5종');
 
 // 강화 카드: 200장 모두 무언가 바뀌고, 설명의 {dN}·{+…} 가 올바르다
@@ -783,7 +783,7 @@ function handCard(b, id) {
     const neverDuo = G.Data.duoCards.filter(c => !played.has(c.id)).map(c => c.id);
     check(!neverDuo.length, '모든 합동기가 한 번 이상 사용됨 (미사용: ' + neverDuo.join(', ') + ')');
     check(!neverUp.length, '모든 강화 카드가 한 번 이상 사용됨 (미사용: ' + neverUp.join(', ') + ')');
-    check(seenMonsters.size === 41, '모든 몬스터 등장 (' + seenMonsters.size + '/41)');
+    check(seenMonsters.size === 56, '모든 몬스터 등장 (' + seenMonsters.size + '/56)');
   } else console.log('  (사용 범위 검사 생략: 1000회 미만)');
 
   console.log(failures ? '\n실패 ' + failures + '건' : '\n모든 테스트 통과');

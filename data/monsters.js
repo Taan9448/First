@@ -1,4 +1,4 @@
-// monsters.js — 몬스터 41종(테마 36 + 거울의 그림자 5)과 행동 패턴. 15단계: 1~2장(만독곡)·9~10장(청운문)은 무림 몬스터
+// monsters.js — 몬스터 56종(테마 51 + 거울의 그림자 5. 28단계에 테마마다 일반 2 · 정예 1 추가)과 행동 패턴. 15단계: 1~2장(만독곡)·9~10장(청운문)은 무림 몬스터
 // 형식은 GAME_DESIGN.md 2.3절. 행동 효과의 대상 기본값은 예고 때 정한 아군 1명('target').
 // 'allAllies' = 아군(플레이어 파티) 전체, 'self' = 자신, 'allMonsters' = 몬스터 전체.
 (function () {
@@ -167,6 +167,53 @@
         ],
         desc: '하린의 사형. 청운문의 금서 혈마경을 훔쳐 고대의 혈마와 하나가 되었다. 두 세계의 틈에서 판타지 땅의 힘까지 빨아들였다.' }),
 
+    // ---------------- 28단계: 테마마다 일반 2 · 정예 1 ----------------
+    M('centipede', '천족오공', 'forest', 'normal', 28,
+      { bite: mv('독턱', [dmg(3, { times: 2 }), st('poison', 1)]), coil: mv('똬리', [blk(5), selfSt('strength', 1)]) },
+      ['bite', 'coil'], { desc: '발이 천 개라는 만독곡의 왕지네. 독턱이 두 번 문다.' }),
+    M('assassin', '흑풍채 자객', 'forest', 'normal', 22,
+      { needle: mv('독침', [dmg(3), st('weak', 1)]), vanish: mv('은신', [blk(8)]), backstab: mv('배후 습격', [dmg(9)]) },
+      ['needle', 'vanish', 'backstab'], { desc: '안개 속에서 칼끝만 보이는 흑풍채의 자객.' }),
+    M('python', '독룡 이무기', 'forest', 'elite', 62,
+      { constrict: mv('휘감아 조르기', [dmg(7), st('weak', 2)]), breath: mv('독룡 숨결', [dmgAll(3), allSt('poison', 2)]), shed: mv('허물 벗기', [blk(12)]) },
+      ['constrict', 'breath', 'shed'], { desc: '용이 되지 못하고 독곡에 눌러앉은 천년 이무기.' }),
+    M('scarab', '황금 스카라브', 'desert', 'normal', 30,
+      { swarm: mv('떼 지어 물기', [dmg(3, { times: 3 })]), burrow: mv('모래 파고들기', [blk(7)]) },
+      ['swarm', 'burrow'], { desc: '파라오의 무덤을 지키는 황금빛 쇠똥구리. 떼로 덤빈다.' }),
+    M('sand_archer', '사막 궁수', 'desert', 'normal', 34,
+      { volley: mv('화살비', [dmgAll(4)]), aim: mv('조준', [blk(4), selfSt('strength', 1)]), snipe: mv('저격', [dmg(12)]) },
+      ['volley', 'aim', 'snipe'], { desc: '모래 언덕 너머에서 활을 당기는 도적단의 궁수.' }),
+    M('sphinx', '스핑크스', 'desert', 'elite', 96,
+      { riddle: mv('수수께끼', [sand(2), allSt('vulnerable', 1)]), claw: mv('앞발 할퀴기', [dmg(8, { times: 2 })]), sunbeam: mv('태양 광선', [dmgAll(8)]) },
+      ['riddle', 'claw', 'sunbeam'], { desc: '답을 틀린 여행자를 모래로 만드는 무덤의 문지기.' }),
+    M('wisp', '얼음 도깨비불', 'snow', 'normal', 32,
+      { touch: mv('냉기의 손', [dmg(6), st('chill', 1)]), flicker: mv('깜박임', [blk(10)]) },
+      ['touch', 'flicker'], { onDeath: [allSt('chill', 2)], desc: '눈보라 속에 길 잃은 넋. 꺼질 때 한기를 흩뿌린다.' }),
+    M('harpy', '설원 하피', 'snow', 'normal', 40,
+      { talons: mv('발톱 연타', [dmg(4, { times: 3 })]), gust: mv('날갯바람', [dmgAll(4), allSt('weak', 1)]) },
+      ['talons', 'gust', 'talons'], { desc: '서리 여왕의 성 위를 맴도는 새 여인.' }),
+    M('frost_wyvern', '서리 와이번', 'snow', 'elite', 125,
+      { freezeBreath: mv('빙결 숨결', [dmgAll(7), allSt('chill', 2)]), dive: mv('급강하', [dmg(20)]), roost: mv('날개 접기', [blk(16), selfSt('strength', 1)]) },
+      ['freezeBreath', 'dive', 'roost'], { desc: '빙벽에 둥지를 튼 와이번. 숨결이 닿으면 손끝부터 언다.' }),
+    M('salamander', '불도마뱀', 'volcano', 'normal', 48,
+      { tongue: mv('불혀', [dmg(7), st('burn', 2)]), bask: mv('용암 목욕', [{ op: 'heal', value: 8, target: 'self' }, selfSt('strength', 1)]) },
+      ['tongue', 'bask'], { desc: '용암 웅덩이에서 몸을 데우는 도마뱀. 데울수록 세진다.' }),
+    M('obsidian', '흑요석 파수꾼', 'volcano', 'normal', 70,
+      { spin: mv('파편 회전', [dmg(5, { times: 2 })]), harden: mv('굳기', [blk(14)]) },
+      ['harden', 'spin'], { startStatus: { thorns: 3 }, desc: '식은 용암이 굳어 생긴 파수꾼. 날카로운 결이 손을 벤다.' }),
+    M('djinn', '화염 마신', 'volcano', 'elite', 150,
+      { inferno: mv('업화', [dmgAll(9), allSt('burn', 2)]), fist: mv('화염권', [dmg(18), st('burn', 3)]), imps: mv('임프 부르기', [summon('fire_imp')]) },
+      ['inferno', 'fist', 'imps'], { desc: '화산의 틈에서 새어 나온 불의 마신. 웃을 때마다 불씨가 튄다.' }),
+    M('blood_monk', '혈교 승병', 'castle', 'normal', 70,
+      { palm: mv('혈수장', [dmg(6, { times: 2 })]), iron: mv('금강불괴', [blk(12), selfSt('strength', 1)]) },
+      ['palm', 'iron', 'palm'], { desc: '혈교에 귀의한 파계승. 피를 바른 손바닥이 쇠처럼 단단하다.' }),
+    M('paper_ghost', '지전귀', 'castle', 'normal', 58,
+      { haunt: mv('혼 흔들기', [st('vulnerable', 2), st('weak', 1)]), cut: mv('종이 칼날', [dmg(4, { times: 3 })]), burn: mv('지전 불사르기', [dmgAll(6)]) },
+      ['haunt', 'cut', 'burn'], { desc: '제사상의 지전에 깃든 원귀. 종잇장이 칼날처럼 날아든다.' }),
+    M('ghost_sword', '귀검 호법', 'castle', 'elite', 165,
+      { flying: mv('어검 삼연', [dmg(7, { times: 3 })]), wall: mv('검막', [blk(18), selfSt('thornsTemp', 4)]), execute: mv('귀검일섬', [dmg(26)]) },
+      ['flying', 'wall', 'execute'], { desc: '죽어서도 검을 놓지 못한 청운문의 옛 호법. 검이 스스로 날아다닌다.' }),
+
     // ---------------- 거울의 방 (이벤트 E13): 파티 캐릭터의 그림자 ----------------
     // 그 캐릭터의 대표 카드를 흉내 낸다. 스테이지에 맞춰 체력·힘이 오른다(scaleByStage)
     M('shadow_kai', '그림자 하린', 'mirror', 'elite', 70,
@@ -203,7 +250,13 @@
     sandworm: { triggers: [{ hpBelow: 0.5, name: '모래 속으로', effects: [blk(20)], pattern: ['pounce', 'burrow', 'eruption', 'pounce', 'eruption'] }] },
     glacier_golem: { startStatus: { spellward: 4 }, triggers: [{ hpBelow: 0.5, name: '빙하 균열', effects: [selfSt('strength', 3)] }] },
     phoenix: { startStatus: { scorch: 1 } },
-    death_knight: { startStatus: { riposte: 5 }, triggers: [{ hpBelow: 0.4, name: '혈갑 해방', effects: [selfSt('strength', 3), blk(15)] }] }
+    death_knight: { startStatus: { riposte: 5 }, triggers: [{ hpBelow: 0.4, name: '혈갑 해방', effects: [selfSt('strength', 3), blk(15)] }] },
+    // 28단계 정예
+    python: { triggers: [{ hpBelow: 0.5, name: '역린', effects: [selfSt('strength', 2)] }] },
+    sphinx: { startStatus: { spellward: 3 } },
+    frost_wyvern: { triggers: [{ hpBelow: 0.5, name: '빙결 포효', effects: [allSt('chill', 3), blk(10)] }] },
+    djinn: { startStatus: { scorch: 1 } },
+    ghost_sword: { startStatus: { riposte: 4 }, triggers: [{ hpBelow: 0.4, name: '만검귀종', effects: [selfSt('strength', 3)] }] }
   };
   list.forEach(function (m) {
     var r = RULES[m.id];
@@ -232,7 +285,12 @@
     regen: { name: '재생하는', color: '#7cf27c', desc: '매 턴 시작 시 체력 4 회복.', everyTurn: [{ op: 'heal', value: 4, target: 'self' }] },
     giant: { name: '거대한', color: '#ffd23f', desc: '체력 1.5배, 크기 1.3배.', hpMult: 1.5, sizeMult: 1.3 },
     tough: { name: '단단한', color: '#a9c8ff', desc: '공격 1회당 받는 피해 -1.', startStatus: { reduce: 1 } },
-    venom: { name: '맹독의', color: '#c96aff', desc: '공격으로 피해를 줄 때마다 중독 1.', onHitStatus: { poison: 1 } }
+    venom: { name: '맹독의', color: '#c96aff', desc: '공격으로 피해를 줄 때마다 중독 1.', onHitStatus: { poison: 1 } },
+    // 28단계
+    swift: { name: '날랜', color: '#7fe0ff', desc: '매 턴 시작 시 보호막 4.', everyTurn: [{ op: 'block', value: 4, target: 'self' }] },
+    burning: { name: '불타는', color: '#ff9a3a', desc: '공격으로 피해를 줄 때마다 화상 1.', onHitStatus: { burn: 1 } },
+    frosty: { name: '서늘한', color: '#b8e8ff', desc: '공격으로 피해를 줄 때마다 한기 1.', onHitStatus: { chill: 1 } },
+    frenzied: { name: '광포한', color: '#ff3a8a', desc: '매 턴 시작 시 힘 +1.', everyTurn: [{ op: 'status', status: 'strength', value: 1, target: 'self' }] }
   };
   // 변이 확률: 스테이지 1 → 10 사이 선형
   Game.Data.affixChance = { from: 0.10, to: 0.35 };
