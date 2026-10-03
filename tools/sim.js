@@ -287,7 +287,7 @@ async function expedition(order) {
         if (clear) done = true;
       } else {
         rec.tries++;
-        rec.lostAt.push(node.type + (result === 'timeout' ? '(시간초과)' : ''));
+        rec.lostAt.push(node.type + (node.type !== 'battle' && node.monsters && !node.squad ? ':' + node.monsters[0] : '') + (result === 'timeout' ? '(시간초과)' : ''));   // 34단계: 정예·보스는 이름까지
         const left = b.monsters.filter(m => m.def.rank !== 'normal' || node.type === 'battle');
         rec.left = (rec.left || []).concat([left.reduce((a, m) => a + Math.max(0, m.hp), 0) / left.reduce((a, m) => a + m.maxHp, 0)]);
         rec.lostTurn = (rec.lostTurn || []).concat([b.turn]);

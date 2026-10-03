@@ -353,6 +353,15 @@
   // 방해 카드 (보유·도감에 포함하지 않음)
   list.push({ id: 'SAND', name: '모래', owner: 'none', type: 'curse', rarity: 'common', cost: null,
     target: 'none', effects: [], text: '사용할 수 없다. 전투가 끝나면 사라진다.', unplayable: true, art: 'sand', el: 'earth', tags: '' });
+  // 34단계: 적이 섞어 넣는 저주 카드(모래처럼 전투가 끝나면 사라진다)
+  list.push({ id: 'CUR_POISON', name: '독기', owner: 'none', type: 'curse', rarity: 'common', cost: null, target: 'none', effects: [],
+    inHandEnd: [{ op: 'status', status: 'poison', value: 2, target: 'randomAlly' }],
+    text: '사용할 수 없다. 손패에 든 채로 턴이 끝나면 무작위 아군 중독 2.', unplayable: true, art: 'smoke', el: 'poison', tags: '' });
+  list.push({ id: 'CUR_BLOOD', name: '혈흔', owner: 'none', type: 'curse', rarity: 'common', cost: null, target: 'none', effects: [],
+    inHandEnd: [{ op: 'loseHp', value: 3, target: 'randomAlly' }],
+    text: '사용할 수 없다. 손패에 든 채로 턴이 끝나면 무작위 아군이 체력 3을 잃는다.', unplayable: true, art: 'blood', el: 'shadow', tags: '' });
+  list.push({ id: 'CUR_BIND', name: '속박', owner: 'none', type: 'curse', rarity: 'common', cost: 1, target: 'none', effects: [], exhaust: true,
+    text: '소멸. 아무 효과도 없다. 써서 없애야 손패가 빈다.', art: 'net', el: 'earth', tags: '' });
 
   // 희귀 이상 카드의 사용 순간 고유 이펙트 (js/effects.js 의 FX.SFX). 성격이 같은 카드끼리 공유한다
   var SFX = {

@@ -29,7 +29,7 @@
       list.push({ small: 'NOW · 진행 중', title: 'STAGE ' + r.stage + ' · ' + D.STAGE_NAME[r.stage - 1], sub: '깊이 ' + Math.min(r.col + 1, r.map.length) + '/' + r.map.length + ' · 눌러서 이어하기',
         sprite: d.party[0], go: function () { Meta.continueRun(); } });
     }
-    var boss = D.monsterById[def.boss], seen = n <= d.clearedStage || !!d.codex.monsters[def.boss];
+    var bossId = St.stageBoss(n), boss = D.monsterById[bossId], seen = n <= d.clearedStage || !!d.codex.monsters[bossId];
     var tag = { final: '최종 보스', boss: '보스', elite: '정예', midboss: '보스' }[lastType(def)] || '보스';
     list.push({ small: 'TARGET · ' + tag, title: seen ? boss.name : '???', sub: 'STAGE ' + n + ' · ' + D.THEME_NAME[def.theme], sprite: boss.sprite, dark: !seen, go: function () { Meta.map(n); } });
     var next = D.characters.filter(function (c) { return d.characters.indexOf(c.id) < 0; }).sort(function (a, b) { return a.joinAfter - b.joinAfter; })[0];   // 30단계: 시엘은 목록 끝이지만 5 스테이지에 합류
@@ -95,7 +95,7 @@
     G.Art.scene('castle').then(function (u) { var t = el.querySelector('[data-go="story"] .tart'); if (u && t) t.style.backgroundImage = 'url(' + u + ')'; });
 
     // 원정 타일: 다음 보스 그림(못 본 보스는 검은 실루엣)
-    var boss = D.monsterById[def.boss], seen = n <= d.clearedStage || !!d.codex.monsters[def.boss];
+    var bossId = St.stageBoss(n), boss = D.monsterById[bossId], seen = n <= d.clearedStage || !!d.codex.monsters[bossId];
     var bsp = UI.spriteEl(boss.sprite, { h: 120, max: 1 });
     bsp.style.position = 'absolute'; bsp.style.right = '10px'; bsp.style.bottom = '6px'; bsp.style.left = 'auto';
     if (!seen) { bsp.style.filter = 'brightness(0)'; bsp.style.animation = 'none'; }

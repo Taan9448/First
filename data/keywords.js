@@ -27,6 +27,9 @@ Game.Data.statuses = {
   frostAura: { name: '서리 기운', kind: 'special', icon: 'chill', desc: '내 턴 시작 시 손패 무작위 {n}장의 이번 턴 비용 +1.' },
   scorch:    { name: '불타는 비늘', kind: 'special', icon: 'burn', desc: '공격 카드에 맞을 때마다 공격한 동료에게 화상 {n}.' },
   vengeance: { name: '복수', kind: 'special', icon: 'strength', desc: '다른 적이 쓰러질 때마다 힘 +{n}.' },
+  // 34단계: 적 기믹
+  dodge:     { name: '회피', kind: 'buff', icon: 'r_feather', desc: '공격 {n}회를 통째로 피한다(1회마다 1 감소). 여러 번 때리는 공격에 약하다.' },
+  shelter:   { name: '엄호', kind: 'special', icon: 'r_crest', desc: '같은 편이 하나라도 더 살아 있으면 받는 공격 피해가 절반이 된다.' },
   freezeImmune: { name: '빙결 면역', kind: 'special', icon: 'freezeImmune', decay: 'round', desc: '한기가 쌓이지 않는다. {n}라운드 남음.' },
 
   venomMark: { name: '독 표식', kind: 'debuff', icon: 'poison', desc: '중독 피해를 받을 때 {n}만큼 더 받는다(소연, 최대 5).' },
@@ -51,7 +54,13 @@ Game.Data.keywords = {
   '선천성': '전투를 시작할 때 첫 손패에 반드시 들어온다.',
   '버린다': '손패에서 골라 버린 더미로 보낸다. 버려지면 효과가 나는 카드도 있다.',
   '버려지면': '다른 카드의 효과로 손패에서 버려질 때 이 효과가 난다(턴 종료로 버려질 때는 아니다).',
-  '미리 보기': '뽑을 덱 맨 위 카드를 보고, 그중 원하는 만큼 버린 더미로 보낸다.'
+  '미리 보기': '뽑을 덱 맨 위 카드를 보고, 그중 원하는 만큼 버린 더미로 보낸다.',
+  // 34단계: 적이 섞어 넣는 저주 카드와 적의 기믹
+  '독기': '적이 섞어 넣는 저주 카드. 쓸 수 없고, 손패에 든 채로 턴이 끝나면 무작위 아군 중독 2. 전투가 끝나면 사라진다.',
+  '혈흔': '적이 섞어 넣는 저주 카드. 쓸 수 없고, 손패에 든 채로 턴이 끝나면 무작위 아군이 체력 3을 잃는다. 전투가 끝나면 사라진다.',
+  '속박': '적이 섞어 넣는 저주 카드. 에너지 1로 써서 없앨 수 있다(소멸). 전투가 끝나면 사라진다.',
+  '분열': '체력이 절반 아래로 내려가면 남은 체력을 나눠 가진 작은 몬스터 둘로 갈라진다.',
+  '자폭': '예고한 턴이 되면 터지며 아군 전체에 피해를 주고 사라진다. 그 전에 쓰러뜨리면 터지지 않는다.'
 };
 ['strength', 'focus', 'keen', 'critUp', 'regen', 'thorns', 'taunt', 'poison', 'burn', 'weak',
  'vulnerable', 'chill', 'frozen', 'stun'].forEach(function (k) {

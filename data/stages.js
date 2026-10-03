@@ -2,7 +2,9 @@
 // 노드: battle(일반) · elite(정예) · event(이벤트) · treasure(보물) · rest(휴식) · shop(상점) · boss(보스) · midboss(중간 보스) · final(최종 보스)
 // 던전 지도(GAME_DESIGN.md 3장): 입구(1칸) → 경로 모듈을 무작위로 이어 붙인 중간 구역(4~5열) → 야영지(휴식/상점) → 마지막 방(정예/보스)
 //   열마다 방이 1~4개, 방마다 다음 열의 이웃 방 1~3개로 통로가 이어진다. 방의 내용은 정찰하거나 들어가기 전까지 보이지 않는다.
-// 일반 전투는 앞쪽 2열까지 easy, 그 뒤에는 hard 조합에서 하나를 고른다.
+// 일반 전투는 앞쪽 2열까지 easy, 그 뒤에는 hard 조합에서 하나를 고른다(34단계: 스테이지마다 easy · hard 6개씩).
+// 34단계: altBosses = 마지막 방 후보. 처음 돌파하기 전(이야기)에는 boss 가 나오고, 돌파한 스테이지를 다시 하거나 승천·오늘의 원정에서는 [boss + altBosses] 중 무작위.
+//   elites = 정예 방 후보(2종, 짝수 스테이지는 midElite 를 더해 3종)
 // 마지막 방이 아닌 정예: midElite 가 있으면 그 몬스터, 없으면 hard 조합에 변이를 모두 붙인 '정예 무리'.
 (function () {
   // 경로 모듈: 이어 붙일 열 목록. w = 그 열의 방 수 범위, pool = 방 종류 가중치
@@ -27,45 +29,45 @@
   };
 Game.Data.stages = [
   { n: 1, theme: 'forest', last: 'elite', boss: 'giant_spider',
-    easy: [['slime', 'slime'], ['mushroom', 'slime'], ['forest_wolf'], ['centipede', 'slime']],
-    hard: [['goblin', 'slime'], ['forest_wolf', 'mushroom'], ['vine', 'slime'], ['assassin', 'centipede']], elites: ['python'] },
+    easy: [['slime', 'slime'], ['mushroom', 'slime'], ['forest_wolf'], ['centipede', 'slime'], ['spore', 'spore', 'slime'], ['assassin', 'mushroom']],
+    hard: [['goblin', 'slime'], ['forest_wolf', 'mushroom'], ['vine', 'slime'], ['assassin', 'centipede'], ['mushroom', 'goblin', 'vine'], ['goblin', 'assassin', 'slime']], elites: ['python', 'poison_witch'], altBosses: ['python', 'poison_witch'] },
   { n: 2, midElite: 'giant_spider', theme: 'forest', last: 'boss', boss: 'treant', join: 'bram',
-    easy: [['goblin', 'mushroom'], ['forest_wolf', 'slime'], ['vine', 'mushroom'], ['assassin', 'slime']],
-    hard: [['forest_wolf', 'goblin'], ['vine', 'goblin', 'slime'], ['forest_wolf', 'forest_wolf'], ['centipede', 'assassin', 'mushroom']], elites: ['python'] },
+    easy: [['goblin', 'mushroom'], ['forest_wolf', 'slime'], ['vine', 'mushroom'], ['assassin', 'slime'], ['mushroom', 'centipede'], ['goblin', 'spore', 'spore']],
+    hard: [['forest_wolf', 'goblin'], ['vine', 'goblin', 'slime'], ['forest_wolf', 'forest_wolf'], ['centipede', 'assassin', 'mushroom'], ['mushroom', 'mushroom', 'goblin'], ['vine', 'assassin', 'centipede']], elites: ['python', 'poison_witch'], altBosses: ['toad_king'] },
   { n: 3, theme: 'desert', last: 'elite', boss: 'sandworm',
-    easy: [['scorpion', 'cactus'], ['bandit', 'scorpion'], ['mummy'], ['scarab', 'scarab']],
-    hard: [['bandit', 'mummy'], ['sand_spirit', 'scorpion'], ['cactus', 'sand_spirit', 'scorpion'], ['sand_archer', 'bandit']], elites: ['sphinx'] },
+    easy: [['scorpion', 'cactus'], ['bandit', 'scorpion'], ['mummy'], ['scarab', 'scarab'], ['mummy', 'scarab'], ['cactus', 'bandit']],
+    hard: [['bandit', 'mummy'], ['sand_spirit', 'scorpion'], ['cactus', 'sand_spirit', 'scorpion'], ['sand_archer', 'bandit'], ['mummy', 'sand_archer', 'scarab'], ['sand_spirit', 'bandit', 'scorpion']], elites: ['sphinx', 'anubis_guard'], altBosses: ['sphinx', 'anubis_guard'] },
   { n: 4, midElite: 'sandworm', theme: 'desert', last: 'boss', boss: 'pharaoh', join: 'lyra',
-    easy: [['bandit', 'cactus'], ['mummy', 'scorpion'], ['sand_spirit', 'bandit'], ['sand_archer', 'scarab']],
-    hard: [['mummy', 'mummy'], ['bandit', 'sand_spirit', 'cactus'], ['scorpion', 'mummy', 'bandit'], ['sand_archer', 'scarab', 'mummy']], elites: ['sphinx'] },
+    easy: [['bandit', 'cactus'], ['mummy', 'scorpion'], ['sand_spirit', 'bandit'], ['sand_archer', 'scarab'], ['mummy', 'sand_spirit'], ['scarab', 'scarab', 'bandit']],
+    hard: [['mummy', 'mummy'], ['bandit', 'sand_spirit', 'cactus'], ['scorpion', 'mummy', 'bandit'], ['sand_archer', 'scarab', 'mummy'], ['mummy', 'mummy', 'sand_archer'], ['cactus', 'sand_spirit', 'sand_archer']], elites: ['sphinx', 'anubis_guard'], altBosses: ['scorpion_queen'] },
   { n: 5, theme: 'snow', last: 'elite', boss: 'glacier_golem', join: 'ciel',
-    easy: [['snow_rabbit', 'frost_spirit'], ['frost_wolf', 'snow_rabbit'], ['yeti'], ['wisp', 'wisp']],
-    hard: [['frost_wolf', 'frost_spirit'], ['yeti', 'snow_rabbit'], ['ice_witch', 'snow_rabbit', 'frost_spirit'], ['harpy', 'wisp']], elites: ['frost_wyvern'] },
+    easy: [['snow_rabbit', 'frost_spirit'], ['frost_wolf', 'snow_rabbit'], ['yeti'], ['wisp', 'wisp'], ['snow_rabbit', 'ice_witch'], ['harpy', 'frost_spirit']],
+    hard: [['frost_wolf', 'frost_spirit'], ['yeti', 'snow_rabbit'], ['ice_witch', 'snow_rabbit', 'frost_spirit'], ['harpy', 'wisp'], ['ice_witch', 'frost_wolf', 'wisp'], ['yeti', 'frost_spirit', 'snow_rabbit']], elites: ['frost_wyvern', 'ice_knight'], altBosses: ['frost_wyvern', 'ice_knight'] },
   { n: 6, midElite: 'glacier_golem', theme: 'snow', last: 'boss', boss: 'frost_queen', join: 'sera',
-    easy: [['ice_witch', 'frost_wolf'], ['yeti', 'frost_spirit'], ['snow_rabbit', 'snow_rabbit', 'frost_wolf'], ['harpy', 'snow_rabbit']],
-    hard: [['yeti', 'ice_witch'], ['frost_wolf', 'frost_wolf', 'frost_spirit'], ['ice_witch', 'yeti', 'snow_rabbit'], ['harpy', 'wisp', 'frost_wolf']], elites: ['frost_wyvern'] },
+    easy: [['ice_witch', 'frost_wolf'], ['yeti', 'frost_spirit'], ['snow_rabbit', 'snow_rabbit', 'frost_wolf'], ['harpy', 'snow_rabbit'], ['ice_witch', 'wisp'], ['frost_spirit', 'frost_wolf']],
+    hard: [['yeti', 'ice_witch'], ['frost_wolf', 'frost_wolf', 'frost_spirit'], ['ice_witch', 'yeti', 'snow_rabbit'], ['harpy', 'wisp', 'frost_wolf'], ['ice_witch', 'ice_witch', 'frost_spirit'], ['yeti', 'harpy', 'snow_rabbit']], elites: ['frost_wyvern', 'ice_knight'], altBosses: ['yeti_king'] },
   { n: 7, theme: 'volcano', last: 'elite', boss: 'phoenix',
-    easy: [['fire_imp', 'fire_bat'], ['lava_slime', 'fire_imp'], ['magma_golem'], ['salamander', 'fire_imp']],
-    hard: [['fire_shaman', 'lava_slime'], ['magma_golem', 'fire_imp'], ['fire_bat', 'fire_bat', 'fire_shaman'], ['obsidian', 'salamander']], elites: ['djinn'] },
+    easy: [['fire_imp', 'fire_bat'], ['lava_slime', 'fire_imp'], ['magma_golem'], ['salamander', 'fire_imp'], ['lava_slime'], ['obsidian', 'fire_imp']],
+    hard: [['fire_shaman', 'lava_slime'], ['magma_golem', 'fire_imp'], ['fire_bat', 'fire_bat', 'fire_shaman'], ['obsidian', 'salamander'], ['lava_slime', 'fire_shaman'], ['obsidian', 'fire_bat', 'salamander']], elites: ['djinn', 'flame_dancer'], altBosses: ['djinn', 'flame_dancer'] },
   { n: 8, midElite: 'phoenix', theme: 'volcano', last: 'boss', boss: 'ignis', join: 'nox',
-    easy: [['fire_shaman', 'fire_imp'], ['lava_slime', 'lava_slime'], ['magma_golem', 'fire_bat'], ['obsidian', 'fire_bat']],
-    hard: [['magma_golem', 'fire_shaman'], ['lava_slime', 'fire_bat', 'fire_imp'], ['fire_shaman', 'lava_slime', 'fire_imp'], ['salamander', 'obsidian', 'fire_imp']], elites: ['djinn'] },
+    easy: [['fire_shaman', 'fire_imp'], ['lava_slime', 'lava_slime'], ['magma_golem', 'fire_bat'], ['obsidian', 'fire_bat'], ['lava_slime', 'fire_imp'], ['obsidian', 'salamander']],
+    hard: [['magma_golem', 'fire_shaman'], ['lava_slime', 'fire_bat', 'fire_imp'], ['fire_shaman', 'lava_slime', 'fire_imp'], ['salamander', 'obsidian', 'fire_imp'], ['lava_slime', 'lava_slime', 'fire_shaman'], ['obsidian', 'magma_golem', 'fire_imp']], elites: ['djinn', 'flame_dancer'], altBosses: ['fire_giant'] },
   { n: 9, theme: 'castle', last: 'elite', boss: 'death_knight',
-    easy: [['skeleton', 'dark_mage'], ['gargoyle', 'skeleton'], ['vampire'], ['blood_monk', 'skeleton']],
-    hard: [['cursed_armor', 'dark_mage'], ['vampire', 'gargoyle'], ['skeleton', 'skeleton', 'dark_mage'], ['paper_ghost', 'blood_monk']], elites: ['ghost_sword'] },
+    easy: [['skeleton', 'dark_mage'], ['gargoyle', 'skeleton'], ['vampire'], ['blood_monk', 'skeleton'], ['paper_ghost', 'skeleton'], ['gargoyle', 'dark_mage']],
+    hard: [['cursed_armor', 'dark_mage'], ['vampire', 'gargoyle'], ['skeleton', 'skeleton', 'dark_mage'], ['paper_ghost', 'blood_monk'], ['gargoyle', 'skeleton', 'dark_mage'], ['paper_ghost', 'vampire', 'skeleton']], elites: ['ghost_sword', 'jiangshi_master'], altBosses: ['ghost_sword', 'jiangshi_master'] },
   { n: 10, midElite: 'death_knight', theme: 'castle', last: 'final', layout: 'final', boss: 'astaroth', midboss: 'baltar',
-    easy: [['skeleton', 'dark_mage'], ['gargoyle', 'skeleton'], ['vampire', 'skeleton'], ['paper_ghost', 'skeleton']],
-    hard: [['skeleton', 'dark_mage'], ['gargoyle', 'skeleton'], ['vampire', 'skeleton'], ['blood_monk', 'paper_ghost']], elites: ['ghost_sword'] },
+    easy: [['skeleton', 'dark_mage'], ['gargoyle', 'skeleton'], ['vampire', 'skeleton'], ['paper_ghost', 'skeleton'], ['blood_monk', 'dark_mage'], ['gargoyle', 'paper_ghost']],
+    hard: [['skeleton', 'dark_mage'], ['gargoyle', 'skeleton'], ['vampire', 'skeleton'], ['blood_monk', 'paper_ghost'], ['gargoyle', 'blood_monk', 'dark_mage'], ['cursed_armor', 'paper_ghost', 'skeleton']], elites: ['ghost_sword', 'jiangshi_master'] },
   // ---------------- 31단계: 세계의 틈(엔딩 뒤) ----------------
   { n: 11, theme: 'rift', last: 'elite', boss: 'rift_warden', rift: true,
-    easy: [['rift_wisp', 'void_hound'], ['echo_swordsman', 'rift_wisp'], ['shard_golem'], ['echo_mage', 'rift_wisp']],
-    hard: [['void_hound', 'echo_mage'], ['shard_golem', 'rift_wisp'], ['echo_swordsman', 'echo_mage'], ['void_hound', 'void_hound', 'rift_wisp']], elites: ['rift_warden'] },
+    easy: [['rift_wisp', 'void_hound'], ['echo_swordsman', 'rift_wisp'], ['shard_golem'], ['echo_mage', 'rift_wisp'], ['blood_seed', 'echo_swordsman'], ['void_hound', 'shard_golem']],
+    hard: [['void_hound', 'echo_mage'], ['shard_golem', 'rift_wisp'], ['echo_swordsman', 'echo_mage'], ['void_hound', 'void_hound', 'rift_wisp'], ['shard_golem', 'echo_mage', 'rift_wisp'], ['void_hound', 'echo_swordsman', 'blood_seed']], elites: ['void_weaver'], altBosses: ['void_weaver'] },
   { n: 12, midElite: 'rift_warden', theme: 'rift', last: 'boss', boss: 'echo_colossus', rift: true,
-    easy: [['echo_swordsman', 'echo_mage'], ['shard_golem', 'rift_wisp'], ['void_hound', 'blood_seed'], ['blood_seed', 'rift_wisp', 'rift_wisp']],
-    hard: [['shard_golem', 'echo_mage'], ['echo_swordsman', 'void_hound', 'rift_wisp'], ['blood_seed', 'blood_seed', 'echo_mage'], ['void_hound', 'shard_golem']], elites: ['rift_warden'] },
+    easy: [['echo_swordsman', 'echo_mage'], ['shard_golem', 'rift_wisp'], ['void_hound', 'blood_seed'], ['blood_seed', 'rift_wisp', 'rift_wisp'], ['rift_wisp', 'void_hound', 'rift_wisp'], ['echo_mage', 'shard_golem']],
+    hard: [['shard_golem', 'echo_mage'], ['echo_swordsman', 'void_hound', 'rift_wisp'], ['blood_seed', 'blood_seed', 'echo_mage'], ['void_hound', 'shard_golem'], ['shard_golem', 'void_hound', 'echo_mage'], ['blood_seed', 'echo_swordsman', 'rift_wisp']], elites: ['void_weaver'], altBosses: ['rift_hydra'] },
   { n: 13, midElite: 'rift_warden', theme: 'rift', last: 'final', layout: 'final', boss: 'blood_demon', midboss: 'danmok_shade', rift: true,
-    easy: [['blood_seed', 'void_hound'], ['echo_swordsman', 'echo_mage'], ['shard_golem', 'blood_seed'], ['rift_wisp', 'rift_wisp', 'blood_seed']],
-    hard: [['blood_seed', 'shard_golem'], ['echo_swordsman', 'echo_mage'], ['void_hound', 'blood_seed', 'rift_wisp'], ['shard_golem', 'echo_mage']], elites: ['rift_warden'] }
+    easy: [['blood_seed', 'void_hound'], ['echo_swordsman', 'echo_mage'], ['shard_golem', 'blood_seed'], ['rift_wisp', 'rift_wisp', 'blood_seed'], ['void_hound', 'echo_mage'], ['shard_golem', 'rift_wisp', 'rift_wisp']],
+    hard: [['blood_seed', 'shard_golem'], ['echo_swordsman', 'echo_mage'], ['void_hound', 'blood_seed', 'rift_wisp'], ['shard_golem', 'echo_mage'], ['shard_golem', 'blood_seed', 'echo_mage'], ['void_hound', 'void_hound', 'echo_swordsman']], elites: ['void_weaver'] }
 ];
 // 31단계: 본편은 10 스테이지까지(엔딩·승천 기록). 그 뒤는 세계의 틈(두 번째 엔딩)
 Game.Data.MAIN_STAGES = 10;

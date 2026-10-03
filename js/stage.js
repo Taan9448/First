@@ -489,13 +489,28 @@
       map[map.length - 1].forEach(function (n) { n.next = []; });
     },
 
+    // 34단계: 마지막 방 후보. 처음 돌파하기 전(이야기 장면이 그 보스를 말한다)에는 원래 보스, 그 뒤·승천·오늘의 원정은 후보 중 무작위
+    bossPool: function (def) { return [def.boss].concat(def.altBosses || []); },
+    bossFree: function (def) {
+      var d = St.data;
+      return !!(d && (d.clearedStage >= def.n || St.ascLevel() > 0 || St.isDaily()));
+    },
+    pickBoss: function (def) { return St.bossFree(def) ? G.rng.pick(St.bossPool(def)) : def.boss; },
+    elitePool: function (def) { var p = (def.elites || []).concat(def.midElite ? [def.midElite] : []); return p.length ? p : [def.boss]; },
+    // 진행 중인 스테이지면 그 지도의 마지막 방 몬스터, 아니면 원래 보스
+    stageBoss: function (n) {
+      var r = St.data && St.data.run, def = St.stageDef(n);
+      if (r && r.stage === n && r.map) { var last = r.map[r.map.length - 1][0]; if (last && last.monsters && last.monsters[0]) return last.monsters[0]; }
+      return def.boss;
+    },
+
     makeNode: function (def, type, last, first) {
       var node = { type: type };
       if (type === 'battle') node.monsters = G.rng.pick(first ? def.easy : def.hard).slice();
       else if (type === 'elite' && !last) {
         // 28단계: 스테이지마다 정예 후보(elites)가 있다. 중간 정예가 정해진 스테이지는 둘 중 하나, 아니면 55%로 정예 · 45%로 변이 무리
         var pool = (def.elites || []).concat(def.midElite ? [def.midElite] : []);
-        if (pool.length && (def.midElite || G.rng.chance(0.55))) node.monsters = [G.rng.pick(pool)];
+        if (pool.length && G.rng.chance(def.midElite ? 0.8 : 0.65)) node.monsters = [G.rng.pick(pool)];
         else { // 정예 무리: 변이를 모두 붙인 일반 몬스터 조합
           node.monsters = G.rng.pick(def.hard).slice();
           var keys = Object.keys(D.affixes);
@@ -504,7 +519,7 @@
         }
       }
       else if (type === 'midboss') node.monsters = [def.midboss];
-      else if (type === 'elite' || type === 'boss' || type === 'final') node.monsters = [def.boss];
+      else if (type === 'elite' || type === 'boss' || type === 'final') node.monsters = [St.pickBoss(def)];
       else if (type === 'event') node.event = St.pickEvent();
       return node;
     },
@@ -1003,7 +1018,7 @@
           break;
         }
         case 'fight':
-          node.fight = { kind: 'elite', monsters: [def.midElite || def.boss] };
+          node.fight = { kind: 'elite', monsters: [G.rng.pick(St.elitePool(def))] };
           res.fight = true;
           res.log.push('정예 전투');
           break;

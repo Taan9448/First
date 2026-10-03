@@ -71,7 +71,8 @@ const cards = G.Data.cards.filter(c => c.owner !== 'none');
 check(cards.length === 277, '카드 277장 (현재 ' + cards.length + ')');
 const KNOWN_OPS = ['damage', 'block', 'heal', 'status', 'cleanse', 'revive', 'loseHp', 'draw', 'energy', 'discount',
   'doubleNext', 'gold', 'power', 'if', 'chance', 'oneOf', 'conjure', 'addCard', 'randomizeCosts', 'freeRandom', 'summon', 'custom',
-  'discard', 'exhaust', 'scry', 'clearStatus', 'loseBlock', 'res', 'spendRes'];
+  'discard', 'exhaust', 'scry', 'clearStatus', 'loseBlock', 'res', 'spendRes',
+  'costUp', 'drainEnergy', 'drainDraw', 'selfDestruct'];   // 34단계: 적의 방해·자폭
 function walk(effects, where) {
   effects.forEach(e => {
     check(KNOWN_OPS.includes(e.op), where + ': 알 수 없는 op ' + e.op);
@@ -93,7 +94,7 @@ G.Data.monsters.forEach(m => {
   });
   if (m.onDeath) walk(m.onDeath, m.id + ' onDeath');
 });
-check(G.Data.monsters.length === 67, '몬스터 67종 (현재 ' + G.Data.monsters.length + ')');
+check(G.Data.monsters.length === 80, '몬스터 80종 (현재 ' + G.Data.monsters.length + ')');
 check(G.Data.monsters.filter(m => m.mirror).length === 6, '거울 속 그림자 6종');
 
 // 강화 카드: 200장 모두 무언가 바뀌고, 설명의 {dN}·{+…} 가 올바르다
@@ -292,6 +293,76 @@ function handCard(b, id) {
   hp0 = b.monsters[0].hp;
   await b.play(handCard(b, 'K01'), b.monsters[0]);
   check(hp0 - b.monsters[0].hp === 12 && !b.heroes[0].status.focus, '집중 → 치명타 12, 집중 소모');
+
+  // ---- 34단계: 적 기믹 ----
+  {
+    const plain = (bb) => { bb.heroes.forEach(h => { h.crit = 0; h.res = 0; }); bb.energy = 9; };
+    // 회피: 공격 1회를 통째로 피한다
+    b = await newBattle(['kai'], ['assassin']); plain(b);
+    let m = b.monsters[0]; m.status.dodge = 1; hp0 = m.hp;
+    await b.play(handCard(b, 'K01'), m);
+    check(m.hp === hp0 && !m.status.dodge, '회피: 첫 공격을 피하고 1 감소');
+    plain(b); await b.play(handCard(b, 'K01'), m);
+    check(m.hp === hp0 - 6, '회피가 없으면 맞는다');
+    // 엄호: 같은 편이 살아 있으면 받는 피해 절반
+    b = await newBattle(['kai'], ['gargoyle', 'skeleton']); plain(b);
+    m = b.monsters[0]; hp0 = m.hp;
+    await b.play(handCard(b, 'K01'), m);
+    check(hp0 - m.hp === 3, '엄호: 피해 6 → 3 (실제 ' + (hp0 - m.hp) + ')');
+    await b.die(b.monsters[1]); plain(b); hp0 = m.hp;
+    await b.play(handCard(b, 'K01'), m);
+    check(hp0 - m.hp === 6, '엄호: 혼자 남으면 그대로');
+    // 분열: 절반 아래로 내려가면 남은 체력을 나눠 가진 둘로
+    b = await newBattle(['kai'], ['mushroom']); plain(b);
+    m = b.monsters[0]; m.hp = 16;
+    await b.play(handCard(b, 'K01'), m);
+    const sp = b.alive('enemy');
+    check(m.dead && sp.length === 2 && sp.every(x => x.id === 'spore' && x.hp === 5 && x.maxHp === 5) && !b.over(), '분열: 독버섯 10 → 포자 버섯 5 · 5');
+    // 자폭: 아군 전체 피해 후 사라진다(전투도 끝난다)
+    b = await newBattle(['kai', 'bram'], ['lava_blob']);
+    m = b.monsters[0]; m.intent = 'boom'; m.intentTarget = null;
+    const hpK = b.heroes[0].hp, hpB = b.heroes[1].hp;
+    await b.act(m);
+    check(m.dead && b.heroes[0].hp < hpK && b.heroes[1].hp < hpB && b.over() && b.result === 'win', '자폭: 전체 피해 후 사라진다');
+    // 비용 올리기 · 에너지 줄이기 · 뽑기 줄이기(다음 내 턴에 적용)
+    const deck10 = Array(10).fill('K01');
+    b = await newBattle(['kai'], ['ice_witch'], deck10);
+    b.piles.draw = b.piles.draw.concat(b.piles.hand); b.piles.hand = [];
+    m = b.monsters[0]; m.intent = 'freeze'; m.intentTarget = b.heroes[0];
+    await b.act(m);
+    check(b.costUpNext === 2, '얼음 족쇄: 다음 턴 비용 올리기 2');
+    await b.startPlayerTurn();
+    check(b.piles.hand.filter(c => c.frosted).length === 2 && !b.costUpNext, '다음 턴 손패 2장 비용 +1');
+    b = await newBattle(['kai'], ['paper_ghost', 'rift_wisp'], deck10);
+    b.monsters[0].intent = 'haunt'; b.monsters[0].intentTarget = b.heroes[0];
+    b.monsters[1].intent = 'hex'; b.monsters[1].intentTarget = b.heroes[0];
+    await b.act(b.monsters[0]); await b.act(b.monsters[1]);
+    b.piles.draw = b.piles.draw.concat(b.piles.hand, b.piles.discard); b.piles.hand = []; b.piles.discard = [];
+    await b.startPlayerTurn();
+    check(b.energy === 2 && b.piles.hand.length === 4, '혼 흔들기 에너지 -1 · 넋 흔들기 카드 -1 (에너지 ' + b.energy + ', 손패 ' + b.piles.hand.length + ')');
+    // 엄호 자세: 체력 비율이 가장 낮은 같은 편에게 보호막
+    b = await newBattle(['kai'], ['goblin', 'slime']);
+    b.monsters[1].hp = 1; b.monsters[0].intent = 'guard';
+    await b.act(b.monsters[0]);
+    check(b.monsters[1].block === 6 && b.monsters[0].block === 0, '엄호 자세: 약한 동료에게 보호막 6');
+    // 저주 카드: 독기는 손패에 든 채 턴이 끝나면 중독 2, 속박은 에너지 1로 써서 없앤다
+    b = await newBattle(['kai'], ['gargoyle']);
+    const k = b.heroes[0], kHp = k.hp;
+    b.piles.hand = [G.Deck.inst('CUR_POISON')];
+    check(!b.canPlay(b.piles.hand[0]).ok, '독기는 쓸 수 없다');
+    await b.endTurn();
+    check(kHp - k.hp >= 2, '독기: 턴이 끝나면 중독 (잃은 체력 ' + (kHp - k.hp) + ')');
+    b = await newBattle(['kai'], ['slime']); b.energy = 1;
+    const bind = handCard(b, 'CUR_BIND');
+    check(b.canPlay(bind).ok, '속박은 쓸 수 있다');
+    await b.play(bind, null);
+    check(b.energy === 0 && b.piles.exhaust.indexOf(bind) >= 0, '속박: 에너지 1, 소멸');
+    // 몬스터 행동이 저주 카드를 섞어 넣는다
+    b = await newBattle(['kai'], ['dark_mage']);
+    b.monsters[0].intent = 'curse'; b.monsters[0].intentTarget = b.heroes[0];
+    await b.act(b.monsters[0]);
+    check(b.piles.discard.some(c => c.id === 'CUR_BLOOD'), '혈교 술사: 혈흔을 버린 더미에');
+  }
 
   {
   // ---- 24단계: 턴 되돌리기 ----
@@ -848,7 +919,7 @@ function handCard(b, id) {
     const neverDuo = G.Data.duoCards.filter(c => !played.has(c.id)).map(c => c.id);
     check(!neverDuo.length, '모든 합동기가 한 번 이상 사용됨 (미사용: ' + neverDuo.join(', ') + ')');
     check(!neverUp.length, '모든 강화 카드가 한 번 이상 사용됨 (미사용: ' + neverUp.join(', ') + ')');
-    check(seenMonsters.size === 57, '모든 몬스터 등장 (' + seenMonsters.size + '/57)');
+    check(seenMonsters.size === 68, '모든 몬스터 등장 (' + seenMonsters.size + '/68)');
   } else console.log('  (사용 범위 검사 생략: 1000회 미만)');
 
   console.log(failures ? '\n실패 ' + failures + '건' : '\n모든 테스트 통과');

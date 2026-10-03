@@ -314,7 +314,7 @@
     var d = St.data, r = d.run, def = St.stageDef(n);
     var cleared = n <= d.clearedStage, open = St.canEnter(n), cur = r && r.stage === n;
     var last = lastType(def);
-    var bossId = def.boss, seen = cleared || !!d.codex.monsters[bossId];
+    var bossId = St.stageBoss(n), seen = cleared || !!d.codex.monsters[bossId];
     var tag = last === 'final' ? '최종 보스' : last === 'boss' ? '보스' : '정예';
     var tc = UI.shade(D.THEME_COLOR[def.theme], -0.55);
     var join = def.join && d.characters.indexOf(def.join) < 0 ? charDef(def.join).name + ' 합류' : '—';
@@ -342,6 +342,8 @@
       html += '<div class="info-line"><span>상태</span><span>' + state + '</span></div>' +
         '<div class="info-line"><span>보상</span><span>' + join + '</span></div>' +
         '<div class="info-line"><span>깊이</span><span>' + cols + '칸</span></div>' +
+        (def.altBosses ? '<div class="info-line" data-tip="처음 돌파하기 전에는 이야기의 ' + tag + '와 싸운다. 돌파한 뒤 다시 하거나 승천·오늘의 원정에서는 후보 중 무작위로 나온다"><span>' + tag + ' 후보</span><span>' +
+          St.bossPool(def).map(function (id) { return d.codex.monsters[id] || (id === def.boss && cleared) ? D.monsterById[id].name : '???'; }).join(' · ') + (St.bossFree(def) ? '' : ' (돌파 뒤)') + '</span></div>' : '') +
         '<p class="dim route-note">들어갈 때마다 길이 새로 짜인다. 방 안에 무엇이 있는지는 들어가거나 정찰해야 알 수 있다.</p>';
       if (cur) html += '<button class="btn gold goto">던전 지도로</button>';
       else if (r) html += '<p class="dim">스테이지 ' + r.stage + '을(를) 진행 중이다.</p><button class="btn goto">진행 중인 스테이지 보기</button>';

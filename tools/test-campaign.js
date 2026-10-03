@@ -415,6 +415,24 @@ function invariants(where) {
     check(san.upgraded.K01 === 10, '저장 정리 후에도 10단계 유지');
     St.data = JSON.parse(keep);
   }
+  // 34단계: 마지막 방 후보 — 처음 돌파 전에는 원래 보스, 돌파한 뒤에는 후보 중 무작위
+  {
+    const keep = JSON.stringify(St.data);
+    const def = St.stageDef(2);
+    St.data.clearedStage = 1; St.data.ascension.current = 0; delete St.data.flags.daily;
+    const before = new Set(); for (let k = 0; k < 40; k++) before.add(St.pickBoss(def));
+    check(before.size === 1 && before.has('treant'), '처음 돌파 전: 이야기의 보스만');
+    St.data.clearedStage = 2;
+    const after = new Set(); for (let k = 0; k < 60; k++) after.add(St.pickBoss(def));
+    check(after.size === 2 && after.has('toad_king'), '돌파 뒤: 보스 후보 2종');
+    D.stages.forEach(sd => {
+      check(St.bossPool(sd).every(id => D.monsterById[id] && D.monsterById[id].rank !== 'normal'), sd.n + ' 스테이지 보스 후보는 정예·보스');
+      check(St.elitePool(sd).length >= (sd.n > 10 ? 1 : 2) && St.elitePool(sd).every(id => D.monsterById[id].rank === 'elite'), sd.n + ' 스테이지 정예 후보');
+      check(sd.easy.length >= 6 && sd.hard.length >= 6 && sd.easy.concat(sd.hard).every(c => c.every(id => D.monsterById[id] && D.monsterById[id].rank === 'normal') && c.length <= 4), sd.n + ' 스테이지 일반 조합 6개 이상');
+    });
+    check(D.stages.filter(sd => !sd.layout).every(sd => St.bossPool(sd).length >= 2), '최종 스테이지 밖은 마지막 방 후보 2종 이상');
+    St.data = JSON.parse(keep);
+  }
   // 모든 카드가 4~10단계까지 만들어진다
   {
     let bad = 0;

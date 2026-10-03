@@ -283,6 +283,13 @@
     var piles = this.piles;
     if (this.mods.emptyHandDraw && !piles.hand.length) { this.nextDraw += this.mods.emptyHandDraw; this.relicFx(this.relicWith('emptyHandDraw')); }
     if (piles.hand.length) await this.relicEvent('turnEndHand');
+    // 34단계: 저주 카드 — 손패에 든 채로 턴이 끝나면 효과가 난다
+    var curses = piles.hand.filter(function (c) { return c.def.inHandEnd; });
+    for (var ci = 0; ci < curses.length && !this.over(); ci++) {
+      this.emit('fx:text', { text: curses[ci].def.name + ' — ' + curses[ci].def.text, kind: 'bad' });
+      await this.run(curses[ci].def.inHandEnd, { src: null, target: null, isMonster: true, defTarget: 'randomAlly', pre: {} });
+    }
+    if (this.checkEnd()) { this.busy = false; return; }
     // 20단계: 보존 카드는 손패에 남는다
     var kept = [];
     piles.hand.forEach(function (c) {
@@ -717,7 +724,8 @@
   };
   // 서리 기운(서리 여왕): 턴 시작 시 손패 무작위 n장의 이번 턴 비용 +1
   P.frostAura = function () {
-    var n = 0;
+    var n = this.costUpNext || 0;   // 34단계: 적이 지난 턴에 건 '비용 올리기'
+    this.costUpNext = 0;
     this.alive('enemy').forEach(function (m) { n += S.get(m, 'frostAura'); });
     if (!n) return;
     var cands = this.piles.hand.filter(function (c) { return !c.def.unplayable && c.def.cost !== 'X' && c.def.cost != null; });
@@ -859,6 +867,12 @@
       case 'allDowned': return this.heroes.filter(function (h) { return h.dead; });
       case 'healed': return ctx.healed && !ctx.healed.dead ? [ctx.healed] : [];
       case 'prevCaster': return ctx.prevCaster && !ctx.prevCaster.dead ? [ctx.prevCaster] : [];
+      // 34단계: 적이 쓰는 대상 — 체력 비율이 가장 낮은 적 · 자신을 뺀 적 · 무작위 아군
+      case 'lowestMonster':
+        var lm = this.alive('enemy').sort(function (a, b) { return a.hp / a.maxHp - b.hp / b.maxHp; })[0];
+        return lm ? [lm] : [];
+      case 'otherMonsters': return this.alive('enemy').filter(function (u) { return u !== ctx.src; });
+      case 'randomAlly': var ra = G.rng.pick(this.alive('ally')); return ra ? [ra] : [];
       default: return [];
     }
   };
@@ -1007,6 +1021,25 @@
         return;
 
       case 'draw': this.drawCards(this.num(e.value, ctx)); this.update(); return;
+      // 34단계: 적의 방해 — 다음 내 턴 손패 비용 올리기 · 에너지 줄이기 · 뽑기 줄이기, 자폭
+      case 'costUp':
+        n = e.value || 1;
+        this.costUpNext = (this.costUpNext || 0) + n;
+        this.emit('fx:text', { unit: ctx.src, text: '다음 턴 카드 ' + n + '장 비용 +1', kind: 'ice' });
+        return;
+      case 'drainEnergy':
+        n = e.value || 1;
+        this.nextEnergy -= n;
+        this.emit('fx:text', { unit: ctx.src, text: '다음 턴 에너지 -' + n, kind: 'bad' });
+        return;
+      case 'drainDraw':
+        n = e.value || 1;
+        this.nextDraw -= n;
+        this.emit('fx:text', { unit: ctx.src, text: '다음 턴 카드 -' + n + '장', kind: 'bad' });
+        return;
+      case 'selfDestruct':
+        if (ctx.src && !ctx.src.dead) { ctx.src.revived = true; await this.die(ctx.src); }
+        return;
       case 'energy':
         n = this.num(e.value, ctx);
         if (e.nextTurn) this.nextEnergy += n; else this.energy += n;
@@ -1169,6 +1202,16 @@
     if (src && src.tm && src.tm.frozenDmgMult && S.has(tgt, 'frozen')) d *= src.tm.frozenDmgMult;
     d = Math.max(0, Math.floor(d));
     d = Math.max(0, d - S.get(tgt, 'reduce'));
+    // 34단계: 엄호(같은 편이 하나라도 더 살아 있으면 받는 공격 피해 절반) · 회피(공격 1회를 통째로 피한다)
+    if (S.has(tgt, 'shelter') && this.alive(tgt.side).some(function (u) { return u !== tgt; })) d = Math.floor(d / 2);
+    if (S.has(tgt, 'dodge') && d > 0) {
+      S.dec(tgt, 'dodge');
+      this.emit('fx:text', { unit: tgt, text: '회피!', kind: 'info' });
+      this.emit('fx:hit', { src: src, unit: tgt, amount: 0, blocked: 0, crit: false, dodged: true });
+      this.update();
+      await G.wait(T.hit);
+      return { dealt: 0, blocked: 0, crit: false, killed: false, dodged: true };
+    }
     if (e.breakBlock && tgt.block > 0) {
       tgt.block = 0;
       this.emit('fx:text', { unit: tgt, text: '방어 파괴', kind: 'info' });
@@ -1243,6 +1286,8 @@
     if (u.side === 'enemy') this.tally.dealt += real; else this.tally.taken += real;
     u.hp -= n;
     if (u.hp > 0) {
+      // 34단계: 분열 — 체력이 기준 아래로 내려가면 남은 체력을 나눠 가진 작은 몬스터들로 갈라진다
+      if (u.side === 'enemy' && u.def.split && !u.splitDone && u.hp <= u.maxHp * (u.def.split.hpBelow || 0.5)) { await this.split(u); return; }
       if (u.side === 'enemy') await this.checkTriggers(u);
       return;
     }
@@ -1553,6 +1598,27 @@
       if (t.everyTurn) m.everyTurn = m.everyTurn.concat(t.everyTurn);
       this.update();
     }
+  };
+
+  P.split = async function (u) {
+    var sp = u.def.split, n = sp.count || 2, hp = Math.max(1, Math.ceil(u.hp / n));
+    u.splitDone = true;
+    this.emit('fx:text', { unit: u, text: '분열!', kind: 'bad' });
+    await G.wait(T.act);
+    var idx = this.monsters.indexOf(u);
+    u.hp = 0; u.dead = true; u.block = 0; u.status = {}; u.vanished = true;
+    this.kills.push(u.id);
+    this.emit('fx:death', { unit: u, split: true });
+    var room = Math.max(1, MAX_MONSTERS - this.alive('enemy').length);
+    for (var i = 0; i < Math.min(n, room); i++) {
+      var m = makeMonster(sp.into, null, this.opts.stage, this.em);
+      m.maxHp = m.hp = hp;
+      this.monsters.splice(idx + 1 + i, 0, m);
+      this.predict(m);
+      this.emit('monster:summon', { unit: m, by: u, split: true });
+    }
+    this.update();
+    await G.wait(T.act);
   };
 
   P.summon = async function (id, by) {
