@@ -23,9 +23,10 @@ function section(name) { console.log('\n■ ' + name); }
 // ---------------------------------------------------------------- 데이터 검사
 section('데이터');
 const cards = G.Data.cards.filter(c => c.owner !== 'none');
-check(cards.length === 200, '카드 200장 (현재 ' + cards.length + ')');
+check(cards.length === 218, '카드 218장 (현재 ' + cards.length + ')');
 const KNOWN_OPS = ['damage', 'block', 'heal', 'status', 'cleanse', 'revive', 'loseHp', 'draw', 'energy', 'discount',
-  'doubleNext', 'gold', 'power', 'if', 'chance', 'oneOf', 'conjure', 'addCard', 'randomizeCosts', 'freeRandom', 'summon', 'custom'];
+  'doubleNext', 'gold', 'power', 'if', 'chance', 'oneOf', 'conjure', 'addCard', 'randomizeCosts', 'freeRandom', 'summon', 'custom',
+  'discard', 'exhaust', 'scry', 'clearStatus', 'loseBlock'];
 function walk(effects, where) {
   effects.forEach(e => {
     check(KNOWN_OPS.includes(e.op), where + ': 알 수 없는 op ' + e.op);
@@ -197,7 +198,7 @@ doc.split('\n').forEach(line => {
   check(c.target === TGT[m[7].trim()], id + ' 대상 ' + c.target + ' ≠ ' + m[7].trim());
   check(c.tags === m[8].trim(), id + ' 분류 "' + c.tags + '" ≠ "' + m[8].trim() + '"');
 });
-check(docRows === 200, '기획서 카드 표 200행 (현재 ' + docRows + ')');
+check(docRows === 218, '기획서 카드 표 218행 (현재 ' + docRows + ')');
 // '강화' 열은 데이터에서 만든 문구와 같아야 한다 (다르면 node tools/doc-upgrades.js)
 let upRows = 0;
 doc.split('\n').forEach(line => {
@@ -206,7 +207,7 @@ doc.split('\n').forEach(line => {
   upRows++;
   check(G.Upgrade.summary(m[1]) === m[2], m[1] + ' 강화 열이 데이터와 다름 (node tools/doc-upgrades.js)');
 });
-check(upRows === 200, '기획서 카드 표 강화 열 200행 (현재 ' + upRows + ')');
+check(upRows === 218, '기획서 카드 표 강화 열 218행 (현재 ' + upRows + ')');
 
 // ---------------------------------------------------------------- 규칙 단위 테스트
 section('규칙');
@@ -246,6 +247,65 @@ function handCard(b, id) {
   await b.play(handCard(b, 'K01'), b.monsters[0]);
   check(hp0 - b.monsters[0].hp === 12 && !b.heroes[0].status.focus, '집중 → 치명타 12, 집중 소모');
 
+  {
+  // ---- 20단계: 보존 · 선천성 · 버리기(버려지면) · 미리 보기 · 소멸 연계 · 적의 반응 ----
+  b = await newBattle(['kai'], ['slime'], ['C01', 'C01', 'C01', 'C01', 'C01', 'C01', 'C01', 'K36']);
+  check(b.piles.hand.some(c => c.id === 'K36'), '선천성: 첫 손패에 들어온다');
+  b = await newBattle(['kai'], ['slime', 'slime']);
+  const ret = handCard(b, 'K35');
+  await b.endTurn();
+  check(b.piles.hand.indexOf(ret) >= 0, '보존: 턴이 끝나도 손패에 남는다');
+  b = await newBattle(['nox'], ['slime', 'slime']);
+  b.piles.hand = [];
+  const sly = handCard(b, 'N35'); handCard(b, 'C01');
+  const hpSum = () => b.monsters.reduce((a, m) => a + m.hp, 0);
+  let hb = hpSum(); b.energy = 3;
+  await b.play(handCard(b, 'N36'), null);
+  check(b.discardedTurn === 2 && hpSum() < hb && sly, '버리기: 2장, 버려지면 피해');
+  check(b.evalCond({ is: 'discardedTurn', op: '>=', n: 2 }, {}, null), '조건: 이번 턴 버린 수');
+  b = await newBattle(['kai'], ['slime'], ['C01', 'C02', 'C03', 'C05', 'C07', 'K01', 'K02', 'K03', 'K04', 'K08']);
+  const drawN = b.piles.draw.length, discN = b.piles.discard.length;
+  b.energy = 3;
+  await b.play(handCard(b, 'C34'), null);
+  check(b.piles.draw.length + (b.piles.discard.length - discN) <= drawN && b.piles.hand.length >= 6, '미리 보기 3 + 1장 뽑기');
+  b = await newBattle(['kai'], ['slime', 'slime']);
+  b.energy = 5;
+  await b.play(handCard(b, 'C36'), null);
+  handCard(b, 'C01');
+  hb = hpSum();
+  await b.play(handCard(b, 'C35'), null);
+  check(b.exhaustedBattle === 2 && hpSum() < hb && b.energy === 6, '결단: 1장 소멸 + 자신 소멸 → 분노의 칼날 2번, 에너지 +2 (에너지 ' + b.energy + ')');
+  // 반격 태세: 한 턴 3번째 공격 카드
+  b = await newBattle(['kai'], ['baltar']);
+  check(b.monsters[0].status.riposte === 6, '사부 청운자: 반격 태세 6');
+  const kh = b.heroes[0].hp; b.energy = 9; b.heroes[0].crit = 0;
+  for (let i = 0; i < 3; i++) await b.play(handCard(b, 'K01'), b.monsters[0]);
+  check(b.heroes[0].hp === kh - 6, '반격 태세: 세 번째 공격 카드에 6 피해 (' + (kh - b.heroes[0].hp) + ')');
+  // 시간의 모래: 7장째에 턴이 끝난다
+  b = await newBattle(['kai'], ['pharaoh']);
+  b.energy = 20;
+  const t0 = b.turn;
+  for (let i = 0; i < 7 && b.turn === t0; i++) await b.play(handCard(b, 'K06'), null);
+  check(b.turn === t0 + 1 && b.monsters[0].status.strength >= 1, '시간의 모래: 7장째 카드에 턴 종료 + 힘 1');
+  // 서리 기운: 턴 시작 시 손패 1장 비용 +1
+  b = await newBattle(['kai'], ['frost_queen'], ['C01', 'C01', 'C01', 'C01', 'C01', 'C01']);
+  check(b.piles.hand.filter(c => c.frosted).length === 1 && b.piles.hand.some(c => b.costOf(c) === 2), '서리 기운: 손패 1장 비용 +1');
+  // 복수: 덩굴이 쓰러지면 마웅 힘 +2
+  b = await newBattle(['kai'], ['treant', 'vine']);
+  await b.die(b.monsters[1]);
+  check(b.monsters[0].status.strength === 2, '복수: 다른 적이 쓰러지면 힘 +2');
+  // 가중치 행동: 같은 행동 세 번 연속 없음, 소환은 적이 3마리 미만일 때만
+  {
+    const w = G.Data.monsters.filter(m => m.ai === 'weighted');
+    check(w.length >= 15, '가중치 행동 몬스터 ' + w.length + '종');
+    b = await newBattle(['bram'], [w[0].id]);
+    const m = b.monsters[0], seq = [];
+    for (let i = 0; i < 60; i++) { b.predict(m); seq.push(m.intent); (m.history = m.history || []).push(m.intent); }
+    let tri = false; for (let i = 2; i < seq.length; i++) if (seq[i] === seq[i - 1] && seq[i] === seq[i - 2]) tri = true;
+    check(!tri && new Set(seq).size >= 2, '가중치 행동: 같은 행동 3연속 없음, 행동이 섞인다');
+  }
+
+  }
   // 한기 3 → 빙결, 보스는 이후 빙결 면역
   b = await newBattle(['lyra'], ['treant']);
   const boss = b.monsters[0];

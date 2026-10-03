@@ -125,6 +125,12 @@
     this.nextEnergy = 0;
     this.teamUndying = 0;
     this.kills = [];
+    // 20단계: 전투 전체에서 센 값(카드 수치 비례식에 쓴다)
+    this.attacksBattle = 0;
+    this.healedBattle = 0;
+    this.exhaustedBattle = 0;
+    this.discardedTurn = 0;
+    this.forceEnd = false;
   }
 
   var P = Battle.prototype;
@@ -140,6 +146,9 @@
 
   // ================= 흐름 =================
   P.start = async function () {
+    // 20단계: 선천성 카드는 첫 손패에 들어오도록 뽑을 덱 위로 올린다
+    var draw = this.piles.draw, innate = draw.filter(function (c) { return c.def.innate; });
+    if (innate.length) { this.piles.draw = draw.filter(function (c) { return !c.def.innate; }).concat(innate); }
     this.emit('battle:start', this);
     var self = this;
     this.monsters.forEach(function (m) { self.predict(m); });
@@ -198,6 +207,8 @@
     this.phase = 'player';
     this.cardsThisTurn = 0;
     this.attacksThisTurn = 0;
+    this.discardedTurn = 0;
+    this.forceEnd = false;
     this.lastType = null;
     this.discount = 0;
     this.doubleNext = false;
@@ -226,6 +237,7 @@
     await this.traitTurnStart();
     await this.runHooks('turnStart');
     await this.relicHooks('turnStart');
+    this.frostAura();
     this.retarget();
     this.update();
     this.checkEnd();
@@ -237,12 +249,15 @@
     // 손패 버림 (그 턴 한정 카드는 사라짐)
     var piles = this.piles;
     if (this.mods.emptyHandDraw && !piles.hand.length) { this.nextDraw += this.mods.emptyHandDraw; this.relicFx(this.relicWith('emptyHandDraw')); }
+    // 20단계: 보존 카드는 손패에 남는다
+    var kept = [];
     piles.hand.forEach(function (c) {
       D.resetTurn(c);
-      if (!c.temp) piles.discard.push(c);
+      if (c.def.retain && !c.temp) kept.push(c);
+      else if (!c.temp) piles.discard.push(c);
     });
-    piles.hand = [];
-    this.emit('cards:discardHand', null);
+    piles.hand = kept;
+    this.emit('cards:discardHand', { kept: kept.length });
     await this.runHooks('turnEnd');
     if (this.mods.turnEndBlockIfNone) {
       var bare = this.alive('ally').filter(function (h) { return h.block === 0; });
@@ -411,8 +426,9 @@
       await this.run(ctx.pair.after, Object.assign({}, ctx, { pair: null, comboBonus: 0, heroFirstAttack: false }));
     }
     if (def.type === 'attack' && !this.over()) await this.runHooks('onAttackCard');
+    if ((def.type === 'skill' || def.type === 'power') && !this.over()) await this.runHooks('onSkillCard');
     this.cardsThisTurn++;
-    if (def.type === 'attack') this.attacksThisTurn++;
+    if (def.type === 'attack') { this.attacksThisTurn++; this.attacksBattle++; }
     if (!this.over()) await this.traitAfterCard(def, caster);
     this.lastType = def.type;
     if (!this.over()) {
@@ -425,14 +441,121 @@
     }
     D.resetTurn(inst);
     if (inst.temp) { /* 사라짐 */ }
-    else if (def.exhaust) this.piles.exhaust.push(inst);
+    else if (def.exhaust) await this.exhaustCard(inst, true);
     else if (def.type === 'power') this.piles.powers.push(inst);
     else this.piles.discard.push(inst);
+    if (!this.over()) await this.reactions(def, caster);
     this.busy = false;
     this.emit('card:done', { inst: inst });
     this.update();
     this.checkEnd();
+    // 20단계: 시간의 모래(파라오) — 한 턴에 카드를 너무 많이 쓰면 턴이 끝난다
+    if (this.forceEnd && !this.over() && this.phase === 'player') { this.forceEnd = false; await this.endTurn(); }
     return true;
+  };
+
+  // ================= 20단계: 버리기 · 소멸 · 미리 보기 · 고르기 =================
+  // 손패(또는 뽑을 덱 위)에서 카드를 고른다. 화면이 'pick:request'를 받아 handled 를 세우면 그 선택을 기다리고,
+  // 아무도 받지 않으면(테스트·시뮬레이터) 값이 낮은 카드부터 자동으로 고른다
+  P.pickCards = function (opts) {
+    var self = this, list = opts.cards.slice();
+    if (!list.length) return Promise.resolve([]);
+    var max = Math.min(opts.max == null ? 1 : opts.max, list.length), min = Math.min(opts.min == null ? max : opts.min, list.length);
+    return new Promise(function (resolve) {
+      var req = { title: opts.title, verb: opts.verb, cards: list, min: min, max: max, handled: false, battle: self,
+        resolve: function (picked) { resolve((picked || []).filter(function (c) { return list.indexOf(c) >= 0; }).slice(0, max)); } };
+      if (!G.instant) self.emit('pick:request', req);
+      if (!req.handled) resolve(self.autoPick(list, min, opts.prefer));
+    });
+  };
+  P.autoPick = function (list, n, prefer) {
+    var self = this;
+    var val = function (c) {
+      if (c.def.unplayable) return -10;
+      if (prefer === 'sly' && c.def.onDiscard) return -5;
+      var v = G.RARITIES.indexOf(c.def.rarity) * 2 + (c.def.type === 'attack' ? 1 : 0) + (c.def.basic ? -1 : 0);
+      var cost = self.costOf(c);
+      if (prefer === 'scry' && typeof cost === 'number' && cost > 2) v -= 2;
+      return v;
+    };
+    return list.slice().sort(function (a, b) { return val(a) - val(b); }).slice(0, n);
+  };
+  P.discardCard = async function (inst, srcCtx) {
+    var i = this.piles.hand.indexOf(inst);
+    if (i < 0) return;
+    this.piles.hand.splice(i, 1);
+    D.resetTurn(inst);
+    if (!inst.temp) this.piles.discard.push(inst);
+    this.discardedTurn++;
+    this.emit('cards:discard', { inst: inst });
+    // 버려지면(소연 '그림자 비수' 등): 그 카드의 주인이 효과를 낸다
+    if (inst.def.onDiscard && !this.over()) {
+      this.emit('fx:text', { unit: this.casterOf(inst), text: inst.def.name + '!', kind: 'good' });
+      await this.run(inst.def.onDiscard, { card: inst.def, inst: inst, src: this.casterOf(inst), target: null, isCard: true, defTarget: 'randomEnemy', pre: {},
+        cardsBefore: this.cardsThisTurn, attacksBefore: this.attacksThisTurn });
+    }
+    if (!this.over()) await this.runHooks('onDiscard');
+    this.update();
+  };
+  P.exhaustCard = async function (inst, played) {
+    if (!played) {
+      var i = this.piles.hand.indexOf(inst);
+      if (i < 0) return;
+      this.piles.hand.splice(i, 1);
+      D.resetTurn(inst);
+    }
+    if (!inst.temp) this.piles.exhaust.push(inst);
+    this.exhaustedBattle++;
+    this.emit('cards:exhaust', { inst: inst });
+    if (!this.over()) await this.runHooks('onExhaust');
+    this.update();
+  };
+  // 뽑을 덱 맨 위 n장을 보고 원하는 만큼 버린다
+  P.scry = async function (n) {
+    var draw = this.piles.draw;
+    if (draw.length < n && this.piles.discard.length) { this.piles.draw = G.rng.shuffle(this.piles.discard).concat(draw); this.piles.discard = []; draw = this.piles.draw; }
+    var top = draw.slice(-n).reverse();
+    if (!top.length) return;
+    var picked = await this.pickCards({ cards: top, min: 0, max: top.length, title: '뽑을 덱 위 ' + top.length + '장 — 버릴 카드를 고른다', verb: '버리기', prefer: 'scry' });
+    var self = this;
+    picked.forEach(function (c) {
+      var k = self.piles.draw.indexOf(c);
+      if (k >= 0) { self.piles.draw.splice(k, 1); self.piles.discard.push(c); self.discardedTurn++; }
+    });
+    this.emit('cards:scry', { seen: top.length, dropped: picked.length });
+    this.update();
+  };
+
+  // ================= 20단계: 적의 반응 =================
+  // 반격 태세: 한 턴의 3·6·9번째 공격 카드마다 그 카드의 시전자(공용이면 무작위 아군)에게 피해
+  // 주문 결계: 스킬·지속 카드를 쓸 때마다 보호막 / 시간의 모래: 한 턴에 그 수만큼 카드를 쓰면 턴이 끝나고 힘 +1
+  P.reactions = async function (def, caster) {
+    var mons = this.alive('enemy');
+    for (var i = 0; i < mons.length && !this.over(); i++) {
+      var m = mons[i];
+      if (def.type === 'attack' && S.has(m, 'riposte') && this.attacksThisTurn % 3 === 0) {
+        var who = caster && !caster.dead ? caster : this.pickHeroTarget();
+        if (who) {
+          this.emit('fx:text', { unit: m, text: '반격!', kind: 'bad' });
+          await this.hit(m, who, S.get(m, 'riposte'), {}, this.monsterCtx(m));
+        }
+      }
+      if ((def.type === 'skill' || def.type === 'power') && S.has(m, 'spellward')) this.addBlock(m, S.get(m, 'spellward'));
+      if (S.has(m, 'sandglass') && this.cardsThisTurn >= S.get(m, 'sandglass') && !this.forceEnd) {
+        this.forceEnd = true;
+        S.add(this, m, 'strength', 1, m);
+        this.emit('fx:text', { unit: m, text: '시간이 멈춘다!', kind: 'bad' });
+      }
+    }
+  };
+  // 서리 기운(서리 여왕): 턴 시작 시 손패 무작위 n장의 이번 턴 비용 +1
+  P.frostAura = function () {
+    var n = 0;
+    this.alive('enemy').forEach(function (m) { n += S.get(m, 'frostAura'); });
+    if (!n) return;
+    var cands = this.piles.hand.filter(function (c) { return !c.def.unplayable && c.def.cost !== 'X' && c.def.cost != null; });
+    G.rng.shuffle(cands).slice(0, n).forEach(function (c) { c.costTurn = (c.costTurn != null ? c.costTurn : c.def.cost) + 1; c.frosted = true; });
+    this.emit('fx:text', { text: '손이 얼어붙는다 — 카드 ' + Math.min(n, cands.length) + '장 비용 +1', kind: 'ice' });
   };
 
   // ================= 연계(9단계) =================
@@ -580,6 +703,11 @@
       case 'attacksThisTurn': p = ctx.attacksBefore || 0; break;
       case 'aliveAllies': p = this.alive('ally').length; break;
       case 'x': p = ctx.x || 0; break;
+      case 'attacksBattle': p = this.attacksBattle; break;
+      case 'healedBattle': p = this.healedBattle; break;
+      case 'exhaustedBattle': p = this.exhaustedBattle; break;
+      case 'discardedTurn': p = this.discardedTurn; break;
+      case 'drawPile': p = this.piles.draw.length; break;
     }
     var n = Math.floor((v.base || 0) + v.mult * p);
     return v.cap != null ? Math.min(n, v.cap) : n;
@@ -613,6 +741,8 @@
       case 'targetHas': return hasSt(tgt, c.pre ? ctx.pre : null);
       case 'targetDebuffKinds': return tgt ? U.cmp(S.debuffKinds(tgt), c.op, c.n) : false;
       case 'targetIntentAttack': return !!(tgt && tgt.side === 'enemy' && this.intentInfo(tgt).dmg != null);
+      case 'attacksMod': return ctx.attacksBefore > 0 && (ctx.attacksBefore + 1) % c.n === 0;   // 이 카드가 이번 턴 n·2n·3n번째 공격 카드인가
+      case 'discardedTurn': return U.cmp(this.discardedTurn, c.op, c.n);
     }
     throw new Error('알 수 없는 조건: ' + c.is);
   };
@@ -629,6 +759,7 @@
         var bAdd = ctx.isCard ? (ctx.pair && ctx.pair.blockAdd || 0) + (ctx.src && ctx.src.tm && ctx.src.tm.blockAdd || 0) : 0;
         for (i = 0; i < list.length; i++) {
           this.addBlock(list[i], this.num(e.value, ctx, list[i]) + bAdd);
+          if (ctx.isCard && !ctx.inHook && list[i].side === 'ally') await this.runHooks('onBlockGain', { inHook: true });
           if (e.keep) S.set(list[i], 'hold', Math.max(1, S.get(list[i], 'hold')));
           // 특성: 다른 아군에게 보호막을 주면 자신도
           if (ctx.isCard && ctx.src && ctx.src.tm && ctx.src.tm.shareBlock && list[i] !== ctx.src && !ctx.src.dead) this.addBlock(ctx.src, ctx.src.tm.shareBlock);
@@ -746,6 +877,33 @@
 
       case 'summon': return this.summon(e.monster, ctx.src);
 
+      // 20단계: 버리기 · 소멸 · 미리 보기 · 상태 터뜨리기
+      case 'discard': {
+        var dh = this.piles.hand.filter(function (c) { return c !== ctx.inst; });
+        n = Math.min(this.num(e.value || 1, ctx), dh.length);
+        var dpick = e.random ? G.rng.shuffle(dh).slice(0, n) : await this.pickCards({ cards: dh, min: n, max: n, title: '버릴 카드 ' + n + '장을 고른다', verb: '버리기', prefer: 'sly' });
+        for (i = 0; i < dpick.length && !this.over(); i++) await this.discardCard(dpick[i], ctx);
+        return;
+      }
+      case 'exhaust': {
+        var xh = this.piles.hand.filter(function (c) { return c !== ctx.inst; });
+        n = Math.min(this.num(e.value || 1, ctx), xh.length);
+        var xpick = await this.pickCards({ cards: xh, min: n, max: n, title: '소멸할 카드 ' + n + '장을 고른다', verb: '소멸' });
+        for (i = 0; i < xpick.length && !this.over(); i++) await this.exhaustCard(xpick[i], false);
+        return;
+      }
+      case 'scry': return this.scry(this.num(e.value, ctx));
+      case 'clearStatus':
+        list = this.targets(spec, ctx);
+        list.forEach(function (u) { S.set(u, e.status, 0); });
+        this.update();
+        return;
+      case 'loseBlock':
+        list = this.targets(spec, ctx);
+        list.forEach(function (u) { u.block = 0; });
+        this.update();
+        return;
+
       case 'custom': return this.custom(e.name, ctx, e);
     }
     throw new Error('알 수 없는 효과: ' + e.op);
@@ -822,7 +980,7 @@
     if (hadBlock && tgt.block === 0 && S.has(tgt, 'charge')) this.cancelCharge(tgt);
     // 반격 수치는 쓰러지면 상태가 지워지므로 먼저 읽는다
     var thorns = S.get(tgt, 'thorns') + S.get(tgt, 'thornsTemp');
-    var lava = S.get(tgt, 'lavaArmor');
+    var lava = S.get(tgt, 'lavaArmor') + (cardAttack ? S.get(tgt, 'scorch') : 0);
     await this.applyLoss(tgt, loss);
     if (src && !src.dead) {
       if (thorns > 0) await this.takeDamage(src, thorns, { kind: 'thorns' });
@@ -919,6 +1077,9 @@
       this.kills.push(u.id);
       if (u.affix) this.affixKills = (this.affixKills || 0) + 1;
       if (u.def.onDeath) await this.run(u.def.onDeath, this.monsterCtx(u));
+      // 복수(20단계): 다른 몬스터가 쓰러지면 힘
+      var self2 = this;
+      this.alive('enemy').forEach(function (m) { if (S.has(m, 'vengeance')) { S.add(self2, m, 'strength', S.get(m, 'vengeance'), m); self2.emit('fx:text', { unit: m, text: '복수!', kind: 'bad' }); } });
       if (this.mods.onKillDraw && this.alive('enemy').length) { this.relicFx(this.relicWith('onKillDraw')); this.drawCards(this.mods.onKillDraw); }
     } else {
       this.retarget();
@@ -938,6 +1099,7 @@
     if (u.side === 'ally' && this.mods.healBonus) n += this.mods.healBonus;
     var real = Math.min(n, u.maxHp - u.hp);
     u.hp += real;
+    if (u.side === 'ally') this.healedBattle += real;
     var over = n - real;
     if (opts && opts.overflowToBlock && over > 0) this.addBlock(u, over);
     this.emit('fx:heal', { unit: u, n: real });
@@ -1038,9 +1200,34 @@
 
   P.predict = function (m) {
     if (m.dead) return;
-    m.intent = m.pattern[m.pIndex % m.pattern.length];
+    m.intent = m.def.ai === 'weighted' && !m.locked ? this.chooseMove(m) : m.pattern[m.pIndex % m.pattern.length];
     var move = this.moveOf(m);
     m.intentTarget = needsSingleTarget(move) ? this.pickHeroTarget() : null;
+  };
+
+  // 20단계: 가중치 행동 고르기. 같은 행동은 두 번까지 연달아, 조건(when)에 맞지 않는 행동은 빼고, 첫 행동은 패턴의 첫 칸
+  P.moveOk = function (m, k) {
+    var w = m.def.moves[k].when;
+    if (!w) return true;
+    switch (w.is) {
+      case 'allies': return U.cmp(this.alive('enemy').length, w.op, w.n);
+      case 'selfHp': return U.cmp(m.hp / m.maxHp, w.op, w.n);
+      case 'heroBlock': return U.cmp(Math.max.apply(null, this.alive('ally').map(function (h) { return h.block; }).concat([0])), w.op, w.n);
+      case 'turn': return U.cmp(this.turn + 1, w.op, w.n);
+    }
+    return true;
+  };
+  P.chooseMove = function (m) {
+    var hist = m.history || (m.history = []), d = m.def, self = this;
+    if (!hist.length && d.pattern && d.pattern.length) return d.pattern[0];
+    var keys = Object.keys(d.moves).filter(function (k) { return self.moveOk(m, k); });
+    var l = hist.length, rep = l >= 2 && hist[l - 1] === hist[l - 2] ? hist[l - 1] : null;
+    var cand = keys.filter(function (k) { return k !== rep; });
+    if (!cand.length) cand = keys.length ? keys : Object.keys(d.moves);
+    var w = cand.map(function (k) { return (d.weights && d.weights[k]) || d.moves[k].weight || 1; }), total = w.reduce(function (a, b) { return a + b; }, 0);
+    var roll = G.rng.next() * total;
+    for (var i = 0; i < cand.length; i++) { roll -= w[i]; if (roll < 0) return cand[i]; }
+    return cand[cand.length - 1];
   };
 
   // 도발·사망에 따라 단일 대상 예고를 다시 정한다
@@ -1097,6 +1284,7 @@
       await G.wait(T.act);
       return;
     }
+    (m.history || (m.history = [])).push(m.intent);
     var move = this.moveOf(m);
     if (move.requiresCharge && !S.has(m, 'charge')) {
       this.emit('fx:text', { unit: m, text: '취소됨', kind: 'info' });
@@ -1135,7 +1323,7 @@
       await G.wait(T.act);
       if (t.effects) await this.run(t.effects, this.monsterCtx(m));
       if (this.em.triggerStr && m.def.rank !== 'normal') S.add(this, m, 'strength', this.em.triggerStr, m);
-      if (t.pattern) { m.pattern = t.pattern.slice(); m.pIndex = 0; this.predict(m); }
+      if (t.pattern) { m.pattern = t.pattern.slice(); m.pIndex = 0; m.locked = true; this.predict(m); }
       if (t.everyTurn) m.everyTurn = m.everyTurn.concat(t.everyTurn);
       this.update();
     }

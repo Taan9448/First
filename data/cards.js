@@ -22,7 +22,7 @@
   var TG = { e: 'enemy', E: 'allEnemies', r: 'randomEnemy', a: 'ally', A: 'allAllies', s: 'self', d: 'downedAlly', n: 'none' };
 
   // C(id, 이름, 유형, 등급, 비용, 대상, 효과, 설명, 추가)
-  // 추가: b 기본 카드 · x 소멸 · art 일러스트 · el 속성 · tags(조건/무작위/치명)
+  // 추가: b 기본 카드 · x 소멸 · art 일러스트 · el 속성 · tags(조건/무작위/치명) · retain 보존 · innate 선천성 · onDiscard 버려지면(20단계)
   function C(id, name, type, rarity, cost, target, effects, text, extra) {
     extra = extra || {};
     var card = {
@@ -31,6 +31,10 @@
       basic: !!extra.b, exhaust: !!extra.x, art: extra.art || null, el: extra.el || null,
       tags: extra.tags || ''
     };
+    // 20단계: 보존(턴이 끝나도 손패에 남음) · 선천성(첫 손패) · 버려지면(다른 카드 효과로 버려질 때)
+    if (extra.retain) card.retain = true;
+    if (extra.innate) card.innate = true;
+    if (extra.onDiscard) card.onDiscard = extra.onDiscard;
     return card;
   }
 
@@ -251,7 +255,32 @@
     C('C31', '보물 상자', 's', 'u', 1, 'n', [{ op: 'gold', value: [5, 30] }], '골드 5~30 획득 (무작위). 소멸.', { x: 1, art: 'chest', tags: '무작위' }),
     C('C32', '혼돈의 소용돌이', 's', 'r', 1, 'n', [{ op: 'randomizeCosts', min: 0, max: 2 }, draw(1)], '이번 턴 손패 모든 카드의 비용이 0~2로 무작위로 바뀐다. 카드 1장을 뽑는다.', { art: 'chaos', tags: '무작위' }),
     // 16단계 추가: 두 세계를 잇는 틈
-    C('C33', '세계의 틈', 's', 'e', 1, 'n', [energy(1), draw(2)], '에너지 +1. 카드 2장을 뽑는다. 소멸.', { x: 1, art: 'chaos' })
+    C('C33', '세계의 틈', 's', 'e', 1, 'n', [energy(1), draw(2)], '에너지 +1. 카드 2장을 뽑는다. 소멸.', { x: 1, art: 'chaos' }),
+    // ---------------- 20단계: 아키타입 핵심 카드 18장 (보존 · 선천성 · 버리기 · 미리 보기 · 소멸 연계) ----------------
+    // 하린: 연격 · 치명
+    C('K35', '발도술', 'a', 'u', 1, 'e', [IF({ is: 'attacksThisTurn', op: '>=', n: 2 }, [dmg(9, { forceCrit: true })], [dmg(9)])], '보존. 피해 {d1}. 이번 턴 이미 공격 카드를 2장 이상 썼다면 치명타 확정.', { retain: 1, art: 'katana', tags: '조건·치명' }),
+    C('K36', '난영검무', 'p', 'r', 1, 's', [power('onAttackCard', [IF({ is: 'attacksMod', n: 3 }, [draw(1), energy(1)])])], '선천성. 지속 이번 턴 3·6·9번째 공격 카드를 쓸 때마다 카드 1장을 뽑고 에너지 +1.', { innate: 1, art: 'dance', tags: '조건' }),
+    C('K37', '검기 해방', 'a', 'e', 2, 'e', [dmg(per('attacksBattle', 2, 6, { cap: 40 }))], '피해 {d0}: 6 + 이번 전투에서 쓴 공격 카드 1장당 2(최대 40). 소멸.', { x: 1, art: 'slashX', tags: '조건' }),
+    // 브리아: 보호막 · 반격
+    C('B34', '굳은 맹세', 'b', 'c', 1, 's', [blk(7)], '보존. 보호막 7.', { retain: 1, art: 'shield' }),
+    C('B35', '불굴의 진형', 'p', 'r', 2, 's', [power('onBlockGain', [dmg(2, { target: 'allEnemies' })])], '지속 동료가 카드로 보호막을 얻을 때마다 적 전체에 피해 2.', { art: 'fortress', tags: '조건' }),
+    C('B36', '방패 투척', 'a', 'e', 1, 'e', [dmg(per('selfBlock', 1.5)), { op: 'loseBlock', target: 'self' }], '자신의 보호막 × 1.5만큼 피해({d0}). 그 뒤 자신의 보호막을 모두 잃는다. 소멸.', { x: 1, art: 'shieldBash', tags: '조건' }),
+    // 리라: 원소 · 마나
+    C('L34', '원소 폭주', 'a', 'r', 2, 'e', [dmg(per('targetStatus', 2, 4, { status: 'burn' })), { op: 'clearStatus', status: 'burn' }], '피해 {d0} + 대상의 화상 1당 2. 그 뒤 대상의 화상을 없앤다.', { art: 'explosion', el: 'fire', tags: '조건' }),
+    C('L35', '마력 순환', 's', 'u', 0, 'n', [{ op: 'discard', value: 1 }, draw(2)], '보존. 손패 1장을 버린다. 카드 2장을 뽑는다.', { retain: 1, art: 'orb' }),
+    C('L36', '빙결 파쇄', 'a', 'e', 2, 'e', [IF({ is: 'targetHas', status: 'frozen' }, [dmg(26)], [dmg(9), st('chill', 2)])], '대상이 빙결 상태면 피해 {d0}. 아니면 피해 {d1}, 한기 2 부여.', { art: 'ice', el: 'ice', tags: '조건' }),
+    // 세라: 회복 · 신성
+    C('S34', '은총의 순환', 'p', 'r', 1, 's', [power('onHeal', [dmg(3, { target: 'randomEnemy' })])], '선천성. 지속 동료가 회복할 때마다 무작위 적에게 피해 3.', { innate: 1, art: 'sun', el: 'holy' }),
+    C('S35', '성스러운 인내', 'b', 'u', 1, 'A', [blk(4)], '보존. 아군 전체에 보호막 4.', { retain: 1, art: 'wings' }),
+    C('S36', '천벌', 'a', 'e', 2, 'e', [dmg(per('healedBattle', 0.5, 6, { cap: 45 }))], '피해 {d0}: 6 + 이번 전투에서 동료가 회복한 체력의 절반(최대 45). 소멸.', { x: 1, art: 'holySword', el: 'holy', tags: '조건' }),
+    // 소연: 독 · 암기(버리기)
+    C('N35', '그림자 비수', 'a', 'c', 1, 'e', [dmg(5)], '피해 {d0}. 버려지면 무작위 적에게 피해 7.', { art: 'dagger', onDiscard: [dmg(7, { target: 'randomEnemy' })] }),
+    C('N36', '암기 비장', 's', 'u', 0, 'n', [{ op: 'discard', value: 2 }, draw(2)], '손패 2장을 버린다. 카드 2장을 뽑는다.', { art: 'cards' }),
+    C('N37', '독기 폭발', 'a', 'r', 1, 'e', [{ op: 'loseHp', target: 'target', value: per('targetStatus', 1, 0, { status: 'poison' }) }], '대상이 중독 수치만큼 즉시 체력을 잃는다(보호막 무시). 중독은 그대로 남는다. 소멸.', { x: 1, art: 'poisonCloud', el: 'poison', tags: '조건' }),
+    // 공용
+    C('C34', '숨 고르기', 's', 'c', 1, 'n', [{ op: 'scry', value: 3 }, draw(1)], '미리 보기 3. 카드 1장을 뽑는다.', { art: 'eye' }),
+    C('C35', '결단', 's', 'u', 0, 'n', [{ op: 'exhaust', value: 1 }, energy(2)], '손패 1장을 소멸시킨다. 에너지 +2. 소멸.', { x: 1, art: 'rage' }),
+    C('C36', '분노의 칼날', 'p', 'r', 1, 'n', [power('onExhaust', [dmg(4, { target: 'randomEnemy' })])], '지속 카드가 소멸할 때마다 무작위 적에게 피해 4.', { art: 'axe' })
   ];
 
   // 방해 카드 (보유·도감에 포함하지 않음)
@@ -271,7 +300,8 @@
     N17: 'poisonCloud', N18: 'cards', N19: 'shadow', N20: 'clock', N21: 'curse', N22: 'poisonCloud', N23: 'flag', N24: 'shadow',
     N25: 'cards', N26: 'thousand', N27: 'shadow', N28: 'aura', N29: 'dice', N32: 'cards',
     C21: 'coin', C22: 'shield', C23: 'cards', C24: 'flag', C25: 'clock', C26: 'cards', C27: 'flag', C32: 'chaos',
-    K34: 'slashX', B33: 'shield', S33: 'heal', N34: 'poisonCloud', C33: 'chaos'
+    K34: 'slashX', B33: 'shield', S33: 'heal', N34: 'poisonCloud', C33: 'chaos',
+    K36: 'aura', K37: 'slashX', B35: 'shield', B36: 'quake', L34: 'explosion', L36: 'ice', S34: 'pillar', S36: 'pillar', N37: 'poisonCloud', C36: 'rage'
   };
   list.forEach(function (c) { if (SFX[c.id]) c.sfx = SFX[c.id]; });
 
@@ -291,8 +321,8 @@
   var SCHOOL = {
     fusion: 'C08 C24 C27 C33 K18 K22 K24 K25 K28 K29 K33 K34 N25 N32 N33 N34 B33 L33 S33',
     magic: 'C07 C11 C17 C18 C25 C26 C30 C32',
-    neutral: 'C05 C12 C15 C21 C23 C28 C29 C31',
-    martial: 'C01 C02 C03 C04 C06 C09 C10 C13 C14 C16 C19 C20 C22'
+    neutral: 'C05 C12 C15 C21 C23 C28 C29 C31 C34',
+    martial: 'C01 C02 C03 C04 C06 C09 C10 C13 C14 C16 C19 C20 C22 C35 C36'
   };
   Object.keys(SCHOOL).forEach(function (k) { SCHOOL[k].split(' ').forEach(function (id) { SCHOOL[id] = k; }); });
   list.forEach(function (c) {

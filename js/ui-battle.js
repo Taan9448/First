@@ -300,6 +300,7 @@
       }
       UI.updateCard(el, inst, B);
       el.classList.toggle('selected', selected === inst);
+      el.classList.toggle('frosted', !!inst.frosted);
     });
     Object.keys(cardEls).forEach(function (uid) {
       if (!live[uid]) {
@@ -561,6 +562,33 @@
     return hold;
   }
 
+  // 20단계: 카드 고르기 창. min~max장을 고르고 확인(0장이 허용되면 '고르지 않기')
+  function pickOverlay(req) {
+    var picked = [];
+    var m = UI.modal('<h2>' + U.esc(req.title || '카드를 고른다') + '</h2><p class="dim pick-sub"></p><div class="row pick-cards"></div>' +
+      '<div class="row" style="justify-content:center"><button class="btn gold ok"></button></div>', 'pickwin', true);
+    var box = m.querySelector('.pick-cards'), ok = m.querySelector('.ok'), sub = m.querySelector('.pick-sub');
+    var refresh = function () {
+      var n = picked.length;
+      ok.disabled = n < req.min || n > req.max;
+      ok.textContent = n ? (req.verb || '확인') + ' (' + n + '장)' : req.min ? (req.verb || '확인') : '고르지 않기';
+      sub.textContent = req.min === req.max ? req.max + '장을 고른다' : '0~' + req.max + '장을 고른다';
+    };
+    req.cards.forEach(function (inst) {
+      var c = UI.cardEl(inst.def, { static: true });
+      c.onclick = function () {
+        var i = picked.indexOf(inst);
+        if (i >= 0) picked.splice(i, 1);
+        else { if (picked.length >= req.max) { if (req.max === 1) picked = []; else return; } picked.push(inst); }
+        UI.$$('.card', box).forEach(function (x, j) { x.classList.toggle('selected', picked.indexOf(req.cards[j]) >= 0); });
+        refresh();
+      };
+      box.appendChild(c);
+    });
+    ok.onclick = function () { if (ok.disabled) return; UI.closeModal(m); req.resolve(picked); };
+    refresh();
+  }
+
   function bindBus() {
     var on = G.bus.on;
     on('battle:update', function () { renderAll(); });
@@ -572,6 +600,10 @@
       handSig = '';
     });
     on('cards:draw', function () { SND.play('draw'); });
+    // 20단계: 버리기·소멸·미리 보기에서 카드를 고른다
+    on('pick:request', function (req) { req.handled = true; pickOverlay(req); });
+    on('cards:discard', function () { SND.play('draw'); handSig = ''; });
+    on('cards:exhaust', function () { handSig = ''; });
     // 16단계: 영웅·전설 카드 · 합동기 컷인 — 얼굴 클로즈업 + 카드 이름 + 대사
     on('card:cutin', function (d) { skillCutIn(d.def, d.caster); });
     on('card:play', function (d) {

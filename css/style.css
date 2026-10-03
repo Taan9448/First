@@ -1258,3 +1258,9 @@ body.fx-low .hand .card .cin, body.fx-low .intent, body.fx-low .title-bg, body.f
 .pick-groups .pick-grid { max-height: none; overflow: visible; --ch: 130px; padding: 4px 10px; }
 .pick-grid .card.selected .cin { filter: drop-shadow(0.15em 0 0 var(--gold)) drop-shadow(-0.15em 0 0 var(--gold)) drop-shadow(0 0.15em 0 var(--gold)) drop-shadow(0 -0.15em 0 var(--gold)); }
 .deck-body .grid.run { display: flex; flex-wrap: wrap; gap: 10px; --ch: 140px; }
+/* 20단계: 전투 중 카드 고르기 */
+.modal.pickwin .box { max-width: min(1100px, 94vw); }
+.modal.pickwin .pick-cards { --ch: 150px; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 10px 0 14px; }
+.modal.pickwin .pick-cards .card { cursor: pointer; }
+.modal.pickwin .pick-cards .card.selected .cin { filter: drop-shadow(0.15em 0 0 var(--gold)) drop-shadow(-0.15em 0 0 var(--gold)) drop-shadow(0 0.15em 0 var(--gold)) drop-shadow(0 -0.15em 0 var(--gold)); transform: translateY(-8px); }
+.card.frosted .cin { filter: drop-shadow(0 0 6px #9fe6ff); }

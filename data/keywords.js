@@ -20,6 +20,13 @@ Game.Data.statuses = {
   lavaArmor: { name: '용암 갑옷', kind: 'buff', icon: 'burn', decay: 'turnStartClear', desc: '다음 턴까지 공격받을 때마다 공격자에게 화상 {n}.' },
   charge:    { name: '차지', kind: 'special', icon: 'charge', desc: '강력한 공격을 준비 중. 보호막이 모두 깨지면 취소된다.' },
   doom:      { name: '종말', kind: 'special', icon: 'doom', desc: '{n}턴 뒤 종말이 찾아온다.' },
+  // 20단계: 적의 고유 규칙(줄지 않는다)
+  riposte:   { name: '반격 태세', kind: 'special', icon: 'thorns', desc: '한 턴에 공격 카드를 3장 쓸 때마다(3·6·9번째) 그 카드를 쓴 동료에게 {n} 피해.' },
+  spellward: { name: '주문 결계', kind: 'special', icon: 'block', desc: '스킬·지속 카드를 쓸 때마다 보호막 {n}을 얻는다.' },
+  sandglass: { name: '시간의 모래', kind: 'special', icon: 'r_hourglass', desc: '한 턴에 카드를 {n}장 쓰면 그 턴이 바로 끝나고 힘 +1.' },
+  frostAura: { name: '서리 기운', kind: 'special', icon: 'chill', desc: '내 턴 시작 시 손패 무작위 {n}장의 이번 턴 비용 +1.' },
+  scorch:    { name: '불타는 비늘', kind: 'special', icon: 'burn', desc: '공격 카드에 맞을 때마다 공격한 동료에게 화상 {n}.' },
+  vengeance: { name: '복수', kind: 'special', icon: 'strength', desc: '다른 적이 쓰러질 때마다 힘 +{n}.' },
   freezeImmune: { name: '빙결 면역', kind: 'special', icon: 'freezeImmune', decay: 'round', desc: '한기가 쌓이지 않는다. {n}라운드 남음.' },
 
   poison:    { name: '중독', kind: 'debuff', icon: 'poison', desc: '턴 종료 시 {n} 피해(보호막 무시) 후 1 감소.' },
@@ -37,7 +44,13 @@ Game.Data.keywords = {
   '소멸': '사용하면 이번 전투에서 제거된다.',
   '지속': '사용하면 전투가 끝날 때까지 효과가 유지되고 덱으로 돌아가지 않는다.',
   '치명타': '피해 2배. 캐릭터마다 확률이 다르고, 공용 카드는 5%.',
-  '모래': '사용할 수 없는 방해 카드. 손패 자리만 차지하고 전투가 끝나면 사라진다.'
+  '모래': '사용할 수 없는 방해 카드. 손패 자리만 차지하고 전투가 끝나면 사라진다.',
+  // 20단계
+  '보존': '턴이 끝나도 버려지지 않고 손패에 남는다.',
+  '선천성': '전투를 시작할 때 첫 손패에 반드시 들어온다.',
+  '버린다': '손패에서 골라 버린 더미로 보낸다. 버려지면 효과가 나는 카드도 있다.',
+  '버려지면': '다른 카드의 효과로 손패에서 버려질 때 이 효과가 난다(턴 종료로 버려질 때는 아니다).',
+  '미리 보기': '뽑을 덱 맨 위 카드를 보고, 그중 원하는 만큼 버린 더미로 보낸다.'
 };
 ['strength', 'focus', 'keen', 'critUp', 'regen', 'thorns', 'taunt', 'poison', 'burn', 'weak',
  'vulnerable', 'chill', 'frozen', 'stun'].forEach(function (k) {

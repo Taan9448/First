@@ -34,6 +34,6 @@
       return drawn;
     },
     // 이번 턴 한정 상태를 지운다
-    resetTurn: function (c) { c.freeTurn = false; c.costTurn = null; }
+    resetTurn: function (c) { c.freeTurn = false; c.costTurn = null; c.frosted = false; }
   };
 })();

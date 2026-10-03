@@ -112,6 +112,10 @@ Game.Data.upgradeRules = {
     S16: { effects: [{ op: 'loseHp', value: 2 }, draw(2)], text: '체력을 {+2} 잃고 카드 2장을 뽑는다.' },
     L25: { effects: [{ op: 'damage', value: { base: 0, per: 'x', mult: 12 } }, st('burn', { base: 0, per: 'x', mult: 1 }), st('chill', { base: 0, per: 'x', mult: 1 })],
       text: '적 전체에 피해 {+12} × X({d0}). 화상 X, 한기 X 부여.' },
+    // 20단계 카드
+    B36: { effects: [{ op: 'damage', value: { base: 4, per: 'selfBlock', mult: 1.5 } }, { op: 'loseBlock', target: 'self' }],
+      text: '자신의 보호막 × 1.5 {++ 4}만큼 피해({d0}). 그 뒤 자신의 보호막을 모두 잃는다. 소멸.' },
+    N37: { exhaust: false, text: '대상이 중독 수치만큼 즉시 체력을 잃는다(보호막 무시). 중독은 그대로 남는다. {+소멸하지 않는다}.' },
     // 설명의 확률 표기까지 함께 바뀌는 카드
     C27: { effects: [st('keen', 3), st('tempStr', 4)],
       text: '아군 전체에 예리함 {+3}(치명타 확률 {++30%}), 이번 턴 힘 +{+4}.' }

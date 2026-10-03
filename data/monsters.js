@@ -191,6 +191,38 @@
       ['dagger', 'expose', 'ambush', 'fog'], { mirror: 'nox', scaleByStage: SCALE, desc: '소연의 그림자. 웃음소리만 먼저 들린다.' })
   ];
 
+  // 20단계: 보스·정예 고유 규칙. 상태로 붙어 화면에 아이콘과 설명이 뜬다(data/keywords.js)
+  var RULES = {
+    treant: { startStatus: { vengeance: 2 } },             // 덩굴이 쓰러질 때마다 힘 +2
+    pharaoh: { startStatus: { sandglass: 7 } },            // 한 턴에 카드 7장을 쓰면 턴이 끝나고 힘 +1
+    frost_queen: { startStatus: { frostAura: 1 } },        // 매 턴 손패 1장 비용 +1
+    ignis: { startStatus: { scorch: 1 } },                 // 공격 카드에 맞을 때마다 공격자 화상 1
+    baltar: { startStatus: { riposte: 6 } },               // 한 턴의 공격 카드 3장마다 반격 6
+    astaroth: { startStatus: { spellward: 5 } },           // 스킬·지속 카드마다 보호막 5
+    giant_spider: { triggers: [{ hpBelow: 0.5, name: '독 고치', effects: [blk(10), allSt('poison', 2)] }] },
+    sandworm: { triggers: [{ hpBelow: 0.5, name: '모래 속으로', effects: [blk(20)], pattern: ['pounce', 'burrow', 'eruption', 'pounce', 'eruption'] }] },
+    glacier_golem: { startStatus: { spellward: 4 }, triggers: [{ hpBelow: 0.5, name: '빙하 균열', effects: [selfSt('strength', 3)] }] },
+    phoenix: { startStatus: { scorch: 1 } },
+    death_knight: { startStatus: { riposte: 5 }, triggers: [{ hpBelow: 0.4, name: '혈갑 해방', effects: [selfSt('strength', 3), blk(15)] }] }
+  };
+  list.forEach(function (m) {
+    var r = RULES[m.id];
+    if (r) {
+      if (r.startStatus) m.startStatus = Object.assign({}, m.startStatus || {}, r.startStatus);
+      if (r.triggers) m.triggers = (m.triggers || []).concat(r.triggers);
+    }
+    // 적 행동 방식(20단계): 행동이 2개 이상이고 차지가 없는 일반 몬스터는 가중치로 고른다(같은 행동은 두 번까지 연달아).
+    // 소환은 적이 3마리 미만일 때만, 자기 회복은 체력 80% 미만일 때만 고른다. 첫 행동은 패턴의 첫 칸
+    var keys = Object.keys(m.moves), charge = keys.some(function (k) { return m.moves[k].charge || m.moves[k].requiresCharge; });
+    if (!m.ai && m.rank === 'normal' && keys.length >= 2 && !charge) m.ai = 'weighted';
+    keys.forEach(function (k) {
+      var mvv = m.moves[k];
+      if (mvv.when) return;
+      if (mvv.effects.some(function (e) { return e.op === 'summon'; })) mvv.when = { is: 'allies', op: '<', n: 3 };
+      else if (mvv.effects.some(function (e) { return e.op === 'heal' && e.target === 'self'; })) mvv.when = { is: 'selfHp', op: '<', n: 0.8 };
+    });
+  });
+
   Game.Data.monsters = list;
 
   // 적 변이(접두어): 일반 몬스터에만 확률로 붙는다 (GAME_DESIGN.md 19.5절)
