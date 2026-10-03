@@ -388,7 +388,38 @@ function invariants(where) {
     St.data.upgraded.K01 = 2; St.data.run.upgrades = 3;
     check(St.upgradeCard('K01') && St.upLevel('K01') === 3 && St.cardDef('K01').id === 'K01+3', '2 → 3단계 강화');
     check(!St.upgradeCard('K01') && St.data.run.upgrades === 2 && St.upgradable().indexOf('K01') < 0, '3단계에서 더 강화되지 않음');
+    // 33단계: 대장간 — 4~10단계는 금화로 확률 강화, 실패하면 1단계 하락(3단계 보장)
+    check(St.forgeList().indexOf('K01') >= 0, '3단계 카드는 대장간 목록에 오른다');
+    St.data.gold = 0;
+    const poor = St.forge('K01', 0);
+    check(!poor.ok && poor.gold && St.upLevel('K01') === 3, '금화가 모자라면 벼리지 못한다');
+    St.data.gold = 100000;
+    const c4 = St.forgeCost('K01'), g0 = St.data.gold;
+    const win = St.forge('K01', 0);
+    check(win.ok && win.success && win.to === 4 && St.upLevel('K01') === 4 && St.data.gold === g0 - c4 && St.cardDef('K01').id === 'K01+4', '대장간 성공: 3 → 4단계, 금화 차감');
+    check(St.forgeCost('K01') > c4 && St.forgeChance('K01') < win.chance, '단계가 오를수록 비용↑ 확률↓');
+    const lose = St.forge('K01', 0.999);
+    check(lose.ok && !lose.success && lose.to === 3 && St.upLevel('K01') === 3, '대장간 실패: 4 → 3단계');
+    const lose3 = St.forge('K01', 0.999);
+    check(lose3.ok && !lose3.success && lose3.to === 3, '실패해도 3단계 아래로는 내려가지 않는다');
+    for (let k = 0; k < 7; k++) St.forge('K01', 0);
+    check(St.upLevel('K01') === 10 && St.forgeList().indexOf('K01') < 0 && !St.forge('K01', 0).ok, '10단계가 끝');
+    const k10 = St.cardDef('K01'), k3 = D.cardById['K01+3'];
+    check(k10.id === 'K01+10' && k10.cost < k3.cost && /보존/.test(k10.text) && k10.tier, '극의(10단계): 비용 -1·보존');
+    check(St.data.forgeLog.tries === 10 && St.data.forgeLog.best === 10, '대장간 기록');
+    const rare = D.cards.find(c => c.rarity === 'rare' && D.cardById[c.id + '+3']);
+    St.data.cards.push(rare.id); St.data.upgraded[rare.id] = 3;
+    check(St.forgeCost(rare.id) > c4, '희귀 카드는 벼리는 값이 더 비싸다');
+    // 저장을 거쳐도 10단계가 유지된다
+    const san = G.Save.sanitize(JSON.parse(JSON.stringify(St.data)));
+    check(san.upgraded.K01 === 10, '저장 정리 후에도 10단계 유지');
     St.data = JSON.parse(keep);
+  }
+  // 모든 카드가 4~10단계까지 만들어진다
+  {
+    let bad = 0;
+    D.cards.forEach(c => { if (D.cardById[c.id + '+3']) for (let l = 4; l <= 10; l++) if (!D.cardById[c.id + '+' + l]) bad++; });
+    check(bad === 0, '4~10단계 카드 정의');
   }
 
   // 던전 지도(14단계): 길이·갈림 수·통로·숨은 방

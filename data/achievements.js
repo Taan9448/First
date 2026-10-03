@@ -42,7 +42,7 @@
     A('A24', '여섯 동료', '동료 여섯이 모두 모인다(30단계부터 여섯).', { collect: 'heroes', n: 6 }),
     A('A25', '수집가', '카드를 120종 모은다.', { collect: 'cards', n: 120 }),
     A('A26', '보물 창고', '유물을 25개 모은다.', { collect: 'relics', n: 25 }),
-    A('A27', '극의', '카드 하나를 3단계까지 강화한다.', { collect: 'up3', n: 1 }),
+    A('A27', '삼단 연마', '카드 하나를 3단계까지 강화한다.', { collect: 'up3', n: 1 }),
     A('A28', '생사지교', '두 동료의 친밀도를 45까지 쌓는다.', { collect: 'bond', n: 45 }),
     // 오늘의 원정
     A('A29', '오늘의 원정', '오늘의 원정에 나선다.', { stat: 'dailyPlays', n: 1 }),
@@ -51,7 +51,10 @@
     // 31단계: 세계의 틈
     // secret: 엔딩을 한 번이라도 보기 전에는 이름·설명이 '???'로 보인다
     A('A32', '틈 너머로', '세계의 틈 11 스테이지를 돌파한다.', { on: 'stageClear', stage: 11 }, null, true),
-    A('A33', '천외로', '세계의 틈을 닫는다(13 스테이지 돌파).', { on: 'stageClear', stage: 13 }, null, true)
+    A('A33', '천외로', '세계의 틈을 닫는다(13 스테이지 돌파).', { on: 'stageClear', stage: 13 }, null, true),
+    // 대장간(33단계)
+    A('A34', '담금질', '대장간에서 카드를 10번 벼린다.', { stat: 'forgeTries', n: 10 }),
+    A('A35', '극의', '대장간에서 카드 하나를 10단계 극의까지 벼린다.', { stat: 'forgeBest', n: 10 })
   ];
   Game.Data.achievements = list;
   Game.Data.achievementById = Game.util.byId(list);

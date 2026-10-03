@@ -81,6 +81,7 @@
         tile('deck', 't-small', '덱', 'DECK', '<span class="badge">' + deckN + '</span><div class="ti"><span>전투 덱 ' + deckN + '장</span></div>' + UI.icon('deck', 'ticon')) +
         tile('story', 't-wide', '스토리', 'STORY', '<div class="ti"><span>' + (sp.seen >= sp.total ? '모든 장면을 보았다' : '제' + n + '장 · ' + D.STAGE_NAME[n - 1] + ' · 본 장면 ' + sp.seen + '/' + sp.total) + '</span>' +
           '<div class="bar"><i style="width:calc(' + sp.pct + '% - 4px)"></i></div></div><span class="pct">' + sp.pct + '<small>%</small></span>', !Meta.story) +
+        tile('forge', 't-full', '대장간', 'FORGE', '<div class="ti"><span>4~10단계 강화 · 벼릴 수 있는 카드 ' + St.forgeList().length + '장</span></div>' + UI.icon('anvil', 'ticon')) +
       '</section>' +
       '<div class="lb-banner"><div class="bn"></div><div class="lb-dots"></div></div>' +
       '<nav class="lb-bottom">' +
@@ -167,7 +168,8 @@
       heroes: function () { G.Extra.codex('heroes'); },
       party: function () { if (canParty) Meta.party(Meta.lobby, '확인', Meta.lobby); },
       deck: function () { G.Extra.deck(); },
-      story: function () { if (Meta.story) Meta.story(); }
+      story: function () { if (Meta.story) Meta.story(); },
+      forge: function () { Meta.forge(); }
     };
     UI.$$('.tile', el).forEach(function (t) { t.onclick = function () { SND('click'); go[t.getAttribute('data-go')](); }; });
     UI.$$('.lb-bottom .navbtn', el).forEach(function (b) {

@@ -114,7 +114,8 @@ Game.Data.economy = {
   // 보스 보상(희귀/영웅/전설): 스테이지 2 → 10 사이는 선형 보간
   bossFrom: [85, 13, 2],
   bossTo: [40, 40, 20],
-  gold: { battle: [13, 21], elite: [32, 42], boss: [60, 100] },  // 15단계: 던전 길이를 절반으로 줄이며 조정
+  gold: { battle: [16, 26], elite: [40, 52], boss: [80, 120] },  // 15단계: 던전 길이를 절반으로 줄이며 조정. 33단계: 대장간 때문에 약 1.25배
+  clearGold: { first: [80, 30], replay: [40, 15] },   // 33단계: 스테이지 돌파 금화 = 앞 + 뒤 × 스테이지 번호(처음 · 다시)
   skipGold: 10,
   fillGold: 20,           // 후보 카드가 3장이 안 될 때 빈자리 대신 주는 골드
   price: { common: 30, uncommon: 55, rare: 90, epic: 150, legendary: 250 },

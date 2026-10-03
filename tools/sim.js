@@ -210,6 +210,19 @@ function useUpgrades() {
   }
 }
 
+// 33단계: 스테이지 사이(로비) 대장간 — 상점용 금화 RESERVE 를 남기고, 덱에 든 카드부터 낮은 단계를 먼저 벼린다
+const FORGE_RESERVE = 120, FORGE = { tries: 0, wins: 0, spent: 0, best: 0, levels: [], goldIn: 0, stages: 0 };
+function useForge() {
+  const d = St.data;
+  const inDeck = id => (d.decks[D.cardById[id].owner] || []).indexOf(id) >= 0;
+  for (let k = 0; k < 8; k++) {
+    const list = St.forgeList().filter(inDeck).sort((a, b) => (St.upLevel(a) - St.upLevel(b)) || rarityIdx(b) - rarityIdx(a));
+    if (!list.length || d.gold < St.forgeCost(list[0]) + FORGE_RESERVE) break;
+    const r = St.forge(list[0], G.rng.next());
+    FORGE.tries++; if (r.success) FORGE.wins++; FORGE.spent += r.cost; FORGE.best = Math.max(FORGE.best, r.to);
+  }
+}
+
 // 한 원정(스테이지 1~10, 6번째 인자가 rift 면 세계의 틈 11~13까지). 진행 상태는 이어진다
 const LAST = process.argv[6] === 'rift' ? D.stages.length : (D.MAIN_STAGES || 10);
 async function expedition(order) {
@@ -218,6 +231,8 @@ async function expedition(order) {
     const rec = { stage: n, tries: 0, lostAt: [], turns: [], forced: false };
     chooseParty(order);
     rebuildDecks();
+    useForge();
+    const g0 = St.data.gold;
     St.startStage(n);
     let done = false;
     while (!done) {
@@ -279,6 +294,7 @@ async function expedition(order) {
         St.battleLost(b);
       }
     }
+    FORGE.goldIn += Math.max(0, St.data.gold - g0); FORGE.stages++;
     out.push(rec);
   }
   return out;
@@ -348,6 +364,9 @@ async function campaign(seed, order, ascMax, mode) {
       console.log(pad(f, 7) + '  | ' + pad(n, 6) + '  | ' + pad(Math.round(n / list.length * 100) + '%', 5) + ' | ' + pad(Math.round(cum / list.length * 100) + '%', 5));
     }
   });
+  const lvls = {}; St.data && Object.keys(St.data.upgraded).forEach(id => { const l = St.data.upgraded[id]; if (l >= 4) lvls[l] = (lvls[l] || 0) + 1; });
+  console.log('\n대장간(로비): 시도 ' + FORGE.tries + ' · 성공 ' + FORGE.wins + ' · 쓴 금화 ' + FORGE.spent + ' · 최고 ' + FORGE.best + '단계 · 스테이지당 순수 금화 증가 ' + Math.round(FORGE.goldIn / Math.max(1, FORGE.stages)) +
+    ' · 마지막 캠페인 4단계 이상 ' + JSON.stringify(lvls));
   console.log('\n파티 선호 순서별 총 패배 수');
   byOrder.forEach((o, i) => console.log('  ' + PARTY_ORDERS[i].slice(0, 3).join('/') + ' 우선: 캠페인 ' + o.runs + '회, 패배 ' + o.fails));
 })().catch(err => { console.error(err); process.exit(1); });

@@ -316,13 +316,14 @@
     cardDef: function (id) { return D.cardById[G.Upgrade.idOf(id, St.data.upgraded)]; },
     // 한 단계 더 강화했을 때의 모습
     nextDef: function (id) { return G.Upgrade.def(id, St.upLevel(id) + 1); },
+    // 원정 중 강화(휴식·이벤트)는 3단계까지(33단계)
     upgradable: function () {
-      return St.data.cards.filter(function (id) { return St.upLevel(id) < G.Upgrade.MAX; });
+      return St.data.cards.filter(function (id) { return St.upLevel(id) < G.Upgrade.FIELD_MAX; });
     },
     // 강화 기회(휴식·이벤트)를 쓴다. 한 번에 한 단계 오른다
     upgradeCard: function (id) {
       var d = St.data, r = d.run;
-      if (!r || !r.upgrades || !St.owns(id) || St.upLevel(id) >= G.Upgrade.MAX) return false;
+      if (!r || !r.upgrades || !St.owns(id) || St.upLevel(id) >= G.Upgrade.FIELD_MAX) return false;
       d.upgraded[id] = St.upLevel(id) + 1;
       r.upgrades--;
       St.save();
@@ -331,6 +332,36 @@
     skipUpgrade: function () {
       var r = St.data.run;
       if (r) { r.upgrades = 0; St.save(); }
+    },
+
+    // ================= 33단계: 대장간(로비, 4~10단계) =================
+    // 3단계 이상인 보유 카드. 금화를 내고 확률로 한 단계 오르며, 실패하면 1단계 내려간다(3단계 아래로는 안 떨어진다)
+    forgeList: function () {
+      var F = D.forge;
+      return St.data.cards.filter(function (id) { var l = St.upLevel(id); return l >= F.minLevel && l < G.Upgrade.MAX; });
+    },
+    forgeCost: function (id) {
+      var F = D.forge, to = St.upLevel(id) + 1, c = D.cardById[id];
+      return Math.round(F.cost[to] * (F.rarityMult[c.rarity] || 1) / 10) * 10;
+    },
+    forgeChance: function (id) { return D.forge.chance[St.upLevel(id) + 1] || 0; },
+    forgeFailTo: function (id) { return Math.max(D.forge.floor, St.upLevel(id) - D.forge.failDrop); },
+    // 반환: { ok, success, from, to, cost } (ok=false 면 금화 부족 등으로 못 했다)
+    forge: function (id, roll) {
+      var d = St.data, from = St.upLevel(id);
+      if (!St.owns(id) || from < D.forge.minLevel || from >= G.Upgrade.MAX) return { ok: false };
+      var cost = St.forgeCost(id);
+      if (d.gold < cost) return { ok: false, gold: true };
+      d.gold -= cost;
+      var p = St.forgeChance(id), success = (roll != null ? roll : Math.random()) < p;
+      var to = success ? from + 1 : St.forgeFailTo(id);
+      d.upgraded[id] = to;
+      d.forgeLog = d.forgeLog || { tries: 0, success: 0, best: 0 };
+      d.forgeLog.tries++; if (success) d.forgeLog.success++;
+      d.forgeLog.best = Math.max(d.forgeLog.best, to);
+      if (G.Profile) G.Profile.forge({ success: success, level: to });
+      St.save();
+      return { ok: true, success: success, from: from, to: to, cost: cost, chance: p };
     },
 
     setParty: function (ids) {
@@ -1117,6 +1148,9 @@
       var first = n > d.clearedStage;
       var joined = null;
       if (first) d.clearedStage = n;
+      // 33단계: 스테이지 돌파 금화(처음 돌파는 많이, 다시 깨면 절반쯤). 대장간에 쓴다
+      var cg = eco().clearGold, clearGold = cg ? (first ? cg.first[0] + cg.first[1] * n : cg.replay[0] + cg.replay[1] * n) : 0;
+      if (clearGold) d.gold += Math.round(clearGold * (St.ascMods().goldMult || 1));
       if (first && def.join && d.characters.indexOf(def.join) < 0) {
         joined = def.join;
         d.characters.push(def.join);
@@ -1135,7 +1169,7 @@
       }
       d.run = null;
       St.save();
-      return { stage: n, first: first, joined: joined, ending: ending, riftEnding: riftEnding, ascension: St.ascLevel() };
+      return { stage: n, first: first, joined: joined, ending: ending, riftEnding: riftEnding, ascension: St.ascLevel(), gold: clearGold };
     },
 
     // ================= 26단계: 시작 선물 =================

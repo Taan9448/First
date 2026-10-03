@@ -96,6 +96,8 @@
     },
     stage: function (info) { P.add('stages'); return P.check('stageClear', info); },
     ending: function (info) { P.add('endings'); return P.check('ending', info); },
+    // 33단계: 대장간 강화 시도·성공, 가장 높이 올린 단계
+    forge: function (info) { P.add('forgeTries'); if (info.success) P.add('forgeWins'); P.max('forgeBest', info.level || 0); return P.check('forge', info); },
     dailyStart: function () { P.add('dailyPlays'); return P.check('dailyStart', {}); },
     // res: { key, score, cleared, stage, party, mods } → { best, attempts, record(이번이 최고인지) }
     dailyDone: function (res) {

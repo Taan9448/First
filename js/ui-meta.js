@@ -591,7 +591,7 @@
     var inDeck = function (id) { return St.inRunDeck(id); };
     list.sort(function (a, b) { return (inDeck(b) - inDeck(a)) || (a < b ? -1 : 1); });
     el.innerHTML = topbar('카드 강화') + '<div class="meta-body">' +
-      '<h1 class="big-title">카드 강화</h1><p class="dim">카드 1장을 골라 한 단계 강화한다(최대 ' + G.Upgrade.MAX + '단계). 2단계부터는 수치와 함께 각인이 붙는다. 강화는 그 카드에 영구히 남는다. (남은 강화 ' + r.upgrades + ')</p>' +
+      '<h1 class="big-title">카드 강화</h1><p class="dim">카드 1장을 골라 한 단계 강화한다(원정 중에는 ' + G.Upgrade.FIELD_MAX + '단계까지, 그 위는 로비 대장간에서 금화로). 2단계부터는 수치와 함께 각인이 붙는다. 강화는 그 카드에 영구히 남는다. (남은 강화 ' + r.upgrades + ')</p>' +
       '<div class="row up-filters">' + owners.map(function (o) {
         return '<button class="btn small ' + (upFilter === o ? 'on' : '') + '" data-o="' + o + '">' + (o === 'all' ? '전체' : o === 'common' ? '공용' : charDef(o).name) + '</button>';
       }).join('') + '</div>' +
@@ -634,6 +634,71 @@
     el.querySelector('.skip').onclick = function () {
       confirmBox('강화하지 않고 넘어갈까요?', '넘어가기', function () { St.skipUpgrade(); after(); });
     };
+    UI.show('camp');
+  };
+
+  // ================= 33단계: 대장간(로비, 4~10단계 강화) =================
+  var forgeFilter = 'all', forgePick = null;
+  Meta.forge = function () {
+    var d = St.data, el = screen('camp'), F = D.forge;
+    var owners = ['all'].concat(d.characters, ['common']);
+    var all = St.forgeList();
+    var list = all.filter(function (id) { return forgeFilter === 'all' || D.cardById[id].owner === forgeFilter; });
+    list.sort(function (a, b) { return (St.upLevel(b) - St.upLevel(a)) || (a < b ? -1 : 1); });
+    var lowN = d.cards.filter(function (id) { return St.upLevel(id) < F.minLevel; }).length;
+    el.innerHTML = topbar('대장간') + '<div class="meta-body forge">' +
+      '<h1 class="big-title">천외 대장간</h1>' +
+      '<p class="dim forge-rule">3단계까지 강화한 카드를 금화로 <b>10단계</b>까지 벼린다. 단계가 오를수록 금화가 많이 들고 성공 확률이 낮아진다. ' +
+      '<b class="bad">실패하면 1단계 내려간다</b>(3단계 아래로는 떨어지지 않는다). 4~6단계 <b>진(眞)</b> · 7~9단계 <b>각성</b>(비용 -1) · 10단계 <b>극의</b>(보존)는 각인이 크게 강해진다.' +
+      (lowN ? ' <span class="dim">1~3단계 강화는 원정 중 휴식·이벤트에서 한다.</span>' : '') + '</p>' +
+      '<div class="row up-filters">' + owners.map(function (o) {
+        return '<button class="btn small ' + (forgeFilter === o ? 'on' : '') + '" data-o="' + o + '">' + (o === 'all' ? '전체' : o === 'common' ? '공용' : charDef(o).name) + '</button>';
+      }).join('') + '</div>' +
+      '<div class="up-wrap"><div class="up-grid"></div><div class="up-preview frame forge-preview"><p class="dim">벼릴 카드를 고르면<br>다음 단계와 확률·금화를 보여 준다.</p></div></div>' +
+      '<div class="row"><button class="btn back">로비로</button></div></div>';
+    backdrop(el, 'volcano');
+    var grid = el.querySelector('.up-grid'), prev = el.querySelector('.forge-preview');
+    var show = function (id) {
+      forgePick = id;
+      UI.$$('.card', grid).forEach(function (x) { x.classList.toggle('selected', x._id === id); });
+      var lv = St.upLevel(id), nx = St.nextDef(id), cost = St.forgeCost(id), p = St.forgeChance(id), failTo = St.forgeFailTo(id);
+      prev.innerHTML = '<div class="up-pair"></div>' +
+        '<div class="forge-odds"><div><span>성공</span><b class="good">' + Math.round(p * 100) + '%</b><small>' + lv + ' → ' + (lv + 1) + '단계</small></div>' +
+        '<div><span>실패</span><b class="bad">' + Math.round((1 - p) * 100) + '%</b><small>' + (failTo === lv ? lv + '단계 유지' : lv + ' → ' + failTo + '단계') + '</small></div>' +
+        '<div><span>금화</span><b class="gold">' + cost + '</b><small>가진 금화 ' + d.gold + '</small></div></div>' +
+        (nx.engrave ? '<p class="up-engr"><b>' + nx.level + '단계 각인 「' + U.esc(nx.engrave.name) + '」</b><br>' + U.esc(nx.engrave.text) + '</p>' : '') +
+        '<button class="btn gold big go"' + (d.gold < cost ? ' disabled' : '') + '>' + (d.gold < cost ? '금화가 모자라다' : '벼리기 · ' + cost + ' 골드') + '</button>';
+      var pair = prev.querySelector('.up-pair');
+      pair.appendChild(UI.cardEl(St.cardDef(id), { static: true }));
+      pair.appendChild(UI.el('div', 'up-arrow', '&#9654;'));
+      pair.appendChild(UI.cardEl(nx, { static: true }));
+      prev.querySelector('.go').onclick = function () { strike(id); };
+    };
+    var strike = function (id) {
+      var res = St.forge(id);
+      if (!res.ok) return;
+      SND(res.success ? 'big' : 'hit');
+      var def = St.cardDef(id);
+      var m = UI.modal('<h2>' + (res.success ? '강화 성공! ' + res.to + '단계' : res.to === res.from ? '강화 실패 — ' + res.to + '단계는 지켰다' : '강화 실패… ' + res.from + ' → ' + res.to + '단계') + '</h2>' +
+        '<div class="row forge-result ' + (res.success ? 'win' : 'lose') + '" style="justify-content:center"></div>' +
+        '<p class="dim" style="text-align:center">금화 ' + res.cost + '을 썼다 · 남은 금화 ' + St.data.gold + '</p>' +
+        '<div class="row" style="justify-content:center"><button class="btn gold ok">확인</button></div>', 'result forge-res' + (res.success ? '' : ' lose'));
+      m.querySelector('.forge-result').appendChild(UI.cardEl(def, { static: true }));
+      m.querySelector('.ok').onclick = function () { UI.closeModal(m); Meta.forge(); };
+    };
+    list.forEach(function (id) {
+      var c = UI.cardEl(St.cardDef(id), { static: true });
+      c._id = id;
+      c.classList.add('mini');
+      if (St.data.run && St.inRunDeck(id)) c.appendChild(UI.el('div', 'ctemp', '<span>덱</span>'));
+      c.appendChild(UI.el('div', 'up-lv', '<span>' + St.upLevel(id) + '단계 · ' + Math.round(St.forgeChance(id) * 100) + '%</span>'));
+      c.onclick = function () { show(id); };
+      grid.appendChild(c);
+    });
+    if (!list.length) grid.innerHTML = '<p class="dim">벼릴 수 있는 카드가 없다. 원정 중 휴식·이벤트에서 카드를 3단계까지 강화하면 여기서 더 올릴 수 있다.</p>';
+    if (forgePick && list.indexOf(forgePick) >= 0) show(forgePick);
+    UI.$$('[data-o]', el).forEach(function (b) { b.onclick = function () { forgeFilter = b.getAttribute('data-o'); Meta.forge(); }; });
+    el.querySelector('.back').onclick = function () { Meta.lobby(); };
     UI.show('camp');
   };
 
@@ -953,6 +1018,7 @@
       '<span class="ribbon">STAGE ' + info.stage + ' CLEAR</span>' +
       '<h1 class="big-title">' + D.STAGE_NAME[info.stage - 1] + ' 돌파!</h1>' +
       (info.first ? '' : '<p class="dim">이미 클리어한 스테이지를 다시 깼다.</p>') + join +
+      (info.gold ? '<p class="clear-gold">' + UI.icon('gold') + ' 돌파 금화 <b>+' + info.gold + '</b> <span class="dim">(로비 대장간에서 카드를 벼릴 수 있다)</span></p>' : '') +
       '<div class="row"><button class="btn gold ok">' + (info.ending || info.riftEnding ? '엔딩 보기' : '맵으로') + '</button></div></div>';
     backdrop(el, St.stageDef(info.stage).theme);
     if (info.joined) el.querySelector('.join .sp').appendChild(UI.spriteEl(info.joined, 1.6));

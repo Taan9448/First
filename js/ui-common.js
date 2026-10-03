@@ -210,7 +210,7 @@
 
   // 카드 이름. 강화 표시(+, +2, +3)는 세로쓰기에서도 바로 서도록 따로 감싼다
   function nameHTML(def) {
-    var m = def.upgraded && /^(.*?)(\+\d?)$/.exec(def.name);
+    var m = def.upgraded && /^(.*?)(\+\d*)$/.exec(def.name);
     return m ? U.esc(m[1]) + '<i class="clv">' + m[2] + '</i>' : U.esc(def.name);
   }
 
@@ -219,6 +219,7 @@
     opts = opts || {};
     var school = def.school || 'neutral', lay = G.ArtCards.layoutOf(school);
     var c = UI.el('div', 'card r-' + def.rarity + ' t-' + def.type + ' sc-' + school + ' lay-' + lay + (opts.static ? ' static' : '') + (def.duo ? ' duo' : '') + (def.level >= 2 ? ' up' + def.level : ''));
+    if (def.tier) c.setAttribute('data-tier', def.tier);   // 33단계: 진(眞) · 각성 · 극의
     var owner = G.Data.characters.filter(function (x) { return x.id === def.owner; })[0];
     var band = owner ? owner.color : '#8a93b8';
     if (def.duo) {

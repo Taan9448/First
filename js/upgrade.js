@@ -10,7 +10,11 @@
 
   // 숫자 n 을 steps 번 올린다. 첫 번은 pct·minAdd, 그 뒤로는 pctNext·minAddNext
   function upN(n, R, steps) {
-    for (var i = 0; i < steps; i++) n = i === 0 ? Math.max(n + R.minAdd, Math.ceil(n * (1 + R.pct))) : Math.max(n + R.minAddNext, Math.ceil(n * (1 + R.pctNext)));
+    for (var i = 0; i < steps; i++) {
+      if (i === 0) n = Math.max(n + R.minAdd, Math.ceil(n * (1 + R.pct)));
+      else if (i < 3 || R.pctHigh == null) n = Math.max(n + R.minAddNext, Math.ceil(n * (1 + R.pctNext)));
+      else n = Math.max(n + R.minAddHigh, Math.ceil(n * (1 + R.pctHigh)));   // 33단계: 4단계부터
+    }
     return n;
   }
   // 숫자·범위·비례식의 기본값을 올린다. 바뀌지 않으면 null
@@ -203,19 +207,40 @@
     }
     return P.byType[card.type] || 'reserve';
   }
+  // 33단계: 4단계부터는 3단계 각인의 수치를 단계에 맞춰 키운다(피해·보호막·회복·상태). 설명의 숫자도 앞에서부터 차례로 바꾼다
+  function tierOf(level) { return (D.upgradeRules.tiers || []).filter(function (t) { return level >= t.from && level <= t.to; })[0] || null; }
+  function bigEngrave(lv3, level) {
+    var t = tierOf(level), k = t.mult[level - t.from], effects = clone(lv3.effects), text = lv3.text, at = 0;
+    effects.forEach(function (e) {
+      if (['damage', 'block', 'heal', 'status'].indexOf(e.op) < 0 || typeof e.value !== 'number') return;
+      var nv = Math.max(e.value + 1, Math.ceil(e.value * k));
+      if (e.op !== 'damage') {
+        var re = /\d+/g, m;
+        re.lastIndex = at;
+        while ((m = re.exec(text))) {
+          if (+m[0] === e.value) { text = text.slice(0, m.index) + nv + text.slice(m.index + m[0].length); at = m.index + String(nv).length; break; }
+        }
+      }
+      e.value = nv;
+    });
+    return { effects: effects, text: text, tier: t };
+  }
   // 각인을 카드 효과 뒤에 붙인다. 설명의 {d} 는 붙인 피해의 순서({dN})로 바꾼다
   function engrave(u, card, level) {
-    var key = skillOf(card), sk = D.upgradeSkills.skills[key], lv = sk['lv' + level];
+    var key = skillOf(card), sk = D.upgradeSkills.skills[key], lv = level >= 4 ? bigEngrave(sk.lv3, level) : sk['lv' + level];
     var n = damageList(u.effects).length;
     var text = lv.text.replace(/\{d\}/g, function () { return '{d' + (n++) + '}'; });
     u.effects = u.effects.concat(clone(lv.effects));
     u.text = u.text + ' {*' + sk.name + '} ' + text;
     // 화면에 그대로 적을 설명: {d} 자리에 붙인 피해의 기본값
     var vals = lv.effects.filter(function (e) { return e.op === 'damage'; }).map(function (e) { return e.value; }), k = 0;
-    u.engrave = { id: key, name: sk.name, level: level, text: G.util.numJosa(lv.text.replace(/\{d\}/g, function () { return vals[k++]; })) };
+    u.engrave = { id: key, name: sk.name + (lv.tier ? '·' + lv.tier.name : ''), level: level, tier: lv.tier ? lv.tier.name : null,
+      text: G.util.numJosa(lv.text.replace(/\{d\}/g, function () { return vals[k++]; })) };
+    if (lv.tier) u.text = u.text.replace('{*' + sk.name + '}', '{*' + u.engrave.name + '}');
   }
 
-  var SUFFIX = ['', '+', '+2', '+3'];
+  var SUFFIX = [''];
+  for (var si = 1; si <= D.upgradeRules.maxLevel; si++) SUFFIX.push(si === 1 ? '+' : '+' + si);   // '', '+', '+2' … '+10'
   function build(card, level) {
     level = level || 1;
     var ex = D.upgradeExceptions[card.id];
@@ -233,11 +258,18 @@
     var d0 = damageList(card.effects), d1 = damageList(u.effects);
     u.upDmg = d1.map(function (v, i) { return v !== d0[i]; });
     if (level >= 2) engrave(u, card, level);
+    // 33단계: 각성(7단계)부터 비용 -1, 극의(10단계)는 보존
+    var tr = tierOf(level);
+    if (tr && tr.costDown && typeof u.cost === 'number' && u.cost > 0) { u.cost = Math.max(0, u.cost - tr.costDown); u.changed = true; }
+    if (tr && tr.retain && !u.retain) { u.retain = true; u.text = '보존. ' + u.text; }
+    u.tier = tr ? tr.name : null;
     return u;
   }
 
   var Up = G.Upgrade = {
     MAX: D.upgradeRules.maxLevel,
+    FIELD_MAX: D.upgradeRules.fieldMax || D.upgradeRules.maxLevel,   // 33단계: 원정 중 강화 한도(3)
+    tierOf: tierOf,
     // 'K01' + 강화 단계 표({ K01: 2 }) → 'K01+2' (강화 안 한 카드는 그대로)
     idOf: function (id, upgraded) { return id + SUFFIX[Up.levelIn(id, upgraded)]; },
     levelIn: function (id, upgraded) {
