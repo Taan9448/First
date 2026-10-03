@@ -135,6 +135,8 @@
     this.exhaustedBattle = 0;
     this.discardedTurn = 0;
     this.forceEnd = false;
+    // 26단계: 기록·업적용 집계(되돌리기와 함께 되돌아간다)
+    this.tally = { dealt: 0, taken: 0, maxHit: 0, cards: 0, plays: {}, maxCombo: 0 };
   }
 
   var P = Battle.prototype;
@@ -440,6 +442,9 @@
     // 21단계 고유 자원: 하린의 검세가 차 있으면 이 공격 카드는 치명타 확정
     if (caster && caster.id === 'kai' && def.type === 'attack' && caster.res >= caster.resMax) ctx.momentum = true;
     if (caster) { caster._cardTurn = true; if (def.type === 'attack') { caster._atkTurn = true; caster._firstAtkDone = true; } }
+    this.tally.cards++;
+    this.tally.plays[def.id] = (this.tally.plays[def.id] || 0) + 1;
+    if (link.count > this.tally.maxCombo) this.tally.maxCombo = link.count;
     if (link.count >= 2 || link.pair) this.emit('combo', { count: link.count, pair: link.pair, unit: caster });
     // 16단계: 영웅·전설 카드와 합동기는 사용한 캐릭터의 얼굴과 대사가 먼저 지나간다(opts.cutin 이 false 면 생략)
     if (this.opts.cutin && caster && (def.rarity === 'epic' || def.rarity === 'legendary' || def.duo)) {
@@ -1141,6 +1146,7 @@
     // 반격 수치는 쓰러지면 상태가 지워지므로 먼저 읽는다
     var thorns = S.get(tgt, 'thorns') + S.get(tgt, 'thornsTemp');
     var lava = S.get(tgt, 'lavaArmor') + (cardAttack ? S.get(tgt, 'scorch') : 0);
+    if (src && src.side === 'ally' && tgt.side === 'enemy' && loss > this.tally.maxHit) this.tally.maxHit = loss;
     await this.applyLoss(tgt, loss);
     if (src && !src.dead) {
       if (thorns > 0) await this.takeDamage(src, thorns, { kind: 'thorns' });
@@ -1195,6 +1201,8 @@
 
   P.applyLoss = async function (u, n) {
     if (n <= 0 || u.dead) return;
+    var real = Math.min(n, u.hp);
+    if (u.side === 'enemy') this.tally.dealt += real; else this.tally.taken += real;
     u.hp -= n;
     if (u.hp > 0) {
       if (u.side === 'enemy') await this.checkTriggers(u);

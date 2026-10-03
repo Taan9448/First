@@ -290,16 +290,81 @@
     body.querySelector('.auto').onclick = function () { d.decks[deckOwner] = St().autoBuild(deckOwner); St().save(); renderDeck(m); };
   }
 
-  // ================= 기록(12단계) =================
-  X.stats = function () {
+  // ================= 26단계: 업적 알림 =================
+  if (G.Profile) G.Profile.onUnlock = function (list) {
+    list.forEach(function (a, i) {
+      setTimeout(function () {
+        var b = a.reward && D.boonById[a.reward];
+        UI.toast('<small>업적 달성</small><b>' + U.esc(a.name) + '</b><span>' + U.esc(a.desc) + '</span>' + (b ? '<em>시작 선물 해금: ' + U.esc(b.name) + '</em>' : ''), 'ach');
+        G.Audio.play('coin');
+      }, i * 600);
+    });
+  };
+
+  // ================= 기록(12단계) · 업적 · 오늘의 원정(26단계) =================
+  var statTab = 'slot';
+  X.stats = function (tab) {
+    if (tab) statTab = tab;
+    if (!St().data && statTab === 'slot') statTab = 'all';
+    var list = (St().data ? [['slot', '이 칸']] : []).concat([['all', '전체 기록'], ['ach', '업적'], ['daily', '오늘의 원정']]);
+    var m = win('기록', tabs(list, statTab) + '<div class="stats-body"></div>', 'setwin statwin');
+    UI.$$('.tab', m).forEach(function (b) { b.onclick = function () { X.stats(b.getAttribute('data-tab')); }; });
+    var body = m.querySelector('.stats-body');
+    if (statTab === 'slot') body.innerHTML = slotStats();
+    else if (statTab === 'all') body.innerHTML = profileStats();
+    else if (statTab === 'ach') body.innerHTML = achList();
+    else body.innerHTML = dailyList();
+  };
+  function stat(label, v, sub) { return '<div class="stat"><small>' + label + '</small><b>' + v + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</div>'; }
+  function profileStats() {
+    var P = G.Profile, pr = P.get(), s = function (k) { return P.stat(k); };
+    var top = function (obj, n, name) {
+      return Object.keys(obj).sort(function (a, b) { return obj[b] - obj[a]; }).slice(0, n).map(function (k) { return name(k) + ' ' + obj[k]; }).join(' · ') || '—';
+    };
+    var heroName = function (id) { var c = D.characters.filter(function (x) { return x.id === id; })[0]; return c ? c.name : id; };
+    var cardName = function (id) { return D.cardById[id] ? D.cardById[id].name : id; };
+    var got = D.achievements.filter(function (a) { return P.has(a.id); }).length;
+    return '<div class="stat-grid">' +
+      stat('전투', s('battles'), '승리 ' + s('wins') + ' · 패배 ' + s('losses')) +
+      stat('쓰러뜨린 적', s('kills'), '정예 ' + s('elites') + ' · 보스 ' + s('bosses')) +
+      stat('준 피해', s('dealt'), '한 번에 최대 ' + s('maxHit')) +
+      stat('받은 피해', s('taken')) +
+      stat('쓴 카드', s('cards'), '최대 연계 ' + s('maxCombo')) +
+      stat('보낸 턴', s('turns'), s('battles') ? '전투당 ' + (s('turns') / s('battles')).toFixed(1) + '턴' : '') +
+      stat('깬 스테이지', s('stages'), '엔딩 ' + s('endings') + '번') +
+      stat('오늘의 원정', s('dailyPlays'), '끝까지 ' + s('dailyClears') + '번') +
+      stat('업적', got + '/' + D.achievements.length) +
+      '</div><p class="dim rec-line">가장 많이 함께한 동료: ' + top(pr.heroUse, 5, heroName) + '</p>' +
+      '<p class="dim rec-line">가장 많이 쓴 카드: ' + top(pr.cardUse, 5, cardName) + '</p>' +
+      '<p class="dim rec-line">저장 칸과 상관없이 이 브라우저 전체의 기록이다.</p>';
+  }
+  function achList() {
+    var P = G.Profile;
+    return '<div class="ach-list">' + D.achievements.map(function (a) {
+      var on = P.has(a.id), pg = P.progress(a), b = a.reward && D.boonById[a.reward];
+      return '<div class="ach' + (on ? ' on' : '') + '"><i class="ach-mark"></i><div class="ach-t"><b>' + U.esc(a.name) + '</b><span>' + U.esc(a.desc) + '</span>' +
+        (b ? '<em' + (on ? '' : ' class="dim"') + '>시작 선물 · ' + U.esc(b.name) + ' — ' + U.esc(b.desc) + '</em>' : '') + '</div>' +
+        (pg && !on ? '<div class="ach-pg"><i style="width:' + Math.round(pg[0] / pg[1] * 100) + '%"></i><small>' + pg[0] + '/' + pg[1] + '</small></div>' : '') +
+        (on ? '<small class="ach-date">' + new Date(P.get().ach[a.id]).toLocaleDateString('ko-KR') + '</small>' : '') + '</div>';
+    }).join('') + '</div>';
+  }
+  function dailyList() {
+    var all = G.Profile.get().daily, keys = Object.keys(all).sort().reverse();
+    if (!keys.length) return '<p class="dim">아직 오늘의 원정 기록이 없다. 타이틀의 \'오늘의 원정\'에서 떠난다.</p>';
+    var heroName = function (id) { var c = D.characters.filter(function (x) { return x.id === id; })[0]; return c ? c.name : id; };
+    return '<div class="daily-rows">' + keys.slice(0, 14).map(function (k) {
+      var r = all[k], b = r.best || {};
+      return '<div class="daily-row"><b>' + k.slice(0, 4) + '.' + k.slice(4, 6) + '.' + k.slice(6) + '</b><span>스테이지 ' + (b.stage || '?') + ' · ' + (b.party || []).map(heroName).join(' · ') + '</span>' +
+        '<span class="' + (b.cleared ? 'ok' : 'dim') + '">' + (b.cleared ? '돌파' : '실패') + '</span><span class="score">' + (b.score || 0) + '점</span><small class="dim">' + r.attempts + '번 도전</small></div>';
+    }).join('') + '</div>';
+  }
+  function slotStats() {
     var d = St().data;
-    if (!d) return;
     var kills = 0, seen = Object.keys(d.codex.monsters).length;
     Object.keys(d.codex.monsters).forEach(function (k) { kills += d.codex.monsters[k].kills || 0; });
     var all = D.cards.filter(function (c) { return c.owner !== 'none'; }).length;
     var talks = Object.keys(d.talks || {}).reduce(function (s, k) { return s + d.talks[k]; }, 0);
-    var stat = function (label, v, sub) { return '<div class="stat"><small>' + label + '</small><b>' + v + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</div>'; };
-    win('원정 기록', '<div class="stat-grid">' +
+    return '<div class="stat-grid">' +
       stat('클리어한 스테이지', d.clearedStage + '/' + D.stages.length, d.flags.ended ? '혈마를 쓰러뜨렸다' : '') +
       stat('승천', St().ascLevel() ? '승천 ' + St().ascLevel() : '기본', '최고 기록 ' + (d.ascension.best ? '승천 ' + d.ascension.best : '—')) +
       stat('동료', d.characters.length + '/' + D.characters.length) +
@@ -311,8 +376,8 @@
       stat('쓰러뜨린 적', kills) +
       stat('모닥불 이야기', talks + '/' + (D.dialogues ? Object.keys(D.dialogues).length * 3 : 30)) +
       stat('골드', d.gold) +
-      '</div>', 'setwin');
-  };
+      '</div>';
+  }
 
   // ================= 도움말(12단계) =================
   X.help = function () {
@@ -403,7 +468,7 @@
       '<div class="set-row"><span>단축키 표시</span><div class="row"><button class="btn small hk-on ' + (s.hotkeys !== false ? 'on' : '') + '">켬</button><button class="btn small hk-off ' + (s.hotkeys === false ? 'on' : '') + '">끔</button>' +
       '<small class="dim">1~0 카드 · ←→ 대상 · Enter 사용 · E 턴 종료 · Z 되돌리기</small></div></div>' +
       '<div class="set-row"><span>튜토리얼</span><div class="row"><button class="btn small tut">다음 전투에서 다시 보기</button></div></div>' +
-      (St().data ? '<div class="set-row"><span>저장 옮기기</span><div class="row"><button class="btn small export">' + G.Save.slot + '번 칸 내보내기</button><small class="dim">가져오기는 타이틀의 저장 칸 화면에서</small></div></div>' : '') +
+      (St().data && !St().isDaily() ? '<div class="set-row"><span>저장 옮기기</span><div class="row"><button class="btn small export">' + G.Save.slot + '번 칸 내보내기</button><small class="dim">가져오기는 타이틀의 저장 칸 화면에서</small></div></div>' : '') +
       '<div class="set-row"><span>저장 데이터</span><div class="row"><button class="btn small reset">초기화</button><small class="dim">' + (G.debug ? '디버그 저장만 지운다' : '모든 진행이 사라진다') + '</small></div></div>' +
       debug + '</div>', 'setwin');
     var re = function () { X.settingsWin(); };

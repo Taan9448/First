@@ -143,6 +143,16 @@
     if (UI.longPressed) { UI.longPressed = false; e.stopPropagation(); e.preventDefault(); }
   }, true);
 
+  // 26단계: 오른쪽 아래 알림(업적 달성 등). 여러 개면 쌓인다
+  UI.toast = function (html, cls) {
+    var box = document.getElementById('toasts');
+    if (!box) { box = UI.el('div', ''); box.id = 'toasts'; document.getElementById('app').appendChild(box); }
+    var t = UI.el('div', 'toast ' + (cls || ''), html);
+    box.appendChild(t);
+    setTimeout(function () { t.classList.add('out'); }, 4200);
+    setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 4700);
+  };
+
   // ---------------- 키워드 ----------------
   var kwRe = null;
   UI.keywordize = function (html) {

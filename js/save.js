@@ -77,6 +77,7 @@
     store: store,                              // 테스트용
     SLOTS: 3,
     slot: 1,                                   // 지금 쓰는 저장 칸(1~3)
+    store: store,   // 26단계: 프로필(업적·기록)도 같은 저장소를 쓴다
     base: function () { return G.debug ? 'fiveHeroes.save.debug' : 'fiveHeroes.save'; },
     key: function (slot) { return Save.base() + '.' + (slot || Save.slot); },
     SETTINGS_KEY: 'fiveHeroes.settings',
@@ -104,6 +105,7 @@
     },
     use: function (slot) {
       Save.slot = slot;
+      if (typeof slot !== 'number') return;   // 오늘의 원정('daily') 칸은 '이어하기' 대상이 아니다
       try { store().setItem(Save.base() + '.last', String(slot)); } catch (e) { /* 무시 */ }
     },
     // 칸의 내용을 미리 본다(지금 칸은 바꾸지 않는다)

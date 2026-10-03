@@ -9,7 +9,7 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 global.window = global;
 ['js/core.js', 'data/keywords.js', 'data/characters.js', 'data/cards.js', 'data/monsters.js', 'data/stages.js', 'data/relics.js', 'data/items.js',
- 'data/upgrades.js', 'data/events.js', 'data/bonds.js', 'data/traits.js', 'data/ascension.js', 'data/modes.js', 'data/story.js', 'js/status.js', 'js/deck.js', 'js/upgrade.js', 'js/battle.js', 'js/save.js', 'js/stage.js'].forEach(f => {
+ 'data/upgrades.js', 'data/events.js', 'data/bonds.js', 'data/traits.js', 'data/ascension.js', 'data/modes.js', 'data/story.js', 'data/achievements.js', 'js/status.js', 'js/deck.js', 'js/upgrade.js', 'js/battle.js', 'js/save.js', 'js/stage.js', 'js/profile.js'].forEach(f => {
   vm.runInThisContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), { filename: f });
 });
 const G = global.Game, St = G.Stage, D = G.Data;
@@ -490,6 +490,58 @@ function invariants(where) {
     St.battleWon({ heroes: [{ id: 'kai', dead: false, hp: 5, maxHp: 70 }, { id: 'bram', dead: true, hp: 0, maxHp: 95 }], monsters: [], kills: [], goldDelta: 0 });
     check(!St.isDead('bram') && St.data.run.hp.bram > 0, '노말: 쓰러진 동료는 복귀');
     G.Save.clear(1); G.Save.clear(2); G.Save.use(1);
+  }
+
+  // ---- 26단계: 업적 · 시작 선물 · 오늘의 원정 ----
+  {
+    const P = G.Profile;
+    check(D.achievements.length >= 30 && D.achievements.every(a => !a.reward || D.boonById[a.reward]), '업적 30개 이상, 보상 선물이 있다');
+    const ids = new Set(); D.achievements.forEach(a => ids.add(a.id));
+    check(ids.size === D.achievements.length, '업적 id 중복 없음');
+    P.reset();
+    G.Save.use(1); St.newGame('normal');
+    St.startStage(1); St.autoPick();
+    const fb = (tally, turn) => ({ heroes: [{ id: 'kai', dead: false, hp: 50, maxHp: 70 }], monsters: [{ id: 'slime' }], kills: ['slime'], goldDelta: 0, turn: turn || 4, tally: tally || {} });
+    St.battleWon(fb({ dealt: 30, taken: 5, maxHit: 70, cards: 8, plays: { K01: 3 }, maxCombo: 2 }, 4));
+    check(P.stat('wins') === 1 && P.stat('kills') === 1 && P.stat('maxHit') === 70 && P.get().cardUse.K01 === 3 && P.get().heroUse.kai === 1, '기록: 승리·처치·최대 피해·카드 사용');
+    check(P.has('A01') && P.has('A18') && !P.has('A19') && P.boons().indexOf('B01') >= 0 && P.boons().indexOf('B05') >= 0, '업적: 첫 승리·일격필살 → 시작 선물 해금');
+    St.data.run.pending = null;
+    St.battleWon(fb({ taken: 0 }, 1));
+    check(P.has('A21') && !P.has('A17'), '업적: 첫 턴에 끝냄(정예·보스가 아니면 무결 아님)');
+    St.data.run.pending = null;
+    check(!P.has('A07'), '아직 2 스테이지 업적 없음');
+    P.stage({ stage: 2 }); P.ending({ mode: 'hard', asc: 5 });
+    check(P.has('A07') && P.has('A11') && P.has('A12') && P.has('A14') && P.has('A15') && !P.has('A16') && !P.has('A13'), '업적: 스테이지·엔딩·모드·승천');
+    const prog = P.progress(D.achievementById.A02);
+    check(prog[0] === 2 && prog[1] === 100 && P.progress(D.achievementById.A17) === null, '업적 진행도');
+    // 시작 선물
+    const g0 = St.data.gold;
+    check(St.applyBoon('B01') && St.data.gold === g0 + 60 && St.data.flags.boon === 'B01', '시작 선물: 여비');
+    St.applyBoon('B05');
+    check(Object.keys(St.data.upgraded).length === 2, '시작 선물: 숙련의 증표 2장 강화');
+    // 오늘의 원정
+    const key = '20261003';
+    const p1 = St.dailyPlan(key), p2 = St.dailyPlan(key), p3 = St.dailyPlan('20261004');
+    check(JSON.stringify(p1) === JSON.stringify(p2) && p1.party.length === 3 && p1.mods.length === 3 && D.daily.stages.indexOf(p1.stage) >= 0, '오늘의 원정: 같은 날은 같은 구성');
+    check(JSON.stringify(p1) !== JSON.stringify(p3), '오늘의 원정: 날마다 다르다');
+    St.newDaily(key);
+    const map1 = JSON.stringify(St.data.run.map);
+    check(St.isDaily() && G.Save.slot === 'daily' && St.data.run.stage === p1.stage && St.data.party.join() === p1.party.join() && P.stat('dailyPlays') === 1 && P.has('A29'), '오늘의 원정 시작');
+    const hasHp = St.dailyMods(p1.mods).reduce((a, x) => a + (x.mods.hpMult || 0), 0);
+    check(Math.abs(St.ascMods().hpMult - hasHp) < 1e-9, '오늘의 원정 규칙이 적 보정에 들어간다');
+    check(St.data.party.every(id => St.levelOf(id) >= 1 && (St.data.growth[id].traits.length === St.levelOf(id))), '오늘의 원정: 동료 레벨·특성');
+    St.newDaily(key);
+    check(JSON.stringify(St.data.run.map) === map1, '오늘의 원정: 같은 날은 같은 지도');
+    const b = G.Battle.create(St.battleOptions());
+    const lostD = St.battleLost(b);
+    check(lostD.daily && lostD.daily.cleared === false && lostD.daily.attempts === 1 && St.data === null && !G.Save.exists('daily') && P.get().daily[key].attempts === 1, '오늘의 원정: 지면 끝나고 기록');
+    St.newDaily(key);
+    St.data.flags.daily.wins = 4; St.data.flags.daily.elites = 1;
+    const sc = St.dailyScore(true);
+    const res = St.clearStage().daily;
+    check(res.cleared && res.score === sc.score && res.score > lostD.daily.score && res.record && P.get().daily[key].best.score === res.score && P.stat('dailyClears') === 1 && P.has('A30'), '오늘의 원정: 돌파 점수·최고 기록·업적');
+    check(G.Save.lastSlot() !== 'daily', '오늘의 원정 칸은 이어하기 대상이 아니다');
+    P.reset(); G.Save.use(1); G.Save.clear(1);
   }
 
   console.log('캠페인 ' + N + '회 · 전투 ' + totalBattles + ' · AI 패배 ' + losses + ' · 강제 승리 ' + kills +

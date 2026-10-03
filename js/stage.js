@@ -73,6 +73,9 @@
       (D.ascension || []).forEach(function (a) { if (a.n <= lv) merge(a.mods); });
       // 23단계: 게임 모드의 규칙(하드)도 같은 방식으로 더한다
       if (St.data) merge(St.mode().rules);
+      // 26단계: 오늘의 원정 규칙
+      var dl = St.data && St.data.flags && St.data.flags.daily;
+      if (dl) St.dailyMods(dl.mods).forEach(function (x) { merge(x.mods); });
       return m;
     },
     // 전투에 넘길 적 강화 보정: 스테이지 난이도(data/stages.js 의 difficulty) + 승천
@@ -625,6 +628,9 @@
       if (battle.items) d.items = battle.items.slice();   // 쓴 소모품은 사라진다
       // 이벤트 효과는 이긴 전투 수만큼 줄어든다
       d.buffs = (d.buffs || []).filter(function (b) { return --b.battles > 0; });
+      // 26단계: 기록·업적, 오늘의 원정 점수
+      if (G.Profile) G.Profile.battle(battle, 'win', { node: fightType, stage: r.stage, mode: d.mode, asc: St.ascLevel() });
+      if (d.flags.daily) { d.flags.daily.wins++; if (fightType === 'elite') d.flags.daily.elites++; }
       if (node.type === 'final') {
         var info = St.clearStage();
         d.flags.ended = true;
@@ -651,6 +657,10 @@
     // 반환: { died: [...], wiped: bool }
     battleLost: function (battle) {
       battle.monsters.forEach(function (m) { St.markSeen([m.id]); });
+      var lnode = St.node(), lkind = lnode ? (lnode.fight ? lnode.fight.kind : lnode.type) : 'battle';
+      if (G.Profile) G.Profile.battle(battle, 'lose', { node: lkind, stage: St.data.run.stage, mode: St.data.mode, asc: St.ascLevel() });
+      // 26단계: 오늘의 원정은 지면 끝난다
+      if (St.data.flags.daily) return { daily: St.finishDaily(false), died: [], wiped: false };
       if (battle.items) St.data.items = battle.items.slice();   // 진 전투에서 쓴 소모품도 사라진다
       var n = St.data.run.stage, died = [];
       if (St.mode().permadeath) {
@@ -1093,6 +1103,8 @@
     // ================= 클리어·합류 =================
     clearStage: function () {
       var d = St.data, n = d.run.stage, def = St.stageDef(n);
+      if (G.Profile) G.Profile.stage({ stage: n });
+      if (d.flags.daily) return { stage: n, daily: St.finishDaily(true) };
       var first = n > d.clearedStage;
       var joined = null;
       if (first) d.clearedStage = n;
@@ -1107,10 +1119,116 @@
       if (ending) {
         d.ascension = d.ascension || { current: 0, best: 0 };
         d.ascension.best = Math.max(d.ascension.best || 0, d.ascension.current || 0);
+        if (G.Profile) G.Profile.ending({ mode: d.mode, asc: St.ascLevel() });
       }
       d.run = null;
       St.save();
       return { stage: n, first: first, joined: joined, ending: ending, ascension: St.ascLevel() };
+    },
+
+    // ================= 26단계: 시작 선물 =================
+    applyBoon: function (id) {
+      var b = D.boonById[id], d = St.data;
+      if (!b || !d) return false;
+      var e = b.effect;
+      if (e.gold) d.gold += e.gold;
+      if (e.items) (e.items === 'random3' ? [St.rollItem(), St.rollItem(), St.rollItem()] : e.items).forEach(function (it) { St.addItem(it); });
+      if (e.relic) {
+        var free = D.relics.filter(function (r) { return r.rarity === e.relic && !St.hasRelic(r.id); });
+        if (free.length) St.addRelic(G.rng.pick(free).id);
+      }
+      if (e.exp) St.growthOf(d.party[0]).exp += e.exp;
+      if (e.upgrade) {
+        var pool = (d.decks[d.party[0]] || []).concat(d.decks.common || []).filter(function (cid) { return !d.upgraded[cid]; });
+        G.rng.shuffle(pool).slice(0, e.upgrade).forEach(function (cid) { d.upgraded[cid] = 1; });
+      }
+      d.flags.boon = id;
+      St.save();
+      return true;
+    },
+
+    // ================= 26단계: 오늘의 원정 =================
+    // 날짜(이 기기의 날짜)로 정한 시드로 스테이지 하나 · 동료 셋 · 카드 · 유물 · 규칙. 같은 날에는 지도도 같다. 지면 끝나고 점수를 남긴다
+    dailyKey: function (date) {
+      var t = date || new Date(), p = function (v) { return (v < 10 ? '0' : '') + v; };
+      return t.getFullYear() + p(t.getMonth() + 1) + p(t.getDate());
+    },
+    dailySeed: function (key) {
+      var h = 2166136261;
+      for (var i = 0; i < key.length; i++) { h ^= key.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+      return h || 1;
+    },
+    dailyMods: function (ids) {
+      var all = D.daily.hard.concat(D.daily.good);
+      return (ids || []).map(function (id) { return all.filter(function (x) { return x.id === id; })[0]; }).filter(Boolean);
+    },
+    // 그날의 구성(새 게임 데이터를 만들기 전에 화면에 보여 준다)
+    dailyPlan: function (key) {
+      key = key || St.dailyKey();
+      var seed = St.dailySeed(key);
+      G.rng.seed(seed);
+      var stage = G.rng.pick(D.daily.stages);
+      var party = G.rng.shuffle(D.characters.map(function (c) { return c.id; })).slice(0, 3);
+      var hard = G.rng.shuffle(D.daily.hard.slice()).slice(0, 2).map(function (x) { return x.id; });
+      var good = G.rng.pick(D.daily.good).id;
+      G.rng.seed(Date.now() >>> 0);
+      return { key: key, seed: seed, stage: stage, party: party, mods: hard.concat([good]), theme: St.stageDef(stage).theme };
+    },
+    isDaily: function () { return !!(St.data && St.data.flags && St.data.flags.daily); },
+    // 오늘의 원정 저장 칸('daily')에 새 데이터를 만들고 그 스테이지를 시작한다
+    newDaily: function (key) {
+      var plan = St.dailyPlan(key), stage = plan.stage;
+      G.Save.use('daily');
+      var d = St.newGame('normal');
+      G.rng.seed(plan.seed + 1);
+      d.characters = plan.party.slice(); d.party = plan.party.slice();
+      d.cards = [];
+      var owners = plan.party.concat(['common']);
+      D.cards.forEach(function (c) { if (c.basic && owners.indexOf(c.owner) >= 0) d.cards.push(c.id); });
+      owners.forEach(function (o) {
+        var pool = D.cards.filter(function (c) { return c.owner === o && !c.basic && !c.duo && (stage >= 6 || c.rarity !== 'legendary'); });
+        G.rng.shuffle(pool).slice(0, (o === 'common' ? 2 : 3) + Math.floor(stage / 2)).forEach(function (c) { d.cards.push(c.id); });
+      });
+      d.decks = {};
+      owners.forEach(function (o) { d.decks[o] = St.autoBuild(o); });
+      var lv = Math.min(D.growth.levels.length, 1 + Math.floor(stage / 2));
+      plan.party.forEach(function (id) {
+        var traits = [];
+        for (var i = 0; i < lv; i++) traits.push(G.rng.int(0, 1));
+        d.growth[id] = { exp: D.growth.levels[lv - 1], traits: traits };
+      });
+      for (var k = 0; k < 1 + Math.floor(stage * 0.7); k++) St.addRelic(St.rollRelic('shop'));
+      St.addItem(St.rollItem());
+      d.gold = 80 + stage * 20;
+      d.clearedStage = stage - 1;
+      d.flags.tutorialDone = true;
+      d.story.seen = ['prologue'];
+      (D.story || []).forEach(function (ch) { ch.scenes.forEach(function (sc) { d.story.seen.push(sc.id); }); });
+      d.flags.daily = { key: plan.key, stage: stage, mods: plan.mods, wins: 0, elites: 0 };
+      if (G.Profile) G.Profile.dailyStart();
+      G.rng.seed(plan.seed + 2);   // 지도는 그날 모두 같다
+      St.startStage(stage);
+      G.rng.seed(Date.now() >>> 0);
+      return d;
+    },
+    dailyScore: function (cleared) {
+      var d = St.data, f = d.flags.daily, sc = D.daily.score, r = d.run, hp = 0, max = 0;
+      if (cleared && r) d.party.forEach(function (id) { hp += Math.max(0, r.hp[id] || 0); max += St.maxHp(id); });
+      var parts = { win: f.wins * sc.win, elite: f.elites * sc.elite, clear: cleared ? sc.clear : 0,
+        hp: cleared && max ? Math.round(hp / max * 100 * sc.hpPct) : 0, gold: Math.round(d.gold * sc.gold) };
+      var sum = 0;
+      Object.keys(parts).forEach(function (k) { sum += parts[k]; });
+      return { parts: parts, mult: 1 + f.stage * sc.stageMult, score: Math.round(sum * (1 + f.stage * sc.stageMult)) };
+    },
+    // 끝: 점수를 프로필에 남기고 오늘의 원정 저장을 지운다. 반환: { score, parts, mult, cleared, best, attempts, record, … }
+    finishDaily: function (cleared) {
+      var d = St.data, f = d.flags.daily, s = St.dailyScore(cleared);
+      var res = { key: f.key, score: s.score, parts: s.parts, mult: s.mult, cleared: cleared, stage: f.stage, party: d.party.slice(), mods: f.mods.slice() };
+      var rec = G.Profile ? G.Profile.dailyDone(res) : {};
+      Object.assign(res, rec);
+      G.Save.clear('daily');
+      St.data = null;
+      return res;
     },
 
     // ================= 스토리(13단계) =================

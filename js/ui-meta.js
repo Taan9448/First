@@ -60,6 +60,7 @@
       (last ? '<button class="btn gold big cont">이어하기 <small>' + last + '번 칸</small></button>'
         : '<button class="btn gold big quick-new">새 게임</button>') +   // 24단계: 저장이 하나도 없으면 바로 모드 선택(1번 칸)
       '<button class="btn big slots">저장 칸 · 새 게임</button>' +
+      '<div class="row sub-menu"><button class="btn daily">오늘의 원정' + (G.Save.exists('daily') ? ' <small>이어하기</small>' : '') + '</button><button class="btn records">업적 · 기록</button></div>' +
       (G.debug ? '<button class="btn small test">전투 테스트 (디버그)</button>' : '') +
       '</div>');
     var line = el.querySelector('.lineup');
@@ -67,6 +68,8 @@
     if (last) el.querySelector('.cont').onclick = function () { openSlot(last); };
     else el.querySelector('.quick-new').onclick = function () { Meta.modeSelect(1); };
     el.querySelector('.slots').onclick = function () { Meta.slots(); };
+    el.querySelector('.daily').onclick = function () { Meta.dailyIntro(); };
+    el.querySelector('.records').onclick = function () { St.data = null; G.Extra.stats('all'); };
     if (G.debug) el.querySelector('.test').onclick = function () { G.TestMenu.open(); };
     UI.show('title');
   };
@@ -144,19 +147,28 @@
 
   // ================= 모드 선택(15단계) =================
   Meta.modeSelect = function (slot) {
-    var el = screen('title'), pick = 'normal';
+    var el = screen('title'), pick = 'normal', boon = null;
+    var boons = G.Profile ? G.Profile.boons() : [];
     var render = function () {
       el.innerHTML = titleFrame('<span class="ribbon">' + slot + '번 칸 · 게임 모드를 고른다 (나중에 바꿀 수 없다)</span><div class="mode-grid">' +
         D.MODE_ORDER.map(function (k) {
           var m = D.modes[k];
           return '<button class="mode-card' + (k === pick ? ' on' : '') + '" data-k="' + k + '" style="--mc:' + m.color + '"><small>' + m.en + '</small><b>' + m.name + '</b><p>' + U.esc(m.desc) + '</p></button>';
         }).join('') + '</div>' +
+        // 26단계: 업적으로 해금한 시작 선물 하나
+        (boons.length ? '<div class="boon-row"><span class="ribbon cyan">시작 선물</span><div class="boons">' +
+          ['none'].concat(boons).map(function (id) {
+            var b = D.boonById[id];
+            return '<button class="boon' + ((boon || 'none') === id ? ' on' : '') + '" data-b="' + id + '"' + (b ? ' data-tip="' + U.esc(b.desc) + '"' : '') + '>' + (b ? U.esc(b.name) : '없음') + '</button>';
+          }).join('') + '</div></div>' : '') +
         '<div class="menu row"><button class="btn back">뒤로</button><button class="btn gold big start">' + D.modes[pick].name + ' 모드로 시작</button></div>');
+      UI.$$('.boon', el).forEach(function (b) { b.onclick = function () { var id = b.getAttribute('data-b'); boon = id === 'none' ? null : id; SND('click'); render(); }; });
       UI.$$('.mode-card', el).forEach(function (b) { b.onclick = function () { pick = b.getAttribute('data-k'); SND('click'); render(); }; });
       el.querySelector('.back').onclick = Meta.slots;
       el.querySelector('.start').onclick = function () {
         G.Save.use(slot);
         St.newGame(pick);
+        if (boon) St.applyBoon(boon);
         // 24단계: 첫 게임은 로비·세계 지도·편성을 건너뛰고 프롤로그 뒤 바로 1 스테이지 던전으로
         Meta.scene('prologue', function () { Meta.enterStage(1); });
       };
@@ -178,7 +190,7 @@
     var dungeon = !!r && mapView === 'dungeon' && mapSel === r.stage;
     el.innerHTML = topbar((dungeon ? '던전 지도' : '원정 지도') + (asc ? ' <span class="asc-chip">승천 ' + asc + '</span>' : ''),
       (r ? '<button class="btn small ghost view">' + UI.icon('map') + (dungeon ? '월드맵' : '던전 지도') + '</button>' : '') +
-      (d.flags.ended ? '<button class="btn small cyan ascend">새 원정</button>' : '') + '<button class="btn small ghost to-title">' + UI.icon('home') + '로비</button>') +
+      (d.flags.ended ? '<button class="btn small cyan ascend">새 원정</button>' : '') + '<button class="btn small ghost to-title">' + UI.icon('home') + (St.isDaily() ? '타이틀' : '로비') + '</button>') +
       '<div class="map-layout"><div class="map-frame"><div class="map-canvas"></div></div><aside class="map-side frame"></aside></div>' +
       '<div class="map-bottom"><div class="party-row"></div><div class="items-row item-bar"></div><div class="relic-bar"></div></div>';
     var common = function () {
@@ -187,7 +199,7 @@
       fillSprites(el.querySelector('.party-row'), 0.6);
       el.querySelector('.map-bottom .relic-bar').innerHTML = UI.relicBar(d.relics);
       el.querySelector('.map-bottom .items-row').innerHTML = UI.itemBar(St.items(), false, D.itemEconomy.slots);
-      el.querySelector('.to-title').onclick = function () { Meta.lobby(); };
+      el.querySelector('.to-title').onclick = function () { if (St.isDaily()) Meta.title(); else Meta.lobby(); };   // 오늘의 원정에는 로비가 없다
       if (el.querySelector('.view')) el.querySelector('.view').onclick = function () { mapView = dungeon ? 'world' : 'dungeon'; Meta.map(r.stage); };
       if (el.querySelector('.ascend')) el.querySelector('.ascend').onclick = function () { Meta.ascend(); };
     };
@@ -406,6 +418,7 @@
       return Meta.traits(next);
     }
     var lost = St.battleLost(battle);
+    if (lost.daily) return Meta.dailyEnd(lost.daily);
     var names = lost.died.map(function (id) { return charDef(id).name; }).join(', ');
     if (lost.wiped) {
       var w = UI.modal('<h2>원정의 끝</h2><p>' + names + '… 모두 쓰러져 다시 일어나지 못했다.<br>하드코어 모드의 기록은 여기서 사라진다.</p>' +
@@ -922,6 +935,7 @@
 
   // ================= 스테이지 클리어 · 엔딩 =================
   Meta.clear = function (info) {
+    if (info.daily) return Meta.dailyEnd(info.daily);
     // 스토리(13단계): 처음 클리어하면 결말 장면부터
     var sc = info.first && St.sceneFor('outro', info.stage);
     if (sc) return Meta.scene(sc, function () { Meta.clear(info); });
@@ -941,6 +955,40 @@
     if (info.joined) el.querySelector('.join .sp').appendChild(UI.spriteEl(info.joined, 1.6));
     el.querySelector('.ok').onclick = function () { if (info.ending) Meta.ending(); else Meta.map(info.stage < D.stages.length ? info.stage + 1 : info.stage); };
     UI.show('clear');
+  };
+
+  // ================= 26단계: 오늘의 원정 =================
+  Meta.dailyIntro = function () {
+    var el = screen('title'), plan = St.dailyPlan(), key = plan.key;
+    var saved = G.Save.load('daily'), resume = saved && saved.flags.daily && saved.flags.daily.key === key && saved.run;
+    if (saved && !resume) G.Save.clear('daily');   // 지난 날의 원정은 버린다
+    var rec = G.Profile ? G.Profile.get().daily[key] : null;
+    var mods = St.dailyMods(plan.mods);
+    el.innerHTML = titleFrame('<span class="ribbon">오늘의 원정 · ' + key.slice(0, 4) + '.' + key.slice(4, 6) + '.' + key.slice(6) + '</span>' +
+      '<div class="daily-card frame"><div class="dl-head"><b>스테이지 ' + plan.stage + ' · ' + D.STAGE_NAME[plan.stage - 1] + '</b><small>' + D.THEME_NAME[plan.theme] + '</small></div>' +
+      '<div class="dl-party"></div>' +
+      '<div class="dl-mods">' + mods.map(function (x) { return '<div class="dl-mod ' + (/^G/.test(x.id) ? 'good' : 'bad') + '"><b>' + U.esc(x.name) + '</b><span>' + U.esc(x.desc) + '</span></div>'; }).join('') + '</div>' +
+      '<p class="dim">날짜로 정한 동료 셋·카드·유물·지도로 스테이지 하나를 돈다. 지면 그대로 끝나고, 이긴 전투·정예·돌파·남은 체력·골드로 점수를 매긴다. 오늘은 모두 같은 지도다.</p>' +
+      '<p class="dl-best">' + (rec && rec.best ? '오늘 최고 <b>' + rec.best.score + '점</b> (' + (rec.best.cleared ? '돌파' : '실패') + ') · ' + rec.attempts + '번 도전' : '오늘은 아직 도전하지 않았다') + '</p></div>' +
+      '<div class="menu row"><button class="btn back">뒤로</button>' + (resume ? '<button class="btn gold big resume">이어하기</button><button class="btn small danger restart">새로 시작</button>' : '<button class="btn gold big go">출발</button>') + '</div>');
+    var party = el.querySelector('.dl-party');
+    plan.party.forEach(function (id) { var w = UI.el('div', 'slot'); w.appendChild(UI.spriteEl(id, 1)); w.appendChild(UI.el('small', '', charDef(id).name)); party.appendChild(w); });
+    var go = function () { St.newDaily(key); mapView = 'dungeon'; Meta.stageIntro(plan.stage, function () { Meta.map(plan.stage); }); };
+    el.querySelector('.back').onclick = Meta.title;
+    if (resume) {
+      el.querySelector('.resume').onclick = function () { G.Save.use('daily'); if (St.load()) { mapView = 'dungeon'; Meta.continueRun(); } else Meta.title(); };
+      el.querySelector('.restart').onclick = function () { G.Save.clear('daily'); go(); };
+    } else el.querySelector('.go').onclick = go;
+    UI.show('title');
+  };
+  Meta.dailyEnd = function (res) {
+    var P = res.parts || {}, rows = [['이긴 전투', P.win], ['정예', P.elite], ['스테이지 돌파', P.clear], ['남은 체력', P.hp], ['남은 골드', P.gold]];
+    var m = UI.modal('<h2>' + (res.cleared ? '오늘의 원정 돌파!' : '오늘의 원정 끝') + '</h2>' +
+      '<div class="daily-score">' + rows.map(function (r) { return '<div><span>' + r[0] + '</span><b>' + (r[1] || 0) + '</b></div>'; }).join('') +
+      '<div><span>스테이지 배율</span><b>×' + (res.mult || 1).toFixed(1) + '</b></div><div class="total"><span>점수</span><b>' + res.score + '</b></div></div>' +
+      '<p style="text-align:center">' + (res.record ? '<b class="new-rec">오늘의 최고 기록!</b> ' : '오늘 최고 ' + (res.best ? res.best.score : res.score) + '점 · ') + res.attempts + '번째 도전</p>' +
+      '<div class="row" style="justify-content:center"><button class="btn gold ok">타이틀로</button></div>', 'result ' + (res.cleared ? 'win' : 'lose'), true);
+    m.querySelector('.ok').onclick = function () { UI.closeModal(m); Meta.title(); };
   };
 
   Meta.ending = function () {
