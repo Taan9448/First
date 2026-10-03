@@ -199,7 +199,8 @@
       if (typeof v === 'object') {
         if (!battle) return v.base ? fmt(v.base, upg) : 'X';
         var x = def.cost === 'X' ? battle.energy : 0;
-        return fmt(battle.num(v, { src: caster, attacksBefore: battle.attacksThisTurn, x: x }, null), upg);
+        return fmt(battle.num(v, { src: caster, attacksBefore: battle.attacksThisTurn, x: x, cardsBefore: battle.cardsThisTurn,   // 32단계: 연계·성장 비례식도 지금 값으로
+          combo: inst && battle.peekCombo ? battle.peekCombo(inst) : 0, timesPlayed: (battle.tally && battle.tally.plays[def.id]) || 0 }, null), upg);
       }
       return fmt(v, upg);
     }).replace(/\{\+([^}]*)\}/g, '<span class="num upg">$1</span>')

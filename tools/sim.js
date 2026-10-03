@@ -42,7 +42,8 @@ function estimate(b, inst, target) {
   const def = inst.def, caster = b.casterOf(inst);
   const cost = b.costOf(inst);
   const ctx = { src: caster, target, x: cost === 'X' ? b.energy : 0, attacksBefore: b.attacksThisTurn, cardsBefore: b.cardsThisTurn,
-    lastType: b.lastType, card: def, pre: target ? Object.assign({}, target.status) : {}, preview: { hand: b.piles.hand.length - 1, energy: cost === 'X' ? 0 : b.energy - cost } };
+    lastType: b.lastType, card: def, pre: target ? Object.assign({}, target.status) : {}, preview: { hand: b.piles.hand.length - 1, energy: cost === 'X' ? 0 : b.energy - cost },
+    combo: b.peekCombo(inst), prevOwner: b.chain.last, timesPlayed: b.tally.plays[def.id] || 0 };   // 32단계 연계·성장 조건
   const r = { dmg: 0, kill: 0, block: 0, heal: 0, util: 0 };
   const enemies = b.alive('enemy');
   const str = caster ? S.get(caster, 'strength') + S.get(caster, 'tempStr') : 0;

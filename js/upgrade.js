@@ -24,6 +24,7 @@
   function addN(v, n) {
     if (typeof v === 'number') return v + n;
     if (Array.isArray(v)) return [v[0] + n, v[1] + n];
+    if (v && typeof v === 'object' && v.per) return Object.assign({}, v, { base: (v.base || 0) + n });   // 32단계: 비례식은 기본값을 올린다
     return null;
   }
   // 값이 바뀐 숫자 쌍 목록(설명에서 바꿔 적을 것)

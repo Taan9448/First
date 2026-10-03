@@ -429,6 +429,7 @@
     this.doubleNext = false;
     hand.splice(idx, 1);
     var caster = this.casterOf(inst);
+    var prevOwner = this.chain.last;   // 32단계 연계형 카드: 직전에 쓴 동료 카드의 주인
     var link = this.linkCard(inst);
     var ctx = {
       card: def, inst: inst, src: caster, target: target, x: x, isCard: true, defTarget: def.target,
@@ -437,7 +438,8 @@
       firstAttackOfBattle: def.type === 'attack' && !this.firstAttackDone,
       firstAttackOfTurn: def.type === 'attack' && this.attacksThisTurn === 0,
       heroFirstAttack: def.type === 'attack' && caster && !caster._firstAtkDone,
-      comboBonus: link.bonus, pair: link.pair, prevCaster: link.prev
+      comboBonus: link.bonus, pair: link.pair, prevCaster: link.prev,
+      combo: link.count, prevOwner: prevOwner, timesPlayed: this.tally.plays[def.id] || 0
     };
     if (def.type === 'attack') this.firstAttackDone = true;
     // 21단계 고유 자원: 하린의 검세가 차 있으면 이 공격 카드는 치명타 확정
@@ -756,6 +758,12 @@
     if (pc.after) out.after = pc.after.map(function (e) { return Object.assign({}, e, { value: up(e.value) }); });
     return out;
   };
+  // 32단계: 지금 쓰면 연계 수가 몇이 되는가(바꾸지 않고 본다). 공용 카드는 이어진 수 그대로
+  P.peekCombo = function (inst) {
+    var o = inst.def.owner, ch = this.chain;
+    if (o === 'common' || o === 'none' || o === 'duo' || !this.heroById(o)) return ch.count;
+    return ch.last && ch.last !== o ? ch.count + 1 : 1;
+  };
   // 손패 미리보기: 지금 쓰면 연계가 이어지는가, 짝 연계가 발동하는가
   P.comboPreview = function (inst) {
     var o = inst.def.owner, ch = this.chain;
@@ -822,7 +830,7 @@
     var cost = this.costOf(inst);
     var ctx = { src: this.casterOf(inst), cardsBefore: this.cardsThisTurn, attacksBefore: this.attacksThisTurn,
       lastType: this.lastType, preview: { hand: this.piles.hand.length - 1, energy: cost === 'X' ? 0 : this.energy - cost },
-      card: inst.def };
+      card: inst.def, combo: this.peekCombo(inst), prevOwner: this.chain.last, timesPlayed: this.tally.plays[inst.def.id] || 0 };
     var self = this;
     return conds.some(function (c) { return self.evalCond(c, ctx, null); });
   };
@@ -876,6 +884,11 @@
       case 'drawPile': p = this.piles.draw.length; break;
       case 'selfRes': p = src ? src.res || 0 : 0; break;
       case 'hand': p = this.piles.hand.length; break;
+      // 32단계: 연계 수 · 이번 턴 앞서 쓴 카드 수 · 이번 전투에서 이 카드를 앞서 쓴 횟수 · 살아 있는 적 수
+      case 'combo': p = ctx.combo || 0; break;
+      case 'cardsThisTurn': p = ctx.cardsBefore || 0; break;
+      case 'timesPlayed': p = ctx.timesPlayed || 0; break;
+      case 'enemyCount': p = this.alive('enemy').length; break;
     }
     var n = Math.floor((v.base || 0) + v.mult * p);
     return v.cap != null ? Math.min(n, v.cap) : n;
@@ -911,6 +924,13 @@
       case 'targetIntentAttack': return !!(tgt && tgt.side === 'enemy' && this.intentInfo(tgt).dmg != null);
       case 'attacksMod': return ctx.attacksBefore > 0 && (ctx.attacksBefore + 1) % c.n === 0;   // 이 카드가 이번 턴 n·2n·3n번째 공격 카드인가
       case 'discardedTurn': return U.cmp(this.discardedTurn, c.op, c.n);
+      // 32단계: 연계형 · 자원 · 성장 조건
+      case 'combo': return U.cmp(ctx.combo || 0, c.op, c.n);                                   // 연계 수(이 카드 포함)
+      case 'prevOther': return !!(ctx.prevOwner && src && ctx.prevOwner !== src.id);           // 직전 동료 카드가 다른 동료의 것
+      case 'prevOwner': return ctx.prevOwner === c.owner;                                     // 직전 동료 카드가 그 동료의 것
+      case 'cardsThisTurn': return U.cmp(ctx.cardsBefore || 0, c.op, c.n);                     // 이번 턴 앞서 쓴 카드 수
+      case 'selfRes': return src ? U.cmp(src.res || 0, c.op, c.n) : false;                    // 시전자의 고유 자원
+      case 'timesPlayed': return U.cmp(ctx.timesPlayed || 0, c.op, c.n);                       // 이번 전투에서 이 카드를 앞서 쓴 횟수
     }
     throw new Error('알 수 없는 조건: ' + c.is);
   };

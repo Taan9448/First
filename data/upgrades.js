@@ -76,7 +76,7 @@ Game.Data.upgradeRules = {
 
   Game.Data.upgradeExceptions = {
     // 소멸 제거
-    L12: { exhaust: false, text: '에너지 +2. {+소멸하지 않는다}.' },
+    L12: { exhaust: false, text: '에너지 +2. 이번 턴 이미 카드를 2장 이상 썼다면 +3. {+소멸하지 않는다}.' },
     // 동전 던지기 앞면 확률 65%
     C29: { effects: [{ op: 'chance', p: 0.65, then: [energy(1)], else: [draw(1)] }],
       text: '동전을 던진다(앞면 {+65%}). 앞면이면 에너지 +1, 뒷면이면 카드 1장을 뽑는다.' },
@@ -92,8 +92,10 @@ Game.Data.upgradeRules = {
     B27: { effects: [{ op: 'damage', value: { base: 10, per: 'selfLostHp', mult: 0.4 } }],
       text: '피해 {d0}({+10} + 브리아가 잃은 체력의 {+40%}).' },
     // 디버프 제거 카드
-    S04: { effects: [{ op: 'cleanse', count: 1 }, blk(4)], text: '아군 1명의 디버프 1개 제거{+, 보호막 4}.' },
-    S13: { effects: [{ op: 'cleanse', all: true }, heal(3)], text: '아군 전체의 모든 디버프 제거{+, 체력 3 회복}.' },
+    S04: { effects: [{ op: 'if', cond: { is: 'targetHas', status: 'debuff' }, then: [{ op: 'cleanse', count: 1 }, draw(1)], else: [{ op: 'cleanse', count: 1 }] }, blk(4)],
+      text: '아군 1명의 디버프 1개 제거. 디버프가 있었다면 카드 1장을 뽑는다{+, 보호막 4}.' },
+    S13: { effects: [{ op: 'cleanse', all: true }, { op: 'if', cond: { is: 'prevOther' }, then: [blk(4)], else: [] }, heal(3)],
+      text: '아군 전체의 모든 디버프 제거{+, 체력 3 회복}. 직전에 다른 동료의 카드를 썼다면 아군 전체 보호막 4.' },
     S17: { effects: [{ op: 'revive', pct: 0.6 }], text: '쓰러진 아군 1명을 체력 {+60%}로 되살린다. 소멸.' },
     // 효과를 더한다
     L15: { effects: [st('burn', 2), { op: 'custom', name: 'spreadBurn' }],
@@ -109,7 +111,8 @@ Game.Data.upgradeRules = {
     N24: { cost: 1 },
     L20: { cost: 1 },
     C26: { cost: 1 },
-    S16: { effects: [{ op: 'loseHp', value: 2 }, draw(2)], text: '체력을 {+2} 잃고 카드 2장을 뽑는다.' },
+    S16: { effects: [{ op: 'loseHp', value: 2 }, draw(2), { op: 'if', cond: { is: 'selfRes', op: '>=', n: 3 }, then: [energy(1)], else: [] }],
+      text: '체력을 {+2} 잃고 카드 2장을 뽑는다. 신앙이 3 이상이면 에너지 +1.' },
     L25: { effects: [{ op: 'damage', value: { base: 0, per: 'x', mult: 12 } }, st('burn', { base: 0, per: 'x', mult: 1 }), st('chill', { base: 0, per: 'x', mult: 1 })],
       text: '적 전체에 피해 {+12} × X({d0}). 화상 X, 한기 X 부여.' },
     // 20단계 카드
@@ -122,7 +125,7 @@ Game.Data.upgradeRules = {
     A05: { effects: [{ op: 'scry', value: 3 }, draw(1)], text: '미리 보기 {+3}{+, 카드 1장을 뽑는다}.' },
     A10: { effects: [{ op: 'res', value: 3 }], text: '조준 {++3}(스킬이라 1 더 쌓인다).' },
     // 설명의 확률 표기까지 함께 바뀌는 카드
-    C27: { effects: [st('keen', 3), st('tempStr', 4)],
-      text: '아군 전체에 예리함 {+3}(치명타 확률 {++30%}), 이번 턴 힘 +{+4}.' }
+    C27: { effects: [st('keen', 3), st('tempStr', { base: 4, per: 'combo', mult: 1, cap: 7 })],
+      text: '아군 전체에 예리함 {+3}(치명타 확률 {++30%}), 이번 턴 힘 +{+4} + 지금 연계 수(최대 {+7}).' }
   };
 })();

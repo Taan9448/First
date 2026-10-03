@@ -376,6 +376,34 @@ function handCard(b, id) {
   }
 
   }
+  // ---- 32단계: 연계형 · 성장형 · 자원 조건 ----
+  {
+    let cb = await newBattle(['kai', 'lyra'], ['treant'], ['C01']); cb.energy = 30; cb.heroes.forEach(h => { h.crit = 0; });
+    // 진기 집중: 직전에 다른 동료 카드 → 힘 +3, 아니면 +2
+    await cb.play(handCard(cb, 'K06'), null);
+    check(cb.heroes[0].status.tempStr === 2, '진기 집중: 처음엔 +2');
+    await cb.play(handCard(cb, 'L03'), null); await cb.play(handCard(cb, 'K06'), null);
+    check(cb.heroes[0].status.tempStr === 5, '진기 집중: 직전 리라 카드 → +3 (' + cb.heroes[0].status.tempStr + ')');
+    // 유수검: 쓸 때마다 타격 +1
+    cb = await newBattle(['kai'], ['treant'], ['C01']); cb.energy = 30; cb.heroes[0].crit = 0;
+    let mh = cb.monsters[0].hp; await cb.play(handCard(cb, 'K39'), cb.monsters[0]); const d1 = mh - cb.monsters[0].hp;
+    mh = cb.monsters[0].hp; await cb.play(handCard(cb, 'K39'), cb.monsters[0]); const d2 = mh - cb.monsters[0].hp;
+    check(d2 > d1, '유수검: 두 번째가 더 세다 (' + d1 + ' → ' + d2 + ')');
+    // 삼재검: 연계 2 이상이면 4회
+    cb = await newBattle(['kai', 'lyra'], ['treant'], ['C01']); cb.energy = 30; cb.heroes.forEach(h => { h.crit = 0; });
+    await cb.play(handCard(cb, 'L03'), null);
+    mh = cb.monsters[0].hp; await cb.play(handCard(cb, 'K10'), cb.monsters[0]);
+    check(cb.chain.count === 2 && mh - cb.monsters[0].hp === (4 + 1) * 4, '삼재검: 연계 2 → 피해 (4+1)×4 (' + (mh - cb.monsters[0].hp) + ')');
+    // 정심결: 검세 3 이상이면 집중 3
+    cb = await newBattle(['kai'], ['treant'], ['C01']); cb.energy = 30; cb.heroes[0].res = 3;
+    await cb.play(handCard(cb, 'K12'), null);
+    check(cb.heroes[0].status.focus === 3, '정심결: 검세 3 → 집중 3');
+    // 철벽: 쓸 때마다 보호막 +4
+    cb = await newBattle(['bram'], ['treant'], ['C01']); cb.energy = 30;
+    await cb.play(handCard(cb, 'B10'), null); const b1 = cb.heroes[0].block;
+    await cb.play(handCard(cb, 'B10'), null);
+    check(b1 === 12 && cb.heroes[0].block === 12 + 16, '철벽: 12 → 16 (' + b1 + ', ' + (cb.heroes[0].block - b1) + ')');
+  }
   // ---- 21단계: 고유 자원 ----
   {
     let rb = await newBattle(['kai', 'bram', 'lyra', 'sera', 'nox'].slice(0, 3), ['treant']);
@@ -686,12 +714,12 @@ function handCard(b, id) {
   await b.play(handCard(b, 'K01'), b.monsters[0]);
   check(hp0 - b.monsters[0].hp === 6 && b.chain.count === 1, '연계 1: 베기 6');
   hp0 = b.monsters[0].hp;
-  await b.play(handCard(b, 'L08'), b.monsters[0]);
+  await b.play(handCard(b, 'L01'), b.monsters[0]);
   check(b.chain.count === 2, '연계 2');
-  check(hp0 - b.monsters[0].hp === (4 + 1) * 2 + 4, '연계 +1 × 2회 + 검기 마법 4 = 14 (실제 ' + (hp0 - b.monsters[0].hp) + ')');
+  check(hp0 - b.monsters[0].hp === (5 + 1) + 4, '연계 +1 + 검기 마법 4 = 10 (실제 ' + (hp0 - b.monsters[0].hp) + ')');
   hp0 = b.monsters[0].hp;
-  await b.play(handCard(b, 'L08'), b.monsters[0]);
-  check(b.chain.count === 1 && hp0 - b.monsters[0].hp === 8, '같은 캐릭터를 이어 쓰면 연계가 1로');
+  await b.play(handCard(b, 'L01'), b.monsters[0]);
+  check(b.chain.count === 1 && hp0 - b.monsters[0].hp === 5, '같은 캐릭터를 이어 쓰면 연계가 1로');
   // 공용 카드는 연계를 끊지 않는다 / 짝 연계는 턴당 한 번
   b = await newBattle(['kai', 'lyra'], ['treant'], ['C01']);
   b.heroes.forEach(h => { h.crit = 0; }); b.energy = 9;
@@ -703,8 +731,8 @@ function handCard(b, id) {
   b.heroes.forEach(h => { h.crit = 0; }); b.energy = 5;
   await b.play(handCard(b, 'K01'), b.monsters[0]);
   hp0 = b.monsters[0].hp;
-  await b.play(handCard(b, 'L08'), b.monsters[0]);
-  check(hp0 - b.monsters[0].hp === 10 + 6, '친밀도 2단계: 검기 마법 6 (실제 ' + (hp0 - b.monsters[0].hp - 10) + ')');
+  await b.play(handCard(b, 'L01'), b.monsters[0]);
+  check(hp0 - b.monsters[0].hp === 6 + 6, '친밀도 2단계: 검기 마법 6 (실제 ' + (hp0 - b.monsters[0].hp - 6) + ')');
   // 합동기: 두 사람 모두 편성·생존해야 쓸 수 있다
   b = await newBattle(['kai'], ['treant'], ['C01']);
   b.energy = 3;
