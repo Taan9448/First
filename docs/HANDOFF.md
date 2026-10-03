@@ -15,6 +15,7 @@
 - 32 카드 108장 개편. 새 조건(`combo` · `prevOther` · `prevOwner` · `cardsThisTurn` · `selfRes` · `timesPlayed`)과 비례식 원천. 카드를 고치면 `node tools/doc-upgrades.js`로 8장 카드 표를 데이터에서 다시 쓴다
 - 33 강화 10단계. 원정 중 강화는 3단계까지(`upgradeRules.fieldMax`), 4~10은 로비 대장간(`Game.Data.forge`, `St.forge(id, roll)`). 4단계부터는 3단계 각인을 경지 배율로 키운다(`js/upgrade.js`의 `bigEngrave`). 카드 id 뒤 `+4`~`+10`. 금화 수급은 `economy.gold`·`clearGold`. 남은 단계 34~41은 16장 표대로(사용자 요청: 노말 스테이지마다 첫 시도 클리어 20% 이하는 35단계)
 - 34 적 다양화. 마지막 방은 처음 돌파 전엔 이야기 보스 고정, 그 뒤·승천·오늘의 원정은 `altBosses` 중 무작위(`St.pickBoss`/`bossFree`). 몬스터 기믹은 데이터로: `split`(분열), `ai:'pattern'` + `selfDestruct`(자폭), 상태 `shelter`(엄호)·`dodge`(회피), op `costUp`·`drainEnergy`·`drainDraw`, 대상 `lowestMonster`·`otherMonsters`, 저주 카드 `CUR_*`(`inHandEnd`). 새 그림 `js/sprites-variety.js`. 새 몬스터 op 를 쓰면 `tools/test-battle.js`의 `KNOWN_OPS`에도 넣는다
+- **노력(effort) 추천**: 사용자 요청으로 단계를 마칠 때마다 다음 단계에 알맞은 노력 수준(낮음 · 중간 · 높음)을 함께 알린다. 남은 단계 추천 — 35 난이도 상향 **높음** · 36 카드 연출 **중간** · 37 그림 연결과 몬스터 동작 **중간** · 38 음악·타격음 **중간** · 39 승천 대사·동료 이벤트 **중간** · 40 UI/UX 개편 **높음** · 41 최종 점검 **높음**. 문서 수정·리소스 하나 연결 같은 작은 일은 **낮음**
 - 글자를 새로 넣으면 `python3 tools/embed-fonts.py`(빠지면 `test-battle`이 알려 준다). 테스트: `node tools/test-battle.js`, `node tools/test-campaign.js`, 밸런스: `node tools/sim.js 12 1 0 normal|hard`
 
 ## 1. 기본 조건
