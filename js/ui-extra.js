@@ -139,7 +139,11 @@
           if (!rec) { s.style.filter = 'brightness(0)'; s.style.animation = 'none'; }
           sp.appendChild(s);
           row.appendChild(sp);
-          var moves = mo.pattern.map(function (k) { return mo.moves[k].name; }).join(' → ');
+          var moves = mo.ai === 'weighted' ? Object.keys(mo.moves).map(function (k) { return mo.moves[k].name; }).join(' · ') + ' (그때그때 고른다)' : mo.pattern.map(function (k) { return mo.moves[k].name; }).join(' → ');
+          // 20단계 고유 규칙(특수 상태)
+          var rules = Object.keys(mo.startStatus || {}).filter(function (k) { return D.statuses[k] && D.statuses[k].kind === 'special'; })
+            .map(function (k) { return D.statuses[k].name + ' ' + mo.startStatus[k] + ': ' + D.statuses[k].desc.replace('{n}', mo.startStatus[k]); });
+          if (rules.length) moves += ' / 규칙 — ' + rules.join(' / ');
           row.appendChild(UI.el('div', 'info', rec ?
             '<b>' + mo.name + '</b> <span class="dim">' + RANK[mo.rank] + ' · 체력 ' + mo.hp + ' · 처치 ' + rec.kills + '회</span>' +
             '<div>' + U.esc(moves) + (mo.triggers ? ' <span class="dim">(체력이 줄면 행동이 바뀐다)</span>' : '') + '</div><div class="dim">' + U.esc(mo.desc || '') + '</div>' :
@@ -188,7 +192,7 @@
         }
         row.appendChild(UI.el('div', 'info', joined ?
           '<b>' + c.name + '</b> <span class="dim">' + c.role + ' · ' + c.job + ' · 체력 ' + St().maxHp(c.id) + ' · 치명타 ' + Math.round(c.crit * 100) + '%</span>' +
-          growth + '<div class="dim">' + c.desc + '</div><div class="cnames">' + cards + '</div>' :
+          growth + (c.resource ? '<div class="res-line" style="color:' + c.resource.color + '"><b>고유 자원 · ' + c.resource.name + '</b> <span class="dim">' + U.esc(c.resource.desc) + '</span></div>' : '') + '<div class="dim">' + c.desc + '</div><div class="cnames">' + cards + '</div>' :
           '<b>???</b> <span class="dim">' + c.joinAfter + ' 스테이지를 클리어하면 합류한다</span>'));
         hl.appendChild(row);
       });

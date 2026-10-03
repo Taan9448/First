@@ -280,7 +280,13 @@
     // 공용
     C('C34', '숨 고르기', 's', 'c', 1, 'n', [{ op: 'scry', value: 3 }, draw(1)], '미리 보기 3. 카드 1장을 뽑는다.', { art: 'eye' }),
     C('C35', '결단', 's', 'u', 0, 'n', [{ op: 'exhaust', value: 1 }, energy(2)], '손패 1장을 소멸시킨다. 에너지 +2. 소멸.', { x: 1, art: 'rage' }),
-    C('C36', '분노의 칼날', 'p', 'r', 1, 'n', [power('onExhaust', [dmg(4, { target: 'randomEnemy' })])], '지속 카드가 소멸할 때마다 무작위 적에게 피해 4.', { art: 'axe' })
+    C('C36', '분노의 칼날', 'p', 'r', 1, 'n', [power('onExhaust', [dmg(4, { target: 'randomEnemy' })])], '지속 카드가 소멸할 때마다 무작위 적에게 피해 4.', { art: 'axe' }),
+    // ---------------- 21단계: 고유 자원 카드 5장 ----------------
+    C('K38', '검세 해방', 'a', 'r', 1, 'e', [dmg(per('selfRes', 6, 0)), { op: 'spendRes' }], '피해 {d0}: 하린의 검세 1당 6. 검세를 모두 쓴다.', { art: 'slashX', tags: '조건' }),
+    C('B37', '반격 준비', 'b', 'u', 1, 's', [blk(5), { op: 'res', value: 2 }], '보호막 5. 반격 자세 +2(방어 카드라 1 더 쌓인다).', { art: 'parry' }),
+    C('L37', '공명 증폭', 's', 'u', 0, 'n', [{ op: 'res', value: 2 }, draw(1)], '원소 공명 +2(카드라 1 더 쌓인다). 카드 1장을 뽑는다.', { art: 'orb', el: 'arcane' }),
+    C('S37', '신앙 고백', 'h', 'r', 1, 'A', [heal(4), { op: 'res', value: 1 }], '아군 전체의 체력 4 회복. 신앙 +1(회복한 동료마다 1 더 쌓인다).', { art: 'pray', el: 'holy' }),
+    C('N38', '표식 폭발', 'a', 'r', 1, 'e', [dmg(per('targetStatus', 5, 0, { status: 'venomMark' })), { op: 'clearStatus', status: 'venomMark' }], '피해 {d0}: 대상의 독 표식 1당 5. 그 뒤 표식을 없앤다.', { art: 'needles', el: 'poison', tags: '조건' })
   ];
 
   // 방해 카드 (보유·도감에 포함하지 않음)
@@ -301,7 +307,7 @@
     N25: 'cards', N26: 'thousand', N27: 'shadow', N28: 'aura', N29: 'dice', N32: 'cards',
     C21: 'coin', C22: 'shield', C23: 'cards', C24: 'flag', C25: 'clock', C26: 'cards', C27: 'flag', C32: 'chaos',
     K34: 'slashX', B33: 'shield', S33: 'heal', N34: 'poisonCloud', C33: 'chaos',
-    K36: 'aura', K37: 'slashX', B35: 'shield', B36: 'quake', L34: 'explosion', L36: 'ice', S34: 'pillar', S36: 'pillar', N37: 'poisonCloud', C36: 'rage'
+    K36: 'aura', K37: 'slashX', B35: 'shield', B36: 'quake', L34: 'explosion', L36: 'ice', S34: 'pillar', S36: 'pillar', N37: 'poisonCloud', C36: 'rage', K38: 'slashX', S37: 'heal', N38: 'poisonCloud'
   };
   list.forEach(function (c) { if (SFX[c.id]) c.sfx = SFX[c.id]; });
 

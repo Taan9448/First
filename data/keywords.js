@@ -29,6 +29,7 @@ Game.Data.statuses = {
   vengeance: { name: '복수', kind: 'special', icon: 'strength', desc: '다른 적이 쓰러질 때마다 힘 +{n}.' },
   freezeImmune: { name: '빙결 면역', kind: 'special', icon: 'freezeImmune', decay: 'round', desc: '한기가 쌓이지 않는다. {n}라운드 남음.' },
 
+  venomMark: { name: '독 표식', kind: 'debuff', icon: 'poison', desc: '중독 피해를 받을 때 {n}만큼 더 받는다(소연, 최대 5).' },
   poison:    { name: '중독', kind: 'debuff', icon: 'poison', desc: '턴 종료 시 {n} 피해(보호막 무시) 후 1 감소.' },
   burn:      { name: '화상', kind: 'debuff', icon: 'burn', desc: '턴 종료 시 {n} 피해(보호막에 막힘) 후 절반으로 감소.' },
   weak:      { name: '약화', kind: 'debuff', icon: 'weak', decay: 'round', desc: '주는 공격 피해 -25%. {n}턴 남음.' },

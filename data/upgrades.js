@@ -115,6 +115,8 @@ Game.Data.upgradeRules = {
     // 20단계 카드
     B36: { effects: [{ op: 'damage', value: { base: 4, per: 'selfBlock', mult: 1.5 } }, { op: 'loseBlock', target: 'self' }],
       text: '자신의 보호막 × 1.5 {++ 4}만큼 피해({d0}). 그 뒤 자신의 보호막을 모두 잃는다. 소멸.' },
+    K38: { effects: [{ op: 'damage', value: { base: 4, per: 'selfRes', mult: 6 } }, { op: 'spendRes' }], text: '피해 {d0}: {+4} + 하린의 검세 1당 6. 검세를 모두 쓴다.' },
+    N38: { effects: [{ op: 'damage', value: { base: 4, per: 'targetStatus', status: 'venomMark', mult: 5 } }, { op: 'clearStatus', status: 'venomMark' }], text: '피해 {d0}: {+4} + 대상의 독 표식 1당 5. 그 뒤 표식을 없앤다.' },
     N37: { exhaust: false, text: '대상이 중독 수치만큼 즉시 체력을 잃는다(보호막 무시). 중독은 그대로 남는다. {+소멸하지 않는다}.' },
     // 설명의 확률 표기까지 함께 바뀌는 카드
     C27: { effects: [st('keen', 3), st('tempStr', 4)],

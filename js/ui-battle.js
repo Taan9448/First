@@ -162,7 +162,7 @@
     var e = UI.el('div', 'unit ' + u.side);
     e.innerHTML = '<div class="intent"></div>' + (u.side === 'ally' ? '<div class="incoming"></div>' : '') +
       '<div class="sprite-wrap"><div class="shadow"></div></div>' +
-      '<div class="hpbar"><div class="ghost"></div><i></i><span></span><div class="blockbadge"></div></div><div class="sts"></div><div class="uname"></div>';
+      '<div class="hpbar"><div class="ghost"></div><i></i><span></span><div class="blockbadge"></div></div>' + (u.side === 'ally' && u.resMax ? '<div class="resbar"></div>' : '') + '<div class="sts"></div><div class="uname"></div>';
     var sp = UI.spriteEl(u.side === 'ally' ? u.id : u.def.sprite, u.side === 'enemy' ? u.size || u.def.size : 1);
     if (u.affix) {
       var ax = G.Data.affixes[u.affix];
@@ -192,6 +192,20 @@
     var bb = e.querySelector('.blockbadge');
     bb.textContent = u.block || '';
     bb.style.display = u.block > 0 ? '' : 'none';
+    // 21단계: 고유 자원 게이지(칸 수 = 최대치, 찬 칸은 캐릭터 자원 색)
+    var rbar = e.querySelector('.resbar');
+    if (rbar) {
+      var rdef = u.def.resource, rk = u.res + '/' + u.resMax;
+      if (rbar._k !== rk) {
+        var pips = '';
+        for (var ri = 0; ri < u.resMax; ri++) pips += '<i class="' + (ri < u.res ? 'on' : '') + '"></i>';
+        rbar.innerHTML = '<b>' + rdef.name + '</b>' + pips;
+        rbar.style.setProperty('--rc', rdef.color);
+        rbar.classList.toggle('full', u.res >= u.resMax);
+        rbar.setAttribute('data-tip', '<b>' + rdef.name + ' ' + u.res + '/' + u.resMax + '</b><br>' + U.esc(rdef.desc));
+        rbar._k = rk;
+      }
+    }
     var sts = UI.statusHTML(u);
     if (e._sts !== sts) { e.querySelector('.sts').innerHTML = sts; e._sts = sts; }
     e.querySelector('.uname').textContent = u.name;

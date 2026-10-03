@@ -23,10 +23,10 @@ function section(name) { console.log('\n■ ' + name); }
 // ---------------------------------------------------------------- 데이터 검사
 section('데이터');
 const cards = G.Data.cards.filter(c => c.owner !== 'none');
-check(cards.length === 218, '카드 218장 (현재 ' + cards.length + ')');
+check(cards.length === 223, '카드 223장 (현재 ' + cards.length + ')');
 const KNOWN_OPS = ['damage', 'block', 'heal', 'status', 'cleanse', 'revive', 'loseHp', 'draw', 'energy', 'discount',
   'doubleNext', 'gold', 'power', 'if', 'chance', 'oneOf', 'conjure', 'addCard', 'randomizeCosts', 'freeRandom', 'summon', 'custom',
-  'discard', 'exhaust', 'scry', 'clearStatus', 'loseBlock'];
+  'discard', 'exhaust', 'scry', 'clearStatus', 'loseBlock', 'res', 'spendRes'];
 function walk(effects, where) {
   effects.forEach(e => {
     check(KNOWN_OPS.includes(e.op), where + ': 알 수 없는 op ' + e.op);
@@ -198,7 +198,7 @@ doc.split('\n').forEach(line => {
   check(c.target === TGT[m[7].trim()], id + ' 대상 ' + c.target + ' ≠ ' + m[7].trim());
   check(c.tags === m[8].trim(), id + ' 분류 "' + c.tags + '" ≠ "' + m[8].trim() + '"');
 });
-check(docRows === 218, '기획서 카드 표 218행 (현재 ' + docRows + ')');
+check(docRows === 223, '기획서 카드 표 223행 (현재 ' + docRows + ')');
 // '강화' 열은 데이터에서 만든 문구와 같아야 한다 (다르면 node tools/doc-upgrades.js)
 let upRows = 0;
 doc.split('\n').forEach(line => {
@@ -207,7 +207,7 @@ doc.split('\n').forEach(line => {
   upRows++;
   check(G.Upgrade.summary(m[1]) === m[2], m[1] + ' 강화 열이 데이터와 다름 (node tools/doc-upgrades.js)');
 });
-check(upRows === 218, '기획서 카드 표 강화 열 218행 (현재 ' + upRows + ')');
+check(upRows === 223, '기획서 카드 표 강화 열 223행 (현재 ' + upRows + ')');
 
 // ---------------------------------------------------------------- 규칙 단위 테스트
 section('규칙');
@@ -237,6 +237,7 @@ function handCard(b, id) {
   // 보호막 먼저 차감
   b.monsters[1].block = 4; hp0 = b.monsters[1].hp;
   kai.status = {}; b.energy = 3;
+  b.heroes.forEach(h => { h.res = 0; }); // 21단계: 하린 검세를 비워 둔다
   await b.play(handCard(b, 'K01'), b.monsters[1]);
   check(b.monsters[1].block === 0 && hp0 - b.monsters[1].hp === 2, '보호막 4 → 피해 6 중 2만 체력');
 
@@ -306,6 +307,43 @@ function handCard(b, id) {
   }
 
   }
+  // ---- 21단계: 고유 자원 ----
+  {
+    let rb = await newBattle(['kai', 'bram', 'lyra', 'sera', 'nox'].slice(0, 3), ['treant']);
+    const [hk, hb2, hl] = rb.heroes; hk.crit = 0; rb.energy = 20;
+    for (let i = 0; i < 5; i++) await rb.play(handCard(rb, 'K01'), rb.monsters[0]);
+    check(hk.res === 5, '검세: 공격 카드 5장 → 5 (' + hk.res + ')');
+    let mh = rb.monsters[0].hp;
+    await rb.play(handCard(rb, 'K01'), rb.monsters[0]);
+    check(hk.res === 0 && mh - rb.monsters[0].hp === 12, '검세 5: 다음 공격 치명타 확정 후 0 (피해 ' + (mh - rb.monsters[0].hp) + ')');
+    await rb.play(handCard(rb, 'B02'), null); await rb.play(handCard(rb, 'B02'), null);
+    check(hb2.res === 2, '반격 자세: 방어 카드 2장 → 2');
+    mh = rb.monsters[0].hp;
+    await rb.hit(rb.monsters[0], hb2, 1, {}, rb.monsterCtx(rb.monsters[0]));
+    check(hb2.res === 0 && mh - rb.monsters[0].hp === 6, '반격 자세: 맞으면 2 × 3 = 6 되갚기');
+    mh = rb.monsters[0].hp;
+    for (let i = 0; i < 5; i++) await rb.play(handCard(rb, 'L03'), null);
+    check(hl.res === 0 && rb.monsters[0].hp <= mh - 8 && rb.monsters[0].status.burn >= 2, '원소 공명 5: 원소 폭발 후 0');
+    rb = await newBattle(['sera', 'kai'], ['treant']);
+    const hs = rb.heroes[0], hk2 = rb.heroes[1]; rb.energy = 20;
+    hk2.hp = 30; hs.hp = 30;
+    for (let i = 0; i < 3; i++) await rb.play(handCard(rb, 'S37'), null);
+    check(hs.res === 5, '신앙: 회복할 때마다 쌓인다 (' + hs.res + ')');
+    hk2.hp = 3;
+    await rb.loseHp(hk2, 50);
+    check(!hk2.dead && hk2.hp === Math.floor(hk2.maxHp * 0.2) && hs.res === 0, '기도의 응답: 신앙 5로 쓰러질 동료가 버틴다');
+    rb = await newBattle(['nox'], ['treant']); rb.energy = 20;
+    await rb.play(handCard(rb, 'N01'), rb.monsters[0]); await rb.play(handCard(rb, 'N01'), rb.monsters[0]);
+    const mk = rb.monsters[0].status.venomMark;
+    check(mk === 2, '독 표식: 소연의 중독마다 +1 (' + mk + ')');
+    mh = rb.monsters[0].hp; const pz = rb.monsters[0].status.poison;
+    await rb.tickDots(rb.monsters[0]);
+    check(mh - rb.monsters[0].hp === pz + 2, '독 표식: 중독 피해 + 표식');
+    mh = rb.monsters[0].hp;
+    await rb.play(handCard(rb, 'N38'), rb.monsters[0]);
+    check(!rb.monsters[0].status.venomMark && mh - rb.monsters[0].hp >= 10, '표식 폭발: 표식 1당 5, 표식 제거');
+  }
+
   // 한기 3 → 빙결, 보스는 이후 빙결 면역
   b = await newBattle(['lyra'], ['treant']);
   const boss = b.monsters[0];
@@ -347,6 +385,7 @@ function handCard(b, id) {
   await b.play(k03, b.monsters[0]);
   check(hp0 - b.monsters[0].hp === 9, '연속 베기 첫 카드 3×3 = 9');
   hp0 = b.monsters[0].hp;
+  b.heroes.forEach(h => { h.res = 0; }); // 21단계: 하린 검세를 비워 둔다
   await b.play(handCard(b, 'K03'), b.monsters[0]);
   check(hp0 - b.monsters[0].hp === 6, '연속 베기 두 번째 3×2 = 6');
 
@@ -451,6 +490,7 @@ function handCard(b, id) {
   await b.play(handCard(b, 'K01'), b.monsters[0]);
   check(hp0 - b.monsters[0].hp === 11, '가죽 장갑: 첫 공격 6+5 = 11');
   hp0 = b.monsters[0].hp;
+  b.heroes.forEach(h => { h.res = 0; }); // 21단계: 하린 검세를 비워 둔다
   await b.play(handCard(b, 'K01'), b.monsters[0]);
   check(hp0 - b.monsters[0].hp === 6, '두 번째 공격은 보너스 없음');
 
@@ -620,7 +660,7 @@ function handCard(b, id) {
   const never = cards.filter(c => !played.has(c.id)).map(c => c.id);
   if (N >= 1000) {
     check(!never.length, '모든 카드가 한 번 이상 사용됨 (미사용: ' + never.join(', ') + ')');
-    const neverUp = cards.filter(c => !played.has(c.id + '+')).map(c => c.id + '+');
+    const neverUp = cards.filter(c => c.target !== 'downedAlly' && !played.has(c.id + '+')).map(c => c.id + '+');  // 부활 카드는 쓰러진 동료가 있어야 쓰여 우연에 맡긴다
     const neverUp3 = cards.filter(c => !played.has(c.id + '+3')).map(c => c.id + '+3');
     check(neverUp3.length <= cards.length * 0.1, '3단계 강화 카드 대부분이 한 번 이상 사용됨 (미사용 ' + neverUp3.length + '장)');
     const neverDuo = G.Data.duoCards.filter(c => !played.has(c.id)).map(c => c.id);

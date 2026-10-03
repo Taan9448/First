@@ -33,7 +33,7 @@
     var max = c.hp + (tm.maxHp || 0);
     var cur = hp == null ? max : Math.min(hp, max);
     return { uid: uidSeq++, side: 'ally', id: id, name: c.name, def: c, maxHp: max, hp: Math.max(0, cur),
-      block: 0, status: {}, dead: cur <= 0, crit: c.crit + (tm.critAdd || 0), tm: tm };
+      block: 0, status: {}, dead: cur <= 0, crit: c.crit + (tm.critAdd || 0), tm: tm, res: 0, resMax: c.resource && !c.resource.onEnemy ? c.resource.max : 0 };  // 소연의 독 표식은 적에게 붙는다
   }
 
   // em: 적 강화 보정(스테이지 난이도 + 승천). hpMult · bossHpMult · finalHpMult
@@ -404,6 +404,8 @@
       comboBonus: link.bonus, pair: link.pair, prevCaster: link.prev
     };
     if (def.type === 'attack') this.firstAttackDone = true;
+    // 21단계 고유 자원: 하린의 검세가 차 있으면 이 공격 카드는 치명타 확정
+    if (caster && caster.id === 'kai' && def.type === 'attack' && caster.res >= caster.resMax) ctx.momentum = true;
     if (caster) { caster._cardTurn = true; if (def.type === 'attack') { caster._atkTurn = true; caster._firstAtkDone = true; } }
     if (link.count >= 2 || link.pair) this.emit('combo', { count: link.count, pair: link.pair, unit: caster });
     // 16단계: 영웅·전설 카드와 합동기는 사용한 캐릭터의 얼굴과 대사가 먼저 지나간다(opts.cutin 이 false 면 생략)
@@ -427,6 +429,7 @@
     }
     if (def.type === 'attack' && !this.over()) await this.runHooks('onAttackCard');
     if ((def.type === 'skill' || def.type === 'power') && !this.over()) await this.runHooks('onSkillCard');
+    if (!this.over()) await this.resourceAfterCard(def, caster, ctx);
     this.cardsThisTurn++;
     if (def.type === 'attack') { this.attacksThisTurn++; this.attacksBattle++; }
     if (!this.over()) await this.traitAfterCard(def, caster);
@@ -452,6 +455,38 @@
     // 20단계: 시간의 모래(파라오) — 한 턴에 카드를 너무 많이 쓰면 턴이 끝난다
     if (this.forceEnd && !this.over() && this.phase === 'player') { this.forceEnd = false; await this.endTurn(); }
     return true;
+  };
+
+  // ================= 21단계: 캐릭터 고유 자원 =================
+  P.gainRes = function (h, n) {
+    if (!h || h.dead || !h.resMax || !n) return;
+    var before = h.res;
+    h.res = Math.max(0, Math.min(h.resMax, h.res + n));
+    if (h.res !== before) this.emit('hero:res', { unit: h });
+  };
+  // 카드를 쓴 뒤: 하린 검세(공격 카드) · 브리아 반격 자세(방어 카드) · 리라 원소 공명(모든 카드, 5가 차면 폭발)
+  P.resourceAfterCard = async function (def, caster, ctx) {
+    if (!caster || caster.dead) return;
+    if (caster.id === 'kai' && def.type === 'attack') {
+      if (ctx.momentum) { caster.res = 0; this.emit('hero:res', { unit: caster }); }
+      else if (!ctx.spent) this.gainRes(caster, 1);
+    }
+    if (caster.id === 'bram' && def.type === 'block') this.gainRes(caster, 1);
+    if (caster.id === 'lyra') {
+      this.gainRes(caster, 1);
+      if (caster.res >= caster.resMax) {
+        caster.res = 0;
+        this.emit('hero:res', { unit: caster });
+        this.emit('fx:text', { unit: caster, text: '원소 폭발!', kind: 'good' });
+        this.emit('hero:burst', { unit: caster });
+        var foes = this.alive('enemy');
+        for (var i = 0; i < foes.length && !this.over(); i++) {
+          await this.takeDamage(foes[i], 8, { kind: 'burn' });
+          if (!foes[i].dead) { S.add(this, foes[i], 'burn', 2, caster); S.add(this, foes[i], 'chill', 1, caster); }
+        }
+        this.update();
+      }
+    }
   };
 
   // ================= 20단계: 버리기 · 소멸 · 미리 보기 · 고르기 =================
@@ -708,6 +743,7 @@
       case 'exhaustedBattle': p = this.exhaustedBattle; break;
       case 'discardedTurn': p = this.discardedTurn; break;
       case 'drawPile': p = this.piles.draw.length; break;
+      case 'selfRes': p = src ? src.res || 0 : 0; break;
     }
     var n = Math.floor((v.base || 0) + v.mult * p);
     return v.cap != null ? Math.min(n, v.cap) : n;
@@ -772,7 +808,8 @@
           n = e.pct ? Math.floor(list[i].maxHp * e.pct) : this.num(e.value, ctx, list[i]);
           var stm = ctx.isCard && ctx.src && ctx.src.tm;
           if (ctx.isCard) n += (ctx.pair && ctx.pair.healAdd || 0) + (stm && stm.healAdd || 0);
-          await this.heal(list[i], n, { overflowToBlock: e.overflowToBlock || !!(stm && stm.overhealBlock) });
+          var got = await this.heal(list[i], n, { overflowToBlock: e.overflowToBlock || !!(stm && stm.overhealBlock) });
+          if (got > 0 && ctx.isCard && ctx.src && ctx.src.id === 'sera') this.gainRes(ctx.src, 1);
         }
         return;
 
@@ -782,6 +819,8 @@
           var sv = self.num(e.value, ctx, u);
           if (ctx.pair && ctx.pair.statusAdd && ctx.pair.statusAdd[e.status] && u.side === 'enemy') sv += ctx.pair.statusAdd[e.status];
           S.add(self, u, e.status, sv, ctx.src);
+          // 독 표식(소연): 소연의 카드가 적에게 중독을 걸면 표식 +1(최대 5)
+          if (e.status === 'poison' && u.side === 'enemy' && !u.dead && ctx.src && ctx.src.id === 'nox') S.set(u, 'venomMark', Math.min(5, S.get(u, 'venomMark') + 1));
         });
         this.update();
         return;
@@ -791,6 +830,7 @@
         list.forEach(function (u) {
           if (S.cleanse(u, e.all ? 'all' : e.count || 1)) {
             self.emit('fx:cleanse', { unit: u });
+            if (ctx.isCard && ctx.src && ctx.src.id === 'sera') self.gainRes(ctx.src, 1);
             if (ctx.isCard && ctx.src && ctx.src.tm && ctx.src.tm.cleanseBlock) self.addBlock(u, ctx.src.tm.cleanseBlock);
           }
         });
@@ -893,6 +933,9 @@
         return;
       }
       case 'scry': return this.scry(this.num(e.value, ctx));
+      // 21단계: 고유 자원 얻기 · 모두 쓰기(시전자)
+      case 'res': this.gainRes(ctx.src, this.num(e.value, ctx)); this.update(); return;
+      case 'spendRes': ctx.spent = true; if (ctx.src && ctx.src.res) { ctx.src.res = 0; this.emit('hero:res', { unit: ctx.src }); } this.update(); return;
       case 'clearStatus':
         list = this.targets(spec, ctx);
         list.forEach(function (u) { S.set(u, e.status, 0); });
@@ -940,6 +983,7 @@
     if (cardAttack) {
       d += ctx.comboBonus || 0;                                      // 연계
       if (ctx.pair && ctx.pair.dmgAdd) d += ctx.pair.dmgAdd;         // 짝 연계
+      if (src && src.id === 'kai' && src.res && !ctx.momentum) d += src.res;    // 검세
       var tm = src && src.tm;
       if (tm) {                                                      // 특성
         if (ctx.heroFirstAttack && tm.firstAttackBonus) d += tm.firstAttackBonus;
@@ -955,7 +999,7 @@
     var crit = false;
     if (ctx.isCard && tgt.side === 'enemy') {
       if (cardAttack && ctx.pair && ctx.pair.forceCrit && !ctx.pair._critUsed) { crit = true; ctx.pair._critUsed = true; }
-      else if (e.forceCrit || (cardAttack && m.turnFirstAttackCrit && ctx.firstAttackOfTurn)) crit = true;
+      else if (e.forceCrit || ctx.momentum || (cardAttack && m.turnFirstAttackCrit && ctx.firstAttackOfTurn)) crit = true;
       else if (src && S.has(src, 'focus')) { crit = true; S.dec(src, 'focus'); }
       else {
         var p = src ? src.crit + S.get(src, 'keen') * 0.1 : G.Data.COMMON_CRIT;
@@ -996,6 +1040,14 @@
     }
     // 특성: 공격받으면 보호막 / 처치하면 보호막·회복·에너지
     if (tgt.side === 'ally' && !tgt.dead && src && src.side === 'enemy' && tgt.tm.onHitBlock) this.addBlock(tgt, tgt.tm.onHitBlock);
+    // 반격 자세(브리아): 적의 공격에 맞으면 쌓인 수 × 3을 되갚는다
+    if (tgt.side === 'ally' && tgt.id === 'bram' && !tgt.dead && tgt.res > 0 && src && src.side === 'enemy' && !src.dead && !ctx.isCounter) {
+      var cn = tgt.res * 3;
+      tgt.res = 0;
+      this.emit('fx:text', { unit: tgt, text: '반격!', kind: 'good' });
+      this.emit('hero:res', { unit: tgt });
+      await this.takeDamage(src, cn, { kind: 'thorns' });
+    }
     if (tgt.dead && src && src.side === 'ally' && !src.dead && ctx.isCard) {
       if (src.tm.onKillBlock) this.addBlock(src, src.tm.onKillBlock);
       if (src.tm.onKillHeal) await this.heal(src, src.tm.onKillHeal);
@@ -1029,6 +1081,16 @@
     u.hp -= n;
     if (u.hp > 0) {
       if (u.side === 'enemy') await this.checkTriggers(u);
+      return;
+    }
+    // 기도의 응답(세라): 신앙이 가득 차 있으면 모두 써서 쓰러질 아군을 체력 20%로 버티게 한다
+    var sera = u.side === 'ally' ? this.alive('ally').filter(function (h) { return h.id === 'sera' && h.res >= h.resMax && h.resMax; })[0] || (u.id === 'sera' && u.res >= u.resMax && u.resMax ? u : null) : null;
+    if (sera) {
+      sera.res = 0;
+      u.hp = Math.max(1, Math.floor(u.maxHp * 0.2));
+      this.emit('fx:revive', { unit: u });
+      this.emit('fx:text', { unit: u, text: '기도의 응답!', kind: 'good' });
+      this.emit('hero:res', { unit: sera });
       return;
     }
     if (u.side === 'ally' && this.mods.phoenix && !this.phoenixUsed) {
@@ -1109,7 +1171,7 @@
 
   P.tickDots = async function (u) {
     var p = S.get(u, 'poison');
-    if (p > 0) { await this.loseHp(u, p, 'poison'); if (!u.dead) S.dec(u, 'poison'); }
+    if (p > 0) { await this.loseHp(u, p + S.get(u, 'venomMark'), 'poison'); if (!u.dead) S.dec(u, 'poison'); }
     var b = S.get(u, 'burn');
     if (b > 0 && !u.dead) { await this.takeDamage(u, b, { kind: 'burn' }); if (!u.dead) S.set(u, 'burn', Math.floor(b / 2)); }
     if (p || b) await G.wait(T.hit);
