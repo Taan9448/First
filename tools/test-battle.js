@@ -22,6 +22,20 @@ function section(name) { console.log('\n■ ' + name); }
 
 // ---------------------------------------------------------------- 데이터 검사
 section('데이터');
+// 24단계: 내장 글꼴(css/fonts.css)이 게임에 쓰는 글자를 모두 담는지 — 빠졌으면 python3 tools/embed-fonts.py 를 다시 돌린다
+{
+  const css = fs.readFileSync(path.join(ROOT, 'css/fonts.css'), 'utf8');
+  const ur = (css.match(/font-family: 'Galmuri11';[^}]*unicode-range: ([^;]+);/) || [])[1] || '';
+  const rs = ur.split(',').map(x => x.trim().slice(2).split('-').map(h => parseInt(h, 16))).map(a => [a[0], a[1] == null ? a[0] : a[1]]);
+  const missing = new Set();
+  ['index.html', 'css/style.css'].concat(fs.readdirSync(path.join(ROOT, 'data')).map(f => 'data/' + f), fs.readdirSync(path.join(ROOT, 'js')).map(f => 'js/' + f)).forEach(f => {
+    for (const ch of fs.readFileSync(path.join(ROOT, f), 'utf8')) {
+      const cp = ch.codePointAt(0);
+      if (cp >= 0x20 && cp !== 0xfeff && !rs.some(r => cp >= r[0] && cp <= r[1])) missing.add(ch);
+    }
+  });
+  check(missing.size === 0, '내장 글꼴에 없는 글자 ' + missing.size + '자(' + [...missing].slice(0, 20).join('') + ') — python3 tools/embed-fonts.py 를 다시 실행');
+}
 const cards = G.Data.cards.filter(c => c.owner !== 'none');
 check(cards.length === 223, '카드 223장 (현재 ' + cards.length + ')');
 const KNOWN_OPS = ['damage', 'block', 'heal', 'status', 'cleanse', 'revive', 'loseHp', 'draw', 'energy', 'discount',
@@ -247,6 +261,30 @@ function handCard(b, id) {
   hp0 = b.monsters[0].hp;
   await b.play(handCard(b, 'K01'), b.monsters[0]);
   check(hp0 - b.monsters[0].hp === 12 && !b.heroes[0].status.focus, '집중 → 치명타 12, 집중 소모');
+
+  {
+  // ---- 24단계: 턴 되돌리기 ----
+  b = await newBattle(['kai', 'bram'], ['slime', 'slime'], ['K01', 'K01', 'K01', 'K01', 'K01', 'B01', 'B01', 'C01'], { undo: true });
+  const u0 = { hand: b.piles.hand.map(c => c.uid).join(), energy: b.energy, mhp: b.monsters.map(m => m.hp).join(), items: b.items.length };
+  check(!b.canUndo(), '되돌리기: 아무것도 안 했으면 되돌릴 게 없다');
+  const atk = b.piles.hand.find(c => c.id === 'K01');
+  await b.play(atk, b.monsters[0]);
+  check(b.canUndo() && b.monsters[0].hp < +u0.mhp.split(',')[0], '되돌리기: 카드를 쓰면 되돌릴 수 있다');
+  b.undo();
+  check(b.piles.hand.map(c => c.uid).join() === u0.hand && b.energy === u0.energy && b.monsters.map(m => m.hp).join() === u0.mhp, '되돌리기: 손패·에너지·적 체력이 턴 시작으로');
+  check(b.monsters.every(m => m.def === G.Data.monsterById[m.id]) && b.piles.hand.every(c => c.def === G.Data.cardById[c.id]), '되돌리기: 데이터 정의는 같은 객체를 가리킨다');
+  check(b.heroes.every(h => b.alive('ally').indexOf(h) >= 0), '되돌리기: 복제된 영웅끼리 참조가 이어진다');
+  // 되돌린 뒤에도 정상 진행되고 다시 되돌릴 수 있다
+  const atk2 = b.piles.hand.find(c => c.id === 'K01');
+  await b.play(atk2, b.monsters[1]);
+  check(b.undo() && b.monsters.map(m => m.hp).join() === u0.mhp, '되돌리기: 여러 번');
+  await b.endTurn();
+  check(b.turn === 2 && b.phase === 'player' && !b.canUndo(), '되돌리기: 다음 턴 시작에 새로 떠 둔다');
+  const nb = await newBattle(['kai'], ['slime']);
+  const a3 = nb.piles.hand.find(c => c.def.type === 'attack') || handCard(nb, 'K01');
+  await nb.play(a3, nb.monsters[0]);
+  check(!nb.canUndo(), '되돌리기: undo 옵션이 없으면(하드·하드코어) 쓸 수 없다');
+  }
 
   {
   // ---- 20단계: 보존 · 선천성 · 버리기(버려지면) · 미리 보기 · 소멸 연계 · 적의 반응 ----

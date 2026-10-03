@@ -270,7 +270,7 @@
     this.frostAura();
     this.retarget();
     this.update();
-    this.checkEnd();
+    if (!this.checkEnd()) this.snapshot();
   };
 
   P.endTurn = async function () {
@@ -493,6 +493,52 @@
     this.checkEnd();
     // 20단계: 시간의 모래(파라오) — 한 턴에 카드를 너무 많이 쓰면 턴이 끝난다
     if (this.forceEnd && !this.over() && this.phase === 'player') { this.forceEnd = false; await this.endTurn(); }
+    return true;
+  };
+
+  // ================= 24단계: 턴 되돌리기 =================
+  // 내 턴이 시작될 때 전투 상태를 통째로 떠 두고, 그 턴에 한 일을 모두 되돌린다(노말 모드·전투 테스트에서만).
+  // 데이터 객체(카드·몬스터·유물 정의)는 그대로 가리키고, 전투 안의 객체끼리의 참조(대상·주인)는 복제본끼리 다시 잇는다
+  var dataObjs = null;
+  function collectData() {
+    dataObjs = new WeakSet();
+    var walk = function (o) {
+      if (!o || typeof o !== 'object' || dataObjs.has(o)) return;
+      dataObjs.add(o);
+      Object.keys(o).forEach(function (k) { walk(o[k]); });
+    };
+    walk(G.Data);
+  }
+  function cloneDeep(v, memo) {
+    if (!v || typeof v !== 'object') return v;
+    if (dataObjs.has(v)) return v;
+    if (memo.has(v)) return memo.get(v);
+    var out = Array.isArray(v) ? [] : Object.create(Object.getPrototypeOf(v));
+    memo.set(v, out);
+    Object.keys(v).forEach(function (k) { out[k] = cloneDeep(v[k], memo); });
+    return out;
+  }
+  var UNDO_SKIP = { opts: 1, _snap: 1, _undoCount: 1 };
+  P.snapshot = function () {
+    if (!this.opts.undo) return;
+    if (!dataObjs) collectData();
+    var memo = new Map(), snap = {}, self = this;
+    Object.keys(this).forEach(function (k) { if (!UNDO_SKIP[k]) snap[k] = cloneDeep(self[k], memo); });
+    this._snap = snap;
+  };
+  // 되돌릴 게 있을 때만(카드를 썼거나 소모품을 썼을 때)
+  P.canUndo = function () {
+    return !!(this._snap && this.phase === 'player' && !this.busy && !this.over() &&
+      (this.cardsThisTurn > 0 || this.itemsUsed.length !== this._snap.itemsUsed.length || this.piles.hand.length !== this._snap.piles.hand.length));
+  };
+  P.undo = function () {
+    if (!this.canUndo()) return false;
+    var snap = this._snap, memo = new Map(), self = this;
+    Object.keys(this).forEach(function (k) { if (!UNDO_SKIP[k] && !(k in snap)) delete self[k]; });
+    Object.keys(snap).forEach(function (k) { self[k] = cloneDeep(snap[k], memo); });   // 다시 복제해 두어 여러 번 되돌릴 수 있다
+    this._undoCount = (this._undoCount || 0) + 1;
+    this.emit('battle:undo', this);
+    this.update();
     return true;
   };
 

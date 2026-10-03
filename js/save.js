@@ -200,8 +200,34 @@
 
     clear: function (slot) { store().removeItem(Save.key(slot)); },
 
+    // ---------------- 24단계: 내보내기 · 가져오기 ----------------
+    // 저장 칸을 글자 한 줄로 바꿔 다른 PC·브라우저로 옮긴다. 'CHG1:' + base64(UTF-8 JSON)
+    EXPORT_TAG: 'CHG1:',
+    exportText: function (slot) {
+      var raw = store().getItem(Save.key(slot));
+      if (!raw) return '';
+      return Save.EXPORT_TAG + btoa(unescape(encodeURIComponent(raw)));
+    },
+    // 글자를 해석해 저장 데이터로 돌려준다(잘못되면 null). 마이그레이션·정리를 거쳐 지금 버전으로
+    parseExport: function (text) {
+      text = String(text || '').replace(/\s+/g, '');
+      if (text.indexOf(Save.EXPORT_TAG) !== 0) return null;
+      var d;
+      try { d = JSON.parse(decodeURIComponent(escape(atob(text.slice(Save.EXPORT_TAG.length))))); } catch (e) { return null; }
+      if (!d || typeof d !== 'object' || !Array.isArray(d.characters) || !Array.isArray(d.cards)) return null;
+      d = Save.migrate(d);
+      return d ? Save.sanitize(d) : null;
+    },
+    importText: function (text, slot) {
+      var d = Save.parseExport(text);
+      if (!d) return false;
+      d.version = VERSION;
+      try { store().setItem(Save.key(slot), JSON.stringify(d)); } catch (e) { return false; }
+      return true;
+    },
+
     // ---------------- 설정 ----------------
-    DEFAULT_SETTINGS: { volume: 70, fx: 'normal', speed: 1 },
+    DEFAULT_SETTINGS: { volume: 70, fx: 'normal', speed: 1, textScale: 1, cb: false, hotkeys: true },
     loadSettings: function () {
       var s = null;
       try { s = JSON.parse(store().getItem(Save.SETTINGS_KEY)); } catch (e) { s = null; }

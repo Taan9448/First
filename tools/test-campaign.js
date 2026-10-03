@@ -441,6 +441,16 @@ function invariants(where) {
     G.Save.use(2); St.newGame('hard'); St.data.gold = 7; St.save();
     G.Save.use(3); St.newGame('hardcore'); St.save();
     check(G.Save.peek(2).mode === 'hard' && G.Save.peek(2).gold === 7 && G.Save.peek(3).mode === 'hardcore', '칸마다 따로 저장');
+    // 24단계: 저장 내보내기 · 가져오기
+    {
+      const txt = G.Save.exportText(2);
+      check(txt.indexOf('CHG1:') === 0 && G.Save.parseExport(txt).gold === 7 && G.Save.parseExport(txt).mode === 'hard', '내보내기 → 해석');
+      check(G.Save.parseExport('CHG1:@@@') === null && G.Save.parseExport('아무 글자') === null && G.Save.parseExport('CHG1:' + btoa('{"a":1}')) === null, '잘못된 글자는 거절');
+      const back = G.Save.peek(1);
+      check(G.Save.importText(txt, 1) && G.Save.peek(1).gold === 7 && G.Save.peek(1).mode === 'hard', '가져오기 → 다른 칸');
+      G.Save.importText(G.Save.EXPORT_TAG + btoa(unescape(encodeURIComponent(JSON.stringify(back)))), 1);
+      check(G.Save.peek(1).gold === back.gold, '가져오기로 되돌림');
+    }
     check(G.Save.lastSlot() === 3, '마지막으로 쓴 칸');
     G.Save.use(1);
     const l1 = G.Save.peek(1);

@@ -587,7 +587,8 @@
         startEffects: startEffects,
         deck: St.battleDeck(party).concat(St.duoDeck(party), extra),
         gold: d.gold,
-        boss: type !== 'battle'
+        boss: type !== 'battle',
+        undo: !!St.mode().undo   // 24단계: 턴 되돌리기(노말만)
       };
     },
 

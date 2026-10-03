@@ -88,7 +88,8 @@
         party: state.party.map(function (id) { return { id: id }; }),
         monsters: state.encounter.slice(),
         deck: deck,
-        gold: 100
+        gold: 100,
+        undo: true
       }, { onExit: backToMenu });
     });
   }

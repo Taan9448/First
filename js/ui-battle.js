@@ -33,7 +33,8 @@
     field = $('.field'); heroesEl = $('.side.heroes'); monstersEl = $('.side.monsters');
     handEl = $('.hand'); fxEl = document.getElementById('fx'); aimEl = document.getElementById('aim');
     heroesEl.innerHTML = ''; monstersEl.innerHTML = ''; handEl.innerHTML = ''; fxEl.innerHTML = '';
-    unitEls = {}; cardEls = {}; handSig = ''; fitSig = ''; selected = null; drag = null;
+    unitEls = {}; cardEls = {}; handSig = ''; fitSig = ''; selected = null; drag = null; aimIdx = 0;
+    clearLog(); endFast();
     UI.$$('.modal').forEach(UI.closeModal);
 
     G.bus.clear();
@@ -145,6 +146,11 @@
       ib._k = ik;
     }
     $('.endturn').disabled = B.phase !== 'player' || B.busy;
+    var ub = $('.undo-btn');
+    ub.style.display = B.opts.undo ? '' : 'none';
+    ub.disabled = !B.canUndo();
+    $('.skip-hint').hidden = B.phase !== 'enemy' || !!fastBase || B.over();
+    renderKbdAim();
     var canAny = B.phase === 'player' && B.piles.hand.some(function (c) { return B.canPlay(c).ok; });
     $('.endturn').classList.toggle('ready', B.phase === 'player' && !B.busy && !canAny);
   }
@@ -232,6 +238,9 @@
       info.kinds.forEach(function (k) { if (k !== main) html += UI.icon(k, 'sub'); });
       if (info.dmg != null && info.all) html += '<span class="all">전체</span>';
       else if (info.dmg != null && info.target) { var tc = heroColor(info.target); html += '<i class="tdot" style="background:' + tc + ';color:' + tc + '"></i>'; }
+      // 24단계: 색약 표기 — 행동 종류와 공격 대상 이름을 글자로
+      html += '<span class="cb-lab">' + info.kinds.map(function (k) { return INTENT_NAME[k] || k; }).join('·') +
+        (info.dmg != null && !info.all && info.target ? ' → ' + U.esc(info.target.name) : '') + '</span>';
       if (it._html !== html) { it.innerHTML = html; it._html = html; }
       it.className = 'intent k-' + main;
       it.style.display = '';
@@ -241,6 +250,7 @@
     }
   }
 
+  var INTENT_NAME = { attack: '공격', block: '방어', buff: '강화', debuff: '약화', special: '특수' };
   function heroColor(h) {
     var c = G.Data.characters.filter(function (x) { return x.id === h.id; })[0];
     return c ? c.color : '#ffffff';
@@ -322,6 +332,10 @@
         cardEls[inst.uid] = el;
       }
       UI.updateCard(el, inst, B);
+      // 24단계: 단축키 번호(1~9, 0)
+      var hk = el.querySelector('.hk'), ki = hand.indexOf(inst);
+      if (!hk) { hk = UI.el('i', 'hk'); el.appendChild(hk); }
+      hk.textContent = ki < 10 ? String((ki + 1) % 10) : '';
       el.classList.toggle('selected', selected === inst);
       el.classList.toggle('frosted', !!inst.frosted);
     });
@@ -346,7 +360,7 @@
   // 부채꼴 배치. 마우스를 올린 카드는 크게 떠오르고 양옆 카드는 비켜 준다
   function layoutHand() {
     var hand = B.piles.hand, n = hand.length;
-    var W = handEl.clientWidth;
+    var W = handEl.clientWidth, H = handEl.clientHeight;
     var ch = parseFloat(getComputedStyle(root).getPropertyValue('--ch')) || 200;
     var cw = ch * 125 / 175;
     var spacing = n > 1 ? Math.min(cw * 0.86, (W - cw) / (n - 1)) : 0;
@@ -366,7 +380,8 @@
         el.style.transform = 'scale(1.08)';
       } else {
         el.style.left = (start + i * spacing + push) + 'px';
-        el.style.top = (lifted ? -ch * 0.34 : 18 + d * d * 2.2) + 'px';
+        // 24단계: 쉬는 카드도 아래 효과 글이 화면 안에 들어오게 손패 바 바닥에 맞춘다
+        el.style.top = (lifted ? -ch * 0.34 : Math.min(18, H - ch - 8) + d * d * 2.2) + 'px';
         el.style.transform = lifted ? 'scale(1.16)' : 'rotate(' + (d * 3.2) + 'deg)';
       }
       el.style.zIndex = lifted ? 100 : 10 + i;
@@ -382,7 +397,7 @@
 
   function tryPlay(inst, target) {
     if (!B || B.busy) return;
-    selected = null;
+    selected = null; aimIdx = 0;
     clearAim();
     B.play(inst, target).then(function () { handSig = ''; renderAll(); });
     handSig = '';
@@ -428,6 +443,7 @@
     if (!drag || !B) return;
     var d = drag;
     drag = null;
+    if (UI.longPressed && !d.active) { handSig = ''; renderAll(); return; }   // 24단계: 길게 눌러 툴팁만 봤다
     var el = cardEls[d.inst.uid];
     if (el) el.classList.remove('dragging', 'ready');
     if (d.active) {
@@ -457,7 +473,93 @@
   }
 
   function cancel() { if (selected || drag) { drag = null; clearAim(); select(null); } }
-  window.addEventListener('keydown', function (e) { if (e.key === 'Escape') cancel(); });
+  // ================= 24단계: 단축키 =================
+  // 1~9·0 카드 고르기(같은 번호를 다시 누르거나 Enter·Space 로 쓴다) · ←→/Tab 대상 바꾸기 · E 턴 종료 · Z 되돌리기 · L 기록 · Esc 취소
+  var aimIdx = 0;
+  function kbdTargets() { return selected && B && B.needsTarget(selected) ? B.validTargets(selected) : []; }
+  function renderKbdAim() {
+    UI.$$('.unit.kbd-aim', root).forEach(function (e) { e.classList.remove('kbd-aim'); });
+    var ts = kbdTargets();
+    if (!ts.length) return;
+    var u = ts[((aimIdx % ts.length) + ts.length) % ts.length], e = u && unitEls[u.uid];
+    if (e) e.classList.add('kbd-aim');
+  }
+  function confirmKbd() {
+    if (!selected) return;
+    var ts = kbdTargets();
+    if (B.needsTarget(selected)) { if (ts.length) tryPlay(selected, ts[((aimIdx % ts.length) + ts.length) % ts.length]); }
+    else tryPlay(selected, null);
+  }
+  window.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') { cancel(); toggleLog(false); return; }
+    if (!B || !root || !root.classList.contains('on') || e.ctrlKey && e.key !== 'z' || e.altKey || e.metaKey) return;
+    if (document.querySelector('#app > .modal') || /INPUT|TEXTAREA/.test((e.target || {}).tagName || '')) return;
+    var k = e.key.toLowerCase();
+    if (k === 'l') { toggleLog(); return; }
+    if (B.phase !== 'player') { if (k === ' ' || k === 'enter') { e.preventDefault(); fastForward(); } return; }
+    if (B.busy) return;
+    if (/^[0-9]$/.test(k)) {
+      var i = k === '0' ? 9 : +k - 1, inst = B.piles.hand[i];
+      if (!inst) return;
+      if (selected === inst) return confirmKbd();
+      if (!B.canPlay(inst).ok) { flashCard(inst); return; }
+      aimIdx = 0; select(inst);
+      return;
+    }
+    if (k === 'arrowright' || k === 'arrowleft' || k === 'tab') {
+      if (!kbdTargets().length) return;
+      e.preventDefault();
+      aimIdx += k === 'arrowleft' || (k === 'tab' && e.shiftKey) ? -1 : 1;
+      renderKbdAim();
+      return;
+    }
+    if (k === 'enter' || k === ' ') { e.preventDefault(); confirmKbd(); return; }
+    if (k === 'e') { root.querySelector('.endturn').click(); return; }
+    if (k === 'z') { e.preventDefault(); doUndo(); }
+  });
+  function doUndo() {
+    if (!B || !B.canUndo()) return;
+    selected = null; drag = null; clearAim();
+    B.undo();
+  }
+
+  // ================= 24단계: 연출 빨리 감기 =================
+  // 적의 턴·카드 연출 중에 전장을 누르면(또는 Space) 그 턴이 끝날 때까지 4배 빠르게
+  var fastBase = 0;
+  function fastForward() {
+    if (fastBase || !B || B.over()) return;
+    fastBase = G.speed || 1;
+    G.speed = fastBase * 4;
+    root.classList.add('fast');
+    $('.skip-hint').hidden = true;
+  }
+  function endFast() {
+    if (!fastBase) return;
+    G.speed = fastBase; fastBase = 0;
+    if (root) root.classList.remove('fast');
+  }
+
+  // ================= 24단계: 전투 기록 =================
+  var logLines = [], logMark = 0, LOG_MAX = 400;
+  function nm(u) { return u ? '<b class="' + (u.side === 'ally' ? 'ally' : 'enemy') + '">' + U.esc(u.name) + '</b>' : ''; }
+  function addLog(html, cls) {
+    logLines.push('<li class="' + (cls || '') + '">' + html + '</li>');
+    if (logLines.length > LOG_MAX) { logLines.splice(0, logLines.length - LOG_MAX); logMark = Math.max(0, logMark - 1); }
+    var el = root && root.querySelector('.battle-log');
+    if (el && !el.hidden) drawLog();
+  }
+  function drawLog() {
+    var el = root.querySelector('.battle-log'), ol = el.querySelector('ol');
+    ol.innerHTML = logLines.join('');
+    ol.scrollTop = ol.scrollHeight;
+  }
+  function clearLog() { logLines = []; logMark = 0; }
+  function toggleLog(force) {
+    var el = root && root.querySelector('.battle-log');
+    if (!el) return;
+    el.hidden = force == null ? !el.hidden : !force;
+    if (!el.hidden) drawLog();
+  }
   window.addEventListener('contextmenu', function (e) {
     if (document.getElementById('screen-battle').classList.contains('on')) { e.preventDefault(); cancel(); }
   });
@@ -614,6 +716,34 @@
 
   function bindBus() {
     var on = G.bus.on;
+    // 24단계: 전투 기록
+    var ST = G.Data.statuses;
+    on('battle:turn', function (d) {
+      addLog(d.turn + '턴 · ' + (d.side === 'ally' ? '내 턴' : '적의 턴'), 'turn');
+      if (d.side === 'ally') { endFast(); logMark = logLines.length; }
+    });
+    on('card:play', function (d) { addLog(nm(d.caster) + (d.caster ? ' ' : '') + '「' + U.esc(d.inst.def.name) + '」' + (d.target ? ' → ' + nm(d.target) : ''), 'card'); });
+    on('monster:act', function (d) { addLog(nm(d.unit) + ' ' + U.esc(d.move && d.move.name || '행동'), 'act'); });
+    on('monster:trigger', function (d) { addLog(nm(d.unit) + ' ' + U.esc(d.name), 'act'); });
+    on('fx:hit', function (d) {
+      var kind = d.kind === 'poison' ? ' (독)' : d.kind === 'burn' ? ' (화상)' : d.kind === 'thorns' ? ' (가시)' : d.kind === 'lose' ? ' (체력 잃음)' : '';
+      if (d.amount > 0) addLog(nm(d.unit) + ' 피해 ' + d.amount + (d.crit ? ' 치명타' : '') + kind + (d.blocked ? ' · 막음 ' + d.blocked : ''), 'hit');
+      else if (d.blocked > 0) addLog(nm(d.unit) + ' 막음 ' + d.blocked, 'blk');
+    });
+    on('fx:block', function (d) { addLog(nm(d.unit) + ' 보호막 +' + d.n, 'blk'); });
+    on('fx:heal', function (d) { if (d.n > 0) addLog(nm(d.unit) + ' 회복 +' + d.n, 'heal'); });
+    on('fx:status', function (d) { var st = ST[d.key]; if (st && d.n) addLog(nm(d.unit) + ' ' + U.esc(st.name) + ' ' + (d.n > 0 ? '+' : '') + d.n, st.kind === 'debuff' ? 'debuff' : 'buff'); });
+    on('fx:death', function (d) { addLog(nm(d.unit) + ' 쓰러졌다', 'death'); });
+    on('relic:trigger', function (d) { var r = d.id && G.Data.relicById[d.id]; if (r) addLog('유물 「' + U.esc(r.name) + '」', 'relic'); });
+    on('item:use', function (d) { addLog('소모품 「' + U.esc(d.def.name) + '」', 'relic'); });
+    on('battle:end', function (d) { endFast(); addLog(d.result === 'win' ? '승리' : '패배', 'turn'); });
+    // 24단계: 턴 되돌리기 — 복제된 유닛·카드로 화면을 다시 만든다
+    on('battle:undo', function () {
+      logLines.length = logMark; addLog('— 이번 턴을 되돌렸다 —', 'turn');
+      heroesEl.innerHTML = ''; monstersEl.innerHTML = ''; handEl.innerHTML = '';
+      unitEls = {}; cardEls = {}; handSig = ''; fitSig = ''; aimIdx = 0;
+      SND.play('draw');
+    });
     on('battle:update', function () { renderAll(); });
     on('battle:turn', function (d) {
       banner(d.side === 'ally' ? '내 턴' : '적의 턴', d.side === 'ally' ? '' : 'enemy');
@@ -835,8 +965,13 @@
       m.querySelector('.no').onclick = function () { UI.closeModal(m); };
       m.querySelector('.yes').onclick = function () { UI.closeModal(m); G.Battle.current = null; B = null; onExit(); };
     });
+    root.querySelector('.undo-btn').addEventListener('click', doUndo);
+    root.querySelector('.log-btn').addEventListener('click', function () { toggleLog(); });
+    root.querySelector('.bl-close').addEventListener('click', function () { toggleLog(false); });
     root.querySelector('.debug-kill').addEventListener('click', function () { if (B && B.phase === 'player' && !B.busy) B.debugKillAll(); });
     root.querySelector('.field').addEventListener('click', function (e) {
+      if (!B) return;
+      if (B.phase === 'enemy' || (B.busy && !selected)) return fastForward();   // 24단계: 연출 빨리 감기
       if (selected && !B.needsTarget(selected) && !e.target.closest('.unit')) tryPlay(selected, null);
     });
     root.querySelector('.energy .crystal').setAttribute('style', UI.iconStyle('energy'));

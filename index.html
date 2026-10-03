@@ -4,9 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>천외검결 — 두 세계의 검</title>
-  <!-- 도트 한글 폰트 갈무리(OFL). 인터넷이 없으면 시스템 글꼴로 보인다 -->
+  <!-- 도트 한글 폰트 갈무리(OFL). 온라인일 때 내장 글꼴에 없는 글자를 채운다 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/galmuri/dist/galmuri.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nanum+Brush+Script&family=Song+Myung&display=swap">
+  <!-- 24단계: 게임에 쓰는 글자만 담은 내장 글꼴(tools/embed-fonts.py). CDN 뒤에 두어 오프라인에서도 같은 글꼴로 보인다 -->
+  <link rel="stylesheet" href="css/fonts.css">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -30,6 +32,8 @@
         <div class="relic-bar"></div>
         <div class="item-bar" data-tip="<b>소모품</b><br>내 턴에 눌러 에너지 없이 쓴다. 칸 3개."></div>
         <span class="gold"><i class="ico ico-gold"></i><span class="goldv">0</span></span>
+        <button class="btn small ghost undo-btn" data-tip="<b>턴 되돌리기</b> (Z)<br>이번 턴에 쓴 카드·소모품을 모두 되돌린다. 노말 모드만.">되돌리기</button>
+        <button class="btn small ghost log-btn" data-tip="<b>전투 기록</b> (L)<br>지금까지 일어난 일을 본다.">기록</button>
         <button class="btn small debug-kill">적 즉사</button>
         <button class="btn small ghost to-menu">메뉴로</button>
       </div>
@@ -52,8 +56,10 @@
           <div class="pilebtn pix pile-exhaust" data-tip="소멸한 카드"><i class="ico ico-exhaust"></i><span class="cnt-exhaust">0</span></div>
           <div class="pilebtn pix pile-discard" data-tip="버린 카드 (클릭해서 보기)"><i class="ico ico-discard"></i><span class="cnt-discard">0</span></div>
         </div>
-        <button class="btn gold endturn">턴 종료</button>
+        <button class="btn gold endturn">턴 종료 <kbd>E</kbd></button>
       </div>
+      <div class="battle-log" hidden><div class="bl-head"><b>전투 기록</b><button class="btn small ghost bl-close">닫기</button></div><ol></ol></div>
+      <div class="skip-hint" hidden>클릭하면 빨리 감기</div>
     </div>
 
     <div id="fx"></div>

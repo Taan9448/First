@@ -119,6 +119,30 @@
     else UI.hideTip();
   });
 
+  // 24단계: 터치 — 길게 누르면 툴팁을 보이고, 그 누름은 클릭으로 치지 않는다
+  var lp = null;
+  UI.longPressed = false;
+  document.addEventListener('pointerdown', function (e) {
+    if (e.pointerType !== 'touch') return;
+    UI.longPressed = false;
+    var t = e.target.closest && e.target.closest('[data-tip]');
+    if (!t) { UI.hideTip(); return; }
+    var x = e.clientX, y = e.clientY;
+    clearTimeout(lp && lp.timer);
+    lp = { x: x, y: y, timer: setTimeout(function () { UI.longPressed = true; UI.showTip(t.getAttribute('data-tip'), x, Math.max(0, y - 60)); }, 450) };
+  }, true);
+  document.addEventListener('pointermove', function (e) {
+    if (lp && e.pointerType === 'touch' && Math.hypot(e.clientX - lp.x, e.clientY - lp.y) > 12) { clearTimeout(lp.timer); lp = null; }
+  }, true);
+  document.addEventListener('pointerup', function (e) {
+    if (e.pointerType !== 'touch') return;
+    if (lp) { clearTimeout(lp.timer); lp = null; }
+    if (UI.longPressed) setTimeout(UI.hideTip, 1600);
+  }, true);
+  document.addEventListener('click', function (e) {
+    if (UI.longPressed) { UI.longPressed = false; e.stopPropagation(); e.preventDefault(); }
+  }, true);
+
   // ---------------- 키워드 ----------------
   var kwRe = null;
   UI.keywordize = function (html) {
@@ -270,7 +294,7 @@
       if (!d) return '';
       var desc = d.desc.replace('{n}', n).replace('{p}', n * 10).replace('{h}', n * 0.5);
       return '<span class="st" data-tip="<b>' + d.name + '</b> ' + n + '<br>' + U.esc(desc) + '">' +
-        '<i class="ico" style="' + UI.iconStyle(d.icon) + '"></i><b>' + n + '</b></span>';
+        '<i class="ico" style="' + UI.iconStyle(d.icon) + '"></i><b>' + n + '</b><em class="cb-lab ' + (d.kind === 'debuff' ? 'de' : 'bu') + '">' + d.name.slice(0, 2) + '</em></span>';   // 24단계: 색약 표기
     }).join('');
   };
 

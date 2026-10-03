@@ -26,6 +26,11 @@
     G.FX.low = s.fx === 'low';
     document.body.classList.toggle('fx-low', G.FX.low);
     G.Audio.setVolume((s.volume == null ? 70 : s.volume) / 100);
+    // 24단계: 글자 크기 · 색약 표기 · 단축키 표시
+    document.documentElement.style.setProperty('--ts', String(s.textScale || 1));
+    document.body.classList.toggle('text-big', (s.textScale || 1) > 1);
+    document.body.classList.toggle('cb', !!s.cb);
+    document.body.classList.toggle('no-hotkeys', s.hotkeys === false);
     G.Save.writeSettings(s);
   };
 
@@ -315,9 +320,63 @@
       ['전투', '매 턴 에너지 3으로 카드를 쓴다. 적의 머리 위 예고를 보고 막거나 먼저 쓰러뜨린다. 쓰러진 동료는 전투 뒤 25%로 돌아온다.'],
       ['카드 등급', '카드 위쪽의 별이 등급이다. 별 1 일반 · 2 고급 · 3 희귀 · 4 영웅 · 5 전설. 합동기는 무지갯빛 테두리.'],
       ['동료', '2·4·6·8 스테이지를 깨면 새 동료가 합류한다. 전투로 경험치를 얻어 레벨이 오르면 특성을 고르고, 함께 싸울수록 친밀도가 쌓인다.'],
-      ['패배', '스테이지를 처음부터 다시 한다. 얻은 카드·골드·유물은 남는다.']
+      ['패배', '스테이지를 처음부터 다시 한다. 골드 일부(노말 15%)를 잃고 스테이지 덱은 처음으로 돌아간다. 보유 카드·유물은 남는다.'],
+      ['단축키', '1~9·0 카드 고르기(같은 번호를 다시 누르면 쓴다) · ←→ 대상 바꾸기 · Enter/Space 쓰기 · E 턴 종료 · Z 턴 되돌리기(노말) · L 전투 기록 · Esc 취소. 적의 턴에 전장을 누르면 빨리 감는다'],
+      ['터치', '카드를 끌어 쓰거나 두 번 눌러 쓴다. 길게 누르면 설명이 나온다']
     ];
     win('도움말', '<div class="mon-list">' + rows.map(function (r) { return '<div class="mon-row"><div class="info"><b>' + r[0] + '</b><div>' + r[1] + '</div></div></div>'; }).join('') + '</div>', 'setwin');
+  };
+
+  // ================= 24단계: 저장 내보내기 · 가져오기 =================
+  X.exportWin = function (slot) {
+    var text = G.Save.exportText(slot);
+    var m = UI.modal('<h2>' + slot + '번 칸 내보내기</h2><p class="dim">아래 글자를 복사해 다른 PC의 타이틀 → 저장 칸 → 가져오기에 붙여 넣는다. 파일로도 받을 수 있다.</p>' +
+      '<textarea class="save-text" readonly></textarea>' +
+      '<div class="row" style="justify-content:flex-end"><span class="dim copied"></span><button class="btn small file">파일로 받기</button><button class="btn small copy">복사</button><button class="btn gold close">닫기</button></div>', 'savewin');
+    var ta = m.querySelector('.save-text');
+    ta.value = text;
+    ta.onclick = function () { ta.select(); };
+    m.querySelector('.copy').onclick = function () {
+      ta.select();
+      var done = function () { m.querySelector('.copied').textContent = '복사했다'; };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, function () { try { document.execCommand('copy'); done(); } catch (e) { /* 무시 */ } });
+      else { try { document.execCommand('copy'); done(); } catch (e) { /* 무시 */ } }
+    };
+    m.querySelector('.file').onclick = function () {
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain' }));
+      a.download = '천외검결-저장' + slot + '.txt';
+      document.body.appendChild(a); a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+    };
+    m.querySelector('.close').onclick = function () { UI.closeModal(m); };
+  };
+  // onDone(): 가져오기에 성공하면 부른다
+  X.importWin = function (slot, onDone) {
+    var m = UI.modal('<h2>' + slot + '번 칸에 가져오기</h2><p class="dim">내보낸 글자를 붙여 넣거나 파일을 고른다.' + (G.Save.exists(slot) ? ' <b>이 칸의 지금 기록은 지워진다.</b>' : '') + '</p>' +
+      '<textarea class="save-text" placeholder="CHG1:..."></textarea>' +
+      '<div class="row" style="justify-content:flex-end"><span class="msg"></span><label class="btn small file">파일 고르기<input type="file" accept=".txt,text/plain" hidden></label><button class="btn small no">취소</button><button class="btn gold yes">가져오기</button></div>', 'savewin');
+    var ta = m.querySelector('.save-text'), msg = m.querySelector('.msg');
+    var preview = function () {
+      var d = G.Save.parseExport(ta.value);
+      msg.className = 'msg ' + (d ? 'ok' : 'bad');
+      msg.textContent = !ta.value.trim() ? '' : d ? (D.modes[d.mode] || D.modes.normal).name + ' · 클리어 ' + d.clearedStage + ' · 동료 ' + d.characters.length + '명 · 골드 ' + d.gold : '알아볼 수 없는 글자다';
+      return d;
+    };
+    ta.oninput = preview;
+    m.querySelector('input[type=file]').onchange = function () {
+      var f = this.files && this.files[0];
+      if (!f) return;
+      var rd = new FileReader();
+      rd.onload = function () { ta.value = String(rd.result || ''); preview(); };
+      rd.readAsText(f);
+    };
+    m.querySelector('.no').onclick = function () { UI.closeModal(m); };
+    m.querySelector('.yes').onclick = function () {
+      if (!preview()) return;
+      if (G.Save.importText(ta.value, slot)) { UI.closeModal(m); if (onDone) onDone(); }
+      else { msg.className = 'msg bad'; msg.textContent = '저장하지 못했다'; }
+    };
   };
 
   // ================= 설정 =================
@@ -334,7 +393,15 @@
       '<button class="btn small fx-low ' + (s.fx === 'low' ? 'on' : '') + '">낮음</button><small class="dim">낮음: 파티클 30%, 흔들림·번쩍임 끔</small></div></div>' +
       '<div class="set-row"><span>전투 속도</span><div class="row"><button class="btn small sp1 ' + (s.speed !== 2 ? 'on' : '') + '">1x</button>' +
       '<button class="btn small sp2 ' + (s.speed === 2 ? 'on' : '') + '">2x</button></div></div>' +
+      '<div class="set-row"><span>글자 크기</span><div class="row">' + [[1, '보통'], [1.15, '크게'], [1.3, '더 크게']].map(function (t) {
+        return '<button class="btn small ts" data-ts="' + t[0] + '">' + t[1] + '</button>';
+      }).join('') + '</div></div>' +
+      '<div class="set-row"><span>색약 표기</span><div class="row"><button class="btn small cb-on ' + (s.cb ? 'on' : '') + '">켬</button><button class="btn small cb-off ' + (!s.cb ? 'on' : '') + '">끔</button>' +
+      '<small class="dim">행동 예고·상태에 글자 표시, 공격 대상 이름</small></div></div>' +
+      '<div class="set-row"><span>단축키 표시</span><div class="row"><button class="btn small hk-on ' + (s.hotkeys !== false ? 'on' : '') + '">켬</button><button class="btn small hk-off ' + (s.hotkeys === false ? 'on' : '') + '">끔</button>' +
+      '<small class="dim">1~0 카드 · ←→ 대상 · Enter 사용 · E 턴 종료 · Z 되돌리기</small></div></div>' +
       '<div class="set-row"><span>튜토리얼</span><div class="row"><button class="btn small tut">다음 전투에서 다시 보기</button></div></div>' +
+      (St().data ? '<div class="set-row"><span>저장 옮기기</span><div class="row"><button class="btn small export">' + G.Save.slot + '번 칸 내보내기</button><small class="dim">가져오기는 타이틀의 저장 칸 화면에서</small></div></div>' : '') +
       '<div class="set-row"><span>저장 데이터</span><div class="row"><button class="btn small reset">초기화</button><small class="dim">' + (G.debug ? '디버그 저장만 지운다' : '모든 진행이 사라진다') + '</small></div></div>' +
       debug + '</div>', 'setwin');
     var re = function () { X.settingsWin(); };
@@ -345,6 +412,15 @@
     m.querySelector('.fx-low').onclick = function () { s.fx = 'low'; X.applySettings(s); re(); };
     m.querySelector('.sp1').onclick = function () { s.speed = 1; X.applySettings(s); re(); };
     m.querySelector('.sp2').onclick = function () { s.speed = 2; X.applySettings(s); re(); };
+    UI.$$('.ts', m).forEach(function (b) {
+      b.classList.toggle('on', +b.getAttribute('data-ts') === (s.textScale || 1));
+      b.onclick = function () { s.textScale = +b.getAttribute('data-ts'); X.applySettings(s); re(); };
+    });
+    m.querySelector('.cb-on').onclick = function () { s.cb = true; X.applySettings(s); re(); X.refreshScreen(); };
+    m.querySelector('.cb-off').onclick = function () { s.cb = false; X.applySettings(s); re(); X.refreshScreen(); };
+    m.querySelector('.hk-on').onclick = function () { s.hotkeys = true; X.applySettings(s); re(); };
+    m.querySelector('.hk-off').onclick = function () { s.hotkeys = false; X.applySettings(s); re(); };
+    if (m.querySelector('.export')) m.querySelector('.export').onclick = function () { St().save(); X.exportWin(G.Save.slot); };
     m.querySelector('.tut').onclick = function () {
       if (St().data) { St().data.flags.tutorialDone = false; St().save(); }
       this.textContent = '다음 전투에서 보여 준다';

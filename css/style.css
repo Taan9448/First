@@ -958,7 +958,7 @@ span.gold.bump { animation: popIn 0.4s steps(4); }
 .result.lose h2 { color: var(--red) !important; }
 .win-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .modal.win .box { width: min(1060px, 94vw); height: 86vh; max-height: 86vh; }
-.modal.setwin .box { width: min(660px, 94vw); height: auto; }
+.modal.setwin .box { width: min(780px, 94vw); height: auto; }
 .tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 6px; align-self: flex-start; }
 .tab { position: relative; border: 0; color: var(--dim); padding: 7px 16px; cursor: pointer; background: rgba(94, 230, 255, 0.06); clip-path: var(--cuts);
   box-shadow: inset 0 -2px 0 rgba(94, 230, 255, 0.2); transition: background 0.15s, color 0.15s, transform 0.12s steps(2); }
@@ -1285,3 +1285,50 @@ body.fx-low .hand .card .cin, body.fx-low .intent, body.fx-low .title-bg, body.f
 .shop-extras .col { display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .shop-items .shop-item { display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .shop-items .shop-item small { font-size: 0.8em; color: #c9d3ea; }
+
+/* 24단계: 단축키 · 전투 기록 · 빨리 감기 */
+kbd { display: inline-block; min-width: 1.3em; padding: 0 0.3em; margin-left: 0.3em; border: 1px solid currentColor; border-radius: 3px; font-family: var(--font); font-size: 0.62em; line-height: 1.4; text-align: center; opacity: 0.75; vertical-align: middle; }
+.card .hk { position: absolute; right: 0.4em; top: -0.7em; z-index: 4; min-width: 1.5em; padding: 0 0.25em; border-radius: 3px; background: rgba(5, 9, 19, 0.82); border: 1px solid rgba(160, 200, 255, 0.45);
+  color: #cfe2ff; font-family: var(--font); font-style: normal; font-size: 0.9em; line-height: 1.4; text-align: center; pointer-events: none; }
+body.no-hotkeys .card .hk, body.no-hotkeys kbd { display: none; }
+.unit.kbd-aim .sprite-wrap { filter: drop-shadow(0 0 3px #ffe066) drop-shadow(0 0 7px #ff9a4a); }
+.unit.kbd-aim .uname { color: #ffe066; }
+#screen-battle .undo-btn:disabled { opacity: 0.4; }
+.battle-log { position: absolute; right: 12px; top: 64px; z-index: 30; width: 330px; max-height: calc(100% - 330px); min-height: 160px; display: flex; flex-direction: column;
+  background: rgba(6, 12, 26, 0.94); border: 1px solid rgba(94, 230, 255, 0.35); box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5); }
+.battle-log[hidden] { display: none; }
+.battle-log .bl-head { display: flex; align-items: center; justify-content: space-between; padding: 6px 8px 6px 12px; border-bottom: 1px solid rgba(94, 230, 255, 0.2); color: var(--cyan); }
+.battle-log li { position: static; display: block; height: auto; white-space: normal; }
+.battle-log ol { margin: 0; padding: 6px 12px 10px; list-style: none; overflow-y: auto; font-size: 0.86em; line-height: 1.5; color: #c4cde6; }
+.battle-log li.turn { margin-top: 6px; color: var(--gold2); border-top: 1px dashed rgba(255, 210, 120, 0.25); padding-top: 4px; }
+.battle-log li.card { color: #e8eeff; }
+.battle-log li.hit { color: #ffb0a8; }
+.battle-log li.blk { color: #9fcaff; }
+.battle-log li.heal { color: #9af0a6; }
+.battle-log li.debuff { color: #d6a8ff; }
+.battle-log li.death { color: #ff7a7a; }
+.battle-log li.relic { color: #ffe08a; }
+.battle-log b.ally { color: #8fe3ff; font-weight: normal; }
+.battle-log b.enemy { color: #ff9a8a; font-weight: normal; }
+.skip-hint { position: absolute; left: 50%; top: 66px; transform: translateX(-50%); z-index: 13; padding: 2px 12px; background: rgba(5, 9, 19, 0.7); color: #aab4d4; font-size: 0.85em; pointer-events: none; }
+.skip-hint[hidden] { display: none; }
+#screen-battle.fast .field::after { content: '>> 빨리 감기'; position: absolute; left: 50%; top: 66px; transform: translateX(-50%); z-index: 13; padding: 2px 12px; background: rgba(5, 9, 19, 0.7); color: var(--gold2); font-size: 0.85em; }
+/* 24단계: 터치 — 손패를 끄는 동안 화면이 움직이지 않게 */
+#screen-battle .hand, #screen-battle .card, #screen-battle .unit { touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+@media (hover: none) { .card .hk, kbd { display: none; } }
+/* 24단계: 글자 크기 */
+:root { --ts: 1; }
+body { font-size: calc(var(--fs) * var(--ts)); }
+body.text-big #tip { max-width: calc(320px * var(--ts)); }
+/* 24단계: 색약 표기 */
+.cb-lab { display: none; }
+body.cb .cb-lab { display: inline; }
+body.cb .intent .cb-lab { display: block; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 2px; white-space: nowrap; padding: 0 5px; background: rgba(5, 9, 19, 0.85); color: #fff; font-size: 11px; font-style: normal; line-height: 1.5; }
+body.cb .st .cb-lab { font-style: normal; font-size: 0.8em; margin-left: 1px; padding: 0 2px; border-radius: 2px; }
+body.cb .st .cb-lab.de { background: #3a1430; color: #ffc2e6; text-decoration: underline; }
+body.cb .st .cb-lab.bu { background: #12324a; color: #c2ecff; }
+/* 24단계: 저장 옮기기 */
+.modal.savewin .box { width: min(640px, 92vw); }
+.save-text { width: 100%; height: 140px; margin: 8px 0 12px; padding: 8px; resize: vertical; background: #050913; color: #cfe2ff; border: 1px solid rgba(94, 230, 255, 0.35); font-family: monospace; font-size: 12px; word-break: break-all; }
+.savewin .msg.ok { color: #9af0a6; } .savewin .msg.bad { color: #ff8a8a; }
+.savewin label.btn { cursor: pointer; }

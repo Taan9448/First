@@ -57,13 +57,15 @@
     var last = G.Save.lastSlot();
     el.innerHTML = titleFrame('<div class="lineup"></div>' +
       '<div class="menu">' +
-      '<button class="btn gold big cont" ' + (last ? '' : 'disabled') + '>이어하기' + (last ? ' <small>' + last + '번 칸</small>' : '') + '</button>' +
+      (last ? '<button class="btn gold big cont">이어하기 <small>' + last + '번 칸</small></button>'
+        : '<button class="btn gold big quick-new">새 게임</button>') +   // 24단계: 저장이 하나도 없으면 바로 모드 선택(1번 칸)
       '<button class="btn big slots">저장 칸 · 새 게임</button>' +
       (G.debug ? '<button class="btn small test">전투 테스트 (디버그)</button>' : '') +
       '</div>');
     var line = el.querySelector('.lineup');
     D.characters.forEach(function (c) { var w = UI.el('div', 'slot'); w.appendChild(UI.spriteEl(c.id, 1.1)); line.appendChild(w); });
-    el.querySelector('.cont').onclick = function () { openSlot(last); };
+    if (last) el.querySelector('.cont').onclick = function () { openSlot(last); };
+    else el.querySelector('.quick-new').onclick = function () { Meta.modeSelect(1); };
     el.querySelector('.slots').onclick = function () { Meta.slots(); };
     if (G.debug) el.querySelector('.test').onclick = function () { G.TestMenu.open(); };
     UI.show('title');
@@ -100,7 +102,7 @@
       var d = G.Save.peek(n);
       if (!d) {
         cards += '<div class="slot-card empty" data-n="' + n + '"><small>SLOT ' + n + '</small><b>빈 칸</b><p class="dim">새 원정을 시작한다</p>' +
-          '<div class="row"><button class="btn gold new" data-n="' + n + '">새 게임</button></div></div>';
+          '<div class="row"><button class="btn gold new" data-n="' + n + '">새 게임</button><button class="btn small imp" data-n="' + n + '">가져오기</button></div></div>';
         continue;
       }
       var md = D.modes[d.mode] || D.modes.normal;
@@ -112,7 +114,7 @@
         '<div class="info-line"><span>클리어</span><span>' + d.clearedStage + '/' + D.stages.length + (d.ascension && d.ascension.current ? ' · 승천 ' + d.ascension.current : '') + '</span></div>' +
         '<div class="info-line"><span>동료</span><span>' + alive.length + '명' + ((d.dead || []).length ? ' · 사망 ' + d.dead.length : '') + '</span></div>' +
         '<div class="info-line"><span>골드 · 카드</span><span>' + d.gold + ' · ' + d.cards.length + '장</span></div>' +
-        '<div class="row"><button class="btn gold go" data-n="' + n + '">이어하기</button><button class="btn small danger del" data-n="' + n + '">지우기</button></div></div>';
+        '<div class="row"><button class="btn gold go" data-n="' + n + '">이어하기</button><button class="btn small exp" data-n="' + n + '">내보내기</button><button class="btn small imp" data-n="' + n + '">가져오기</button><button class="btn small danger del" data-n="' + n + '">지우기</button></div></div>';
     }
     el.innerHTML = titleFrame('<span class="ribbon">저장 칸을 고른다</span><div class="slot-grid">' + cards + '</div>' +
       '<div class="menu"><button class="btn back">뒤로</button></div>');
@@ -126,6 +128,9 @@
       });
     });
     UI.$$('.slot-card .go', el).forEach(function (b) { b.onclick = function () { openSlot(+b.getAttribute('data-n')); }; });
+    // 24단계: 저장 내보내기 · 가져오기
+    UI.$$('.slot-card .exp', el).forEach(function (b) { b.onclick = function () { G.Extra.exportWin(+b.getAttribute('data-n')); }; });
+    UI.$$('.slot-card .imp', el).forEach(function (b) { b.onclick = function () { G.Extra.importWin(+b.getAttribute('data-n'), Meta.slots); }; });
     UI.$$('.slot-card .new', el).forEach(function (b) { b.onclick = function () { Meta.modeSelect(+b.getAttribute('data-n')); }; });
     UI.$$('.slot-card .del', el).forEach(function (b) {
       b.onclick = function () {
@@ -152,7 +157,8 @@
       el.querySelector('.start').onclick = function () {
         G.Save.use(slot);
         St.newGame(pick);
-        Meta.scene('prologue', Meta.lobby);
+        // 24단계: 첫 게임은 로비·세계 지도·편성을 건너뛰고 프롤로그 뒤 바로 1 스테이지 던전으로
+        Meta.scene('prologue', function () { Meta.enterStage(1); });
       };
     };
     render();
@@ -344,8 +350,12 @@
     var r = St.data.run;
     if (r) { if (r.stage === n) Meta.continueRun(); return; }
     if (!St.canEnter(n)) return;
-    Meta.party(function () { St.startStage(n); mapView = 'dungeon'; Meta.stageIntro(n, function () { Meta.map(n); }); }, '스테이지 ' + n + ' 출발', function () { Meta.map(n); });
+    // 24단계: 고를 동료가 한 명뿐이면 편성 화면을 건너뛴다
+    var able = St.data.characters.filter(function (id) { return !St.isDead(id); });
+    if (able.length === 1 && St.setParty(able)) return Meta.enterStage(n);
+    Meta.party(function () { Meta.enterStage(n); }, '스테이지 ' + n + ' 출발', function () { Meta.map(n); });
   }
+  Meta.enterStage = function (n) { St.startStage(n); mapView = 'dungeon'; Meta.stageIntro(n, function () { Meta.map(n); }); };
 
   // 진행 중인 스테이지의 현재 노드로
   var starting = false; // 전투 시작 버튼을 빠르게 두 번 눌러도 전투는 하나만
