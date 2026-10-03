@@ -1,4 +1,4 @@
-// items.js — 소모품(단약·부적) 12종 (22단계)
+// items.js — 소모품(단약·부적) 18종 (22단계, 29단계에 6종 추가)
 // 전투 중 언제든(내 턴, 카드를 쓰는 중이 아닐 때) 에너지 없이 쓴다. 칸은 3개(economy.itemSlots), 쓰면 사라진다.
 // 효과 목록은 카드와 같은 형식이고 시전자가 없다. 대상은 고르지 않는다(전체 · 무작위 · 체력이 가장 낮은 아군 · 쓰러진 아군 전원)
 (function () {
@@ -15,7 +15,14 @@
     I('I09', '정심환', 'uncommon', 'regen', '아군 전체의 디버프를 모두 지우고 재생 3.', [{ op: 'cleanse', all: true, target: 'allAllies' }, { op: 'status', status: 'regen', value: 3, target: 'allAllies' }]),
     I('I10', '기세 환단', 'uncommon', 'special', '동료 전원의 고유 자원 +3.', [{ op: 'res', value: 3, target: 'allAllies' }]),
     I('I11', '혈기단', 'rare', 'strength', '아군 전체 이번 턴 힘 +3.', [{ op: 'status', status: 'tempStr', value: 3, target: 'allAllies' }]),
-    I('I12', '대환단', 'rare', 'heart', '쓰러진 아군을 모두 체력 30%로 되살린다.', [{ op: 'revive', pct: 0.3, target: 'allDowned' }])
+    I('I12', '대환단', 'rare', 'heart', '쓰러진 아군을 모두 체력 30%로 되살린다.', [{ op: 'revive', pct: 0.3, target: 'allDowned' }]),
+    // 29단계
+    I('I13', '철벽부', 'common', 'hold', '아군 전체 보호막 6, 버티기(다음 턴에 보호막이 사라지지 않는다).', [{ op: 'block', value: 6, target: 'allAllies' }, { op: 'status', status: 'hold', value: 1, target: 'allAllies' }]),
+    I('I14', '가시덩굴 부적', 'common', 'thorns', '아군 전체 가시(일시) 5.', [{ op: 'status', status: 'thornsTemp', value: 5, target: 'allAllies' }]),
+    I('I15', '쇠약향', 'common', 'weak', '적 전체에 약화 2.', [{ op: 'status', status: 'weak', value: 2, target: 'allEnemies' }]),
+    I('I16', '청심단', 'uncommon', 'focus', '아군 전체 집중 1(다음 공격이 반드시 치명타).', [{ op: 'status', status: 'focus', value: 1, target: 'allAllies' }]),
+    I('I17', '빙혼부', 'uncommon', 'frozen', '무작위 적 1명에게 한기 3(바로 빙결).', [{ op: 'status', status: 'chill', value: 3, target: 'randomEnemy' }]),
+    I('I18', '태청단', 'rare', 'buff', '에너지 +1, 카드 2장 뽑기, 아군 전체 보호막 6.', [{ op: 'energy', value: 1 }, { op: 'draw', value: 2 }, { op: 'block', value: 6, target: 'allAllies' }])
   ];
   Game.Data.items = list;
   Game.Data.itemById = Game.util.byId(list);

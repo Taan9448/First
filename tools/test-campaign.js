@@ -233,7 +233,7 @@ function invariants(where) {
   }
 
   if (N >= 3) {
-    check(eventsSeen.size >= 22, '이벤트 대부분 등장 (' + eventsSeen.size + '/30)');
+    check(eventsSeen.size >= 22, '이벤트 대부분 등장 (' + eventsSeen.size + '/40)');
     ['battle', 'elite', 'event', 'rest', 'shop', 'boss', 'midboss', 'final'].forEach(t => check(typesSeen.has(t), '노드 종류 등장: ' + t));
   }
 
@@ -292,9 +292,9 @@ function invariants(where) {
   check(St.battleOptions().party.every(p => Array.isArray(p.traits)), '전투에 특성 전달');
   St.abandon();
 
-  // 22단계: 이벤트 30종의 선택지를 모두 실행해 본다(테마 이벤트는 그 테마 스테이지에서), 소모품
+  // 22단계: 이벤트 40종(29단계)의 선택지를 모두 실행해 본다(테마 이벤트는 그 테마 스테이지에서), 소모품
   {
-    check(D.events.length === 30, '이벤트 30종');
+    check(D.events.length === 40, '이벤트 40종');
     St.data.party = ['kai']; St.data.gold = 999;
     const stageOfTheme = th => D.stages.findIndex(s => s.theme === th) + 1;
     let ran = 0;

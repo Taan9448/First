@@ -1,4 +1,4 @@
-// cards.js — 카드 200종(16단계에 융합 카드 8장 추가) + 방해 카드
+// cards.js — 카드 247종(16단계 200 → 20단계 218 → 21단계 223 → 29단계 247) + 방해 카드
 // 형식은 GAME_DESIGN.md 2.3절. 설명의 {d0}, {d1} … 은 damage 효과의 순서(깊이 우선)이며
 // 화면에서 힘·약화를 반영한 값으로 바뀐다. 그 밖의 수치는 글자로 적는다.
 (function () {
@@ -286,7 +286,32 @@
     C('B37', '반격 준비', 'b', 'u', 1, 's', [blk(5), { op: 'res', value: 2 }], '보호막 5. 반격 자세 +2(방어 카드라 1 더 쌓인다).', { art: 'parry' }),
     C('L37', '공명 증폭', 's', 'u', 0, 'n', [{ op: 'res', value: 2 }, draw(1)], '원소 공명 +2(카드라 1 더 쌓인다). 카드 1장을 뽑는다.', { art: 'orb', el: 'arcane' }),
     C('S37', '신앙 고백', 'h', 'r', 1, 'A', [heal(4), { op: 'res', value: 1 }], '아군 전체의 체력 4 회복. 신앙 +1(회복한 동료마다 1 더 쌓인다).', { art: 'pray', el: 'holy' }),
-    C('N38', '표식 폭발', 'a', 'r', 1, 'e', [dmg(per('targetStatus', 5, 0, { status: 'venomMark' })), { op: 'clearStatus', status: 'venomMark' }], '피해 {d0}: 대상의 독 표식 1당 5. 그 뒤 표식을 없앤다.', { art: 'needles', el: 'poison', tags: '조건' })
+    C('N38', '표식 폭발', 'a', 'r', 1, 'e', [dmg(per('targetStatus', 5, 0, { status: 'venomMark' })), { op: 'clearStatus', status: 'venomMark' }], '피해 {d0}: 대상의 독 표식 1당 5. 그 뒤 표식을 없앤다.', { art: 'needles', el: 'poison', tags: '조건' }),
+    // ---------------- 29단계: 캐릭터마다 4장 · 공용 4장 ----------------
+    C('K39', '유수검', 'a', 'c', 1, 'e', [dmg(4, { times: 2 })], '피해 {d0}을 2회.', { art: 'twin' }),
+    C('K40', '검세 응축', 's', 'u', 1, 's', [{ op: 'res', value: 2 }, blk(4, { target: 'self' })], '검세 +2. 보호막 4.', { art: 'shout' }),
+    C('K41', '일섬 연파', 'a', 'r', 2, 'E', [dmg(7), IF({ is: 'attacksThisTurn', op: '>=', n: 2 }, [dmg(7)])], '적 전체에 피해 {d0}. 이번 턴 이미 공격 카드를 2장 이상 썼다면 한 번 더 피해 {d1}.', { art: 'slashX', tags: '조건' }),
+    C('K42', '파천일격', 'a', 'e', 3, 'e', [dmg(18, { forceCrit: true })], '피해 {d0}. 반드시 치명타.', { art: 'katana', tags: '치명' }),
+    C('B38', '방패 올리기', 'b', 'c', 1, 's', [blk(5), draw(1)], '보호막 5. 카드 1장을 뽑는다.', { art: 'shield' }),
+    C('B39', '역습', 'a', 'u', 1, 'e', [dmg(per('selfBlock', 0.5, 4))], '피해 {d0}: 4 + 자신의 보호막 절반.', { art: 'shieldBash', tags: '조건' }),
+    C('B40', '수호 결계', 'b', 'r', 2, 'A', [blk(6), st('thorns', 2)], '아군 전체에 보호막 6, 가시 2.', { art: 'fortress' }),
+    C('B41', '불멸의 맹세', 'p', 'e', 2, 's', [power('turnStart', [blk(6, { target: 'self' })])], '지속 매 턴 시작 시 보호막 6.', { art: 'wall' }),
+    C('L38', '불씨', 'a', 'c', 0, 'e', [dmg(3), st('burn', 2)], '피해 {d0}. 화상 2 부여.', { art: 'fire', el: 'fire' }),
+    C('L39', '서리 고리', 'a', 'u', 1, 'E', [dmg(4), st('chill', 1)], '적 전체에 피해 {d0}, 한기 1 부여.', { art: 'frostRing', el: 'ice' }),
+    C('L40', '마나 폭주', 's', 'r', 1, 'n', [energy(2), draw(1)], '에너지 +2. 카드 1장을 뽑는다. 소멸.', { x: 1, art: 'orb', el: 'arcane' }),
+    C('L41', '삼원소 붕괴', 'a', 'e', 3, 'E', [dmg(8), st('burn', 2), st('chill', 2)], '적 전체에 피해 {d0}, 화상 2, 한기 2 부여.', { art: 'explosion', el: 'arcane' }),
+    C('S38', '작은 축복', 'h', 'c', 1, 'a', [heal(6), blk(3)], '아군 1명의 체력 6 회복, 보호막 3.', { art: 'pray', el: 'holy' }),
+    C('S39', '정화의 빛', 'h', 'u', 1, 'A', [cleanse(), heal(3)], '아군 전체의 디버프 1개를 지우고 체력 3 회복.', { art: 'sun', el: 'holy' }),
+    C('S40', '심판의 빛', 'a', 'r', 2, 'e', [dmg(10), st('weak', 2), st('vulnerable', 1)], '피해 {d0}. 약화 2, 취약 1 부여.', { art: 'lightArrow', el: 'holy' }),
+    C('S41', '천사의 날개', 'p', 'e', 2, 's', [power('turnStart', [heal(3, { target: 'allAllies' })])], '지속 매 턴 시작 시 아군 전체의 체력 3 회복.', { art: 'wings', el: 'holy' }),
+    C('N39', '독침 투척', 'a', 'c', 1, 'r', [dmg(3), st('poison', 3)], '무작위 적에게 피해 {d0}, 중독 3 부여.', { art: 'needles', el: 'poison' }),
+    C('N40', '연막', 'b', 'u', 1, 'A', [blk(4), st('weak', 1, { target: 'allEnemies' })], '아군 전체에 보호막 4. 적 전체에 약화 1 부여.', { art: 'smoke' }),
+    C('N41', '독무', 's', 'r', 2, 'E', [st('poison', 5)], '적 전체에 중독 5 부여.', { art: 'poisonCloud', el: 'poison' }),
+    C('N42', '천독만화', 'a', 'e', 2, 'e', [dmg(per('targetStatus', 1, 6, { status: 'poison' })), st('poison', 4)], '피해 {d0}: 6 + 대상의 중독 1당 1. 그 뒤 중독 4 부여.', { art: 'dagger', el: 'poison', tags: '조건' }),
+    C('C37', '정비', 'b', 'c', 1, 's', [blk(4), draw(1)], '보호막 4. 카드 1장을 뽑는다.', { art: 'shield' }),
+    C('C38', '기습', 'a', 'u', 0, 'e', [dmg(6)], '피해 {d0}. 소멸.', { x: 1, art: 'dash' }),
+    C('C39', '전열 재정비', 's', 'r', 1, 'n', [draw(3), { op: 'discard', value: 1 }], '카드 3장을 뽑는다. 손패 1장을 버린다.', { art: 'flag' }),
+    C('C40', '합공', 'a', 'e', 2, 'E', [dmg(10), energy(1)], '적 전체에 피해 {d0}. 에너지 +1.', { art: 'axe' })
   ];
 
   // 방해 카드 (보유·도감에 포함하지 않음)
@@ -307,7 +332,8 @@
     N25: 'cards', N26: 'thousand', N27: 'shadow', N28: 'aura', N29: 'dice', N32: 'cards',
     C21: 'coin', C22: 'shield', C23: 'cards', C24: 'flag', C25: 'clock', C26: 'cards', C27: 'flag', C32: 'chaos',
     K34: 'slashX', B33: 'shield', S33: 'heal', N34: 'poisonCloud', C33: 'chaos',
-    K36: 'aura', K37: 'slashX', B35: 'shield', B36: 'quake', L34: 'explosion', L36: 'ice', S34: 'pillar', S36: 'pillar', N37: 'poisonCloud', C36: 'rage', K38: 'slashX', S37: 'heal', N38: 'poisonCloud'
+    K36: 'aura', K37: 'slashX', B35: 'shield', B36: 'quake', L34: 'explosion', L36: 'ice', S34: 'pillar', S36: 'pillar', N37: 'poisonCloud', C36: 'rage', K38: 'slashX', S37: 'heal', N38: 'poisonCloud',
+    K41: 'storm', K42: 'slashX', B40: 'shield', B41: 'shield', L40: 'aura', L41: 'explosion', S40: 'pillar', S41: 'wings', N41: 'poisonCloud', N42: 'thousand', C39: 'flag', C40: 'thousand'
   };
   list.forEach(function (c) { if (SFX[c.id]) c.sfx = SFX[c.id]; });
 
@@ -327,8 +353,8 @@
   var SCHOOL = {
     fusion: 'C08 C24 C27 C33 K18 K22 K24 K25 K28 K29 K33 K34 N25 N32 N33 N34 B33 L33 S33',
     magic: 'C07 C11 C17 C18 C25 C26 C30 C32',
-    neutral: 'C05 C12 C15 C21 C23 C28 C29 C31 C34',
-    martial: 'C01 C02 C03 C04 C06 C09 C10 C13 C14 C16 C19 C20 C22 C35 C36'
+    neutral: 'C05 C12 C15 C21 C23 C28 C29 C31 C34 C37 C39',
+    martial: 'C01 C02 C03 C04 C06 C09 C10 C13 C14 C16 C19 C20 C22 C35 C36 C38 C40'
   };
   Object.keys(SCHOOL).forEach(function (k) { SCHOOL[k].split(' ').forEach(function (id) { SCHOOL[id] = k; }); });
   list.forEach(function (c) {

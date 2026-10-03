@@ -1,4 +1,4 @@
-// events.js — 이벤트 노드 30종 (GAME_DESIGN.md 19.3절, 22단계에 15종 추가)
+// events.js — 이벤트 노드 40종 (GAME_DESIGN.md 19.3절, 22단계에 15종 · 29단계에 10종 추가)
 // 선택지의 effects 는 이벤트 효과 목록이다. 처리는 js/stage.js 의 St.eventOp 가 맡는다.
 //   gold{value}                  골드 증감
 //   hp{who, value | pct}         who: leader(선두) · party(파티 전원) · random(파티 중 1명). 음수는 잃음(1 아래로는 안 내려감)
@@ -229,6 +229,75 @@ Game.Data.events = [
     choices: [
       { label: '손을 넣는다', desc: '무작위 유물, 다음 전투 2번 덱에 모래 1장', effects: [{ op: 'relic', pool: 'any' }, { op: 'curse', card: 'SAND', count: 1, battles: 2 }], text: '무언가를 움켜쥐고 손을 빼냈다. 손가락 사이로 모래가 흘렀다.' },
       { label: '닫는다', desc: '파티 전원 경험치 +15', effects: [{ op: 'exp', value: 15 }], text: '틈이 사라지자 바람이 잦아들었다.' }
+    ] },
+  // ---------------- 29단계: 이벤트 10종 (테마 5 + 공통 5) ----------------
+  { id: 'E31', name: '거미줄 동굴', icon: 'chest', themes: ['forest'],
+    text: '끈끈한 거미줄이 동굴 입구를 겹겹이 덮었다. 안쪽에서 무언가 반짝인다.',
+    choices: [
+      { label: '헤치고 들어간다', desc: '파티 전원 체력 -6, 일반·고급 유물', effects: [{ op: 'hp', who: 'party', value: -6 }, { op: 'relic', pool: 'low' }], text: '거미줄에 온몸이 쓸렸지만, 먼저 온 이가 남긴 물건을 찾았다.' },
+      { label: '돌아간다', desc: '아무 일도 없다', effects: [], text: '어둠 속에서 여러 개의 눈이 반짝였다.' }
+    ] },
+  { id: 'E32', name: '신기루 시장', icon: 'shop', themes: ['desert'],
+    text: '모래 위에 천막이 늘어선 시장이 나타났다. 상인들의 얼굴이 아지랑이처럼 흔들린다.',
+    choices: [
+      { label: '골드 50을 낸다', desc: '고급 이상 카드 3장 중 1장', need: { gold: 50 }, effects: [{ op: 'gold', value: -50 }, { op: 'cardChoice', count: 3, minRarity: 'uncommon' }], text: '비급 한 권을 집어 들자 시장이 모래로 흩어졌다.' },
+      { label: '구경만 한다', desc: '50%: 소모품 1개 / 50%: 아무 일도 없다', effects: [
+        { op: 'chance', p: 0.5, then: [{ op: 'item' }], else: [],
+          thenText: '발밑에 누군가 떨어뜨린 약병이 굴러 왔다.', elseText: '눈을 비비자 시장은 사라지고 모래만 남았다.' }], text: '' }
+    ] },
+  { id: 'E33', name: '얼어붙은 검객', icon: 'chill', themes: ['snow'],
+    text: '빙벽 속에 검을 뽑아 든 검객이 그대로 얼어 있다. 검끝이 아직도 무언가를 겨눈다.',
+    choices: [
+      { label: '검세를 읽는다', desc: '선두 캐릭터 체력 -8, 희귀 이상 카드 1장', effects: [{ op: 'hp', who: 'leader', value: -8 }, { op: 'card', minRarity: 'rare' }], text: '한기에 손끝이 갈라졌지만 검객의 마지막 초식을 깨달았다.' },
+      { label: '예를 갖춘다', desc: '카드 1장 강화', effects: [{ op: 'upgrade', count: 1 }], text: '빙벽 앞에 고개를 숙이자 마음이 맑아졌다.' }
+    ] },
+  { id: 'E34', name: '용암 온천', icon: 'burn', themes: ['volcano'],
+    text: '바위틈에서 뜨거운 물이 솟는다. 김 사이로 붉은 광석이 반짝인다.',
+    choices: [
+      { label: '몸을 담근다', desc: '파티 전원 체력 30% 회복, 다음 전투 첫 턴 아군 전체 화상 2', effects: [{ op: 'hp', who: 'party', pct: 0.3 },
+        { op: 'buff', name: '아직 뜨겁다', battles: 1, effects: [{ op: 'status', status: 'burn', value: 2, target: 'allAllies' }] }], text: '피로가 풀렸다. 살갗이 아직 화끈거린다.' },
+      { label: '광석을 캔다', desc: '골드 +40', effects: [{ op: 'gold', value: 40 }], text: '붉은 광석을 자루에 담았다.' }
+    ] },
+  { id: 'E35', name: '무너진 연무장', icon: 'strength', themes: ['castle'],
+    text: '청운문 제자들이 수련하던 연무장이다. 목인 몇 개가 아직 서 있다.',
+    choices: [
+      { label: '목인과 대련한다', desc: '파티 전원 경험치 +25, 파티의 짝마다 친밀도 +2', effects: [{ op: 'exp', value: 25 }, { op: 'bond', value: 2 }], text: '서로 자세를 바로잡아 주며 땀을 흘렸다.' },
+      { label: '무기고를 뒤진다', desc: '고급 소모품 1개', effects: [{ op: 'item', rarity: 'uncommon' }], text: '먼지 쌓인 선반 뒤에 단약 하나가 남아 있었다.' }
+    ] },
+  { id: 'E36', name: '떠돌이 검객', icon: 'attack',
+    text: '삿갓을 쓴 검객이 길가 바위에 앉아 있다. "지나가려면 한 수 겨루고 가시오."',
+    choices: [
+      { label: '비무를 청한다', desc: '파티 최고 치명타 확률 × 3으로 성공: 희귀 이상 카드 / 실패: 선두 캐릭터 체력 -12', effects: [
+        { op: 'chance', crit: 3, then: [{ op: 'card', minRarity: 'rare' }], else: [{ op: 'hp', who: 'leader', value: -12 }],
+          thenText: '검객이 검을 거두며 웃었다. "좋은 칼이군. 이걸 가져가시오."', elseText: '눈 깜짝할 새 검끝이 어깨를 스쳤다.' }], text: '' },
+      { label: '술을 대접한다', desc: '골드 -25, 파티의 짝마다 친밀도 +3', need: { gold: 25 }, effects: [{ op: 'gold', value: -25 }, { op: 'bond', value: 3 }], text: '검객의 강호 이야기에 모두 밤늦도록 웃었다.' }
+    ] },
+  { id: 'E37', name: '점쟁이 노인', icon: 'scroll',
+    text: '길모퉁이에 산통을 든 노인이 앉아 있다. "앞길이 궁금하지 않은가?"',
+    choices: [
+      { label: '점을 본다', desc: '골드 -20, 다음 전투 2번 시작 시 아군 전체 보호막 5', need: { gold: 20 }, effects: [{ op: 'gold', value: -20 },
+        { op: 'buff', name: '길조', battles: 2, effects: [{ op: 'block', value: 5, target: 'allAllies' }] }], text: '"동쪽에서 귀인을 만나리라." 왠지 든든하다.' },
+      { label: '손금을 내민다', desc: '50%: 일반 유물 / 50%: 다음 전투 2번 덱에 모래 1장', effects: [
+        { op: 'chance', p: 0.5, then: [{ op: 'relic', pool: 'common' }], else: [{ op: 'curse', card: 'SAND', count: 1, battles: 2 }],
+          thenText: '노인이 품에서 낡은 부적을 꺼내 주었다.', elseText: '"흉하구나." 노인이 모래 한 줌을 뿌렸다.' }], text: '' }
+    ] },
+  { id: 'E38', name: '버려진 수레', icon: 'chest',
+    text: '바퀴가 빠진 수레가 길가에 기울어 있다. 주인은 보이지 않는다.',
+    choices: [
+      { label: '짐을 뒤진다', desc: '소모품 1개, 골드 +15', effects: [{ op: 'item' }, { op: 'gold', value: 15 }], text: '짐 꾸러미 속에서 쓸 만한 것을 찾았다.' },
+      { label: '불을 피워 쉰다', desc: '파티 전원 체력 8 회복', effects: [{ op: 'hp', who: 'party', value: 8 }], text: '부서진 수레로 불을 피워 몸을 녹였다.' }
+    ] },
+  { id: 'E39', name: '고수의 무덤', icon: 'skull',
+    text: '이끼 낀 비석에 이름 모를 고수의 무덤이라 적혀 있다. 무덤 앞에 녹슨 검이 꽂혀 있다.',
+    choices: [
+      { label: '절을 올린다', desc: '카드 1장 강화, 파티 전원 경험치 +10', effects: [{ op: 'upgrade', count: 1 }, { op: 'exp', value: 10 }], text: '바람결에 누군가의 칭찬이 들린 것 같았다.' },
+      { label: '무덤을 연다', desc: '무작위 유물, 다음 전투에 거울 속 그림자', effects: [{ op: 'relic', pool: 'any' }, { op: 'mirror' }], text: '부장품을 챙기자 등 뒤로 서늘한 기척이 따라붙었다.' }
+    ] },
+  { id: 'E40', name: '두 세계의 다리', icon: 'mirror',
+    text: '안개 위로 돌다리가 걸려 있다. 한쪽 끝은 무림의 산, 다른 끝은 엘단의 숲으로 이어진다.',
+    choices: [
+      { label: '다리를 건넌다', desc: '스테이지 덱의 카드 1장 복제, 1장 빼기', effects: [{ op: 'dup' }, { op: 'purge' }], text: '다리를 건너는 동안 익힌 것과 잊은 것이 하나씩 생겼다.' },
+      { label: '다리 아래서 쉰다', desc: '파티 전원 체력 15% 회복, 경험치 +10', effects: [{ op: 'hp', who: 'party', pct: 0.15 }, { op: 'exp', value: 10 }], text: '두 세계의 바람이 번갈아 불어왔다.' }
     ] }
 ];
 Game.Data.eventById = Game.util.byId(Game.Data.events);

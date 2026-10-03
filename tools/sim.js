@@ -149,7 +149,10 @@ async function playTurn(b) {
 }
 
 // 22단계 소모품: 위급하면 회복·부활·보호막, 정예·보스 첫 턴에는 공격·강화 소모품
-const ITEM_KIND = { I01: 'heal', I12: 'revive', I02: 'guard', I09: 'cleanse', I03: 'boss', I04: 'boss', I07: 'boss', I08: 'boss', I11: 'boss', I05: 'boss', I06: 'boss', I10: 'boss' };
+const ITEM_KIND = { I01: 'heal', I12: 'revive', I02: 'guard', I09: 'cleanse', I03: 'boss', I04: 'boss', I07: 'boss', I08: 'boss', I11: 'boss', I05: 'boss', I06: 'boss', I10: 'boss',
+  I13: 'guard', I14: 'guard', I15: 'boss', I16: 'boss', I17: 'boss', I18: 'boss' };   // 29단계
+// 쓰는 법을 모르는 소모품은 칸만 차지해 결과가 나빠진다(29단계에 겪음)
+D.items.forEach(x => { if (!ITEM_KIND[x.id]) console.log('경고: sim 이 쓰지 않는 소모품 ' + x.id + ' — ITEM_KIND 에 넣는다'); });
 async function useItems(b) {
   for (let i = b.items.length - 1; i >= 0 && !b.over(); i--) {
     const k = ITEM_KIND[b.items[i]], allies = b.alive('ally');
