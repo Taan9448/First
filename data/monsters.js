@@ -1,4 +1,4 @@
-// monsters.js — 몬스터 56종(테마 51 + 거울의 그림자 5. 28단계에 테마마다 일반 2 · 정예 1 추가)과 행동 패턴. 15단계: 1~2장(만독곡)·9~10장(청운문)은 무림 몬스터
+// monsters.js — 몬스터 57종(테마 51 + 거울의 그림자 6 — 30단계에 그림자 시엘. 28단계에 테마마다 일반 2 · 정예 1 추가)과 행동 패턴. 15단계: 1~2장(만독곡)·9~10장(청운문)은 무림 몬스터
 // 형식은 GAME_DESIGN.md 2.3절. 행동 효과의 대상 기본값은 예고 때 정한 아군 1명('target').
 // 'allAllies' = 아군(플레이어 파티) 전체, 'self' = 자신, 'allMonsters' = 몬스터 전체.
 (function () {
@@ -235,7 +235,11 @@
     M('shadow_nox', '그림자 소연', 'mirror', 'elite', 60,
       { dagger: mv('그림자 독비도', [dmg(4), st('poison', 4)]), expose: mv('그림자 약점 노출', [st('weak', 2), st('vulnerable', 1)]),
         ambush: mv('그림자 암기 세례', [dmg(13)]), fog: mv('그림자 만독무', [allSt('poison', 2)]) },
-      ['dagger', 'expose', 'ambush', 'fog'], { mirror: 'nox', scaleByStage: SCALE, desc: '소연의 그림자. 웃음소리만 먼저 들린다.' })
+      ['dagger', 'expose', 'ambush', 'fog'], { mirror: 'nox', scaleByStage: SCALE, desc: '소연의 그림자. 웃음소리만 먼저 들린다.' }),
+    M('shadow_ciel', '그림자 시엘', 'mirror', 'elite', 58,
+      { aim: mv('그림자 조준', [selfSt('strength', 2), blk(6)]), volley: mv('그림자 연사', [dmg(3, { times: 3 })]),
+        pierce: mv('그림자 관통 화살', [dmg(12), st('vulnerable', 1)]), rain: mv('그림자 화살비', [dmgAll(5)]) },
+      ['volley', 'aim', 'pierce', 'rain'], { mirror: 'ciel', scaleByStage: SCALE, desc: '시엘의 그림자. 시위 소리보다 화살이 먼저 닿는다.' })
   ];
 
   // 20단계: 보스·정예 고유 규칙. 상태로 붙어 화면에 아이콘과 설명이 뜬다(data/keywords.js)

@@ -721,6 +721,7 @@
       } },
 
     needles: needles('steel'), toxicNeedles: needles('toxic'),
+    arrows: arrows(),
 
     holyHeal: heal('holy'), natureHeal: heal('heal'),
 
@@ -928,6 +929,40 @@
           if (s.stuck && s.t < (toxic ? 1.4 : 0.8)) s.stuck.forEach(function (q) {
             var ux = Math.cos(q[2]), uy = Math.sin(q[2]);
             line(q[0] - ux * 4, q[1] - uy * 4, q[0], q[1], P.ink[6], 1); put(q[0] - ux * 4, q[1] - uy * 4, P[pal][4]);
+          });
+        });
+      } };
+  }
+
+  // 30단계 시엘: 정령 화살 셋이 곧게 날아가 꽂히고, 꽂힌 자리에서 초록 바람이 원을 그리며 흩어진다
+  function arrows() {
+    return { ch: 'heal', sh: 'heal', hit: 0.22, dur: 1.0,
+      run: function (T, dt, st, c) {
+        each(c, st, 0.06, function (b, k, s, d) {
+          var t = T - d, z = b.z;
+          if (t < 0) return;
+          for (var q = 0; q < 3; q++) {
+            if (t >= q * 0.05 && once(s, 'a' + q)) {
+              (function (q) {
+                var tx = b.x + (q - 1) * 6 * z, ty = b.y + (q - 1) * 7 * z, sx = c.C.x, sy = c.C.y + (q - 1) * 4, fl = 0.17;
+                add({ kind: 'streak', x: sx, y: sy, vx: (tx - sx) / fl, vy: (ty - sy) / fl, life: fl, pal: 'heal', len: 16, fade: false,
+                  onDie: function () {
+                    (s.stuck = s.stuck || []).push([tx, ty, Math.atan2(ty - sy, tx - sx)]);
+                    sparks(tx, ty, 'heal', 4, 50 * z);
+                  } });
+              })(q);
+            }
+          }
+          if (t >= 0.24 && once(s, 'hit')) { ringFx(b.x, b.y, 3, 16 * z, 0.35, 'heal', 1, 0.3); if (k === 0) shake(0.1, 1); }
+          s.t = t;
+        });
+      },
+      draw: function (T, st, c) {
+        each(c, st, 0.06, function (b, k, s) {
+          if (s.stuck && s.t < 0.8) s.stuck.forEach(function (q) {
+            var ux = Math.cos(q[2]), uy = Math.sin(q[2]);
+            line(q[0] - ux * 7, q[1] - uy * 7, q[0], q[1], P.ink[5], 1);
+            put(q[0] - ux * 7, q[1] - uy * 7 - 1, P.heal[5]); put(q[0] - ux * 7, q[1] - uy * 7 + 1, P.heal[5]); put(q[0], q[1], P.heal[7]);
           });
         });
       } };

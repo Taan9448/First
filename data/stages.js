@@ -38,7 +38,7 @@ Game.Data.stages = [
   { n: 4, midElite: 'sandworm', theme: 'desert', last: 'boss', boss: 'pharaoh', join: 'lyra',
     easy: [['bandit', 'cactus'], ['mummy', 'scorpion'], ['sand_spirit', 'bandit'], ['sand_archer', 'scarab']],
     hard: [['mummy', 'mummy'], ['bandit', 'sand_spirit', 'cactus'], ['scorpion', 'mummy', 'bandit'], ['sand_archer', 'scarab', 'mummy']], elites: ['sphinx'] },
-  { n: 5, theme: 'snow', last: 'elite', boss: 'glacier_golem',
+  { n: 5, theme: 'snow', last: 'elite', boss: 'glacier_golem', join: 'ciel',
     easy: [['snow_rabbit', 'frost_spirit'], ['frost_wolf', 'snow_rabbit'], ['yeti'], ['wisp', 'wisp']],
     hard: [['frost_wolf', 'frost_spirit'], ['yeti', 'snow_rabbit'], ['ice_witch', 'snow_rabbit', 'frost_spirit'], ['harpy', 'wisp']], elites: ['frost_wyvern'] },
   { n: 6, midElite: 'glacier_golem', theme: 'snow', last: 'boss', boss: 'frost_queen', join: 'sera',

@@ -1,4 +1,4 @@
-// traits.js — 캐릭터 성장: 경험치·레벨·특성 50개 (GAME_DESIGN.md 19.8절, 9단계)
+// traits.js — 캐릭터 성장: 경험치·레벨·특성 60개 (GAME_DESIGN.md 19.8절, 9단계 · 30단계 시엘 10개)
 // 특성 효과는 mods(수정자)로 적고, 해석은 js/battle.js(전투) · js/stage.js(최대 체력·승리 회복)가 맡는다.
 // mods 키
 //   maxHp · critAdd(치명타 확률) · startStatus{상태:수치} · startBlock · turnStartBlock
@@ -9,7 +9,7 @@
 //   blockAdd · healAdd(그 캐릭터 카드의 보호막·회복) · statusAdd{상태:+n}(그 캐릭터가 거는 상태)
 //   endTurnThornsIfBlock · shareBlock(다른 아군에게 보호막을 주면 자신도) · undyingOnce · onHitBlock
 //   onFreezeDraw · burnVuln · cleanseBlock · overhealBlock · revivePct · selfRevive · turnStartHealLowest · attackHealLowest
-//   firstDebuffDraw · 전투 전체: firstTurnEnergy · firstTurnDraw · everyN{n, v} · winHeal(전투 승리 후 아군 전체 회복)
+//   firstDebuffDraw · startRes(30단계: 전투 시작 시 고유 자원) · 전투 전체: firstTurnEnergy · firstTurnDraw · everyN{n, v} · winHeal(전투 승리 후 아군 전체 회복)
 Game.Data.growth = {
   exp: { battle: 8, elite: 16, boss: 35, midboss: 35, final: 50 },  // 15단계: 던전 길이를 절반으로 줄이며 14단계에서 깎은 값을 일부 되돌렸다
   levels: [40, 120, 250, 450, 700]   // 레벨 1~5 문턱(누적 경험치). 10단계: 한 원정에 최고 레벨까지 가지 않게 올림
@@ -52,6 +52,13 @@ Game.Data.growth = {
       [t('약점 공략', '소연이 거는 약화 +1', { statusAdd: { weak: 1 } }), t('허점 공략', '소연이 거는 취약 +1', { statusAdd: { vulnerable: 1 } })],
       [t('당가의 눈', '매 턴 소연이 처음 디버프를 걸면 카드 1장 뽑기', { firstDebuffDraw: 1 }), t('암살자의 흐름', '소연의 카드로 처치하면 에너지 +1', { onKillEnergy: 1 })],
       [t('긴 호흡', '3턴마다 에너지 +1', { everyN: { n: 3, v: 1 } }), t('치명의 비수', '전투 시작 시 치명 강화 1', { startStatus: { critUp: 1 } })]
+    ],
+    ciel: [
+      [t('정령의 눈', '치명타 확률 +5%', { critAdd: 0.05 }), t('서리숲 사냥꾼', '시엘이 거는 취약 +1', { statusAdd: { vulnerable: 1 } })],
+      [t('가벼운 몸', '최대 체력 +8', { maxHp: 8 }), t('미리 겨눈 화살', '전투 시작 시 조준 2', { startRes: 2 })],
+      [t('한 점 사격', '단일 대상 공격 피해 +2', { singleDamage: 2 }), t('화살비 숙련', '전체 공격 피해 +2', { aoeDamage: 2 })],
+      [t('사냥의 흐름', '시엘의 카드로 처치하면 에너지 +1', { onKillEnergy: 1 }), t('바람의 첫발', '매 턴 시엘의 첫 공격 카드 비용 -1', { firstOwnAttackDiscount: 1 })],
+      [t('숲의 가호', '전투 시작 시 보호막 8', { startBlock: 8 }), t('첫 화살', '매 전투 시엘의 첫 공격 카드 피해 +6', { firstAttackBonus: 6 })]
     ]
   };
 })();

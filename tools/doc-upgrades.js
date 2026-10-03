@@ -16,7 +16,7 @@ let n = 0;
 const out = fs.readFileSync(file, 'utf8').split('\n').map(line => {
   if (line === '| ID | 이름 | 등급 | 유형 | 비용 | 대상 | 분류 | 효과 |') return line + ' 강화 |';
   if (line === '|---|---|---|---|---|---|---|---|') return line + '---|';
-  const m = line.match(/^\| ([KBLSNC]\d\d)★? \|(?:[^|]*\|){7}/);
+  const m = line.match(/^\| ([KBLSNAC]\d\d)★? \|(?:[^|]*\|){7}/);
   if (!m) return line;
   n++;
   return m[0] + ' ' + G.Upgrade.summary(m[1]) + ' |';

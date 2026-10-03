@@ -76,6 +76,14 @@
     drop: path('M40 6 Q56 28 56 36 A16 16 0 0 1 24 36 Q24 28 40 6 Z', '#7fd3ff') + circ(34, 36, 3, '#ffffff', 'stroke="none"'),
     pray: circ(40, 30, 16, '#fff3a8', 'opacity="0.6" stroke="none"') + path('M40 52 L32 30 Q32 18 40 10 Q48 18 48 30 Z', '#ffd0b0') + path('M40 10 V52', 'none', 'stroke-width="2"') + circ(40, 10, 10, 'none', 'stroke="' + gold + '" stroke-width="3"'),
     lightArrow: path('M8 46 L58 12', 'none', 'stroke="#fff3a8" stroke-width="5"') + path('M50 8 L68 6 L64 22 Z', gold) + path('M8 46 L16 36 M8 46 L18 48', 'none', 'stroke="' + gold + '" stroke-width="3"'),
+    // 30단계 시엘: 나무 활(시위에 건 정령 화살) · 화살비 · 정령 구슬
+    bow: path('M30 6 Q58 28 30 50', 'none', 'stroke="#8a5a2a" stroke-width="5"') + path('M30 6 L30 50', 'none', 'stroke="#e8fff0" stroke-width="1.6"') +
+      path('M22 28 L66 28', 'none', 'stroke="#c8a070" stroke-width="2.4"') + path('M60 22 L72 28 L60 34 Z', '#7affc8') + path('M22 28 L16 23 M22 28 L16 33', 'none', 'stroke="#5ac84a" stroke-width="3"'),
+    arrows: [[14, 10], [30, 6], [46, 12]].map(function (q) {
+      return path('M' + q[0] + ' ' + q[1] + ' L' + (q[0] + 16) + ' ' + (q[1] + 34), 'none', 'stroke="#c8a070" stroke-width="2.4"') +
+        path('M' + (q[0] + 12) + ' ' + (q[1] + 34) + ' L' + (q[0] + 19) + ' ' + (q[1] + 43) + ' L' + (q[0] + 20) + ' ' + (q[1] + 32) + ' Z', '#7affc8');
+    }).join(''),
+    spirit: glow(40, 28, 20, '#7affc8') + circ(40, 28, 9, '#d0fff0') + path('M40 19 Q50 8 58 14 M40 37 Q30 48 22 42', 'none', 'stroke="#7ad8ff" stroke-width="3"') + circ(37, 26, 2, '#ffffff', 'stroke="none"'),
     leaf: path('M14 46 Q14 10 66 10 Q66 46 14 46 Z', '#7cd65a') + path('M14 46 L56 18', 'none', 'stroke="#2f7a35" stroke-width="2"'),
     sun: [0, 45, 90, 135, 180, 225, 270, 315].map(function (a) {
       return g('translate(40 28) rotate(' + a + ')', path('M-4 -16 L0 -27 L4 -16 Z', '#ffe066'));

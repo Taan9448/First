@@ -187,6 +187,14 @@
       d.items = (d.items || []).filter(function (id) { return G.Data.itemById && G.Data.itemById[id]; }).slice(0, G.Data.itemEconomy ? G.Data.itemEconomy.slots : 3);
       d.gold = Math.max(0, d.gold | 0);
       d.clearedStage = d.clearedStage | 0;
+      // 30단계: 새 동료(시엘, 5 스테이지 합류)가 생기기 전에 그 스테이지를 지나온 저장에도 합류시킨다
+      (G.Data.stages || []).forEach(function (st) {
+        if (!st.join || st.n > d.clearedStage || d.characters.indexOf(st.join) >= 0 || chars.indexOf(st.join) < 0) return;
+        d.characters.push(st.join);
+        G.Data.cards.forEach(function (c) { if (c.basic && c.owner === st.join && d.cards.indexOf(c.id) < 0) d.cards.push(c.id); });
+        var ch = G.Data.characters.filter(function (c) { return c.id === st.join; })[0];
+        d.decks[st.join] = ((ch && ch.starter) || []).filter(function (id) { return d.cards.indexOf(id) >= 0; });
+      });
       d.mode = G.Data.modes && G.Data.modes[d.mode] ? d.mode : 'normal';
       d.dead = (d.dead || []).filter(function (id, i, a) { return d.characters.indexOf(id) >= 0 && a.indexOf(id) === i; });
       if (d.party.every(function (id) { return d.dead.indexOf(id) >= 0; })) {

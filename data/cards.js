@@ -1,4 +1,4 @@
-// cards.js — 카드 247종(16단계 200 → 20단계 218 → 21단계 223 → 29단계 247) + 방해 카드
+// cards.js — 카드 277종(16단계 200 → 20단계 218 → 21단계 223 → 29단계 247 → 30단계 277) + 방해 카드
 // 형식은 GAME_DESIGN.md 2.3절. 설명의 {d0}, {d1} … 은 damage 효과의 순서(깊이 우선)이며
 // 화면에서 힘·약화를 반영한 값으로 바뀐다. 그 밖의 수치는 글자로 적는다.
 (function () {
@@ -16,7 +16,7 @@
   var power = function (hook, effects) { return { op: 'power', hook: hook, effects: effects }; };
   var per = function (p, mult, base, o) { return Object.assign({ base: base || 0, per: p, mult: mult }, o); };
 
-  var OWNER = { K: 'kai', B: 'bram', L: 'lyra', S: 'sera', N: 'nox', C: 'common' };
+  var OWNER = { K: 'kai', B: 'bram', L: 'lyra', S: 'sera', N: 'nox', A: 'ciel', C: 'common' };
   var R = { c: 'common', u: 'uncommon', r: 'rare', e: 'epic', l: 'legendary' };
   var T = { a: 'attack', s: 'skill', b: 'block', h: 'heal', p: 'power' };
   var TG = { e: 'enemy', E: 'allEnemies', r: 'randomEnemy', a: 'ally', A: 'allAllies', s: 'self', d: 'downedAlly', n: 'none' };
@@ -311,7 +311,43 @@
     C('C37', '정비', 'b', 'c', 1, 's', [blk(4), draw(1)], '보호막 4. 카드 1장을 뽑는다.', { art: 'shield' }),
     C('C38', '기습', 'a', 'u', 0, 'e', [dmg(6)], '피해 {d0}. 소멸.', { x: 1, art: 'dash' }),
     C('C39', '전열 재정비', 's', 'r', 1, 'n', [draw(3), { op: 'discard', value: 1 }], '카드 3장을 뽑는다. 손패 1장을 버린다.', { art: 'flag' }),
-    C('C40', '합공', 'a', 'e', 2, 'E', [dmg(10), energy(1)], '적 전체에 피해 {d0}. 에너지 +1.', { art: 'axe' })
+    C('C40', '합공', 'a', 'e', 2, 'E', [dmg(10), energy(1)], '적 전체에 피해 {d0}. 에너지 +1.', { art: 'axe' }),
+
+    // ---------------- 30단계: 시엘(정령 궁수, 카드 번호 A) — 스킬로 조준을 쌓고 공격 카드로 쏜다 ----------------
+    C('A01', '정령 화살', 'a', 'c', 1, 'e', [dmg(6)], '피해 {d0}.', { b: 1, art: 'bow' }),
+    C('A02', '바람 장막', 's', 'c', 1, 's', [blk(5)], '보호막 5. 스킬이라 조준 +1.', { b: 1, art: 'wind' }),
+    C('A03', '겨누기', 's', 'c', 1, 'n', [{ op: 'res', value: 1 }, draw(1)], '조준 +1(스킬이라 1 더 쌓인다). 카드 1장을 뽑는다.', { b: 1, art: 'eye' }),
+    C('A04', '연사', 'a', 'c', 1, 'r', [dmg(3, { times: 3 })], '무작위 적에게 피해 {d0}을 3회.', { b: 1, art: 'arrows' }),
+    C('A05', '숲의 숨결', 's', 'c', 0, 'n', [{ op: 'scry', value: 2 }], '미리 보기 2.', { b: 1, art: 'leaf' }),
+    C('A06', '꿰뚫는 화살', 'a', 'c', 2, 'e', [dmg(9), st('vulnerable', 2)], '피해 {d0}. 취약 2 부여.', { b: 1, art: 'pierce' }),
+    C('A07', '견제 사격', 'a', 'c', 1, 'e', [dmg(4), st('weak', 1)], '피해 {d0}. 약화 1 부여.', { b: 1, art: 'bow' }),
+    C('A08', '사냥꾼의 발걸음', 'b', 'c', 1, 's', [blk(4), draw(1)], '보호막 4. 카드 1장을 뽑는다.', { b: 1, art: 'leaf' }),
+    C('A09', '서리 화살', 'a', 'c', 1, 'e', [dmg(5), st('chill', 1)], '피해 {d0}. 한기 1 부여.', { art: 'ice', el: 'ice' }),
+
+    C('A10', '정령 부르기', 's', 'u', 1, 'n', [{ op: 'res', value: 2 }], '조준 +2(스킬이라 1 더 쌓인다).', { art: 'spirit' }),
+    C('A11', '화살비', 'a', 'u', 2, 'E', [dmg(5, { times: 2 })], '적 전체에 피해 {d0}을 2회.', { art: 'arrows' }),
+    C('A12', '숨죽이기', 's', 'u', 1, 's', [blk(5), { op: 'res', value: 1 }], '보호막 5. 조준 +1(스킬이라 1 더 쌓인다).', { art: 'leaf' }),
+    C('A13', '약점 간파', 's', 'u', 0, 'e', [st('vulnerable', 1), draw(1)], '취약 1 부여. 카드 1장을 뽑는다.', { art: 'eye' }),
+    C('A14', '바람 화살', 'a', 'u', 1, 'e', [dmg(5), draw(1)], '피해 {d0}. 카드 1장을 뽑는다.', { art: 'wind' }),
+    C('A15', '나무 위 은신처', 'b', 'u', 1, 'a', [blk(8)], '아군 1명에게 보호막 8.', { art: 'wall' }),
+    C('A16', '삼연시', 'a', 'u', 1, 'e', [dmg(3, { times: 3 })], '피해 {d0}을 3회.', { art: 'arrows' }),
+    C('A17', '순풍', 's', 'u', 1, 'n', [energy(1, { nextTurn: true }), { op: 'res', value: 1 }], '다음 턴 에너지 +1. 조준 +1(스킬이라 1 더 쌓인다).', { art: 'wind' }),
+
+    C('A18', '정조준', 'a', 'r', 2, 'e', [dmg(per('selfRes', 3, 8))], '피해 {d0}: 8 + 조준 1당 3(조준 보너스는 따로 더해진다).', { art: 'pierce', tags: '조건' }),
+    C('A19', '바람 읽기', 'p', 'r', 1, 'n', [power('turnStart', [{ op: 'scry', value: 2 }, draw(1)])], '지속 매 턴 시작 시 미리 보기 2, 카드 1장을 뽑는다.', { art: 'eye' }),
+    C('A20', '사냥꾼의 일격', 'a', 'r', 1, 'e', [dmg(7, { onKill: [energy(1), draw(1)] })], '피해 {d0}. 이 공격으로 처치하면 에너지 +1, 카드 1장을 뽑는다.', { art: 'bow', tags: '조건' }),
+    C('A21', '서리 화살비', 'a', 'r', 2, 'E', [dmg(4), st('chill', 2)], '적 전체에 피해 {d0}, 한기 2 부여.', { art: 'ice', el: 'ice' }),
+    C('A22', '바람 걸음', 's', 'r', 1, 'n', [{ op: 'discard', value: 1 }, draw(2), { op: 'res', value: 1 }], '손패 1장을 버린다. 카드 2장을 뽑는다. 조준 +1(스킬이라 1 더 쌓인다).', { art: 'wind' }),
+    C('A23', '표적 지정', 's', 'r', 1, 'e', [st('vulnerable', 2), st('weak', 1), { op: 'res', value: 1 }], '취약 2, 약화 1 부여. 조준 +1(스킬이라 1 더 쌓인다).', { art: 'eye' }),
+
+    C('A24', '천공의 화살', 'a', 'e', 3, 'e', [dmg(20, { critBonus: 0.3 })], '피해 {d0}. 치명타 확률 +30%.', { art: 'lightArrow', tags: '치명' }),
+    C('A25', '정령 폭풍', 'a', 'e', 2, 'E', [dmg(per('selfRes', 2, 6))], '적 전체에 피해 {d0}: 6 + 조준 1당 2.', { art: 'spirit', tags: '조건' }),
+    C('A26', '바람의 궁술', 'p', 'e', 1, 'n', [power('onSkillCard', [dmg(3, { target: 'randomEnemy' })])], '지속 스킬·지속 카드를 쓸 때마다 무작위 적에게 피해 3.', { art: 'bow' }),
+    C('A27', '화살 폭풍', 'a', 'e', 2, 'r', [dmg(3, { times: 6 })], '무작위 적에게 피해 {d0}을 6회.', { art: 'arrows' }),
+    C('A28', '바람의 장벽', 'b', 'e', 2, 'A', [blk(8), { op: 'res', value: 2 }], '아군 전체에 보호막 8. 조준 +2.', { art: 'wind' }),
+
+    C('A29', '정령왕의 화살', 'a', 'l', 3, 'e', [dmg(per('selfRes', 6, 12))], '피해 {d0}: 12 + 조준 1당 6(조준 보너스는 따로 더해진다).', { art: 'lightArrow', tags: '조건' }),
+    C('A30', '정령왕의 계약', 'p', 'l', 2, 'n', [power('turnStart', [{ op: 'res', value: 2 }, draw(1)])], '지속 매 턴 시작 시 조준 +2, 카드 1장을 뽑는다.', { art: 'spirit' })
   ];
 
   // 방해 카드 (보유·도감에 포함하지 않음)
@@ -333,7 +369,8 @@
     C21: 'coin', C22: 'shield', C23: 'cards', C24: 'flag', C25: 'clock', C26: 'cards', C27: 'flag', C32: 'chaos',
     K34: 'slashX', B33: 'shield', S33: 'heal', N34: 'poisonCloud', C33: 'chaos',
     K36: 'aura', K37: 'slashX', B35: 'shield', B36: 'quake', L34: 'explosion', L36: 'ice', S34: 'pillar', S36: 'pillar', N37: 'poisonCloud', C36: 'rage', K38: 'slashX', S37: 'heal', N38: 'poisonCloud',
-    K41: 'storm', K42: 'slashX', B40: 'shield', B41: 'shield', L40: 'aura', L41: 'explosion', S40: 'pillar', S41: 'wings', N41: 'poisonCloud', N42: 'thousand', C39: 'flag', C40: 'thousand'
+    K41: 'storm', K42: 'slashX', B40: 'shield', B41: 'shield', L40: 'aura', L41: 'explosion', S40: 'pillar', S41: 'wings', N41: 'poisonCloud', N42: 'thousand', C39: 'flag', C40: 'thousand',
+    A18: 'storm', A19: 'aura', A20: 'thousand', A21: 'blizzard', A22: 'aura', A23: 'curse', A24: 'slashX', A25: 'storm', A26: 'aura', A27: 'thousand', A28: 'shield', A29: 'pillar', A30: 'aura'
   };
   list.forEach(function (c) { if (SFX[c.id]) c.sfx = SFX[c.id]; });
 
@@ -344,7 +381,8 @@
     L25: '원소 전부, 한꺼번에 간다!', L29: '혼돈의 대마법… 나도 결과는 몰라!',
     S25: '기적은 기도하는 자에게 와요!', S29: '여신이시여, 이곳에 내려오소서!',
     N25: '하늘의 비밀, 조금만 빌릴게.', N29: '마지막 한 수는 늘 숨겨 두는 법이지.',
-    C24: '다섯이 함께라면 두렵지 않아!', C25: '시간아, 멈춰라!', C26: '무엇이 나올지는 나도 몰라!', C27: '천하의 신병이기여, 모두의 손에!'
+    A29: '모든 정령이여, 이 한 발에!', A30: '숲의 왕이여, 나와 계약해 줘.',
+    C24: '모두 함께라면 두렵지 않아!', C25: '시간아, 멈춰라!', C26: '무엇이 나올지는 나도 몰라!', C27: '천하의 신병이기여, 모두의 손에!'
   };
   list.forEach(function (c) { if (LINE[c.id]) c.line = LINE[c.id]; });
 

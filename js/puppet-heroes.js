@@ -1,4 +1,4 @@
-// puppet-heroes.js — 27단계 영웅 다섯(js/puppet.js 렌더러로 그린다). 오른쪽을 보는 3/4 각도, 몸 약 50도트, 장면 80×66
+// puppet-heroes.js — 27단계 영웅 다섯 + 30단계 시엘(js/puppet.js 렌더러로 그린다). 오른쪽을 보는 3/4 각도, 몸 약 50도트, 장면 80×66
 // 공통 몸(머리·얼굴·머리채·저고리·치마·소매·팔·발)을 자세 값으로 움직이고, 영웅마다 머리 모양·옷·무기·광채 색을 바꾼다.
 // 동작: idle 8(숨쉬기·바람) · attack 8 · skill 16(돌아서 기를 모아 내지르기) · hit 2. 원본 GIF의 그림은 쓰지 않고 자세 순서만 참고했다
 (function () {
@@ -355,6 +355,23 @@
         [0.6, { aF: [-0.6, -1.1], wpn: -1.6, aB: [2.7, -0.3], wind: 0.8, flare: 1.4, glow: 2.6, fx: 2, fxk: 1, dy: -2 }],
         [0.75, { lean: 0.3, dx: 3, aF: [1.7, -0.1], wpn: -0.2, aB: [1.2, -0.2], wind: 1.2, flare: 1.6, glow: 2.6, fx: 3, fxk: 1 }],
         [1, { glow: 1 }]] };
+    } else if (kind === 'bow') {   // 30단계: 활(시엘). pull 은 시위를 당긴 정도(0~1)
+      attack = { n: 8, keys: [
+        [0, { pull: 0 }],
+        [0.2, { lean: -0.1, aF: [1.5, 0], aB: [1.3, -2.3], wpn: -1.57, pull: 0.6, wind: 0.3, glow: 1.2 }],
+        [0.45, { lean: -0.18, dx: -1, aF: [1.55, 0], aB: [1.35, -2.75], wpn: -1.57, pull: 1, wind: 0.4, glow: 1.6, crouch: 0.3 }],
+        [0.58, { lean: -0.05, dx: -1, aF: [1.55, 0], aB: [0.9, -2.9], wpn: -1.57, pull: 0, wind: 0.8, flare: 0.8, glow: 1.8, fx: 1, fxk: 0.3 }],
+        [0.8, { lean: 0, aF: [1.5, 0], aB: [0.6, -2], wpn: -1.57, pull: 0, wind: 0.6, fx: 1, fxk: 1 }],
+        [1, { pull: 0 }]] };
+      skill = { n: 16, keys: [
+        [0, { pull: 0 }],
+        [0.12, { turn: 1, wind: 0.6, flare: 1, glow: 1.4, crouch: 0.6, pull: 0 }],
+        [0.26, { turn: 0, dy: -7, lean: -0.2, aF: [2.1, 0], aB: [1.9, -2.4], wpn: -2.1, pull: 0.7, wind: -0.3, flare: 1.2, glow: 1.9, fx: 2, fxk: 0.3 }],
+        [0.42, { dy: -8, lean: -0.25, aF: [2.2, 0], aB: [2, -2.8], wpn: -2.15, pull: 1, wind: -0.2, flare: 1.3, glow: 2.3, fx: 2, fxk: 1 }],
+        [0.52, { dy: -8, lean: -0.15, aF: [2.2, 0], aB: [1.2, -2.9], wpn: -2.15, pull: 0, wind: 0.6, flare: 1.4, glow: 2.6, fx: 3, fxk: 0.3 }],
+        [0.7, { dy: -2, lean: 0.1, aF: [1.6, 0], aB: [0.8, -2.2], wpn: -1.6, pull: 0, wind: 1, flare: 1.4, glow: 2.4, fx: 3, fxk: 1 }],
+        [0.85, { dy: 0, crouch: 0.6, aF: [1.2, -0.2], wpn: -1.4, pull: 0, wind: 0.6, glow: 1.6 }],
+        [1, { glow: 1, pull: 0 }]] };
     } else {   // 암기(소연)
       attack = { n: 8, keys: [
         [0, {}],
@@ -678,9 +695,130 @@
     }
   });
 
-  // 거울의 그림자(5종)도 새 그림에서 다시 만든다(왼쪽을 보고 어두운 보랏빛)
+  // ================= 시엘(30단계) — 서리숲의 엘프 정령 궁수. 연둣빛 은발 옆 땋은 머리, 잎사귀 머리띠, 이끼색 짧은 망토와 청록 사냥복,
+  // 가죽 띠·화살통, 나무 활. 광채는 숲빛 초록과 하늘빛 =================
+  // 활: 손(H)이 가운데를 쥐고 wpn 방향이 윗날. 몸 쪽(뒤)으로 휘고, 시위는 pull 만큼 뒷손으로 당겨진다
+  function bow(c, o) {
+    var F = c.F, M = c.M, Hn = c.armF.H, a = c.p.wpn, ax = [cos(a), sin(a)], fw = [-ax[1], ax[0]];   // fw: 활 등(앞쪽)
+    if (fw[0] < 0) fw = [-fw[0], -fw[1]];
+    var L = o.len || 11, bend = 2.6;
+    var top = [Hn[0] + ax[0] * L - fw[0] * 1.5, Hn[1] + ax[1] * L - fw[1] * 1.5], bot = [Hn[0] - ax[0] * L - fw[0] * 1.5, Hn[1] - ax[1] * L - fw[1] * 1.5];
+    var up = [Hn[0] + ax[0] * L * 0.55 + fw[0] * bend * 0.6, Hn[1] + ax[1] * L * 0.55 + fw[1] * bend * 0.6];
+    var dn = [Hn[0] - ax[0] * L * 0.55 + fw[0] * bend * 0.6, Hn[1] - ax[1] * L * 0.55 + fw[1] * bend * 0.6];
+    var mid = [Hn[0] + fw[0] * 0.8, Hn[1] + fw[1] * 0.8];
+    // 시위: 두 끝에서 뒷손(당길 때) 또는 곧게
+    var pull = Math.max(0, Math.min(1, c.p.pull || 0)), nock = pull > 0.05 ? [top[0] + (bot[0] - top[0]) / 2 + (c.armB.H[0] - (top[0] + bot[0]) / 2) * pull, (top[1] + bot[1]) / 2 + (c.armB.H[1] - (top[1] + bot[1]) / 2) * pull] : null;
+    var line = function (p0, p1) { for (var s = 0; s <= 1; s += 0.08) F.dot(p0[0] + (p1[0] - p0[0]) * s, p0[1] + (p1[1] - p0[1]) * s, M.string, 3); };
+    if (nock) { line(top, nock); line(nock, bot); } else line(top, bot);
+    F.put(P.ribbon([top, up, mid, dn, bot], 1.4, 1.4), M.wood, { line: 'soft' });
+    F.put(P.ribbon([[Hn[0] + ax[0] * 2, Hn[1] + ax[1] * 2], [Hn[0] - ax[0] * 2, Hn[1] - ax[1] * 2]], 2, 2), M.leather, { line: 'none' });   // 손잡이
+    F.dot(top[0], top[1], M.spirit, 4); F.dot(bot[0], bot[1], M.spirit, 4);
+    // 걸어 둔 화살: 시위에서 활 앞으로
+    if (nock) {
+      var tip = [Hn[0] + fw[0] * 7, Hn[1] + fw[1] * 7];
+      F.put(P.ribbon([nock, tip], 1, 1), M.wood, { line: 'none' });
+      F.put(P.blob([[tip[0] + fw[0] * 2.5, tip[1] + fw[1] * 2.5], [tip[0] - ax[0] * 1.3, tip[1] - ax[1] * 1.3], [tip[0] + ax[0] * 1.3, tip[1] + ax[1] * 1.3]]), M.spirit, { line: 'none' });
+      c.tip = tip;
+    } else c.tip = [Hn[0] + fw[0] * 4, Hn[1] + fw[1] * 4];
+    c.fw = fw;
+  }
+  hero('ciel', {
+    kind: 'bow', elf: true, sleeveWide: 0.25,
+    glow: { color: [120, 240, 170], width: 3, alpha: 0.45 },
+    aurora: ['#6af0a0', '#7ad8ff', '#e8ffb0'],
+    base: { aF: [0.35, -0.35], aB: [-0.15, -0.4], wpn: -1.25, pull: 0 },
+    mats: {
+      skin: SKIN, lash: LASH, iris: { ramp: ['#3a1e04', '#7a4a0a', '#d08a1a', '#ffd060', '#ffffff'], eye: true }, lip: LIP, blush: BLUSH, shoe: { base: '#4a2e1a' },
+      hair: { ramp: ['#1e3a2c', '#5a9878', '#90cca8', '#c4eccf', '#eefff4'], strand: true, th: [0.28, 0.62, 0.9] },
+      robe: { ramp: ['#061a1e', '#0e4048', '#16666e', '#2a9298', '#5ac4c4'], th: [0.3, 0.64, 0.9] },
+      sleeve: { ramp: ['#061a1e', '#10464e', '#1a6e76', '#30989e', '#62cccc'] },
+      sleeveB: { ramp: ['#04100e', '#0a2c30', '#12464a', '#1c6066', '#2a7c80'] },
+      cloak: { ramp: ['#0c1a08', '#22381a', '#365a26', '#4e7a36', '#6e9e4e'] },
+      inner: { ramp: ['#3a3020', '#a89a78', '#e6dcbc', '#f6f0dc', '#ffffff'] },
+      leather: { ramp: ['#1a0e06', '#4a2a12', '#7a4a22', '#a8703a', '#d09a5a'] },
+      wood: { ramp: ['#1a0e06', '#5a3418', '#8a5a2a', '#b88a4a', '#e0b878'] },
+      legs: { ramp: ['#0e1216', '#262c34', '#3a424c', '#525c68', '#74808e'] },
+      leaf: { ramp: ['#0a2a10', '#2a7a2a', '#5ac84a', '#a8f07a', '#e8ffd0'] },
+      string: { base: '#e8fff0' },
+      spirit: { ramp: ['#0a3a2a', '#2ac88a', '#7affc8', '#d0fff0', '#ffffff'], emit: true }
+    },
+    cuff: 'leather',
+    draw: {
+      hairBack: function (c) {
+        longHair(c, c.M.hair, { n: 5, len: 24 });
+        // 옆으로 땋아 어깨 앞으로 내린 머리: 마디를 번갈아 찍는다
+        var h = c.head, wv = c.wind, ph = c.t * TAU, pts = [];
+        for (var i = 0; i <= 6; i++) { var k = i / 6; pts.push([h[0] - 9 - k * 3 - wv * 7 * k * k + sin(ph + k * 3) * k, h[1] + 3 + k * 20]); }
+        for (i = 0; i < 6; i++) c.F.put(P.ellipse((pts[i][0] + pts[i + 1][0]) / 2, (pts[i][1] + pts[i + 1][1]) / 2, 2.4 - i * 0.15, 2, 0.3 * (i % 2 ? 1 : -1)), c.M.hair, { grp: 63 + i, line: 'soft' });
+        c.F.put(P.ellipse(pts[6][0], pts[6][1] + 1, 1.5, 1.3), c.M.leaf, { line: 'soft' });
+      },
+      cape: function (c) {
+        // 짧은 망토: 어깨에서 허리 아래까지, 바람에 뒤로
+        var x = c.lx(c.shY), y = c.shY, wv = c.wind, ph = c.t * TAU;
+        c.F.put(P.blob([[x - 5, y - 1], [x + 3, y - 1], [x + 1, y + 8], [x - 3 - wv * 4, c.hipY + 6 + sin(ph) * 0.8], [x - 11 - wv * 8, c.hipY + 4 + sin(ph + 1)], [x - 12 - wv * 7, y + 10], [x - 8, y + 2]]), c.M.cloak, { round: 4, grp: 65 });
+      },
+      weaponBack: function (c) {
+        // 등에 멘 화살통과 깃
+        var x = c.lx(c.shY) - 5, y = c.shY + 2;
+        c.F.put(P.ribbon([[x + 2, y + 10], [x - 3, y - 4]], 3.6, 3.2), c.M.leather, { grp: 66, line: 'soft' });
+        [[-4, -6], [-2.5, -7], [-5.5, -5]].forEach(function (q, i) { c.F.put(P.ribbon([[x - 3 + q[0] * 0.2, y - 4], [x + q[0], y + q[1]]], 1.6, 0.8), i === 1 ? c.M.leaf : c.M.inner, { grp: 67, line: 'none' }); });
+      },
+      hairFront: function (c) {
+        bangs(c, c.M.hair, { locks: [[-4, 0.15, 5], [-1, 0.25, 6], [2, 0.35, 6], [5, 0.5, 5], [7.5, 0.6, 4]] });
+        var h = c.head;
+        c.F.put(P.ribbon([hp(h, -7.5, -6.5), hp(h, 0, -10.2), hp(h, 8, -7)], 1.2, 1.2), c.M.wood, { line: 'none' });   // 덩굴 머리띠
+        [[-5, -9], [3.5, -10.5]].forEach(function (b, i) {   // 잎사귀
+          var q = hp(h, b[0], b[1]);
+          c.F.put(P.blob([[q[0] - 2, q[1] + 0.5], [q[0], q[1] - 1.8 - i * 0.4], [q[0] + 2.2, q[1] - 0.2], [q[0], q[1] + 1.2]]), c.M.leaf, { cast: true, line: 'soft' });
+        });
+      },
+      skirt: function (c) {
+        // 각반을 감은 다리 + 짧은 사냥복 자락
+        var x = c.lx(c.hipY), y = c.hipY, st = c.p.step;
+        c.F.put(P.ribbon([[x - 2.5, y], [x - 3.5 - st, c.by - 2]], 4, 3.6), c.M.legs, { grp: 31 });
+        c.F.put(P.ribbon([[x + 2.5, y], [x + 4 + st, c.by - 2]], 4, 3.6), c.M.legs, { grp: 32 });
+        c.F.put(P.ribbon([[x - 3.6 - st, c.by - 6], [x - 3.5 - st, c.by - 1]], 4.4, 4.2), c.M.leather, { grp: 33, line: 'soft' });   // 장화 목
+        c.F.put(P.ribbon([[x + 4 + st, c.by - 6], [x + 4.2 + st, c.by - 1]], 4.4, 4.2), c.M.leather, { grp: 34, line: 'soft' });
+        skirt(c, c.M.robe, { hem: 10, len: 0.6, waist: 6.5, folds: [-0.5, 0.1, 0.55], trim: c.M.inner, trimW: 1 });
+      },
+      torso: function (c) {
+        torso(c, c.M.robe, { collar: c.M.inner, sash: c.M.leather });
+        var s = c.shY, x0 = c.lx(s);
+        c.F.put(P.ribbon([[x0 + 4.5, s + 0.5], [x0 - 4, c.hipY - 2]], 1.4, 1.4), c.M.leather, { line: 'none' });   // 화살통 끈
+        c.F.put(P.ellipse(x0 + 1, s + 1.2, 1.4, 1.2), c.M.leaf, { line: 'soft' });   // 잎 모양 망토 고리
+      },
+      weapon: function (c) { bow(c, { len: 11 }); }
+    },
+    weaponFront: true,
+    fx: function (c, F, p, t, anim) {
+      var G1 = P.hexRgb('#7affc8'), G2 = P.hexRgb('#7ad8ff');
+      if (p.pull > 0.3 && c.tip) sparkle(F, c.tip[0], c.tip[1], '#d0fff0', 0.5 * p.pull);
+      if (anim === 'attack' && p.fx >= 1 && c.tip) {
+        // 쏘아 보낸 화살: 손 앞에서 앞으로 날아가는 빛줄기
+        var d = 2 + p.fxk * 22;
+        for (var k = 0; k < 9; k++) F.glowPx('fx', c.tip[0] + d - k, c.tip[1], k ? G1 : [255, 255, 255], (1 - k / 9) * 0.95);
+      }
+      if (anim === 'skill' && p.fx >= 2 && c.tip) {
+        // 정령 셋이 활 끝을 돈다
+        for (var i = 0; i < 3; i++) {
+          var a = t * TAU * 2 + i * TAU / 3, r = 4 + p.fxk * 3;
+          F.glowPx('fx', c.tip[0] + cos(a) * r, c.tip[1] + sin(a) * r, i % 2 ? G2 : G1, 0.9 * p.fxk);
+          F.glowPx('fx', c.tip[0] + cos(a) * r, c.tip[1] + sin(a) * r - 1, [255, 255, 255], 0.5 * p.fxk);
+        }
+      }
+      if (anim === 'skill' && p.fx >= 3 && c.tip) {
+        // 화살비: 비스듬히 여러 줄
+        for (var j = 0; j < 4; j++) {
+          var dd = 3 + p.fxk * (16 + j * 3), yy = c.tip[1] - 2 + j * 3;
+          for (var m = 0; m < 7; m++) F.glowPx('fx', c.tip[0] + dd - m, yy + (dd - m) * 0.25, m ? (j % 2 ? G2 : G1) : [255, 255, 255], (1 - m / 7) * 0.9);
+        }
+      }
+    }
+  });
+
+  // 거울의 그림자(6종)도 새 그림에서 다시 만든다(왼쪽을 보고 어두운 보랏빛)
   var Sh = Game.Shape;
-  if (Sh && Sh.variant) ['kai', 'bram', 'lyra', 'sera', 'nox'].forEach(function (id) { Sh.variant('shadow_' + id, id, { flip: true, remap: Sh.shadowRemap }); });
+  if (Sh && Sh.variant) ['kai', 'bram', 'lyra', 'sera', 'nox', 'ciel'].forEach(function (id) { Sh.variant('shadow_' + id, id, { flip: true, remap: Sh.shadowRemap }); });
 
   Game.PuppetKit = { body: body, skirt: skirt, torso: torso, longHair: longHair, bangs: bangs, backHead: backHead, sword: sword, slash: slash, sparkle: sparkle, aurora: aurora, anims: anims, hero: hero,
     SKIN: SKIN, LIP: LIP, BLUSH: BLUSH, LASH: LASH, SHOE: SHOE, FX: SKILL_FX, GX: GX, GY: GY };

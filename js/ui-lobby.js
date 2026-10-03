@@ -32,7 +32,7 @@
     var boss = D.monsterById[def.boss], seen = n <= d.clearedStage || !!d.codex.monsters[def.boss];
     var tag = { final: '최종 보스', boss: '보스', elite: '정예', midboss: '보스' }[lastType(def)] || '보스';
     list.push({ small: 'TARGET · ' + tag, title: seen ? boss.name : '???', sub: 'STAGE ' + n + ' · ' + D.THEME_NAME[def.theme], sprite: boss.sprite, dark: !seen, go: function () { Meta.map(n); } });
-    var next = D.characters.filter(function (c) { return d.characters.indexOf(c.id) < 0; })[0];
+    var next = D.characters.filter(function (c) { return d.characters.indexOf(c.id) < 0; }).sort(function (a, b) { return a.joinAfter - b.joinAfter; })[0];   // 30단계: 시엘은 목록 끝이지만 5 스테이지에 합류
     if (next) list.push({ small: 'ALLY · 동료 합류', title: '???', sub: next.joinAfter + ' 스테이지를 클리어하면 합류', sprite: next.id, dark: true, go: function () { Meta.map(next.joinAfter); } });
     if (d.flags.ended) list.push({ small: 'ASCENSION · 승천', title: d.ascension.best ? '최고 기록 승천 ' + d.ascension.best : '승천 원정 열림', sub: '카드·유물·성장을 이어서 더 어려운 원정으로', icon: 'crown', go: function () { Meta.ascend(); } });
     return list;

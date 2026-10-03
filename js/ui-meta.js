@@ -444,7 +444,7 @@
         return '<div class="hero-pick ' + (on ? 'on' : '') + '" data-hero="' + id + '"><div class="portrait" style="--hc:' + UI.shade(c.color, -0.55) + '"><div class="sp" data-id="' + id + '"></div></div>' +
           '<b>' + c.name + ' <span class="lvtag">Lv ' + St.levelOf(id) + '</span></b><small>' + c.role + ' · ' + c.job + '<br>치명타 ' + Math.round(c.crit * 100) + '% · 덱 ' + (d.decks[id] || []).length + '장</small>' + hpBar(id) + '</div>';
       }).join('');
-      var locked = D.characters.filter(function (c) { return d.characters.indexOf(c.id) < 0; }).map(function (c) {
+      var locked = D.characters.filter(function (c) { return d.characters.indexOf(c.id) < 0; }).sort(function (a, b) { return a.joinAfter - b.joinAfter; }).map(function (c) {
         return '<div class="hero-pick locked"><div class="portrait"><div class="sp lock-sp" data-lock="' + c.id + '"></div></div><b>???</b><small>' + c.joinAfter + ' 스테이지 클리어 시 합류</small></div>';
       }).join('');
       var deckSize = St.battleDeck(pick).length;

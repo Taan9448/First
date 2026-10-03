@@ -7,7 +7,7 @@
   var X = G.Extra = {};
   var THEMES = ['forest', 'desert', 'snow', 'volcano', 'castle', 'mirror'];
   var RANK = { normal: '일반', elite: '정예', boss: '보스', final: '최종 보스' };
-  var OWNERS = ['kai', 'bram', 'lyra', 'sera', 'nox', 'common'];
+  var OWNERS = ['kai', 'bram', 'lyra', 'sera', 'nox', 'ciel', 'common'];
 
   function charDef(id) { return D.characters.filter(function (c) { return c.id === id; })[0]; }
   function ownerName(o) { return o === 'common' ? '공용' : charDef(o).name; }

@@ -118,6 +118,9 @@ Game.Data.upgradeRules = {
     K38: { effects: [{ op: 'damage', value: { base: 4, per: 'selfRes', mult: 6 } }, { op: 'spendRes' }], text: '피해 {d0}: {+4} + 하린의 검세 1당 6. 검세를 모두 쓴다.' },
     N38: { effects: [{ op: 'damage', value: { base: 4, per: 'targetStatus', status: 'venomMark', mult: 5 } }, { op: 'clearStatus', status: 'venomMark' }], text: '피해 {d0}: {+4} + 대상의 독 표식 1당 5. 그 뒤 표식을 없앤다.' },
     N37: { exhaust: false, text: '대상이 중독 수치만큼 즉시 체력을 잃는다(보호막 무시). 중독은 그대로 남는다. {+소멸하지 않는다}.' },
+    // 30단계 시엘: 미리 보기 · 조준만 있는 카드
+    A05: { effects: [{ op: 'scry', value: 3 }, draw(1)], text: '미리 보기 {+3}{+, 카드 1장을 뽑는다}.' },
+    A10: { effects: [{ op: 'res', value: 3 }], text: '조준 {++3}(스킬이라 1 더 쌓인다).' },
     // 설명의 확률 표기까지 함께 바뀌는 카드
     C27: { effects: [st('keen', 3), st('tempStr', 4)],
       text: '아군 전체에 예리함 {+3}(치명타 확률 {++30%}), 이번 턴 힘 +{+4}.' }

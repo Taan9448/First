@@ -25,10 +25,11 @@ G.instant = true;
 
 const MAX_TRIES = 8;
 const PARTY_ORDERS = [
-  ['kai', 'bram', 'lyra', 'sera', 'nox'],
-  ['bram', 'sera', 'kai', 'lyra', 'nox'],
-  ['kai', 'lyra', 'nox', 'bram', 'sera'],
-  ['bram', 'kai', 'sera', 'nox', 'lyra']
+  ['kai', 'bram', 'lyra', 'sera', 'nox', 'ciel'],
+  ['bram', 'sera', 'kai', 'lyra', 'nox', 'ciel'],
+  ['kai', 'lyra', 'nox', 'bram', 'sera', 'ciel'],
+  ['bram', 'kai', 'sera', 'nox', 'lyra', 'ciel'],
+  ['kai', 'ciel', 'bram', 'sera', 'lyra', 'nox']   // 30단계: 시엘을 쓰는 파티
 ];
 
 // ---------------------------------------------------------------- 카드 가치 추정
@@ -100,6 +101,15 @@ function estimate(b, inst, target) {
     });
   }
   walk(def.effects, 1);
+  // 30단계: 시엘의 조준 — 공격 카드는 쌓인 조준 × 3만큼 첫 공격 피해 +, 5면 관통(적 전체 8). 스킬·지속 카드와 'res' 효과는 조준 1당 2쯤의 값
+  if (caster && caster.id === 'ciel' && caster.resMax) {
+    if (def.type === 'attack' && caster.res > 0) {
+      r.dmg += caster.res * 3 * weak * crit;
+      if (caster.res >= caster.resMax) r.dmg += 8 * enemies.length;
+    }
+    if ((def.type === 'skill' || def.type === 'power') && caster.res < caster.resMax) r.util += 2.5;
+    def.effects.forEach(e => { if (e.op === 'res') r.util += Math.min(e.value, caster.resMax - caster.res) * 2.5 - 3; });
+  }
   return r;
 }
 

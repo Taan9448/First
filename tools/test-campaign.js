@@ -222,7 +222,7 @@ function invariants(where) {
         }
       }
     }
-    check(St.data.characters.length === 5, '5명 모두 합류');
+    check(St.data.characters.length === 6, '6명 모두 합류');
     // 클리어한 스테이지 재도전: 합류는 다시 일어나지 않는다
     St.startStage(2);
     check(St.data.run.replay, '재도전 표시');

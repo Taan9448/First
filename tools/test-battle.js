@@ -25,7 +25,7 @@ section('데이터');
 // 27단계: 새 영웅 그림 — 다섯 명 모두 대기 8 · 공격 8 · 스킬 16 · 맞음 2장면, 장면마다 몸이 그려지고 얼굴 칸에 피부색이 있다
 {
   const P = G.Puppet;
-  ['kai', 'bram', 'lyra', 'sera', 'nox'].forEach(id => {
+  ['kai', 'bram', 'lyra', 'sera', 'nox', 'ciel'].forEach(id => {
     const d = P.designs[id];
     check(!!d, id + ': 새 영웅 그림 설계');
     if (!d) return;
@@ -68,7 +68,7 @@ section('데이터');
   check(missing.size === 0, '내장 글꼴에 없는 글자 ' + missing.size + '자(' + [...missing].slice(0, 20).join('') + ') — python3 tools/embed-fonts.py 를 다시 실행');
 }
 const cards = G.Data.cards.filter(c => c.owner !== 'none');
-check(cards.length === 247, '카드 247장 (현재 ' + cards.length + ')');
+check(cards.length === 277, '카드 277장 (현재 ' + cards.length + ')');
 const KNOWN_OPS = ['damage', 'block', 'heal', 'status', 'cleanse', 'revive', 'loseHp', 'draw', 'energy', 'discount',
   'doubleNext', 'gold', 'power', 'if', 'chance', 'oneOf', 'conjure', 'addCard', 'randomizeCosts', 'freeRandom', 'summon', 'custom',
   'discard', 'exhaust', 'scry', 'clearStatus', 'loseBlock', 'res', 'spendRes'];
@@ -93,8 +93,8 @@ G.Data.monsters.forEach(m => {
   });
   if (m.onDeath) walk(m.onDeath, m.id + ' onDeath');
 });
-check(G.Data.monsters.length === 56, '몬스터 56종 (현재 ' + G.Data.monsters.length + ')');
-check(G.Data.monsters.filter(m => m.mirror).length === 5, '거울 속 그림자 5종');
+check(G.Data.monsters.length === 57, '몬스터 57종 (현재 ' + G.Data.monsters.length + ')');
+check(G.Data.monsters.filter(m => m.mirror).length === 6, '거울 속 그림자 6종');
 
 // 강화 카드: 200장 모두 무언가 바뀌고, 설명의 {dN}·{+…} 가 올바르다
 cards.forEach(c => {
@@ -147,21 +147,21 @@ check(G.Data.cardById['C29+'].effects[0].p === 0.65, '예외: 동전 던지기+ 
 check(G.Data.cardById['C30+'].effects[0].options[3].effects[0].value === 3, '아군에게 거는 디버프(수상한 물약의 중독)는 올리지 않음');
 check(G.util.numJosa('피해 4을 3회, 6를, 7으로') === '피해 4를 3회, 6을, 7로', '숫자 조사 교정');
 
-// 9단계: 짝 연계 10 · 합동기 10 · 대화 30 · 특성 50
+// 9단계: 짝 연계 10 · 합동기 10 · 대화 30 · 특성 50 (30단계 시엘: 15 · 15 · 45 · 60)
 const HEROES = G.Data.characters.map(c => c.id);
-check(G.Data.pairCombos.length === 10, '짝 연계 10종');
-check(new Set(G.Data.pairCombos.map(p => p.from + '>' + p.to)).size === 10, '짝 연계 중복 없음');
+check(G.Data.pairCombos.length === 15, '짝 연계 15종');
+check(new Set(G.Data.pairCombos.map(p => p.from + '>' + p.to)).size === 15, '짝 연계 중복 없음');
 G.Data.pairCombos.forEach(p => { check(HEROES.includes(p.from) && HEROES.includes(p.to) && p.from !== p.to, p.name + ': 캐릭터'); if (p.after) walk(p.after, p.name); });
-check(G.Data.duoCards.length === 10, '합동기 10장');
+check(G.Data.duoCards.length === 15, '합동기 15장');
 G.Data.duoCards.forEach(c => {
   walk(c.effects, c.id);
   check(c.duo.length === 2 && c.duo.includes(c.caster), c.id + ': 짝과 시전자');
   check(G.Data.cardById[c.id] === c && !G.Data.cards.includes(c), c.id + ': 조회 표에만 등록');
   check(c.sfx && G.FX.SFX[c.sfx], c.id + ': 고유 이펙트');
 });
-const pairKeys = []; for (let i = 0; i < 5; i++) for (let j = i + 1; j < 5; j++) pairKeys.push(HEROES[i] + '+' + HEROES[j]);
+const pairKeys = []; for (let i = 0; i < HEROES.length; i++) for (let j = i + 1; j < HEROES.length; j++) pairKeys.push(HEROES[i] + '+' + HEROES[j]);
 check(pairKeys.every(k => G.Data.duoByPair[k]), '짝마다 합동기 1장');
-check(Object.keys(G.Data.dialogues).length === 10 && pairKeys.every(k => G.Data.dialogues[k] && G.Data.dialogues[k].length === 3), '대화 짝 10 × 3편');
+check(Object.keys(G.Data.dialogues).length === 15 && pairKeys.every(k => G.Data.dialogues[k] && G.Data.dialogues[k].length === 3), '대화 짝 15 × 3편');
 pairKeys.forEach(k => G.Data.dialogues[k].forEach((d, i) => {
   check(d.length >= 3 && d.length <= 6, k + ' 대화 ' + (i + 1) + ': 3~6줄');
   check(d.every(l => k.split('+').includes(l[0]) && l[1]), k + ' 대화 ' + (i + 1) + ': 말하는 사람은 그 짝');
@@ -169,13 +169,13 @@ pairKeys.forEach(k => G.Data.dialogues[k].forEach((d, i) => {
 const TRAIT_KEYS = ['maxHp', 'critAdd', 'startStatus', 'startBlock', 'turnStartBlock', 'firstAttackBonus', 'lowHpDamage', 'aoeDamage', 'singleDamage',
   'selfBlockDmgMult', 'frozenDmgMult', 'onKillBlock', 'onKillHeal', 'onKillEnergy', 'thirdAttackDraw', 'firstOwnAttackDiscount', 'firstOwnCardDiscount',
   'blockAdd', 'healAdd', 'statusAdd', 'endTurnThornsIfBlock', 'shareBlock', 'undyingOnce', 'onHitBlock', 'onFreezeDraw', 'burnVuln', 'cleanseBlock',
-  'overhealBlock', 'revivePct', 'selfRevive', 'turnStartHealLowest', 'attackHealLowest', 'firstDebuffDraw', 'firstTurnEnergy', 'firstTurnDraw', 'everyN', 'winHeal'];
+  'overhealBlock', 'revivePct', 'selfRevive', 'turnStartHealLowest', 'attackHealLowest', 'firstDebuffDraw', 'firstTurnEnergy', 'firstTurnDraw', 'everyN', 'winHeal', 'startRes'];
 let traitN = 0;
 HEROES.forEach(id => {
   check(G.Data.traits[id] && G.Data.traits[id].length === 5, id + ': 특성 5레벨');
   (G.Data.traits[id] || []).forEach(lv => { check(lv.length === 2, id + ': 레벨마다 2개'); lv.forEach(t => { traitN++; Object.keys(t.mods).forEach(k => check(TRAIT_KEYS.includes(k), id + ' ' + t.name + ': 알 수 없는 특성 효과 ' + k)); }); });
 });
-check(traitN === 50, '특성 50개 (' + traitN + ')');
+check(traitN === 60, '특성 60개 (' + traitN + ')');
 
 // 이벤트 40종(22단계 30, 29단계 40)
 check(G.Data.events.length === 40, '이벤트 40종');
@@ -229,7 +229,7 @@ const TYPE = { 공격: 'attack', 방어: 'block', 보조: 'skill', 회복: 'heal
 const TGT = { 적1: 'enemy', 적전체: 'allEnemies', 무작위: 'randomEnemy', 아군1: 'ally', 아군전체: 'allAllies', 자신: 'self', '쓰러진 아군': 'downedAlly', '—': 'none' };
 let docRows = 0;
 doc.split('\n').forEach(line => {
-  const m = line.match(/^\| ([KBLSNC]\d\d)(★?) \| ([^|]+) \| (\S+) \| (\S+) \| (\S+) \| ([^|]+) \| ([^|]*) \|/);
+  const m = line.match(/^\| ([KBLSNAC]\d\d)(★?) \| ([^|]+) \| (\S+) \| (\S+) \| (\S+) \| ([^|]+) \| ([^|]*) \|/);
   if (!m) return;
   docRows++;
   const c = G.Data.cardById[m[1]];
@@ -243,16 +243,16 @@ doc.split('\n').forEach(line => {
   check(c.target === TGT[m[7].trim()], id + ' 대상 ' + c.target + ' ≠ ' + m[7].trim());
   check(c.tags === m[8].trim(), id + ' 분류 "' + c.tags + '" ≠ "' + m[8].trim() + '"');
 });
-check(docRows === 247, '기획서 카드 표 247행 (현재 ' + docRows + ')');
+check(docRows === 277, '기획서 카드 표 277행 (현재 ' + docRows + ')');
 // '강화' 열은 데이터에서 만든 문구와 같아야 한다 (다르면 node tools/doc-upgrades.js)
 let upRows = 0;
 doc.split('\n').forEach(line => {
-  const m = line.match(/^\| ([KBLSNC]\d\d)★? \|(?:[^|]*\|){7} ([^|]*) \|$/);
+  const m = line.match(/^\| ([KBLSNAC]\d\d)★? \|(?:[^|]*\|){7} ([^|]*) \|$/);
   if (!m) return;
   upRows++;
   check(G.Upgrade.summary(m[1]) === m[2], m[1] + ' 강화 열이 데이터와 다름 (node tools/doc-upgrades.js)');
 });
-check(upRows === 247, '기획서 카드 표 강화 열 247행 (현재 ' + upRows + ')');
+check(upRows === 277, '기획서 카드 표 강화 열 277행 (현재 ' + upRows + ')');
 
 // ---------------------------------------------------------------- 규칙 단위 테스트
 section('규칙');
@@ -411,6 +411,21 @@ function handCard(b, id) {
     mh = rb.monsters[0].hp;
     await rb.play(handCard(rb, 'N38'), rb.monsters[0]);
     check(!rb.monsters[0].status.venomMark && mh - rb.monsters[0].hp >= 10, '표식 폭발: 표식 1당 5, 표식 제거');
+    // 30단계: 시엘의 조준 — 스킬로 쌓고, 공격 카드의 첫 공격에 조준 × 3, 가득 차 있었으면 관통(적 전체 8)
+    rb = await newBattle(['ciel'], ['treant', 'treant']); rb.energy = 20;
+    const hc = rb.heroes[0]; hc.crit = 0;
+    await rb.play(handCard(rb, 'A03'), null);
+    check(hc.res === 2, '조준: 겨누기 → 2 (' + hc.res + ')');
+    mh = rb.monsters[0].hp;
+    await rb.play(handCard(rb, 'A01'), rb.monsters[0]);
+    check(hc.res === 0 && mh - rb.monsters[0].hp === 12, '조준 2: 정령 화살 6 + 6, 조준을 모두 쓴다 (' + (mh - rb.monsters[0].hp) + ')');
+    await rb.play(handCard(rb, 'A10'), null); await rb.play(handCard(rb, 'A10'), null);
+    check(hc.res === 5, '조준: 최대 5');
+    const m1 = rb.monsters[1].hp; mh = rb.monsters[0].hp;
+    await rb.play(handCard(rb, 'A01'), rb.monsters[0]);
+    check(mh - rb.monsters[0].hp === 6 + 15 + 8 && m1 - rb.monsters[1].hp === 8 && hc.res === 0, '조준 5: 피해 +15, 관통 적 전체 8');
+    await rb.play(handCard(rb, 'A16'), rb.monsters[1]);
+    check(hc.res === 0, '조준 없이 공격하면 그대로 0');
   }
 
   // 한기 3 → 빙결, 보스는 이후 빙결 면역
@@ -805,7 +820,7 @@ function handCard(b, id) {
     const neverDuo = G.Data.duoCards.filter(c => !played.has(c.id)).map(c => c.id);
     check(!neverDuo.length, '모든 합동기가 한 번 이상 사용됨 (미사용: ' + neverDuo.join(', ') + ')');
     check(!neverUp.length, '모든 강화 카드가 한 번 이상 사용됨 (미사용: ' + neverUp.join(', ') + ')');
-    check(seenMonsters.size === 56, '모든 몬스터 등장 (' + seenMonsters.size + '/56)');
+    check(seenMonsters.size === 57, '모든 몬스터 등장 (' + seenMonsters.size + '/57)');
   } else console.log('  (사용 범위 검사 생략: 1000회 미만)');
 
   console.log(failures ? '\n실패 ' + failures + '건' : '\n모든 테스트 통과');

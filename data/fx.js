@@ -17,8 +17,8 @@
     },
     // 회복 카드: 속성이 신성이면 금빛 기둥, 그 밖에는 초록 빛
     heal: { holy: 'holyHeal', other: 'natureHeal' },
-    // 공격 카드: 캐릭터별 기본 (소연은 암기를 던진다)
-    byOwner: { nox: 'needles' },
+    // 공격 카드: 캐릭터별 기본 (소연은 암기를 던진다 · 30단계 시엘은 정령 화살을 쏜다)
+    byOwner: { nox: 'needles', ciel: 'arrows' },
     // 공격 카드: 속성별
     byElement: {
       fire: 'fireOrb', ice: 'iceLance', lightning: 'thunder', poison: 'toxicNeedles',

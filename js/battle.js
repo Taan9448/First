@@ -164,6 +164,7 @@
       if (h.dead) return;
       Object.keys(h.tm.startStatus).forEach(function (k) { S.set(h, k, S.get(h, k) + h.tm.startStatus[k]); });
       if (h.tm.startBlock) self.addBlock(h, h.tm.startBlock);
+      if (h.tm.startRes) self.gainRes(h, h.tm.startRes);   // 30단계: 시엘 '미리 겨눈 화살'
     });
     for (var i = 0; i < this.startEffects.length && !this.over(); i++) {
       this.emit('fx:text', { text: this.startEffects[i].name, kind: 'buff' });
@@ -441,6 +442,8 @@
     if (def.type === 'attack') this.firstAttackDone = true;
     // 21단계 고유 자원: 하린의 검세가 차 있으면 이 공격 카드는 치명타 확정
     if (caster && caster.id === 'kai' && def.type === 'attack' && caster.res >= caster.resMax) ctx.momentum = true;
+    // 30단계: 시엘의 조준 — 이 공격 카드가 쌓인 조준을 모두 쓴다(첫 공격 피해 + 조준 × 3, 가득 찼으면 관통)
+    if (caster && caster.id === 'ciel' && def.type === 'attack' && caster.res > 0) ctx.aim = caster.res;
     if (caster) { caster._cardTurn = true; if (def.type === 'attack') { caster._atkTurn = true; caster._firstAtkDone = true; } }
     this.tally.cards++;
     this.tally.plays[def.id] = (this.tally.plays[def.id] || 0) + 1;
@@ -575,7 +578,7 @@
     if (h.res !== before) this.emit('hero:res', { unit: h });
     if (h.res >= h.resMax && before < h.resMax) this.queueRelic('resFull', { target: h });
   };
-  // 카드를 쓴 뒤: 하린 검세(공격 카드) · 브리아 반격 자세(방어 카드) · 리라 원소 공명(모든 카드, 5가 차면 폭발)
+  // 카드를 쓴 뒤: 하린 검세(공격 카드) · 브리아 반격 자세(방어 카드) · 리라 원소 공명(모든 카드, 5가 차면 폭발) · 시엘 조준(스킬·지속 카드로 쌓고 공격 카드로 씀)
   P.resourceAfterCard = async function (def, caster, ctx) {
     if (!caster || caster.dead) return;
     if (caster.id === 'kai' && def.type === 'attack') {
@@ -583,6 +586,20 @@
       else if (!ctx.spent) this.gainRes(caster, 1);
     }
     if (caster.id === 'bram' && def.type === 'block') this.gainRes(caster, 1);
+    if (caster.id === 'ciel') {
+      if ((def.type === 'skill' || def.type === 'power') && !ctx.spent) this.gainRes(caster, 1);
+      if (def.type === 'attack' && ctx.aim) {
+        caster.res = 0;
+        this.emit('hero:res', { unit: caster });
+        if (ctx.aim >= caster.resMax) {
+          this.emit('fx:text', { unit: caster, text: '관통!', kind: 'good' });
+          this.emit('hero:burst', { unit: caster });
+          var all = this.alive('enemy');
+          for (var k = 0; k < all.length && !this.over(); k++) await this.takeDamage(all[k], 8, { kind: 'pierce' });
+          this.update();
+        }
+      }
+    }
     if (caster.id === 'lyra') {
       this.gainRes(caster, 1);
       if (caster.res >= caster.resMax) {
@@ -1105,6 +1122,7 @@
       d += ctx.comboBonus || 0;                                      // 연계
       if (ctx.pair && ctx.pair.dmgAdd) d += ctx.pair.dmgAdd;         // 짝 연계
       if (src && src.id === 'kai' && src.res && !ctx.momentum) d += src.res;    // 검세
+      if (src && src.id === 'ciel' && ctx.aim && !ctx.aimUsed) { d += ctx.aim * 3; ctx.aimUsed = true; }   // 조준(첫 공격만)
       var tm = src && src.tm;
       if (tm) {                                                      // 특성
         if (ctx.heroFirstAttack && tm.firstAttackBonus) d += tm.firstAttackBonus;
