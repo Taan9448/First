@@ -2,9 +2,9 @@
 
 > 사용자 승인 후 적용 완료(2026-10-04). 아래는 승인 당시 제안 기록이며 현재 구현 범위는 [SD_UI_IMPLEMENTATION.md](SD_UI_IMPLEMENTATION.md)를 따른다.
 
-2026-10-04 · ChatGPT Art Director / UI·UX · UI 방향 검토용 초안
+2026-10-04 · ChatGPT Art Director / UI·UX · 승인된 UI 방향의 제작 기준
 
-사용자의 최신 요청에 따라 도트 SD에서 **SD 그림풍**으로 바뀐 캐릭터에 맞춰 UI를 먼저 제안한다. 승인된 `assets/characters/{kai,bram,lyra,sera,nox,ciel}_poses.png`의 외형·색·비례·빛을 기준으로 삼고 기존 그림은 유지한다. 화면 시안은 새 UI의 제안이며 사용자 승인 전이다.
+사용자가 승인한 로비·전투·편성·월드맵 목업의 방향으로 **SD 그림풍** UI를 제작한다. 승인된 `assets/characters/{kai,bram,lyra,sera,nox,ciel}_poses.png`의 외형·색·비례·빛을 기준으로 삼고 기존 그림은 유지한다. 이번에 추가한 그림과 화면은 같은 방향의 새 검토 자료이며, 게임 연결은 Claude가 맡는다.
 
 ## 화풍과 재질
 
@@ -57,6 +57,6 @@
 - 캐릭터·몬스터·아이콘·카드 틀·UI 부품은 실제 알파 투명 PNG. 체크무늬나 단색을 배경으로 그린 가짜 투명은 금지한다.
 - 전체 화면 목업은 **배경과 UI가 합쳐진 불투명 PNG**이며 게임에 꽂는 개별 부품이 아니다. 승인 후 필요한 부품을 요청 규격에 맞춰 따로 제작한다.
 - 기존 승인 그림의 재생성·덮어쓰기, 외형·무기·성별 변경, 무협과 무관한 SF HUD, 과도한 금빛·네온·입자, 작은 글자의 금박 처리, 낮은 대비, 마법진의 읽을 수 있는 문자 표현을 금지한다.
-- 완성 리소스는 `docs/ASSET_SPEC.md`의 경로·이름·비율·투명 조건을 따른다. UI 부품 크기는 승인 후 Claude가 요청서에 확정한다.
+- 완성 리소스는 `docs/ASSET_SPEC.md`의 경로·이름·비율·투명 조건을 따른다. 실제 전달 크기와 알파 검사 결과는 `docs/DESIGN_ASSET_CATALOG.md`에 기록한다. UI 부품을 런타임에서 자르거나 다시 칠하지 않는다.
 
 화면별 배치와 기존 기능 유지 목록은 [UI_REDESIGN_PROPOSAL.md](UI_REDESIGN_PROPOSAL.md)에 있다.

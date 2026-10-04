@@ -5,6 +5,7 @@ ChatGPT(Art Director)가 만든 그림을 두는 곳이다. Claude는 이 폴더
 - **규격(크기 · 투명 · 방향 · 이름)**: `docs/ASSET_SPEC.md` (기준 데이터 `data/asset-spec.js`)
 - **필요한 그림 전체 목록과 요청서**: `docs/IMAGE_REQUESTS.md`
 - **ChatGPT 작업 브리프**: `docs/CHATGPT_BRIEF.md` · 공동 개발 규칙: `docs/COLLAB.md`
+- **추가 SD 디자인 전달**: `docs/DESIGN_HANDOFF.md` · `docs/DESIGN_GALLERY.md` · `docs/DESIGN_ASSET_CATALOG.md` (새 그림은 검토 후 Claude가 연결)
 
 ```
 assets/
