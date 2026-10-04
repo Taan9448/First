@@ -108,6 +108,8 @@
     // 스프라이트 시트. 캐릭터·몬스터는 도형 렌더러(js/pixel-render.js, 대기 8 + 공격 1프레임)가 그린다.
     // 글자 격자 시트(대기, 숨쉬기, 공격 3프레임)는 정의가 남아 있는 경우에만 쓴다
     sheet: function (id) {
+      var art = G.CharacterArt && G.CharacterArt.sheet(id);
+      if (art) return art;
       if (G.Shape && G.Shape.has(id)) return G.Shape.sheet(id);
       if (sheets[id]) return sheets[id];
       if (!defs[id] && G.Shape) return G.Shape.sheet('_unknown');

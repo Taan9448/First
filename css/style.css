@@ -651,6 +651,13 @@ span.gold.bump { animation: popIn 0.4s steps(4); }
 .sprite.tint-block { filter: drop-shadow(0 0 8px var(--blue)) brightness(1.2) hue-rotate(160deg) saturate(1.6); }
 .sprite.tint-heal { filter: drop-shadow(0 0 8px var(--green)) brightness(1.2); }
 .sprite.stop { animation-play-state: paused; }
+.sprite.asset-sprite { flex-shrink: 0; }
+.sprite-art { position: absolute; top: 0; height: 100%; background-repeat: no-repeat; image-rendering: pixelated; transform-origin: 50% 100%; }
+.asset-sprite[data-pose="idle"] .sprite-art { animation: assetBreath 2.4s steps(2, end) infinite; }
+@keyframes assetBreath { 50% { transform: scaleY(0.992); } }
+.asset-sprite.fixed-pose .sprite-art, .dead .asset-sprite .sprite-art { animation: none; }
+.asset-sprite.stop .sprite-art { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) { .asset-sprite .sprite-art { animation: none !important; } }
 .unit.phase .sprite { animation: phaseShake 0.07s linear 10; }
 @keyframes phaseShake { 50% { transform: translateX(4px); } }
 

@@ -164,6 +164,9 @@
     fitSig = sig;
     field.style.removeProperty('--px');
     field.style.removeProperty('--uw');
+    // The PNG atlas includes long weapons; reserve room at the field's left edge.
+    var first = heroesEl.querySelector('.sprite'), sh = first && first._sheet;
+    heroesEl.style.paddingLeft = sh && sh.art ? 'calc(var(--px) * ' + Math.max(0, sh.w * sh.anchor - 16.5).toFixed(2) + ')' : '';
     var need = heroesEl.offsetWidth + monstersEl.offsetWidth + 48;
     var avail = field.clientWidth * 0.94;
     if (need > avail) {

@@ -116,7 +116,7 @@
     G.FX.init();
     G.BattleUI.init();
     G.Extra.initMenu();
-    G.Meta.title();
+    G.CharacterArt.load().then(function () { G.Meta.title(); });
     // 나머지 카드 그림은 뒤에서 미리 변환해 둔다
     setTimeout(function () { G.ArtCards.preload(G.Data.cards); }, 300);
   });

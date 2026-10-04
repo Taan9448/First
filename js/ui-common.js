@@ -328,6 +328,13 @@
     e.style.left = 'calc(var(--px) * ' + ((0.5 - sh.anchor) * sh.w * size).toFixed(2) + ')';
     e._sheet = sh;
     e._size = size;
+    if (sh.art) {
+      e.classList.add('asset-sprite');
+      e.style.backgroundImage = 'none';
+      e._art = UI.el('span', 'sprite-art');
+      e._art.style.backgroundImage = 'url(' + sh.url + ')';
+      e.appendChild(e._art);
+    }
     // 27단계: 동작이 여러 개인 영웅 그림(js/puppet.js)은 스크립트가 장면을 넘긴다. 칼을 휘두를 여백만큼 양옆을 겹쳐 자리는 예전 폭만 차지한다
     if (sh.anims) {
       e.classList.add('puppet');
@@ -352,6 +359,15 @@
     }
     if (e._idx === idx) return;
     e._idx = idx;
+    if (sh.art) {
+      var d = sh.art, r = d.regions[idx], s = e._art;
+      e.dataset.pose = ['idle', 'attack', 'skill', 'hit'][idx];
+      s.style.width = r[1] / d.frameWidth * 100 + '%';
+      s.style.left = (d.frameWidth - r[1]) / 2 / d.frameWidth * 100 + '%';
+      s.style.backgroundSize = d.width / r[1] * 100 + '% ' + d.height / d.frameHeight * 100 + '%';
+      s.style.backgroundPosition = r[0] / (d.width - r[1]) * 100 + '% ' + d.top / (d.height - d.frameHeight) * 100 + '%';
+      return;
+    }
     e.style.backgroundPosition = (sh.frames > 1 ? idx / (sh.frames - 1) * 100 : 0) + '% 0';
   }
   setInterval(function () {
@@ -367,6 +383,7 @@
     if (!e || !e._sheet || !e._sheet.anims || !e._sheet.anims[name]) return false;
     e._anim = { name: name, t0: Date.now() };
     e._fixed = null;
+    e.classList.remove('fixed-pose');
     drawAnim(e, Date.now());
     return true;
   };
@@ -374,6 +391,7 @@
   UI.holdPose = function (e) {
     if (!e || !e._sheet || !e._sheet.anims) return false;
     e._fixed = e._sheet.anims.idle.start;
+    e.classList.add('fixed-pose');
     e.style.marginLeft = e.style.marginRight = '0';
     drawAnim(e, Date.now());
     return true;

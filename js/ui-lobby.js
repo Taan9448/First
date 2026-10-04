@@ -111,13 +111,15 @@
     var size = 0;
     var fit = function () {
       var s = heroSize(el);
+      var sh = sp._sheet;
+      if (sh.art) s = Math.min(stage.clientHeight * 0.92 / (sh.h * 4), stage.clientWidth * 0.96 / (sh.w * 4));
       if (s === size) return;
       size = s;
-      var sh = sp._sheet;
-      if (sh.anims) {   // 27단계 새 그림은 장면이 커서(66줄) 예전 키에 맞춘다. 정수배라 도트가 고르다
+      if (sh.anims && !sh.art) {   // 27단계 새 그림은 장면이 커서(66줄) 예전 키에 맞춘다. 정수배라 도트가 고르다
         s = Math.max(1, Math.round(s * 0.74));
         sp.style.marginLeft = sp.style.marginRight = 'calc(var(--px) * -' + Math.max(0, (sh.w - 34) * s / 2).toFixed(2) + ')';
       }
+      if (sh.art) sp.style.marginLeft = sp.style.marginRight = '0';
       sp.style.width = 'calc(var(--px) * ' + (sh.w * s) + ')';
       sp.style.height = 'calc(var(--px) * ' + (sh.h * s) + ')';
       sp.style.left = 'calc(var(--px) * ' + ((0.5 - sh.anchor) * sh.w * s).toFixed(2) + ')';
