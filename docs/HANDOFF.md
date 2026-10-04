@@ -132,3 +132,7 @@ js/ui-common.js(화면 전환·카드 HTML·툴팁)  ui-battle.js  ui-meta.js(�
 - 생성 원본은 `/workspace/generated_images/`에 보존했고 전달 폴더는 별도 사본이다. 기존 리소스와 게임 로직은 바꾸지 않았다. 새 PNG를 게임에 연결하는 작업은 Claude가 handoff에 따라 진행한다.
 - 원본 PNG 382개 비율/알파/중복 검사와 연결표/미리보기 검사 통과. `inspection.json`, `validation.json` 확인.
 - 기존 `?card-design=1` 코드 그림 갤러리는 폴백/연출 설계 참고다. 새 PNG 프레임의 공통 틀 + 하단 띠 방식과 실제 게임 유형 이름(공격/보조/방어/회복/지속/방해)을 우선한다.
+
+### 2026-10-04 — 카드 원화 우선으로 진행 순서 변경
+
+사용자가 이펙트를 제외하고 **카드 원화와 개별 카드 미리보기를 먼저 완성**하도록 요청했다. `design-delivery/cards-only/`는 원화 187장과 카드 PNG 187장만 확인하는 전용 패키지다. 이펙트 파일/이펙트 화면은 포함하지 않는다. 남은 원화 109장은 `resume-art-only-jobs.json`에 별도로 정리했다. 원화 생성 한도는 재확인했으나 429 usage_limit_reached 상태다. 카드 296장이 완성될 때까지 새 이펙트 작업은 보류한다.
