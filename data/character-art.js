@@ -2,6 +2,11 @@
 (function () {
   'use strict';
   Game.Data.characterArt = {
+    kai: {
+      url: 'assets/characters/kai_poses.png', width: 2172, height: 724,
+      top: 105, bottom: 633, bodyHeight: 414, face: [235, 367], tip: [0.97, 0.55],
+      regions: [[47, 404], [578, 527], [1231, 397], [1768, 359]]
+    },
     bram: {
       url: 'assets/characters/bram_poses.png', width: 2160, height: 728,
       top: 193, bottom: 598, bodyHeight: 398, face: [282, 298], tip: [0.96, 0.65],
