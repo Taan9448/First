@@ -180,3 +180,10 @@ b { font-weight:700; }
 @media (prefers-reduced-motion:reduce) {
   .asset-sprite .sprite-art,.tile,.screen.enter,.meta-body > *,.smark { animation:none !important; transition:none !important; }
 }
+/* ---- 39단계(Claude): 긴 효과 글은 글자를 줄이지 않고 글 상자를 위로 키운다(14px 유지) · NEW 표시는 이름 대신 그림 창 오른쪽 위 ---- */
+.card .ctext.long,.card.lay-ink .ctext.long,.card.lay-split .ctext.long { top:9.35em; height:7.05em; }
+.card .ctext.xlong,.card.lay-ink .ctext.xlong,.card.lay-split .ctext.xlong { top:8.55em; height:7.85em; z-index:1; }
+.card .ctext.long span,.card .ctext.xlong span,.card.lay-ink .ctext.long span,.card.lay-ink .ctext.xlong span,.card.lay-split .ctext.long span,.card.lay-split .ctext.xlong span { line-height:1.3; }
+.card .ctemp.new,.card.lay-ink .ctemp.new,.card.lay-split .ctemp.new { left:auto; right:1.4em; top:2.6em; }
+.sc-btns .asc-row { display:flex; flex-wrap:wrap; gap:4px; width:100%; }
+.sc-btns .asc-row .btn { min-width:0; min-height:32px; padding:2px 9px; }

@@ -565,7 +565,7 @@ span.gold.bump { animation: popIn 0.4s steps(4); }
 /* 캐릭터 뒤로 테마 빛이 번져 배경 색과 묶인다 */
 .field .unit .sprite { filter: drop-shadow(0 0 7px var(--glow)); }
 .field .unit .shadow { width: 86%; height: calc(var(--px) * 4); bottom: calc(var(--px) * -2); background: radial-gradient(closest-side, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0)); clip-path: none; }
-.side { position: absolute; bottom: calc(var(--ch) * 0.78 + 26px); display: flex; align-items: flex-end; gap: 14px; z-index: 1; }
+.side { position: absolute; bottom: calc(var(--ch) * 0.78 + 50px);   /* 39단계: 이름표 · 상태가 손패에 가리지 않게 24px 올림 */ display: flex; align-items: flex-end; gap: 14px; z-index: 1; }
 .side.heroes { left: 4%; }
 .side.monsters { right: 4%; }
 .unit { position: relative; display: flex; flex-direction: column; align-items: center; min-width: var(--uw); cursor: default; transition: transform 0.3s var(--ease), opacity 0.4s var(--ease); }

@@ -131,6 +131,15 @@
     var top = Math.max(St.data.ascension.best || 0, St.ascLevel());
     return sc.asc ? top >= sc.asc : top > 0;
   }
+  // 39단계: 승천 단계별 장면(10개)은 버튼 하나로 묶고 누르면 펼친다(카드가 길어지지 않게)
+  function ascGroup(ch) {
+    var list = ch.scenes.filter(function (sc) { return sc.asc; });
+    if (!list.length) return '';
+    var open = list.filter(ascSeen);
+    if (!open.length) return '<button class="btn small ghost" disabled>승천 ???</button>';
+    return '<button class="btn small asc-toggle">승천 장면 ' + open.length + '/' + list.length + '</button><div class="asc-row" hidden>' +
+      list.map(function (sc) { var ok = ascSeen(sc); return '<button class="btn small ' + (ok ? '' : 'ghost') + '" data-id="' + sc.id + '" ' + (ok ? '' : 'disabled') + '>' + (ok ? sc.asc : '?') + '</button>'; }).join('') + '</div>';
+  }
   // ================= 스토리 다시 보기 =================
   Meta.story = function () {
     var el = screen(), prog = St.storyProgress();
@@ -142,10 +151,10 @@
       var stageTheme = ch.n >= 1 && ch.n <= D.stages.length ? D.stages[ch.n - 1].theme : ch.n === 21 ? 'rift' : 'castle'; // 프롤로그·에필로그는 청운문, 31단계 세계의 틈 에필로그는 틈
       return '<div class="sc-card' + (anySeen ? '' : ' locked') + '" data-theme="' + stageTheme + '"><div class="sc-art"></div>' +
         '<div class="sc-head"><small>' + ch.en + '</small><b>' + (anySeen ? ch.title : '???') + '</b></div><div class="sc-btns">' +
-        ch.scenes.map(function (sc) {
+        ch.scenes.filter(function (sc) { return !sc.asc; }).map(function (sc) {
           var ok = ascSeen(sc);
-          return '<button class="btn small ' + (ok ? '' : 'ghost') + '" data-id="' + sc.id + '" ' + (ok ? '' : 'disabled') + '>' + (ok ? KIND_NAME[sc.kind] + (sc.asc ? ' ' + sc.asc : '') : '???') + '</button>';
-        }).join('') + '</div></div>';
+          return '<button class="btn small ' + (ok ? '' : 'ghost') + '" data-id="' + sc.id + '" ' + (ok ? '' : 'disabled') + '>' + (ok ? KIND_NAME[sc.kind] : '???') + '</button>';
+        }).join('') + ascGroup(ch) + '</div></div>';
     }).join('');
     el.innerHTML = Meta.topbar('스토리', '<button class="btn small ghost back">' + UI.icon('home') + '로비</button>') +
       '<div class="meta-body story-list"><div class="sc-prog"><span>본 장면 <b>' + prog.seen + '/' + prog.total + '</b></span><div class="bar"><i style="width:calc(' + prog.pct + '% - 4px)"></i></div><b class="pct">' + prog.pct + '%</b></div>' +
@@ -153,9 +162,10 @@
     UI.$$('.sc-card', el).forEach(function (c) {
       G.Art.scene(theme(c.getAttribute('data-theme'))).then(function (u) { if (u) c.querySelector('.sc-art').style.backgroundImage = 'url(' + u + ')'; });
     });
-    UI.$$('.sc-btns .btn:not(:disabled)', el).forEach(function (b) {
+    UI.$$('.sc-btns .btn[data-id]:not(:disabled)', el).forEach(function (b) {
       b.onclick = function () { Meta.scene(b.getAttribute('data-id'), Meta.story, { replay: true }); };
     });
+    UI.$$('.asc-toggle', el).forEach(function (b) { b.onclick = function () { var r = b.nextElementSibling; r.hidden = !r.hidden; }; });
     el.querySelector('.back').onclick = function () { Meta.lobby(); };
     UI.show('story');
   };
