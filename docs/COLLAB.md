@@ -11,6 +11,12 @@
 
 흐름: 사용자 요구 → Claude(코드·로직) → GitHub → ChatGPT(이미지·UI/UX) → GitHub → Claude(리소스를 게임에 적용)
 
+## 1.5 진행 계획
+이미지와 UI/UX는 **전면 개편**한다(전투 중 동료·몬스터 포함). 단계표는 `GAME_DESIGN.md` 16장 36~45단계이고, 각 단계의 담당(Claude / ChatGPT / 협업)이 적혀 있다.
+- 36단계에서 Claude가 리소스 기술 규격(`docs/ASSET_SPEC.md`)과 전체 요청서(`docs/IMAGE_REQUESTS.md`, 우선순위 묶음)를 쓴다. 같은 때 ChatGPT는 스타일 가이드와 시범 리소스를 만들고, 사용자가 화풍을 확정한다
+- 그림이 만들어지는 동안 Claude는 그림과 무관한 단계(소리 · 이야기)를 먼저 하고, 리소스가 올라오는 대로 해당 단계에서 연결한다
+- 동료·몬스터는 동작별 한 장씩(대기 · 공격 · 스킬 · 맞음 · 쓰러짐) 받아 CSS 로 움직인다(file:// 에서는 그림을 잘라 쓸 수 없어서). 스프라이트 시트는 규격에 맞으면 받는다
+
 ## 2. 리소스(Asset) 규칙
 - 위치: `assets/` 아래 `characters` · `cards` · `icons` · `backgrounds` · `ui` · `effects` · `items` (자세한 규격은 `assets/README.md`). 필요하면 기존 구조를 우선한다
 - ChatGPT가 올린 이미지를 Claude는 **다시 만들거나 바꾸지 않는다**. 파일명 · 비율 · 투명 배경 여부 · 크기 · 스타일 · 캐릭터 외형 · 색상 · 쓰임새를 그대로 지킨다
