@@ -38,7 +38,7 @@ Game.Data.statuses = {
   burn:      { name: '화상', kind: 'debuff', icon: 'burn', desc: '턴 종료 시 {n} 피해(보호막에 막힘) 후 절반으로 감소.' },
   weak:      { name: '약화', kind: 'debuff', icon: 'weak', decay: 'round', desc: '주는 공격 피해 -25%. {n}턴 남음.' },
   vulnerable:{ name: '취약', kind: 'debuff', icon: 'vulnerable', decay: 'round', desc: '받는 공격 피해 +50%. {n}턴 남음.' },
-  chill:     { name: '한기', kind: 'debuff', icon: 'chill', desc: '3 중첩되면 사라지며 빙결된다. ({n}/3)' },
+  chill:     { name: '한기', kind: 'debuff', icon: 'chill', desc: '3 중첩되면 사라지며 빙결된다. 화상인 적에게 걸면 증기 폭발. ({n}/3)' },
   frozen:    { name: '빙결', kind: 'debuff', icon: 'frozen', desc: '적: 다음 행동을 건너뛴다. 아군: 이번 턴 이 캐릭터의 카드를 쓸 수 없다.' },
   stun:      { name: '정지', kind: 'debuff', icon: 'stun', desc: '다음 행동을 건너뛴다.' }
 };

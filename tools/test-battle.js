@@ -211,7 +211,7 @@ check(G.Data.cardById['N27+'].effects[0].then[0].value === 36 && G.Data.cardById
 check(G.Data.cardById['B04+'].effects[0].cond.n === 0.6, '강화 규칙: 조건 완화 절반 → 60%');
 check(!G.Data.cardById['L12+'].exhaust, '예외: 마력 충전+ 소멸 제거');
 check(G.Data.cardById['C29+'].effects[0].p === 0.65, '예외: 동전 던지기+ 앞면 65%');
-check(G.Data.cardById['C30+'].effects[0].options[3].effects[0].value === 3, '아군에게 거는 디버프(수상한 물약의 중독)는 올리지 않음');
+// 39단계: '아군에게 거는 디버프는 올리지 않음' 규칙을 쓰던 수상한 물약이 활력 물약(무작위 없음)으로 바뀌어 지금은 그 규칙을 쓰는 카드가 없다
 check(G.util.numJosa('피해 4을 3회, 6를, 7으로') === '피해 4를 3회, 6을, 7로', '숫자 조사 교정');
 
 // 9단계: 짝 연계 10 · 합동기 10 · 대화 30 · 특성 50 (30단계 시엘: 15 · 15 · 45 · 60)
@@ -652,13 +652,27 @@ function handCard(b, id) {
   hp0 = b.monsters[0].hp;
   await b.play(handCard(b, 'L02'), b.monsters[0]);
   check(hp0 - b.monsters[0].hp === 4 + 3 * 2 && b.monsters[0].status.burn === 1 && b.monsters[0].status.chill === 1, '증기 폭발: 얼음 화살 4 + 화상 3×2 = 10, 화상 1 (' + (hp0 - b.monsters[0].hp) + ')');
+  // 증기 순환(지속): 증기 폭발마다 카드 1장 · 그 적에게 화상 2
+  b = await newBattle(['lyra'], ['treant'], ['C01', 'C01', 'C01', 'C01', 'C01', 'C01', 'C01', 'C01']);
+  b.heroes[0].crit = 0; b.energy = 9;
+  b.piles.hand.push(G.Deck.inst('L28'), G.Deck.inst('L01'), G.Deck.inst('L02'));
+  await b.play(handCard(b, 'L28'), null); await b.play(handCard(b, 'L01'), b.monsters[0]);
+  const ds = b.piles.draw.length; await b.play(handCard(b, 'L02'), b.monsters[0]);
+  check(b.piles.draw.length === ds - 1 && b.monsters[0].status.burn === 1 + 2, '증기 순환: 증기 폭발 뒤 카드 1장, 화상 1 + 2 = 3 (' + b.monsters[0].status.burn + ' · 덱 ' + ds + '→' + b.piles.draw.length + ')');
+  // 묵운낙관: 적마다 그 적의 획으로 낙관
+  b = await newBattle(['kai'], ['treant', 'treant']);
+  b.heroes[0].crit = 0; b.energy = 5;
+  b.monsters[0].status.ink = 4; b.monsters[1].status.ink = 0;
+  const m0 = b.monsters[0].hp, m1 = b.monsters[1].hp;
+  b.piles.hand.push(G.Deck.inst('K32')); await b.play(handCard(b, 'K32'), null);
+  check(m0 - b.monsters[0].hp === 3 + 4 * 3 + 4 && m1 - b.monsters[1].hp === 3 && !b.monsters[0].status.ink, '묵운낙관: 획 4인 적 19 · 획 없는 적 3 (' + (m0 - b.monsters[0].hp) + ' · ' + (m1 - b.monsters[1].hp) + ')');
 
   // X 비용
   b = await newBattle(['kai'], ['treant']);
   b.heroes[0].crit = 0; b.energy = 2;
   hp0 = b.monsters[0].hp;
   await b.play(handCard(b, 'K24'), b.monsters[0]);
-  check(hp0 - b.monsters[0].hp === 18 && b.energy === 0, '천 번의 베기 X=2 → 6×3 = 18');
+  check(hp0 - b.monsters[0].hp === 6 + 7 + 8 && b.energy === 0, '천검난무 X=2 → 3회, 맞을 때마다 획 1 → 6 + 7 + 8 = 21 (' + (hp0 - b.monsters[0].hp) + ')');
 
   // 쓰러진 캐릭터의 카드는 사용 불가, 공용 카드는 가능
   b = await newBattle(['kai', 'bram'], ['treant']);

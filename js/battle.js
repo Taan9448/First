@@ -1016,6 +1016,7 @@
           this.emit('fx:steam', { unit: su, n: burn * CR.steamMult });
           S.set(su, 'burn', Math.floor(burn / 2));
           await this.takeDamage(su, burn * CR.steamMult, { kind: 'steam' });
+          if (!this.over()) await this.runHooks('steam', { target: su.dead ? null : su });   // 지속 카드: 증기 폭발이 일어날 때마다
         }
         this.update();
         return;
