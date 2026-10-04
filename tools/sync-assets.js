@@ -71,7 +71,7 @@ function kindOf(rel) {
     if (m) return { kind: 'bgFore', id: m[1], known: true };
     m = base.match(/^battle_(.+)$/);
     if (m) return { kind: 'bgBattle', id: m[1], known: ['forest', 'desert', 'snow', 'volcano', 'castle', 'rift', 'mirror'].includes(m[1]) };
-    return { kind: 'bgScreen', id: base, known: ['title', 'lobby', 'dungeon_map', 'shop', 'camp', 'forge', 'reward', 'codex', 'records', 'settings'].includes(base) };
+    return { kind: 'bgScreen', id: base, known: ['title', 'lobby', 'dungeon_map', 'shop', 'camp', 'forge', 'reward', 'codex', 'records', 'settings'].includes(base) || /^title_[2-9]$/.test(base) };
   }
   if (p.startsWith('icons/')) return { kind: 'icon', id: base, known: true };
   if (p.startsWith('items/relics/')) return { kind: 'relic', id: base, known: !!D.relicById[base] };

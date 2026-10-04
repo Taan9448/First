@@ -90,14 +90,14 @@
       (G.debug ? '<button type="button" class="btn small test">전투 테스트 (디버그)</button>' : '') + '</nav>' +
       '<div class="tt-dim"></div>' +
       '<section class="tt-pick" role="dialog" aria-modal="true" aria-labelledby="tt-pick-h" aria-hidden="true"><h2 id="tt-pick-h">SELECT SAVE</h2>' +
-      '<div class="tt-slots"></div><div class="tt-pickfoot"><button type="button" class="btn back">BACK</button>' +
-      '<button type="button" class="btn manage" data-tip="저장 내보내기 · 가져오기 · 지우기">MANAGE</button></div></section>' +
+      '<div class="tt-slots"></div><div class="tt-pickfoot"><button type="button" class="btn back">BACK</button></div></section>' +
       '<div class="tt-tools">' + [['records', '업적 · 기록'], ['help', '도움말'], ['settings', '설정']].map(function (t) {
         return '<button type="button" class="tt-ico ' + t[0] + '" aria-label="' + t[1] + '"><svg viewBox="0 0 24 24">' + TT_ICO[t[0]] + '</svg></button>';
       }).join('') + '</div>', true);
     var pick = el.querySelector('.tt-pick'), list = el.querySelector('.tt-slots');
     // 칸 고르기. mode 'cont' = 빈 칸은 못 고름, 'new' = 빈 칸은 바로, 찬 칸은 덮어쓸지 묻는다
     var openPick = function (mode) {
+      mode0 = mode;
       var h = '';
       for (var n = 1; n <= G.Save.SLOTS; n++) {
         var d = G.Save.peek(n), md = d && (D.modes[d.mode] || D.modes.normal);
@@ -112,16 +112,40 @@
       UI.$$('.tt-slot', list).forEach(function (b) {
         b.onclick = function () {
           var n = +b.getAttribute('data-n'), d = G.Save.peek(n);
-          if (mode === 'cont') return openSlot(n);
+          if (mode === 'cont') return slotActions(n, b);
           if (!d) return Meta.modeSelect(n);
           confirmBox(n + '번 칸의 기록을 덮어쓸까요? 모드를 고르고 시작하면 이전 기록은 사라진다.', '덮어쓰기', function () { Meta.modeSelect(n); });
         };
       });
+      pick.classList.remove('acting');
+      el.querySelector('.tt-pickfoot').hidden = false;
       el.classList.add('tt-picking');
       pick.setAttribute('aria-hidden', 'false');
       var f = list.querySelector('.tt-slot:not(:disabled)');
       if (f) try { f.focus({ preventScroll: true }); } catch (e) { /* 무시 */ }
     };
+    // 40단계(사용자 요청): 칸을 누르면 그 칸만 남기고 LOAD · DELETE · BACK
+    var slotActions = function (n, b) {
+      UI.$$('.tt-slot', list).forEach(function (x) { if (x !== b) x.hidden = true; });
+      b.classList.add('picked'); b.disabled = true;
+      b.querySelector('.tt-go').textContent = '';
+      pick.classList.add('acting');
+      el.querySelector('.tt-pickfoot').hidden = true;
+      var row = UI.el('div', 'tt-acts', '<button type="button" class="btn gold big load">LOAD</button><button type="button" class="btn big del">DELETE</button><button type="button" class="btn big bk">BACK</button>');
+      list.appendChild(row);
+      row.querySelector('.load').onclick = function () { openSlot(n); };
+      row.querySelector('.del').onclick = function () {
+        confirmBox('SLOT ' + n + '의 기록을 지울까요? 되돌릴 수 없다.', '지우기', function () {
+          G.Save.clear(n);
+          var any2 = false;
+          for (var k2 = 1; k2 <= G.Save.SLOTS; k2++) if (G.Save.peek(k2)) any2 = true;
+          if (any2) openPick('cont'); else Meta.title();
+        });
+      };
+      row.querySelector('.bk').onclick = function () { openPick(mode0); };
+      try { row.querySelector('.load').focus({ preventScroll: true }); } catch (e) { /* 무시 */ }
+    };
+    var mode0 = 'cont';
     var closePick = function () {
       el.classList.remove('tt-picking');
       pick.setAttribute('aria-hidden', 'true');
@@ -136,7 +160,6 @@
     el.querySelector('.daily').onclick = function () { Meta.dailyIntro(); };
     el.querySelector('.tt-pick .back').onclick = closePick;
     el.querySelector('.tt-dim').onclick = closePick;
-    el.querySelector('.tt-pick .manage').onclick = function () { Meta.slots(); };
     el.querySelector('.tt-ico.records').onclick = function () { St.data = null; G.Extra.stats('all'); };
     el.querySelector('.tt-ico.help').onclick = function () { G.Extra.help(); };
     el.querySelector('.tt-ico.settings').onclick = function () { if (G.Extra && G.Extra.settingsWin) G.Extra.settingsWin(); };
@@ -145,12 +168,12 @@
       titleKeyBound = true;
       document.addEventListener('keydown', function (e) {
         var t = screen('title');
-        if (e.key === 'Escape' && t.classList.contains('tt-picking') && !document.querySelector('#app > .modal')) { var b = t.querySelector('.tt-pick .back'); if (b) b.click(); }
+        if (e.key === 'Escape' && t.classList.contains('tt-picking') && !document.querySelector('#app > .modal')) { var b = t.querySelector('.tt-acts .bk') || t.querySelector('.tt-pick .back'); if (b) b.click(); }
       });
     }
     UI.show('title');
   };
-  var titleKeyBound = false;
+  var titleKeyBound = false, titleBgPick = null;
   function titleFrame(inner, home) {
     var t = screen('title');
     t.classList.toggle('tt-home', !!home);
@@ -168,7 +191,10 @@
       '<div class="title-foot">저장 칸 ' + G.Save.SLOTS + '개 · 진행은 브라우저에 자동 저장된다</div>';
     setTimeout(function () {
       var bg = screen('title').querySelector('.title-bg');
-      var titleBg = G.Assets.screenBg('title') || G.Assets.screenBg('lobby');
+      // 40단계: 시작 화면은 열 때마다 배경을 무작위로(하위 화면은 그 배경을 그대로 이어 쓴다)
+      var pool = G.Assets.titleBgs ? G.Assets.titleBgs() : [];
+      if (home || !titleBgPick) titleBgPick = pool.length ? pool[Math.floor(Math.random() * pool.length)] : null;
+      var titleBg = titleBgPick || G.Assets.screenBg('title') || G.Assets.screenBg('lobby');
       (titleBg ? Promise.resolve(titleBg) : G.Art.scene('castle')).then(function (u) { if (u && bg) bg.style.backgroundImage = 'url(' + u + ')'; });
     }, 0);
     return html;

@@ -64,6 +64,13 @@
     battleBg: function (theme) { return url(find(path('bgBattle', theme))); },
     battleFore: function (theme) { return url(find(path('bgFore', theme))); },
     screenBg: function (name) { return url(find(path('bgScreen', name))); },
+    // 40단계: 시작 화면 배경 후보 — 타이틀(title · title_2 …) · 로비 · 전투 배경 7종 중 있는 것(사용자 요청: 열 때마다 무작위)
+    titleBgs: function () {
+      var out = [], self = this;
+      ['title'].concat([2, 3, 4, 5, 6, 7, 8, 9].map(function (n) { return 'title_' + n; }), ['lobby']).forEach(function (k) { var u = self.screenBg(k); if (u) out.push(u); });
+      ['castle', 'forest', 'desert', 'snow', 'volcano', 'rift', 'mirror'].forEach(function (t) { var u = self.battleBg(t); if (u) out.push(u); });
+      return out;
+    },
     worldMap: function () { return url(find(spec('worldMap').dir + '/' + spec('worldMap').name)); },
     // 아이콘은 icons/ 아래 어느 하위 폴더에 있어도 파일 이름이 키다
     icon: function (name) {

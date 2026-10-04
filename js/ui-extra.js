@@ -500,7 +500,7 @@
   // ================= 24단계: 저장 내보내기 · 가져오기 =================
   X.exportWin = function (slot) {
     var text = G.Save.exportText(slot);
-    var m = UI.modal('<h2>' + slot + '번 칸 내보내기</h2><p class="dim">아래 글자를 복사해 다른 PC의 타이틀 → 저장 칸 → 가져오기에 붙여 넣는다. 파일로도 받을 수 있다.</p>' +
+    var m = UI.modal('<h2>' + slot + '번 칸 내보내기</h2><p class="dim">아래 글자를 복사해 다른 PC의 설정 → 저장 가져오기에 붙여 넣는다. 파일로도 받을 수 있다.</p>' +
       '<textarea class="save-text" readonly></textarea>' +
       '<div class="row" style="justify-content:flex-end"><span class="dim copied"></span><button class="btn small file">파일로 받기</button><button class="btn small copy">복사</button><button class="btn gold close">닫기</button></div>', 'savewin');
     var ta = m.querySelector('.save-text');
@@ -580,7 +580,9 @@
       '<div class="set-row">' + ico('cb') + '<span>색약 표기</span>' + tog('cb-tog', s.cb, '색약 표기') + '<small class="dim">행동 예고·상태에 글자 표시, 공격 대상 이름</small></div>' +
       '<div class="set-row">' + ico('hk') + '<span>단축키 표시</span>' + tog('hk-tog', s.hotkeys !== false, '단축키 표시') + '<small class="dim">1~0 카드 · ←→ 대상 · Enter 사용 · E 턴 종료 · Z 되돌리기</small></div>' +
       '<div class="set-foot"><button class="btn tut">튜토리얼 다시 보기</button>' +
-      (St().data && !St().isDaily() ? '<button class="btn export" data-tip="가져오기는 타이틀의 저장 칸 화면에서">' + G.Save.slot + '번 칸 내보내기</button>' : '') +
+      (St().data && !St().isDaily() ? '<button class="btn export" data-tip="다른 PC에서는 설정의 가져오기로 넣는다">' + G.Save.slot + '번 칸 내보내기</button>' : '') +
+      // 40단계: 시작 화면의 저장 칸 관리 화면을 없앴으므로 가져오기는 여기서(빈 칸이 있으면 첫 빈 칸, 없으면 지금 칸)
+      (!St().isDaily || !St().isDaily() ? '<button class="btn import" data-tip="내보낸 저장을 빈 칸(없으면 지금 칸)에 넣는다">저장 가져오기</button>' : '') +
       '<button class="btn danger reset" data-tip="' + (G.debug ? '디버그 저장만 지운다' : '모든 진행이 사라진다') + '">저장 초기화</button></div>' +
       debug + '</div></div>', 'setwin');
     var hp = UI.portraitEl('kai', 'set-pic');
@@ -605,6 +607,12 @@
     m.querySelector('.cb-tog').onchange = function () { s.cb = this.checked; X.applySettings(s); re(); X.refreshScreen(); };
     m.querySelector('.hk-tog').onchange = function () { s.hotkeys = this.checked; X.applySettings(s); re(); };
     if (m.querySelector('.export')) m.querySelector('.export').onclick = function () { St().save(); X.exportWin(G.Save.slot); };
+    if (m.querySelector('.import')) m.querySelector('.import').onclick = function () {
+      var to = 0;
+      for (var n = 1; n <= G.Save.SLOTS && !to; n++) if (!G.Save.peek(n)) to = n;
+      to = to || (typeof G.Save.slot === 'number' ? G.Save.slot : 1);
+      X.importWin(to, function () { UI.$$('.modal').forEach(UI.closeModal); if (!St().data) G.Meta.title(); });
+    };
     m.querySelector('.tut').onclick = function () {
       if (St().data) { St().data.flags.tutorialDone = false; St().save(); }
       this.textContent = '다음 전투에서 보여 준다';

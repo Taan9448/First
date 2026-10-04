@@ -557,3 +557,10 @@ body.ui-parts #gmenu .btn.icon::before { border:none; border-image:none; border-
 /* 시작 화면의 하위 화면(모드 고르기 · 저장 칸 관리 · 오늘의 원정): 위에 작은 제목, 아래로 내용을 가운데 정렬 */
 #screen-title:not(.tt-home) .title-wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:130px 24px 44px; box-sizing:border-box; overflow:auto; }
 #screen-title:not(.tt-home) .title-shade { background:linear-gradient(#0b1220cc,#0b122099 30%,#0b1220cc); }
+/* SELECT SAVE에서 칸을 누르면: 그 칸만 남고 LOAD · DELETE · BACK(사용자 요청) */
+.tt-slot.picked { opacity:1; cursor:default; box-shadow:inset 0 0 0 1px #54c7c0,inset 0 -3px 0 #54c7c0; background:#13252a; }
+.tt-slot[hidden] { display:none; }
+.tt-acts { display:flex; flex-direction:column; gap:10px; margin-top:6px; }
+.tt-acts .btn.big { width:100%; height:56px; min-height:56px; padding-top:0; padding-bottom:0; font-family:var(--font-serif); letter-spacing:.18em; font-size:1.1em; }
+.tt-pickfoot[hidden] { display:none; }
+.tt-slot.picked .tt-sn { background:radial-gradient(circle,#f0e4cb 0 60%,#c5a261 62% 70%,#111820 72%); color:#111820; }
