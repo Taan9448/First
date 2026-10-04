@@ -88,7 +88,7 @@ function invariants(where) {
     G.rng.seed(77 + run);
     G.Save.clear();
     St.newGame();
-    check(St.data.cards.length === 23, '새 게임 보유 카드 23장 (' + St.data.cards.length + ')');
+    check(St.data.cards.length === 24, '새 게임 보유 카드 24장(39단계: 일필낙관이 기본 카드) (' + St.data.cards.length + ')');
     check(St.data.decks.kai.length === 5 && St.data.decks.common.length === 5, '시작 준비 덱 하린 5 + 공용 5');
     invariants('새 게임');
 

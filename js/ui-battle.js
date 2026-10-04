@@ -858,7 +858,7 @@
       var e = unitEls[d.unit.uid];
       if (!e) return;
       var p = spritePt(d.unit);
-      var el = d.kind === 'poison' ? 'poison' : d.kind === 'burn' ? 'fire' : d.kind === 'thorns' ? 'nature' :
+      var el = d.kind === 'poison' ? 'poison' : d.kind === 'burn' || d.kind === 'steam' ? 'fire' : d.kind === 'thorns' ? 'nature' :
         d.kind === 'lose' ? 'shadow' : d.src && d.src.side === 'enemy' ? 'monster' : cur ? cur.el : 'neutral';
       if (d.amount > 0) {
         var cls = d.crit ? 'crit' : d.kind === 'poison' ? 'poison' : d.kind === 'burn' ? 'burn' : '';
@@ -904,6 +904,7 @@
         SND.play('buff');
       }
     });
+    on('fx:steam', function (d) { if (unitEls[d.unit.uid]) { FX.burst(spritePt(d.unit), { colors: ['#ffffff', '#bfefff', '#ff9a5a'], n: 22, speed: 2.6 }); FX.ring(spritePt(d.unit), '#bfefff', 40, { size: 2 }); } });   // 39단계
     on('fx:cleanse', function (d) { FX.rise(spritePt(d.unit), { colors: ['#ffffff', '#9fe6ff'], n: 10 }); });
     on('fx:text', function (d) { float(d.unit || B.heroes[0], d.text, 'text ' + (d.kind || '')); });
     on('fx:gold', function (d) {

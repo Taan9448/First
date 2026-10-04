@@ -32,6 +32,7 @@ Game.Data.statuses = {
   shelter:   { name: '엄호', kind: 'special', icon: 'r_crest', desc: '같은 편이 하나라도 더 살아 있으면 받는 공격 피해가 절반이 된다.' },
   freezeImmune: { name: '빙결 면역', kind: 'special', icon: 'freezeImmune', decay: 'round', desc: '한기가 쌓이지 않는다. {n}라운드 남음.' },
 
+  ink:       { name: '획', kind: 'debuff', icon: 'scroll', desc: '하린의 붓이 남긴 먹 자국. 하린의 공격은 획 1당 피해 +1(최대 5). 낙관 카드가 획을 터뜨린다. (최대 9)' },
   venomMark: { name: '독 표식', kind: 'debuff', icon: 'poison', desc: '중독 피해를 받을 때 {n}만큼 더 받는다(소연, 최대 5).' },
   poison:    { name: '중독', kind: 'debuff', icon: 'poison', desc: '턴 종료 시 {n} 피해(보호막 무시) 후 1 감소.' },
   burn:      { name: '화상', kind: 'debuff', icon: 'burn', desc: '턴 종료 시 {n} 피해(보호막에 막힘) 후 절반으로 감소.' },
@@ -60,8 +61,14 @@ Game.Data.keywords = {
   '혈흔': '적이 섞어 넣는 저주 카드. 쓸 수 없고, 손패에 든 채로 턴이 끝나면 무작위 아군이 체력 3을 잃는다. 전투가 끝나면 사라진다.',
   '속박': '적이 섞어 넣는 저주 카드. 에너지 1로 써서 없앨 수 있다(소멸). 전투가 끝나면 사라진다.',
   '분열': '체력이 절반 아래로 내려가면 남은 체력을 나눠 가진 작은 몬스터 둘로 갈라진다.',
-  '자폭': '예고한 턴이 되면 터지며 아군 전체에 피해를 주고 사라진다. 그 전에 쓰러뜨리면 터지지 않는다.'
+  '자폭': '예고한 턴이 되면 터지며 아군 전체에 피해를 주고 사라진다. 그 전에 쓰러뜨리면 터지지 않는다.',
+  // 39단계: 카드 개편 — 동료마다 쌓고(준비) 터뜨리는(마무리) 고리
+  '획': '하린의 붓이 남긴 먹 자국(적, 최대 9). 하린의 공격은 획 1당 피해 +1(최대 5). 낙관 카드가 획을 터뜨린다.',
+  '낙관': '하린의 마무리 — 대상의 획에 비례해 크게 베고 획을 모두 지운다. 획을 쌓아 둘지(공격 +1) 터뜨릴지 고른다.',
+  '증기 폭발': '화상인 적에게 한기를 걸면 터진다 — 화상 × 2 피해(보호막에 막힘), 화상은 절반으로. 리라가 불로 준비하고 얼음으로 터뜨린다.'
 };
+// 39단계: 카드 규칙 수치 — 획 최대 · 획 공격 보너스 최대 · 증기 폭발 배율
+Game.Data.cardRules = { inkMax: 9, inkBonusCap: 5, steamMult: 2 };
 ['strength', 'focus', 'keen', 'critUp', 'regen', 'thorns', 'taunt', 'poison', 'burn', 'weak',
  'vulnerable', 'chill', 'frozen', 'stun'].forEach(function (k) {
   var s = Game.Data.statuses[k];

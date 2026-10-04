@@ -142,6 +142,7 @@
       else if (info.kind === 'burn') add('burnTick');
       else if (info.kind === 'thorns') add('thorns');
       else if (info.kind === 'lose') add('drain');
+      else if (info.kind === 'steam') { add('fire'); add('zap'); }   // 39단계: 증기 폭발
       else if (info.enemy) add(pickMove(info.move));
       else if (info.el && (X.physical || []).indexOf(info.el) < 0 && X.element && X.element[info.el]) add(X.element[info.el], pitch);
       else {

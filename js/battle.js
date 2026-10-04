@@ -947,6 +947,7 @@
       case 'targetBlock': return tgt ? U.cmp(tgt.block, c.op, c.n) : false;
       case 'selfHas': return hasSt(src);
       case 'targetHas': return hasSt(tgt, c.pre ? ctx.pre : null);
+      case 'targetStatus': return tgt ? U.cmp(S.get(tgt, c.status), c.op, c.n) : false;      // 39단계: 대상의 상태 수치(획 3 이상 등)
       case 'targetDebuffKinds': return tgt ? U.cmp(S.debuffKinds(tgt), c.op, c.n) : false;
       case 'targetIntentAttack': return !!(tgt && tgt.side === 'enemy' && this.intentInfo(tgt).dmg != null);
       case 'attacksMod': return ctx.attacksBefore > 0 && (ctx.attacksBefore + 1) % c.n === 0;   // 이 카드가 이번 턴 n·2n·3n번째 공격 카드인가
@@ -995,14 +996,27 @@
       case 'status':
         list = this.targets(spec, ctx);
         if (e.ifHas) list = list.filter(function (u) { return S.has(u, e.ifHas); });   // 22단계: 그 상태가 있는 대상에게만
+        var steam = [], CR = G.Data.cardRules || {};
         list.forEach(function (u) {
           var sv = self.num(e.value, ctx, u);
+          // 39단계: 증기 폭발 — 아군이 화상인 적에게 한기를 걸면 화상 × steamMult 피해, 화상은 절반으로
+          if (e.status === 'chill' && u.side === 'enemy' && ctx.src && ctx.src.side === 'ally' && S.get(u, 'burn') > 0 && CR.steamMult) steam.push(u);
           if (ctx.pair && ctx.pair.statusAdd && ctx.pair.statusAdd[e.status] && u.side === 'enemy') sv += ctx.pair.statusAdd[e.status];
           S.add(self, u, e.status, sv, ctx.src);
           // 독 표식(소연): 소연의 카드가 적에게 중독을 걸면 표식 +1(최대 5)
           if (e.status === 'poison' && u.side === 'enemy' && !u.dead && ctx.src && ctx.src.id === 'nox') S.set(u, 'venomMark', Math.min(5, S.get(u, 'venomMark') + 1));
           if (u.side === 'enemy' && !u.dead && !ctx.isRelic && !ctx.isMonster && S.isDebuff(e.status)) self.queueRelic('enemyDebuff', { target: u });
+          if (e.status === 'ink' && CR.inkMax) S.set(u, 'ink', Math.min(CR.inkMax, S.get(u, 'ink')));   // 획은 최대 inkMax
         });
+        this.update();
+        for (i = 0; i < steam.length && !this.over(); i++) {
+          var su = steam[i], burn = S.get(su, 'burn');
+          if (su.dead || burn <= 0) continue;
+          this.emit('fx:text', { unit: su, text: '증기 폭발!', kind: 'bad' });
+          this.emit('fx:steam', { unit: su, n: burn * CR.steamMult });
+          S.set(su, 'burn', Math.floor(burn / 2));
+          await this.takeDamage(su, burn * CR.steamMult, { kind: 'steam' });
+        }
         this.update();
         return;
 
@@ -1188,6 +1202,7 @@
       d += ctx.comboBonus || 0;                                      // 연계
       if (ctx.pair && ctx.pair.dmgAdd) d += ctx.pair.dmgAdd;         // 짝 연계
       if (src && src.id === 'kai' && src.res && !ctx.momentum) d += src.res;    // 검세
+      if (src && src.id === 'kai') d += Math.min((G.Data.cardRules || {}).inkBonusCap || 5, S.get(tgt, 'ink'));   // 39단계: 획 — 하린의 공격은 대상의 획 1당 +1
       if (src && src.id === 'ciel' && ctx.aim && !ctx.aimUsed) { d += ctx.aim * 3; ctx.aimUsed = true; }   // 조준(첫 공격만)
       var tm = src && src.tm;
       if (tm) {                                                      // 특성

@@ -13,6 +13,8 @@ global.window = global;
 });
 const G = global.Game;
 G.instant = true;
+// 39단계: 전투 테스트의 '하린 기본 공격(피해 6)' 자리는 획을 걸지 않는 시험 카드로(청운일검은 획을 걸어 다음 공격이 +1 된다)
+G.Data.cardById.TK01 = Object.assign({}, G.Data.cardById.K01, { id: 'TK01', effects: [{ op: 'damage', value: 6 }], text: '피해 {d0}.' });
 
 let failures = 0;
 function check(cond, msg) {
@@ -205,8 +207,8 @@ check(G.Upgrade.idOf('K01', { K01: 2 }) === 'K01+2' && G.Upgrade.idOf('K01', {})
 check(G.Data.cardById['K01+'].effects[0].value === 8, '강화 규칙: 베기 6 → 8');
 check(G.Data.cardById['K22+'].cost === 2, '강화 규칙: 비용 3 → 2');
 check(G.Data.cardById['K15+'].cost === 0, '강화 규칙: 지속 카드 비용 -1');
-check(G.Data.cardById['K17+'].effects[0].then[0].value === 36 && G.Data.cardById['K17+'].effects[0].else[0].value === 18, '강화 규칙: 2배 관계 유지 (처형 18/36)');
-check(G.Data.cardById['K17+'].effects[0].cond.n === 0.6, '강화 규칙: 조건 완화 절반 → 60%');
+check(G.Data.cardById['N27+'].effects[0].then[0].value === 36 && G.Data.cardById['N27+'].effects[0].else[0].value === 18, '강화 규칙: 2배 관계 유지 (절명독수 18/36)');
+check(G.Data.cardById['B04+'].effects[0].cond.n === 0.6, '강화 규칙: 조건 완화 절반 → 60%');
 check(!G.Data.cardById['L12+'].exhaust, '예외: 마력 충전+ 소멸 제거');
 check(G.Data.cardById['C29+'].effects[0].p === 0.65, '예외: 동전 던지기+ 앞면 65%');
 check(G.Data.cardById['C30+'].effects[0].options[3].effects[0].value === 3, '아군에게 거는 디버프(수상한 물약의 중독)는 올리지 않음');
@@ -342,21 +344,21 @@ function handCard(b, id) {
   kai.status.strength = 2; kai.status.weak = 1; s1.status.vulnerable = 1;
   let hp0 = s1.hp;
   b.energy = 3;
-  await b.play(handCard(b, 'K01'), s1);
+  await b.play(handCard(b, 'TK01'), s1);
   check(hp0 - s1.hp === 9, '피해 계산 (6+2)×0.75×1.5 = 9 (실제 ' + (hp0 - s1.hp) + ')');
 
   // 보호막 먼저 차감
   b.monsters[1].block = 4; hp0 = b.monsters[1].hp;
   kai.status = {}; b.energy = 3;
   b.heroes.forEach(h => { h.res = 0; }); // 21단계: 하린 검세를 비워 둔다
-  await b.play(handCard(b, 'K01'), b.monsters[1]);
+  await b.play(handCard(b, 'TK01'), b.monsters[1]);
   check(b.monsters[1].block === 0 && hp0 - b.monsters[1].hp === 2, '보호막 4 → 피해 6 중 2만 체력');
 
   // 집중은 확정 치명타 (2배)
   b = await newBattle(['kai'], ['treant']);
   b.heroes[0].crit = 0; b.heroes[0].status.focus = 1; b.energy = 3;
   hp0 = b.monsters[0].hp;
-  await b.play(handCard(b, 'K01'), b.monsters[0]);
+  await b.play(handCard(b, 'TK01'), b.monsters[0]);
   check(hp0 - b.monsters[0].hp === 12 && !b.heroes[0].status.focus, '집중 → 치명타 12, 집중 소모');
 
   // ---- 34단계: 적 기믹 ----
@@ -365,22 +367,22 @@ function handCard(b, id) {
     // 회피: 공격 1회를 통째로 피한다
     b = await newBattle(['kai'], ['assassin']); plain(b);
     let m = b.monsters[0]; m.status.dodge = 1; hp0 = m.hp;
-    await b.play(handCard(b, 'K01'), m);
+    await b.play(handCard(b, 'TK01'), m);
     check(m.hp === hp0 && !m.status.dodge, '회피: 첫 공격을 피하고 1 감소');
-    plain(b); await b.play(handCard(b, 'K01'), m);
+    plain(b); await b.play(handCard(b, 'TK01'), m);
     check(m.hp === hp0 - 6, '회피가 없으면 맞는다');
     // 엄호: 같은 편이 살아 있으면 받는 피해 절반
     b = await newBattle(['kai'], ['gargoyle', 'skeleton']); plain(b);
     m = b.monsters[0]; hp0 = m.hp;
-    await b.play(handCard(b, 'K01'), m);
+    await b.play(handCard(b, 'TK01'), m);
     check(hp0 - m.hp === 3, '엄호: 피해 6 → 3 (실제 ' + (hp0 - m.hp) + ')');
     await b.die(b.monsters[1]); plain(b); hp0 = m.hp;
-    await b.play(handCard(b, 'K01'), m);
+    await b.play(handCard(b, 'TK01'), m);
     check(hp0 - m.hp === 6, '엄호: 혼자 남으면 그대로');
     // 분열: 절반 아래로 내려가면 남은 체력을 나눠 가진 둘로
     b = await newBattle(['kai'], ['mushroom']); plain(b);
     m = b.monsters[0]; m.hp = 16;
-    await b.play(handCard(b, 'K01'), m);
+    await b.play(handCard(b, 'TK01'), m);
     const sp = b.alive('enemy');
     check(m.dead && sp.length === 2 && sp.every(x => x.id === 'spore' && x.hp === 5 && x.maxHp === 5) && !b.over(), '분열: 독버섯 10 → 포자 버섯 5 · 5');
     // 자폭: 아군 전체 피해 후 사라진다(전투도 끝난다)
@@ -390,7 +392,7 @@ function handCard(b, id) {
     await b.act(m);
     check(m.dead && b.heroes[0].hp < hpK && b.heroes[1].hp < hpB && b.over() && b.result === 'win', '자폭: 전체 피해 후 사라진다');
     // 비용 올리기 · 에너지 줄이기 · 뽑기 줄이기(다음 내 턴에 적용)
-    const deck10 = Array(10).fill('K01');
+    const deck10 = Array(10).fill('TK01');
     b = await newBattle(['kai'], ['ice_witch'], deck10);
     b.piles.draw = b.piles.draw.concat(b.piles.hand); b.piles.hand = [];
     m = b.monsters[0]; m.intent = 'freeze'; m.intentTarget = b.heroes[0];
@@ -431,10 +433,10 @@ function handCard(b, id) {
 
   {
   // ---- 24단계: 턴 되돌리기 ----
-  b = await newBattle(['kai', 'bram'], ['slime', 'slime'], ['K01', 'K01', 'K01', 'K01', 'K01', 'B01', 'B01', 'C01'], { undo: true });
+  b = await newBattle(['kai', 'bram'], ['slime', 'slime'], ['TK01', 'TK01', 'TK01', 'TK01', 'TK01', 'B01', 'B01', 'C01'], { undo: true });
   const u0 = { hand: b.piles.hand.map(c => c.uid).join(), energy: b.energy, mhp: b.monsters.map(m => m.hp).join(), items: b.items.length };
   check(!b.canUndo(), '되돌리기: 아무것도 안 했으면 되돌릴 게 없다');
-  const atk = b.piles.hand.find(c => c.id === 'K01');
+  const atk = b.piles.hand.find(c => c.id === 'TK01');
   await b.play(atk, b.monsters[0]);
   check(b.canUndo() && b.monsters[0].hp < +u0.mhp.split(',')[0], '되돌리기: 카드를 쓰면 되돌릴 수 있다');
   b.undo();
@@ -442,13 +444,13 @@ function handCard(b, id) {
   check(b.monsters.every(m => m.def === G.Data.monsterById[m.id]) && b.piles.hand.every(c => c.def === G.Data.cardById[c.id]), '되돌리기: 데이터 정의는 같은 객체를 가리킨다');
   check(b.heroes.every(h => b.alive('ally').indexOf(h) >= 0), '되돌리기: 복제된 영웅끼리 참조가 이어진다');
   // 되돌린 뒤에도 정상 진행되고 다시 되돌릴 수 있다
-  const atk2 = b.piles.hand.find(c => c.id === 'K01');
+  const atk2 = b.piles.hand.find(c => c.id === 'TK01');
   await b.play(atk2, b.monsters[1]);
   check(b.undo() && b.monsters.map(m => m.hp).join() === u0.mhp, '되돌리기: 여러 번');
   await b.endTurn();
   check(b.turn === 2 && b.phase === 'player' && !b.canUndo(), '되돌리기: 다음 턴 시작에 새로 떠 둔다');
   const nb = await newBattle(['kai'], ['slime']);
-  const a3 = nb.piles.hand.find(c => c.def.type === 'attack') || handCard(nb, 'K01');
+  const a3 = nb.piles.hand.find(c => c.def.type === 'attack') || handCard(nb, 'TK01');
   await nb.play(a3, nb.monsters[0]);
   check(!nb.canUndo(), '되돌리기: undo 옵션이 없으면(하드·하드코어) 쓸 수 없다');
   }
@@ -469,7 +471,7 @@ function handCard(b, id) {
   await b.play(handCard(b, 'N36'), null);
   check(b.discardedTurn === 2 && hpSum() < hb && sly, '버리기: 2장, 버려지면 피해');
   check(b.evalCond({ is: 'discardedTurn', op: '>=', n: 2 }, {}, null), '조건: 이번 턴 버린 수');
-  b = await newBattle(['kai'], ['slime'], ['C01', 'C02', 'C03', 'C05', 'C07', 'K01', 'K02', 'K03', 'K04', 'K08']);
+  b = await newBattle(['kai'], ['slime'], ['C01', 'C02', 'C03', 'C05', 'C07', 'TK01', 'K02', 'K03', 'K04', 'K08']);
   const drawN = b.piles.draw.length, discN = b.piles.discard.length;
   b.energy = 3;
   await b.play(handCard(b, 'C34'), null);
@@ -485,7 +487,7 @@ function handCard(b, id) {
   b = await newBattle(['kai'], ['baltar']);
   check(b.monsters[0].status.riposte === 6, '사부 청운자: 반격 태세 6');
   const kh = b.heroes[0].hp; b.energy = 9; b.heroes[0].crit = 0;
-  for (let i = 0; i < 3; i++) await b.play(handCard(b, 'K01'), b.monsters[0]);
+  for (let i = 0; i < 3; i++) await b.play(handCard(b, 'TK01'), b.monsters[0]);
   check(b.heroes[0].hp === kh - 6, '반격 태세: 세 번째 공격 카드에 6 피해 (' + (kh - b.heroes[0].hp) + ')');
   // 시간의 모래: 7장째에 턴이 끝난다
   b = await newBattle(['kai'], ['pharaoh']);
@@ -515,11 +517,11 @@ function handCard(b, id) {
   // ---- 32단계: 연계형 · 성장형 · 자원 조건 ----
   {
     let cb = await newBattle(['kai', 'lyra'], ['treant'], ['C01']); cb.energy = 30; cb.heroes.forEach(h => { h.crit = 0; });
-    // 진기 집중: 직전에 다른 동료 카드 → 힘 +3, 아니면 +2
+    // 진기 집중(39단계): 검세 +1, 직전에 다른 동료 카드 → 검세 +2와 카드 1장
     await cb.play(handCard(cb, 'K06'), null);
-    check(cb.heroes[0].status.tempStr === 2, '진기 집중: 처음엔 +2');
-    await cb.play(handCard(cb, 'L03'), null); await cb.play(handCard(cb, 'K06'), null);
-    check(cb.heroes[0].status.tempStr === 5, '진기 집중: 직전 리라 카드 → +3 (' + cb.heroes[0].status.tempStr + ')');
+    check(cb.heroes[0].res === 1, '진기 집중: 처음엔 검세 +1');
+    await cb.play(handCard(cb, 'L03'), null); const hand0 = cb.piles.hand.length; await cb.play(handCard(cb, 'K06'), null);
+    check(cb.heroes[0].res === 3, '진기 집중: 직전 리라 카드 → 검세 +2, 카드 1장 (' + cb.heroes[0].res + ')');
     // 유수검: 쓸 때마다 타격 +1
     cb = await newBattle(['kai'], ['treant'], ['C01']); cb.energy = 30; cb.heroes[0].crit = 0;
     let mh = cb.monsters[0].hp; await cb.play(handCard(cb, 'K39'), cb.monsters[0]); const d1 = mh - cb.monsters[0].hp;
@@ -544,10 +546,10 @@ function handCard(b, id) {
   {
     let rb = await newBattle(['kai', 'bram', 'lyra', 'sera', 'nox'].slice(0, 3), ['treant']);
     const [hk, hb2, hl] = rb.heroes; hk.crit = 0; rb.energy = 20;
-    for (let i = 0; i < 5; i++) await rb.play(handCard(rb, 'K01'), rb.monsters[0]);
+    for (let i = 0; i < 5; i++) await rb.play(handCard(rb, 'TK01'), rb.monsters[0]);
     check(hk.res === 5, '검세: 공격 카드 5장 → 5 (' + hk.res + ')');
     let mh = rb.monsters[0].hp;
-    await rb.play(handCard(rb, 'K01'), rb.monsters[0]);
+    await rb.play(handCard(rb, 'TK01'), rb.monsters[0]);
     check(hk.res === 0 && mh - rb.monsters[0].hp === 12, '검세 5: 다음 공격 치명타 확정 후 0 (피해 ' + (mh - rb.monsters[0].hp) + ')');
     await rb.play(handCard(rb, 'B02'), null); await rb.play(handCard(rb, 'B02'), null);
     check(hb2.res === 2, '반격 자세: 방어 카드 2장 → 2');
@@ -608,7 +610,7 @@ function handCard(b, id) {
   b = await newBattle(['lyra'], ['treant']);
   b.heroes[0].status.affinity = 1; b.energy = 3;
   await b.play(handCard(b, 'L01'), b.monsters[0]);
-  check(b.monsters[0].status.burn === 3, '원소 친화 화상 2+1 = 3 (실제 ' + b.monsters[0].status.burn + ')');
+  check(b.monsters[0].status.burn === 4, '원소 친화 화상 3+1 = 4 (실제 ' + b.monsters[0].status.burn + ')');
 
   // 약화: 적 턴에 걸린 것은 그 라운드에 줄지 않는다
   b = await newBattle(['kai'], ['giant_spider']);
@@ -624,18 +626,32 @@ function handCard(b, id) {
   await b.endTurn();
   check(!b.monsters[0].status.vulnerable, '라운드 끝에 취약 1 → 0');
 
-  // 조건: 이번 턴 첫 카드
+  // 조건: 이번 턴 첫 카드(급습)
+  b = await newBattle(['kai'], ['treant'], ['C13']);
+  b.heroes[0].crit = 0; b.energy = 3;
+  check(b.condMet(handCard(b, 'C13')) === true, '첫 카드일 때 조건 충족 표시');
+  // 39단계: 획 — 쌍연검은 맞을 때마다 획 1, 하린의 공격은 획 1당 +1 → 3 + (3+1) = 7, 다음엔 (3+2) + (3+3) = 11
   b = await newBattle(['kai'], ['treant']);
   b.heroes[0].crit = 0; b.energy = 3;
-  const k03 = handCard(b, 'K03');
-  check(b.condMet(k03) === true, '첫 카드일 때 조건 충족 표시');
   hp0 = b.monsters[0].hp;
-  await b.play(k03, b.monsters[0]);
-  check(hp0 - b.monsters[0].hp === 9, '연속 베기 첫 카드 3×3 = 9');
+  await b.play(handCard(b, 'K03'), b.monsters[0]);
+  check(hp0 - b.monsters[0].hp === 7 && b.monsters[0].status.ink === 2, '쌍연검: 3 + 4 = 7, 획 2 (' + (hp0 - b.monsters[0].hp) + ')');
   hp0 = b.monsters[0].hp;
   b.heroes.forEach(h => { h.res = 0; }); // 21단계: 하린 검세를 비워 둔다
   await b.play(handCard(b, 'K03'), b.monsters[0]);
-  check(hp0 - b.monsters[0].hp === 6, '연속 베기 두 번째 3×2 = 6');
+  check(hp0 - b.monsters[0].hp === 11 && b.monsters[0].status.ink === 4, '쌍연검 두 번째: 5 + 6 = 11, 획 4 (' + (hp0 - b.monsters[0].hp) + ')');
+  // 낙관: 획 1당 4 + 2(+ 획 보너스 최대 5), 획을 지운다
+  b.heroes.forEach(h => { h.res = 0; }); b.energy = 3;
+  hp0 = b.monsters[0].hp;
+  await b.play(handCard(b, 'K09'), b.monsters[0]);
+  check(hp0 - b.monsters[0].hp === 2 + 4 * 4 + 4 && !b.monsters[0].status.ink, '일필낙관: 2 + 획 4×4 + 획 보너스 4 = 22, 획 지움 (' + (hp0 - b.monsters[0].hp) + ')');
+  // 증기 폭발: 화상인 적에게 한기 → 화상 × 2 피해, 화상 절반
+  b = await newBattle(['lyra'], ['treant']);
+  b.heroes[0].crit = 0; b.energy = 5;
+  await b.play(handCard(b, 'L01'), b.monsters[0]);
+  hp0 = b.monsters[0].hp;
+  await b.play(handCard(b, 'L02'), b.monsters[0]);
+  check(hp0 - b.monsters[0].hp === 4 + 3 * 2 && b.monsters[0].status.burn === 1 && b.monsters[0].status.chill === 1, '증기 폭발: 얼음 화살 4 + 화상 3×2 = 10, 화상 1 (' + (hp0 - b.monsters[0].hp) + ')');
 
   // X 비용
   b = await newBattle(['kai'], ['treant']);
@@ -647,7 +663,7 @@ function handCard(b, id) {
   // 쓰러진 캐릭터의 카드는 사용 불가, 공용 카드는 가능
   b = await newBattle(['kai', 'bram'], ['treant']);
   b.heroes[0].hp = 0; b.heroes[0].dead = true;
-  check(!b.canPlay(handCard(b, 'K01')).ok, '쓰러진 카이 카드 사용 불가');
+  check(!b.canPlay(handCard(b, 'TK01')).ok, '쓰러진 카이 카드 사용 불가');
   check(b.canPlay(handCard(b, 'C01')).ok, '공용 카드는 사용 가능');
 
   // 그림자 분신: 다음 카드 2번 발동
@@ -667,14 +683,14 @@ function handCard(b, id) {
   check(q.status.charge === 1 && q.block === 25, '절대영도 준비 → 보호막 25, 차지');
   check(q.intent === 'zero', '다음 예고는 절대영도');
   b.energy = 9; b.heroes[0].crit = 0; b.heroes[0].status.strength = 30;
-  await b.play(handCard(b, 'K01'), q);
+  await b.play(handCard(b, 'TK01'), q);
   check(!q.status.charge && q.status.vulnerable === 2, '보호막 파괴 → 차지 취소 + 취약 2');
   check(q.intent !== 'zero', '취소 후 예고가 다음 행동으로 바뀜 (' + q.intent + ')');
 
   // 체력 조건 발동: 고목 50% 이하 → 힘 2
   b = await newBattle(['kai'], ['treant']);
   b.energy = 9; b.heroes[0].crit = 0; b.heroes[0].status.strength = 64;
-  await b.play(handCard(b, 'K01'), b.monsters[0]);
+  await b.play(handCard(b, 'TK01'), b.monsters[0]);
   check(b.monsters[0].status.strength === 2, '고목 격노 → 힘 2');
 
   // 소환 최대 4마리, 넘치면 보호막 8
@@ -685,10 +701,10 @@ function handCard(b, id) {
   // 불사조 1회 부활
   b = await newBattle(['kai'], ['phoenix']);
   b.energy = 9; b.heroes[0].status.strength = 300;
-  await b.play(handCard(b, 'K01'), b.monsters[0]);
+  await b.play(handCard(b, 'TK01'), b.monsters[0]);
   const rev = Math.floor(b.monsters[0].maxHp * G.Data.monsterById.phoenix.revive.pct);
   check(!b.monsters[0].dead && b.monsters[0].hp === rev, '불사조 부활 체력 = ' + rev + ' (실제 ' + b.monsters[0].hp + ')');
-  await b.play(handCard(b, 'K01'), b.monsters[0]);
+  await b.play(handCard(b, 'TK01'), b.monsters[0]);
   check(b.result === 'win', '두 번째에는 처치 → 승리');
 
   // 모래: 사용 불가, 버린 더미에 들어감
@@ -772,7 +788,7 @@ function handCard(b, id) {
     check(rb.heroes[0].res === 2 && rb.heroes[1].res === 2, '단전 수련서: 시작 시 고유 자원 +2');
     rb = await newBattle(['kai'], ['treant'], ['C01'], { relics: ['R44'] });
     rb.heroes[0].res = 4; rb.energy = 5; rb.piles.draw = [G.Deck.inst('C01')]; const hh = rb.piles.hand.length;
-    await rb.play(handCard(rb, 'K01'), rb.monsters[0]);
+    await rb.play(handCard(rb, 'TK01'), rb.monsters[0]);
     check(rb.energy === 5 && rb.piles.hand.length === hh + 1, '천외검선의 검집: 자원이 차면 1장 + 에너지 1 (' + rb.energy + ')');
     // 29단계 유물
     rb = await newBattle(['kai'], ['treant'], ['C01'], { relics: ['R55'] });
@@ -801,15 +817,15 @@ function handCard(b, id) {
   b = await newBattle(['lyra'], ['treant'], ['C01'], { relics: ['R10', 'R21'] });
   b.energy = 3;
   await b.play(handCard(b, 'L01'), b.monsters[0]);
-  check(b.monsters[0].status.burn === 6, '부싯돌+용의 심장: 화상 (2+1)×2 = 6 (실제 ' + b.monsters[0].status.burn + ')');
+  check(b.monsters[0].status.burn === 8, '부싯돌+용의 심장: 화상 (3+1)×2 = 8 (실제 ' + b.monsters[0].status.burn + ')');
 
   b = await newBattle(['kai'], ['treant'], ['C01'], { relics: ['R07'] });
   b.heroes[0].crit = 0; b.energy = 3; hp0 = b.monsters[0].hp;
-  await b.play(handCard(b, 'K01'), b.monsters[0]);
+  await b.play(handCard(b, 'TK01'), b.monsters[0]);
   check(hp0 - b.monsters[0].hp === 11, '가죽 장갑: 첫 공격 6+5 = 11');
   hp0 = b.monsters[0].hp;
   b.heroes.forEach(h => { h.res = 0; }); // 21단계: 하린 검세를 비워 둔다
-  await b.play(handCard(b, 'K01'), b.monsters[0]);
+  await b.play(handCard(b, 'TK01'), b.monsters[0]);
   check(hp0 - b.monsters[0].hp === 6, '두 번째 공격은 보너스 없음');
 
   b = await newBattle(['kai'], ['treant'], ['C01'], { relics: ['R14'] });
@@ -847,7 +863,7 @@ function handCard(b, id) {
   b = await newBattle(['kai', 'lyra'], ['treant'], ['C01']);
   b.heroes.forEach(h => { h.crit = 0; }); b.energy = 5;
   hp0 = b.monsters[0].hp;
-  await b.play(handCard(b, 'K01'), b.monsters[0]);
+  await b.play(handCard(b, 'TK01'), b.monsters[0]);
   check(hp0 - b.monsters[0].hp === 6 && b.chain.count === 1, '연계 1: 베기 6');
   hp0 = b.monsters[0].hp;
   await b.play(handCard(b, 'L01'), b.monsters[0]);
@@ -859,13 +875,13 @@ function handCard(b, id) {
   // 공용 카드는 연계를 끊지 않는다 / 짝 연계는 턴당 한 번
   b = await newBattle(['kai', 'lyra'], ['treant'], ['C01']);
   b.heroes.forEach(h => { h.crit = 0; }); b.energy = 9;
-  await b.play(handCard(b, 'K01'), b.monsters[0]);
+  await b.play(handCard(b, 'TK01'), b.monsters[0]);
   await b.play(handCard(b, 'C01'), b.monsters[0]);
   check(b.chain.last === 'kai' && b.chain.count === 1, '공용 카드는 연계를 끊지도 올리지도 않음');
   // 친밀도 2단계: 짝 연계 1.5배
   b = await newBattle(['kai', 'lyra'], ['treant'], ['C01'], { bonds: { 'kai+lyra': 25 } });
   b.heroes.forEach(h => { h.crit = 0; }); b.energy = 5;
-  await b.play(handCard(b, 'K01'), b.monsters[0]);
+  await b.play(handCard(b, 'TK01'), b.monsters[0]);
   hp0 = b.monsters[0].hp;
   await b.play(handCard(b, 'L01'), b.monsters[0]);
   check(hp0 - b.monsters[0].hp === 6 + 6, '친밀도 2단계: 검기 마법 6 (실제 ' + (hp0 - b.monsters[0].hp - 6) + ')');
@@ -883,17 +899,17 @@ function handCard(b, id) {
   b = await newBattle(['kai'], ['treant'], ['C01'], { party: [{ id: 'kai', traits: [{ maxHp: 10 }, { firstOwnAttackDiscount: 1 }, { startStatus: { strength: 1 } }] }] });
   check(b.heroes[0].maxHp === 80 && b.heroes[0].hp === 80, '특성: 최대 체력 +10');
   check(b.heroes[0].status.strength === 1, '특성: 시작 힘 1');
-  const k1 = handCard(b, 'K01');
+  const k1 = handCard(b, 'TK01');
   check(b.costOf(k1) === 0, '특성: 매 턴 첫 공격 카드 비용 -1');
   b.energy = 3; await b.play(k1, b.monsters[0]);
-  check(b.costOf(handCard(b, 'K01')) === 1, '두 번째 공격 카드는 그대로');
+  check(b.costOf(handCard(b, 'TK01')) === 1, '두 번째 공격 카드는 그대로');
   b = await newBattle(['bram'], ['treant'], ['C01'], { party: [{ id: 'bram', traits: [{ undyingOnce: true }, { startBlock: 8 }] }] });
   check(b.heroes[0].block === 8, '특성: 시작 보호막 8');
   await b.loseHp(b.heroes[0], 999);
   check(!b.heroes[0].dead && b.heroes[0].hp === 1, '특성: 불굴(체력 1로 버팀)');
   b = await newBattle(['lyra'], ['treant'], ['C01'], { party: [{ id: 'lyra', traits: [{ statusAdd: { burn: 1 } }] }] });
   b.energy = 3; await b.play(handCard(b, 'L01'), b.monsters[0]);
-  check(b.monsters[0].status.burn === 3, '특성: 리라가 거는 화상 +1');
+  check(b.monsters[0].status.burn === 4, '특성: 리라가 거는 화상 +1');
 
   // ---------------------------------------------------------------- 10단계: 적 강화 보정(난이도·승천)
   check(G.Data.ascension.length === 10 && G.Data.ascension.every((x, i) => x.n === i + 1 && x.desc), '승천 10단계');
@@ -954,6 +970,8 @@ function handCard(b, id) {
       await b.start();
       let guard = 0;
       while (!b.over() && b.turn < 80 && guard++ < 5000) {
+        // 39단계: 공격 상한으로 동료가 잘 쓰러지지 않아, 가끔 한 명을 쓰러뜨려 부활 카드도 써 보게 한다
+        if (b.alive('ally').length > 1 && G.rng.next() < 0.03) await b.loseHp(G.rng.pick(b.alive('ally')), 999);
         const options = b.piles.hand.filter(c => b.canPlay(c).ok && (!b.needsTarget(c) || b.validTargets(c).length));
         if (!options.length || G.rng.next() < 0.08) { await b.endTurn(); continue; }
         const c = options[Math.floor(G.rng.next() * options.length)];

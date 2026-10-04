@@ -5,7 +5,7 @@
 // starter: 처음과 합류할 때 준비 덱에 들어가는 시작 카드 5장(19단계)
 // school: 그 캐릭터 카드의 기본 계열(martial 무공 · magic 마법). 카드마다 따로 정할 수 있다(data/cards.js)
 Game.Data.characters = [
-  { id: 'kai', resource: { name: '검세', max: 5, color: '#ff6a5a', desc: '하린이 공격 카드를 쓸 때마다 1 쌓인다(최대 5). 쌓인 만큼 하린의 공격 1회당 피해 +1. 5가 차면 하린의 다음 공격 카드가 반드시 치명타가 되고 검세를 모두 쓴다.' }, starter: ['K01', 'K02', 'K03', 'K04', 'K08'], en: 'SEO HARIN', name: '하린', role: '공격', job: '필검객', hp: 70, crit: 0.15, joinAfter: 0, color: '#d9534a', school: 'martial',
+  { id: 'kai', resource: { name: '검세', max: 5, color: '#ff6a5a', desc: '하린이 공격 카드를 쓸 때마다 1 쌓인다(최대 5). 쌓인 만큼 하린의 공격 1회당 피해 +1. 5가 차면 하린의 다음 공격 카드가 반드시 치명타가 되고 검세를 모두 쓴다.' }, starter: ['K01', 'K03', 'K08', 'K09', 'K02'], en: 'SEO HARIN', name: '하린', role: '공격', job: '필검객', hp: 70, crit: 0.15, joinAfter: 0, color: '#d9534a', school: 'martial',
     attackStyle: 'slash', fullName: '서하린',
     desc: '청운문의 가난한 외문 제자. 검 한 자루 살 돈이 없어 금서각에서 먹을 갈며 큰 붓으로 검법을 익혔다. 사형 단목천의 누명을 쓰고 벼랑에서 떨어졌다. 천외검선의 기연으로 붓끝의 검기에 마나를 함께 싣는다.',
     cutin: ['청운의 검, 하늘 밖까지!', '이 한 검에 모든 걸 건다!', '사부님, 보고 계세요!', '두 세계의 검, 받아 봐!'],
