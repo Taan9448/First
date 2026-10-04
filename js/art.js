@@ -281,11 +281,13 @@
       return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 150" width="400" height="150">' + (SCENE[theme] || SCENE.forest)() + '</svg>';
     },
     // 전투 배경을 도트로 변환해 url 을 넘긴다(16단계: 해상도를 두 배로 올려 캐릭터 도트 크기에 가깝게)
-    scene: function (theme) { return Game.Pixel.raster('scene2:' + theme, Game.Art.sceneSvg(theme), 400, 150, 14); },
+    // 36단계: 전투 배경 리소스(assets/backgrounds/battle_테마)가 있으면 그것을
+    scene: function (theme) { var a = Game.Assets && Game.Assets.battleBg(theme); return a ? Promise.resolve(a) : Game.Pixel.raster('scene2:' + theme, Game.Art.sceneSvg(theme), 400, 150, 14); },
     // 전투 앞쪽 장식(16단계): 캐릭터 발치를 가리는 풀·모래·눈더미·바위·돌기둥. 투명 배경 400×40
     foreSvg: function (theme) {
       return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 40" width="400" height="40">' + (FORE[theme] || FORE.forest)() + '</svg>';
     },
-    fore: function (theme) { return Game.Pixel.raster('fore:' + theme, Game.Art.foreSvg(theme), 400, 40, 14); }
+    // 배경 리소스가 있으면 코드 앞쪽 띠는 쓰지 않는다(앞쪽 띠 리소스가 따로 있으면 그것)
+    fore: function (theme) { var A = Game.Assets; if (A && A.battleFore(theme)) return Promise.resolve(A.battleFore(theme)); if (A && A.battleBg(theme)) return Promise.resolve(null); return Game.Pixel.raster('fore:' + theme, Game.Art.foreSvg(theme), 400, 40, 14); }
   };
 })();

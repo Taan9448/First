@@ -40,6 +40,8 @@
 ```
 
 ## 3. 이미지가 올라왔을 때 Claude가 하는 일
+(36단계부터) `node tools/sync-assets.js`로 검사 · 목록 갱신 → `node tools/gen-image-requests.js`로 요청서 '있음' 갱신 → `index.html?assets=1`과 실제 화면에서 확인 → 테스트 → 커밋. 규격은 `docs/ASSET_SPEC.md`, ChatGPT에게 줄 브리프는 `docs/CHATGPT_BRIEF.md`
+
 1. 파일 위치 확인 → 2. 크기·비율 확인 → 3. 기존 리소스 구조와의 일관성 확인 → 4. 게임 코드에 경로 연결 → 5. 카드·캐릭터·UI에 제대로 보이는지 확인 → 6. 여러 화면 크기에서 깨지지 않는지 확인
 
 ## 4. 코드 작업 원칙(Claude)

@@ -220,7 +220,7 @@
     parchment: parchment,
     fogLayer: fogLayer,
     riftLayer: riftLayer,
-    world: function () { return G.Pixel.raster('map:world', worldSvg(), 500, 280, 16); },
+    world: function () { var a = G.Assets && G.Assets.worldMap(); return a ? Promise.resolve(a) : G.Pixel.raster('map:world', worldSvg(), 500, 280, 16); },   // 36단계: 월드맵 리소스
     fog: function () { return G.Pixel.raster('map:fog', fogSvg(), 100, 70, 8); }
   };
 })();

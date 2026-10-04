@@ -170,6 +170,8 @@
 
   // 스프라이트를 도트 조각으로 흩어지게 한다
   FX.shatter = function (spriteEl) {
+    // 36단계: 리소스 그림은 픽셀을 읽을 수 없으니(file://) 쓰러짐 동작 + CSS 로 사라진다
+    if (spriteEl && spriteEl._asset) { if (G.UI && G.UI.assetAnim) G.UI.assetAnim(spriteEl, 'down'); return; }
     ensure();
     var sh = spriteEl._sheet;
     if (!sh || !sh.canvas) return;

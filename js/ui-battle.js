@@ -42,6 +42,7 @@
     var theme = battleOpts.theme || (G.Data.monsterById[battleOpts.monsters[battleOpts.monsters.length - 1]] || {}).theme || 'forest';
     if (theme === 'mirror') theme = 'castle';
     G.Art.scene(theme).then(function (url) { if (url) field.style.backgroundImage = 'url(' + url + ')'; });
+    field.classList.toggle('has-bg', !!(G.Assets && G.Assets.battleBg(theme)));   // 36단계: 그림 배경이면 코드 바닥·띠를 덜어 낸다
     // 16단계: 배경과 캐릭터를 잇는 바닥·앞쪽 장식·떠다니는 입자(테마별)
     field.setAttribute('data-theme', theme);
     G.Art.fore(theme).then(function (url) { var f = field.querySelector('.fore'); if (url && f) f.style.backgroundImage = 'url(' + url + ')'; });
@@ -826,7 +827,7 @@
         SND.play('buff');
       }
     });
-    on('monster:act', function (d) { pulseClass(unitEls[d.unit.uid], 'lunge-l', 330); });
+    on('monster:act', function (d) { pulseClass(unitEls[d.unit.uid], 'lunge-l', 330); var me = unitEls[d.unit.uid]; if (me && me._sprite && me._sprite._asset) UI.playAnim(me._sprite, 'attack'); });   // 36단계: 리소스 몬스터는 공격 그림
     on('monster:summon', function (d) {
       renderUnit(d.unit); pulseClass(unitEls[d.unit.uid], 'summoned', 420);
       FX.burst(spritePt(d.unit), { colors: ['#c9a0ff', '#ffffff'], n: 16, speed: 2 });
@@ -852,7 +853,7 @@
         if (d.overkill > 0) setTimeout(function () { float(d.unit, '과잉 +' + d.overkill, 'over'); }, 120);
         if (d.unit.side === 'enemy' && !d.kind && (!d.src || d.src.side === 'ally')) { hits++; showHits(); }
         pulseClass(e._sprite, 'hit', 120);
-        if (d.unit.side === 'ally') UI.playAnim(e._sprite, 'hit');
+        if (d.unit.side === 'ally' || (e._sprite && e._sprite._asset)) UI.playAnim(e._sprite, 'hit');
         pulseClass(e._sprite, 'stop', 90);
         pulseClass(e, d.unit.side === 'enemy' ? 'knock-r' : 'knock-l', 240);
         FX.impact(p, el, d.crit);
@@ -916,6 +917,7 @@
     });
     on('fx:revive', function (d) {
       renderUnit(d.unit); float(d.unit, '부활', 'text good');
+      var re = unitEls[d.unit.uid]; if (re && re._sprite && re._sprite._asset) { re._sprite.classList.remove('a-down'); UI.assetAnim(re._sprite, 'idle'); }   // 36단계
       FX.play('revive', { targets: [spritePt(d.unit)], allies: [] });
     });
     on('battle:end', function (d) {
