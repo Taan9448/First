@@ -56,7 +56,7 @@
       t.classList.remove('bump'); void t.offsetWidth; t.classList.add('bump');
     },
     // 36단계: assets/icons 에 같은 이름의 그림이 있으면 그것을(부드럽게 줄인다), 없으면 도트 아이콘
-    iconStyle: function (id) { var a = G.Assets && G.Assets.icon(id); return a ? 'background-image:url(' + a + ');background-size:contain;background-position:center;background-repeat:no-repeat;image-rendering:auto' : 'background-image:url(' + G.Pixel.icon(id) + ')'; },
+    iconStyle: function (id) { var a = G.Assets && G.Assets.icon(id); return a ? 'background-image:url(' + a + ');background-size:contain;background-position:center;background-repeat:no-repeat;image-rendering:auto' : 'background-image:url(' + ((G.SD && G.SD.icon(id)) || G.Pixel.icon(id)) + ')'; },
     // 유물 · 소모품: 그 id 의 그림이 있으면 그것, 없으면 아이콘 이름으로
     relicStyle: function (r) { var a = G.Assets && G.Assets.relic(r.id); return a ? 'background-image:url(' + a + ');background-size:contain;background-position:center;background-repeat:no-repeat;image-rendering:auto' : UI.iconStyle(r.icon); },
     itemStyle: function (it) { var a = G.Assets && G.Assets.item(it.id); return a ? 'background-image:url(' + a + ');background-size:contain;background-position:center;background-repeat:no-repeat;image-rendering:auto' : UI.iconStyle(it.icon); },
@@ -237,7 +237,7 @@
     var nStar = G.RARITIES.indexOf(def.rarity) + 1, knots = '';
     for (var k = 0; k < nStar; k++) knots += '<i></i>';
     var rankHTML = lay === 'ink' ? '<div class="cknots">' + knots + '</div>' : UI.starsHTML(def.rarity);
-    var subHTML = lay === 'split' ? '<div class="csub"><span>' + [G.SCHOOL_NAME[school], G.TYPE_NAME[def.type], who].filter(Boolean).join(' · ') + '</span></div>' : '';
+    var subHTML = '<div class="csub"><span>' + [G.SCHOOL_NAME[school], G.TYPE_NAME[def.type], who].filter(Boolean).join(' · ') + '</span></div>';
     c.innerHTML = '<div class="cin">' +
       '<div class="cf"></div><div class="cart"></div>' + rankHTML + subHTML +
       '<div class="cband" style="background:' + band + '"></div>' +

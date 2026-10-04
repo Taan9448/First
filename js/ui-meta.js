@@ -88,7 +88,8 @@
       '<div class="title-foot">저장 칸 3개 · 진행은 브라우저에 자동 저장된다</div>';
     setTimeout(function () {
       var bg = screen('title').querySelector('.title-bg');
-      G.Art.scene('castle').then(function (u) { if (u && bg) bg.style.backgroundImage = 'url(' + u + ')'; });
+      var titleBg = G.Assets.screenBg('title') || G.Assets.screenBg('lobby');
+      (titleBg ? Promise.resolve(titleBg) : G.Art.scene('castle')).then(function (u) { if (u && bg) bg.style.backgroundImage = 'url(' + u + ')'; });
     }, 0);
     return html;
   }
@@ -457,10 +458,12 @@
       }).join('');
       var deckSize = St.battleDeck(pick).length;
       el.innerHTML = topbar('파티 편성') +
-        '<div class="meta-body"><span class="ribbon">출전할 동료를 최대 3명 고른다</span><div class="row heroes" style="justify-content:center;gap:14px">' + heroes + locked + '</div>' +
+        '<div class="meta-body"><span class="ribbon">출전할 동료를 최대 3명 고른다</span><div class="squad-layout"><div class="squad-grid">' + heroes + locked + '</div><aside class="squad-summary"><h2>출전 ' + pick.length + ' / 3</h2>' +
+        pick.map(function (id) { var c = charDef(id); return '<div class="squad-member"><b>' + c.name + ' · Lv ' + St.levelOf(id) + '</b><span>' + c.role + ' · ' + c.job + '</span><small>동료 덱 ' + (St.runDecks() ? (St.runDecks()[id] || []) : (d.decks[id] || [])).length + '장</small></div>'; }).join('') +
+        '<p class="squad-note">' + (St.runDecks() ? '이번 스테이지 덱' : '준비 덱') + '과 공용 덱을 합쳐 출전한다.</p>' +
         '<div class="deck-count" data-tip="' + (St.runDecks() ? '이번 스테이지 덱 = 고른 동료들의 스테이지 덱 + 공용 스테이지 덱' : '전투 덱 = 고른 동료들의 준비 덱 + 공용 준비 덱 ' + ((d.decks.common || []).length) + '장<br>준비 덱마다 ' + e.deckMin + '~' + e.deckMax + '장 (오른쪽 위 덱 메뉴에서 편집)') + '">' +
         UI.icon('deck') + '<b>' + deckSize + '</b><span>장</span></div>' +
-        '<div class="row"><button class="btn back">뒤로</button><button class="btn gold ok" ' + (pick.length ? '' : 'disabled') + '>' + okLabel + '</button></div></div>';
+        '<div class="squad-actions"><button class="btn gold ok" ' + (pick.length ? '' : 'disabled') + '>' + okLabel + '</button><button class="btn back">뒤로</button></div></aside></div></div>';
       backdrop(el, runTheme());
       fillSprites(el, 1);
       UI.$$('.lock-sp', el).forEach(function (s) {
@@ -468,6 +471,8 @@
       });
       UI.$$('.hero-pick:not(.locked)', el).forEach(function (p) {
         var id = p.getAttribute('data-hero');
+        p.setAttribute('role', 'button'); p.tabIndex = 0; p.setAttribute('aria-pressed', pick.indexOf(id) >= 0 ? 'true' : 'false');
+        p.onkeydown = function (ev) { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); p.click(); var next = el.querySelector('[data-hero="' + id + '"]'); if (next) next.focus(); } };
         p.onclick = function () {
           var i = pick.indexOf(id);
           if (i >= 0) pick.splice(i, 1); else if (pick.length < 3) pick.push(id);

@@ -157,6 +157,10 @@
     },
 
     // SVG → 낮은 해상도 도트 그림. 같은 key 는 한 번만 변환한다
+    vector: function (key, svg) {
+      if (!rasters[key]) rasters[key] = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg).replace(/[!'()*]/g, function (c) { return '%' + c.charCodeAt(0).toString(16); });
+      return Promise.resolve(rasters[key]);
+    },
     rasterCached: function (key) { return rasters[key] || null; },
     raster: function (key, svg, w, h, levels) {
       if (rasters[key]) return Promise.resolve(rasters[key]);
