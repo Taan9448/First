@@ -10,6 +10,7 @@ Game.Data.assets = { files: {
   "backgrounds/battle_volcano.png": [1672,941,0],
   "backgrounds/lobby.png": [1672,941,0],
   "backgrounds/title.png": [1672,941,0],
+  "backgrounds/title_2.png": [1672,941,0],
   "backgrounds/world_map.png": [1672,941,0],
   "cards/art/K01.png": [1374,1145,0],
   "cards/art/K25.png": [1374,1145,0],

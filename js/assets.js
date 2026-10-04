@@ -67,7 +67,7 @@
     // 40단계: 시작 화면 배경 후보 — 타이틀(title · title_2 …) · 로비 · 전투 배경 7종 중 있는 것(사용자 요청: 열 때마다 무작위)
     titleBgs: function () {
       var out = [], self = this;
-      ['title'].concat([2, 3, 4, 5, 6, 7, 8, 9].map(function (n) { return 'title_' + n; }), ['lobby']).forEach(function (k) { var u = self.screenBg(k); if (u) out.push(u); });
+      ['title'].concat([2, 3, 4, 5, 6, 7, 8, 9].map(function (n) { return 'title_' + n; })).forEach(function (k) { var u = self.screenBg(k); if (u) out.push(u); });
       ['castle', 'forest', 'desert', 'snow', 'volcano', 'rift', 'mirror'].forEach(function (t) { var u = self.battleBg(t); if (u) out.push(u); });
       return out;
     },
