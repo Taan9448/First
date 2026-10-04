@@ -105,6 +105,7 @@
   window.addEventListener('DOMContentLoaded', function () {
     // SD UI uses the embedded smooth Korean face.
     document.body.classList.add('sd-ui');
+    document.body.classList.add('twj-game-skin');   // 40단계: ChatGPT UI 키트의 게임 스킨(docs/ui-kit/game-skin.css)
     G.Extra.applySettings(G.Save.loadSettings());
     G.FX.init();
     G.BattleUI.init();

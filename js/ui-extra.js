@@ -14,7 +14,7 @@
   function inBattle() { return document.getElementById('screen-battle').classList.contains('on') && G.Battle.current && !G.Battle.current.over(); }
   function tabs(list, cur) {
     return '<div class="tabs">' + list.map(function (t) {
-      return '<button class="tab pix ' + (t[0] === cur ? 'on' : '') + '" data-tab="' + t[0] + '">' + (t[2] ? '<i class="ico" style="' + UI.iconStyle(t[2]) + '"></i>' : '') + t[1] + '</button>';
+      return '<button type="button" class="tab pix ' + (t[0] === cur ? 'on' : '') + '" aria-pressed="' + (t[0] === cur) + '" data-tab="' + t[0] + '">' + (t[2] ? '<i class="ico" style="' + UI.iconStyle(t[2]) + '"></i>' : '') + t[1] + '</button>';
     }).join('') + '</div>';
   }
 
@@ -61,7 +61,8 @@
 
   function win(title, body, cls) {
     UI.$$('.modal.win').forEach(UI.closeModal);
-    var m = UI.modal('<div class="win-head"><h2>' + title + '</h2><button class="btn small close">닫기</button></div>' + body, 'win ' + (cls || ''));
+    var m = UI.modal('<div class="win-head"><h2>' + title + '</h2><button type="button" class="btn small close" aria-label="닫기">닫기</button></div>' + body, 'win ' + (cls || ''));
+    var bx = m.querySelector('.box'); bx.tabIndex = -1; try { bx.focus({ preventScroll: true }); } catch (e) { /* 무시 */ }   // 창 안으로 포커스(Tab 이 창 안부터 돈다)
     m.querySelector('.close').onclick = function () { UI.closeModal(m); if (cls === 'deckwin') X.refreshScreen(); };
     // 40단계: 창 뒤 장면(assets/backgrounds/codex · records · settings.jpg)이 올라오면 깐다
     var bk = { codex: 'codex', statwin: 'records', setwin: 'settings' }[cls], bu = bk && G.Assets && G.Assets.screenBg(bk);
@@ -82,7 +83,7 @@
   var ROLE_ICON = { '공격': 'attack', '탱커': 'block', '마법': 'energy', '회복': 'heart', '서포트': 'poison', '원거리': 'keen' };
   function chips(key, opts, cur) {
     return '<div class="cx-chips">' + opts.map(function (o) {
-      return '<button class="cx-chip' + (o[0] === cur ? ' on' : '') + '" data-' + key + '="' + o[0] + '">' + o[1] + '</button>';
+      return '<button type="button" class="cx-chip' + (o[0] === cur ? ' on' : '') + '" aria-pressed="' + (o[0] === cur) + '" data-' + key + '="' + o[0] + '">' + o[1] + '</button>';
     }).join('') + '</div>';
   }
   // 그림 타일: 위에 동그란 문장, 아래 한지 이름판
@@ -102,9 +103,18 @@
     var body = m.querySelector('.codex-body'), d = St().data, cs = codexState;
     if (!CX_TABS.some(function (t) { return t[0] === cs.tab; })) cs.tab = 'heroes';
     body.innerHTML = '<div class="cx-layout"><nav class="cx-rail">' + CX_TABS.map(function (t) {
-      return '<button class="cx-tab' + (t[0] === cs.tab ? ' on' : '') + '" data-tab="' + t[0] + '"><i class="ico" style="' + UI.iconStyle(t[2]) + '"></i><span>' + t[1] + '</span></button>';
+      return '<button type="button" class="cx-tab' + (t[0] === cs.tab ? ' on' : '') + '" aria-pressed="' + (t[0] === cs.tab) + '" data-tab="' + t[0] + '"><i class="ico" style="' + UI.iconStyle(t[2]) + '"></i><span>' + t[1] + '</span></button>';
     }).join('') + '</nav><div class="cx-main"><div class="cx-bar"></div><div class="cx-grid"></div></div><aside class="cx-detail"></aside></div>';
     var bar = body.querySelector('.cx-bar'), grid = body.querySelector('.cx-grid'), det = body.querySelector('.cx-detail');
+    var search = function () {
+      bar.insertAdjacentHTML('afterbegin', '<label class="twj-field cx-search"><input type="search" placeholder="이름 검색" aria-label="이름 검색" value="' + U.esc(cs.q || '') + '"></label>');
+      var inp = bar.querySelector('.cx-search input');
+      var run = function () {
+        cs.q = inp.value.trim();
+        Array.prototype.forEach.call(grid.children, function (t) { t.hidden = !!cs.q && (t.getAttribute('data-name') || '').indexOf(cs.q) < 0; });
+      };
+      inp.oninput = run; run();
+    };
     var pick = function (t, fill) {
       UI.$$('.cx-tile.on, .cx-grid .card.on', grid).forEach(function (x) { x.classList.remove('on'); });
       t.classList.add('on');
@@ -165,6 +175,9 @@
           el.removeAttribute('data-tip');
         }
         el.style.cursor = 'pointer';
+        el.tabIndex = 0;
+        el.setAttribute('data-name', has ? St().cardDef(c.id).name : '');
+        el.onkeydown = function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.onclick(); } };
         el.onclick = function () {
           if (G.debug && inBattle()) {
             var b = G.Battle.current;
@@ -175,6 +188,7 @@
         };
         grid.appendChild(el);
       });
+      search();
       var first = shown.filter(function (c) { return d.cards.indexOf(c.id) >= 0; })[0];
       if (first) pick(grid.children[shown.indexOf(first)], function () { cardDetail(first, true); });
     } else if (cs.tab === 'monsters') {
@@ -205,9 +219,11 @@
       list.forEach(function (mo) {
         var rec = d.codex.monsters[mo.id];
         var t = tile(monSprite(mo, 76, rec), rec ? U.esc(mo.name) : '???', mo.rank === 'normal' ? null : mo.rank === 'elite' ? 'elite' : 'crown', !rec);
+        t.setAttribute('data-name', rec ? mo.name : '');
         t.onclick = function () { pick(t, function () { monDetail(mo); }); };
         grid.appendChild(t);
       });
+      search();
       var fm = list.filter(function (mo) { return d.codex.monsters[mo.id]; })[0] || list[0];
       if (fm) pick(grid.children[list.indexOf(fm)], function () { monDetail(fm); });
     } else if (cs.tab === 'relics') {
@@ -226,9 +242,11 @@
         var own = have.indexOf(r.id) >= 0;
         var t = tile(relicArt(r, own), own ? U.esc(r.name) : '???', null, !own);
         t.classList.add('cx-rel');
+        t.setAttribute('data-name', own ? r.name : '');
         t.onclick = function () { pick(t, function () { relicDetail(r); }); };
         grid.appendChild(t);
       });
+      search();
       var fr = rlist.filter(function (r) { return have.indexOf(r.id) >= 0; })[0] || rlist[0];
       if (fr) pick(grid.children[rlist.indexOf(fr)], function () { relicDetail(fr); });
     } else {
@@ -415,12 +433,12 @@
     var owner = function (o) { if (o === 'common') return '공용'; var c = D.characters.filter(function (x) { return x.id === o; })[0]; return c ? c.name : o; };
     var head = [['plays', '쓴 횟수'], ['perBattle', '전투당'], ['battles', '든 전투'], ['rate', '승률']];
     return '<div class="row card-sort">' + head.map(function (h) { return '<button class="btn small ' + (cardSort === h[0] ? 'on' : '') + '" data-cs="' + h[0] + '">' + h[1] + ' 순</button>'; }).join('') + '</div>' +
-      '<table class="card-stat"><thead><tr><th>카드</th><th>주인</th><th>등급</th><th>쓴 횟수</th><th>전투당</th><th>든 전투</th><th>승률</th></tr></thead><tbody>' +
+      '<div class="twj-table-wrap"><table class="card-stat"><thead><tr><th>카드</th><th>주인</th><th>등급</th><th>쓴 횟수</th><th>전투당</th><th>든 전투</th><th>승률</th></tr></thead><tbody>' +
       rows.slice(0, 60).map(function (r) {
         var c = D.cardById[r.id];
         return '<tr><td><b>' + U.esc(c.name) + '</b> <small class="dim">' + r.id + '</small></td><td>' + owner(c.owner) + '</td><td>' + (G.RARITY_NAME ? G.RARITY_NAME[c.rarity] : c.rarity) + '</td>' +
           '<td>' + r.p + '</td><td>' + (r.p / r.n).toFixed(1) + '</td><td>' + r.n + '</td><td class="' + (r.rate >= 0.6 ? 'ok' : r.rate < 0.4 ? 'bad' : '') + '">' + Math.round(r.rate * 100) + '%</td></tr>';
-      }).join('') + '</tbody></table>' +
+      }).join('') + '</tbody></table></div>' +
       '<p class="dim rec-line">이 브라우저 전체 기록. 강화 단계는 합쳐 센다. 승률은 그 카드가 덱에 든 전투 중 이긴 비율이다(카드 자체의 힘만은 아니다). 위에서 60장까지.</p>';
   }
   function achList() {
@@ -550,8 +568,8 @@
     }
     // 40단계: 시안(settings_sd_v1) — 왼쪽 하린, 한지 판 위에 문장 아이콘 + 청록 슬라이더 · 구간 단추 · 토글, 아래에 큰 단추
     var ico = function (k) { return '<i class="set-ico"><svg viewBox="0 0 24 24">' + SET_ICO[k] + '</svg></i>'; };
-    var seg = function (opts) { return '<div class="seg">' + opts.map(function (o) { return '<button class="seg-b ' + o[0] + (o[2] ? ' on' : '') + '"' + (o[3] || '') + '>' + o[1] + '</button>'; }).join('') + '</div>'; };
-    var tog = function (cls, on) { return '<button class="tog ' + cls + (on ? ' on' : '') + '" aria-pressed="' + !!on + '"><i></i></button>'; };
+    var seg = function (opts) { return '<div class="seg">' + opts.map(function (o) { return '<button type="button" class="seg-b ' + o[0] + (o[2] ? ' on' : '') + '" aria-pressed="' + !!o[2] + '"' + (o[3] || '') + '>' + o[1] + '</button>'; }).join('') + '</div>'; };
+    var tog = function (cls, on, label) { return '<label class="twj-switch"><input type="checkbox" class="' + cls + '"' + (on ? ' checked' : '') + ' aria-label="' + label + '"><span>' + (on ? '켜짐' : '꺼짐') + '</span></label>'; };
     var m = win('설정',
       '<div class="settings set-layout"><div class="set-hero"></div><div class="set-paper hanji">' +
       '<div class="set-row">' + ico('sfx') + '<span>효과음</span><input type="range" min="0" max="100" step="5" class="vol" value="' + s.volume + '"><b class="volv">' + s.volume + '</b></div>' +
@@ -559,8 +577,8 @@
       '<div class="set-row">' + ico('fx') + '<span>이펙트 강도</span>' + seg([['fx-normal', '보통', s.fx !== 'low'], ['fx-low', '낮음', s.fx === 'low']]) + '<small class="dim">낮음: 파티클 30%, 흔들림·번쩍임 끔</small></div>' +
       '<div class="set-row">' + ico('speed') + '<span>전투 속도</span>' + seg([['sp1', '1x', s.speed !== 2], ['sp2', '2x', s.speed === 2]]) + '</div>' +
       '<div class="set-row">' + ico('text') + '<span>글자 크기</span>' + seg([[1, '보통'], [1.15, '크게'], [1.3, '더 크게']].map(function (t) { return ['ts', t[1], t[0] === (s.textScale || 1), ' data-ts="' + t[0] + '"']; })) + '</div>' +
-      '<div class="set-row">' + ico('cb') + '<span>색약 표기</span>' + tog('cb-tog', s.cb) + '<small class="dim">행동 예고·상태에 글자 표시, 공격 대상 이름</small></div>' +
-      '<div class="set-row">' + ico('hk') + '<span>단축키 표시</span>' + tog('hk-tog', s.hotkeys !== false) + '<small class="dim">1~0 카드 · ←→ 대상 · Enter 사용 · E 턴 종료 · Z 되돌리기</small></div>' +
+      '<div class="set-row">' + ico('cb') + '<span>색약 표기</span>' + tog('cb-tog', s.cb, '색약 표기') + '<small class="dim">행동 예고·상태에 글자 표시, 공격 대상 이름</small></div>' +
+      '<div class="set-row">' + ico('hk') + '<span>단축키 표시</span>' + tog('hk-tog', s.hotkeys !== false, '단축키 표시') + '<small class="dim">1~0 카드 · ←→ 대상 · Enter 사용 · E 턴 종료 · Z 되돌리기</small></div>' +
       '<div class="set-foot"><button class="btn tut">튜토리얼 다시 보기</button>' +
       (St().data && !St().isDaily() ? '<button class="btn export" data-tip="가져오기는 타이틀의 저장 칸 화면에서">' + G.Save.slot + '번 칸 내보내기</button>' : '') +
       '<button class="btn danger reset" data-tip="' + (G.debug ? '디버그 저장만 지운다' : '모든 진행이 사라진다') + '">저장 초기화</button></div>' +
@@ -584,8 +602,8 @@
     UI.$$('.ts', m).forEach(function (b) {
       b.onclick = function () { s.textScale = +b.getAttribute('data-ts'); X.applySettings(s); re(); };
     });
-    m.querySelector('.cb-tog').onclick = function () { s.cb = !s.cb; X.applySettings(s); re(); X.refreshScreen(); };
-    m.querySelector('.hk-tog').onclick = function () { s.hotkeys = s.hotkeys === false; X.applySettings(s); re(); };
+    m.querySelector('.cb-tog').onchange = function () { s.cb = this.checked; X.applySettings(s); re(); X.refreshScreen(); };
+    m.querySelector('.hk-tog').onchange = function () { s.hotkeys = this.checked; X.applySettings(s); re(); };
     if (m.querySelector('.export')) m.querySelector('.export').onclick = function () { St().save(); X.exportWin(G.Save.slot); };
     m.querySelector('.tut').onclick = function () {
       if (St().data) { St().data.flags.tutorialDone = false; St().save(); }

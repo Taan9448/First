@@ -33,3 +33,14 @@
 이 환경의 브라우저 정책이 `file://` 탐색을 `ERR_BLOCKED_BY_ADMINISTRATOR`로 차단해 직접 파일 실행을 검증하지 못했다. 검수는 localhost HTTP에서 수행했다. 키트는 로컬 파일과 일반 script/CSS만 사용하지만 Claude가 연결 후 실제 로컬 파일 실행을 확인해야 한다.
 
 전체 13개 화면의 재배치, 카드 드래그/조준/사용, 저장 호환성, 캠페인 진행, 모든 키보드 조작과 대체 이미지 경로의 게임 통합 검사는 Claude 적용 후 수행한다. 이번 검수는 전체 게임 회귀 검사를 대신하지 않는다.
+
+## 게임 연결 검수 (Claude, 2026-10-04)
+
+키트를 게임에 연결한 뒤 `file://index.html`을 Chromium(Playwright)으로 직접 열어 확인했다(이 환경에서는 file:// 실행이 된다).
+
+- 연결: `index.html`이 `docs/ui-kit/ui-kit.css` · `docs/ui-kit/game-skin.css`를 읽고 `js/main.js`가 `body.twj-game-skin`을 켠다. 키트 파일은 바꾸지 않았고 게임과 다른 가정은 `css/ui-kit-adapter.css`에서 바로잡았다.
+- 1024×700 · 1280×800 · 1440×900: 문서 폭 = 창 폭(가로 스크롤 없음), 실행 오류 0건.
+- 키보드: 창이 `role=dialog` · 제목 연결, Esc 로 닫힘, 닫은 뒤 연 단추로 포커스 복귀. 설정 켬/끔은 실제 체크박스로 저장값이 바뀌고 되돌아온다.
+- 전투: 동료 3명 · 적 4마리(넓은 늑대 · 지네 포함) · 적마다 상태 6개 · 동료마다 4개에서 이름표 · 상태 · 예고 · 체력이 겹치지 않는다(그림이 늦게 커질 때 겹치던 문제를 고쳤다). 손패 5장의 긴 효과 · 조건 · 연계 · 툴팁 유지.
+- 회귀: `node tools/test-battle.js` · `node tools/test-campaign.js` 통과, `node tools/sync-assets.js --check` 오류 0.
+- 남은 것: 키트의 PNG 아트 버튼은 짧은 큰 버튼에만 썼다. 키트가 말한 전용 카드 틀 · 한지 패널 · 실내 배경 PNG는 아직 없다(요청서 묶음 2 · 3-3).

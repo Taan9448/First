@@ -1,0 +1,67 @@
+/* ui-kit-adapter.css — 40단계(Claude): ChatGPT UI 키트(docs/ui-kit)를 게임 DOM에 잇는다. 맨 마지막에 읽는다.
+   키트 파일은 고치지 않고, 게임 구조와 다른 가정만 여기서 바로잡는다. 결정은 GAME_DESIGN 17.45 */
+
+/* 1) 키트 토큰: ui-kit.css 의 부품(twj-*)은 .twj-kit 안에서만 색을 받으므로 게임 몸 전체에 같은 값을 준다 */
+body.twj-game-skin {
+  --twj-ink:#111820; --twj-ink-soft:#202d40; --twj-paper:#f0e4cb;
+  --twj-gold:#c5a261; --twj-line:#80704f; --twj-teal:#54c7c0;
+  --twj-red:#9f2934; --twj-hp:#80ba79; --twj-blue:#6fb8e4;
+  --twj-muted:#c3bbad; --twj-focus:#8ce6de; --twj-gap:16px;
+}
+
+/* 2) 이 게임의 .modal 은 화면 전체를 덮는 막이고 창은 .modal .box 다. 키트 스킨의 창 꾸밈(불투명 바탕 · 테두리)을 상자로 옮긴다 */
+body.twj-game-skin .modal { background:radial-gradient(ellipse at 50% 40%,#0b1220a8,#05080fee); border:0; border-radius:0; }
+body.twj-game-skin .modal .box::before { background:#111820fa; box-shadow:inset 0 0 0 1px #c5a261,0 18px 44px #000c; border-radius:6px; }
+/* 창 · 장식 패널 안의 큰 글 상자는 한지 정보 면(키트 twj-panel--paper)과 같은 색 */
+body.twj-game-skin .hanji { background:#f0e4cb; color:#111820; }
+body.twj-game-skin .hanji .dim,body.twj-game-skin .hanji small { color:#514939; }
+
+/* 3) 체력 · 방어 막대(키트 twj-meter): 금선 테두리 + 안쪽 2px 여백 */
+body.twj-game-skin .hpbar { box-shadow:inset 0 0 0 1px #c5a261; }
+
+/* 4) 카드: 키트 CSS 카드 틀(game-skin)을 쓴다. 등급색은 카드 바깥 금테 대신 키트의 등급 표(--rc)를 따른다 */
+body.twj-game-skin .card { --rc:#c5a261; }
+body.twj-game-skin .card.r-uncommon { --rc:#80ba79; }
+body.twj-game-skin .card.r-rare { --rc:#6fb8e4; }
+body.twj-game-skin .card.r-epic { --rc:#b59ce8; }
+body.twj-game-skin .card.r-legendary { --rc:#f1cd72; }
+
+/* 5) 스위치(키트 twj-switch): 게임 설정의 실제 체크박스 */
+body.twj-game-skin .set-paper .twj-switch { justify-self:start; color:#111820; font-weight:700; }
+body.twj-game-skin .set-paper .twj-switch input { border-color:#c5a261; }
+
+/* 6) 검색 칸(키트 twj-field) */
+body.twj-game-skin .cx-search { flex:0 1 220px; min-width:140px; }
+body.twj-game-skin .cx-search input { min-height:38px; }
+
+/* 7) 표(키트 twj-table-wrap): 넓으면 가로로 스크롤 */
+body.twj-game-skin .st-layout .twj-table-wrap { overflow-x:auto; }
+
+@media (prefers-reduced-motion:reduce) {
+  body.twj-game-skin .cx-tile,body.twj-game-skin .choice,body.twj-game-skin .fg-main .up-arrow i { transition:none; animation:none; }
+}
+
+/* 8) 고른 것(키트 data-selected): 청록 바깥 선 */
+body.twj-game-skin .cx-grid .card.on,body.twj-game-skin .rw-main .reward-cards .card.selected,body.twj-game-skin .fg-list .up-grid .card.selected { outline:3px solid #54c7c0; outline-offset:4px; }
+body.twj-game-skin .cx-tile.on { box-shadow:inset 0 0 0 2px #54c7c0,inset 0 0 0 4px #0b1220,inset 0 0 0 5px #54c7c0,0 0 14px #54c7c066; }
+.cx-grid > [hidden] { display:none !important; }
+
+/* 9) 던전 방(키트 twj-node 상태): 완료 = 짙은 초록 원판 · 현재 = 청록 바깥 선 · 선택 가능 = 밝은 금테 · 잠김 = 회색 금테 */
+body.twj-game-skin .droom[data-state=complete]::before { background:radial-gradient(circle at 50% 38%,#33604d,#264a3c 72%); box-shadow:0 0 0 2px #c5a261,0 0 0 4px #0b1220,0 0 0 5px var(--gold-d); }
+body.twj-game-skin .droom[data-state=current]::before { box-shadow:0 0 0 2px #54c7c0,0 0 0 4px #0b1220,0 0 0 6px #54c7c0,0 0 18px #54c7c0aa; }
+body.twj-game-skin .droom[data-state=available]::after { box-shadow:0 0 0 3px #eed4a0,0 0 14px #c5a261; }
+body.twj-game-skin .droom.unk[data-state=locked]::before { box-shadow:0 0 0 2px #706b63,0 0 0 4px #0b1220,0 0 0 5px #4a463f; }
+
+/* 10) 에너지 보석(키트 twj-energy): 청록 육각 보석 + 금테, 숫자는 먹색 판 위 */
+body.twj-game-skin .energy { filter:drop-shadow(0 4px 0 #0009) drop-shadow(0 0 14px #54c7c066); }
+body.twj-game-skin .energy::before { background:#c5a261; }
+body.twj-game-skin .energy::after { inset:4px; background:linear-gradient(135deg,#b0f3ef,#2f9695 50%,#1a525c); box-shadow:none; }
+body.twj-game-skin .energy .crystal { padding:2px 10px; border-radius:4px; background:#111820ed !important; font-family:var(--font-body); font-weight:700; font-size:38px; text-shadow:none; }
+
+/* 11) 키트 스킨의 .btn::before(남색)가 위험 · 고른 버튼 색을 덮지 않게 같은 세기로 다시 준다 */
+body.twj-game-skin .btn.danger::before { background:#62232e; box-shadow:inset 0 0 0 1px #e5969c; }
+body.twj-game-skin .btn.on::before { background:#1b4444; box-shadow:inset 0 0 0 1px #54c7c0,inset 0 -3px 0 #54c7c0; }
+body.twj-game-skin .btn:hover:not(:disabled)::before { box-shadow:inset 0 0 0 1px #c5a261,0 0 0 2px #c5a261; }
+body.twj-game-skin.ui-parts .btn.big::before,body.twj-game-skin.ui-parts .btn.big:hover:not(:disabled)::before { background:none; box-shadow:none; }
+body.twj-game-skin.ui-parts .btn.big:disabled::before { background:#292d32; box-shadow:inset 0 0 0 1px #6c665b; }
+.modal .box:focus { outline:none; }

@@ -113,6 +113,10 @@
         var b = UI.el('button', cls, '<i class="ico" style="' + UI.iconStyle(icon) + '"></i>');
         b.style.left = pos[c][i].x + 'px'; b.style.top = pos[c][i].y + 'px';
         b.setAttribute('data-tip', tip);
+        // 40단계(UI 키트 twj-node): 상태를 색과 문구로 함께 — 완료 · 현재 · 선택 가능 · 잠김
+        var ds = st === 'done' ? 'complete' : st === 'now' ? 'current' : st === 'can' ? 'available' : 'locked';
+        b.setAttribute('data-state', ds);
+        b.setAttribute('aria-label', ({ complete: '지나온 방', current: '지금 방', available: '갈 수 있는 방', locked: '아직 갈 수 없는 방' })[ds] + ' · ' + (known ? D.NODE_NAME[nd.type] : '미지의 방'));
         if (last) {
           var bid = nd.monsters && nd.monsters[0], seen = bid && (St.data.codex.monsters[bid] || r.stage <= St.data.clearedStage);
           b.insertAdjacentHTML('beforeend', '<small>' + (seen ? D.monsterById[bid].name : D.NODE_NAME[nd.type]) + '</small>');

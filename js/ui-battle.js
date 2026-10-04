@@ -175,6 +175,30 @@
       field.style.setProperty('--px', (4 * k).toFixed(2) + 'px');
       field.style.setProperty('--uw', Math.floor(132 * k) + 'px');
     }
+    // 40단계: PNG 그림은 늦게 불러져 위 계산 뒤에 넓어질 수 있다(적 4마리 · 넓은 몬스터에서 아군과 겹침).
+    // 자리를 잡은 뒤 실제 위치를 다시 재서, 겹치면 양쪽 줄을 발밑 기준으로 함께 줄인다
+    clearTimeout(fitField._t); clearTimeout(fitField._t2);
+    fitField._t = setTimeout(unclash, 380);
+    fitField._t2 = setTimeout(unclash, 1500);
+  }
+  // 그림(.sprite)은 유닛 칸 밖으로 삐져나올 수 있어 줄 상자가 아니라 그림의 실제 자리로 잰다
+  function edge(root, right) {
+    var v = right ? -1e9 : 1e9;
+    UI.$$('.unit:not(.dead) .sprite, .unit:not(.dead) .hpbar', root).forEach(function (e) {
+      var r = e.getBoundingClientRect();
+      if (r.width) v = right ? Math.max(v, r.right) : Math.min(v, r.left);
+    });
+    return v;
+  }
+  function unclash() {
+    if (!B || !heroesEl || !monstersEl) return;
+    heroesEl.style.transform = monstersEl.style.transform = '';
+    var gap = edge(monstersEl, false) - edge(heroesEl, true), want = 24;
+    if (gap >= want) return;
+    var total = heroesEl.offsetWidth + monstersEl.offsetWidth;
+    var k = Math.max(0.6, (total - (want - gap)) / total);
+    heroesEl.style.transformOrigin = '0 100%'; monstersEl.style.transformOrigin = '100% 100%';
+    heroesEl.style.transform = monstersEl.style.transform = 'scale(' + k.toFixed(3) + ')';
   }
 
   function unitEl(u) {

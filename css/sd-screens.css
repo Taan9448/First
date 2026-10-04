@@ -14,7 +14,7 @@
 /* ---------------- 글꼴: 제목은 명조, 수치 · 본문은 고딕 ---------------- */
 h1,h2,h3,.big-title,.logo,.logo-tag,.ribbon,.topbar .title,.lb-name b,.tile b,.sc-head b,.asc-panel h2,.modal h2,.modal .mtitle,
 .slot-card b,.boss-card b,.map-side h2,.event-card .ev-name,.shop-title,.card .cname span,.card.lay-ink .cname span,.card.lay-split .cname span,
-.btn,.tt-slot b,.res-title,.forge-title { font-family:var(--font-serif); letter-spacing:.02em; }
+.tt-slot b,.res-title,.forge-title { font-family:var(--font-serif); letter-spacing:.02em; }
 .btn small,.card .ctext span,.dim,p,li,small { font-family:var(--font-body); }
 .big-title { font-weight:700; color:#f3e6c4; text-shadow:0 2px 0 #0008,0 0 18px #c9a45a40; }
 .hpbar span,.res,.turn-badge b,span.gold,.ccost span { font-family:var(--font-body); font-weight:700; }
@@ -30,16 +30,31 @@ h1,h2,h3,.big-title,.logo,.logo-tag,.ribbon,.topbar .title,.lb-name b,.tile b,.s
 .topbar span.gold,.topbar .res { border:1px solid var(--gold-d); border-radius:6px; background:#0b1220e6; padding:4px 14px 4px 8px; }
 .topbar .btn.small { min-height:40px; }
 
-/* ---------------- 버튼: ChatGPT 붉은(주) · 남색(보조) 버튼 그림을 9조각으로. 크기마다 장식 끝 폭을 맞춘다 ---------------- */
-body.ui-parts .btn::before { clip-path:none; background:none; box-shadow:none; border-style:solid; border-width:0 var(--bend,34px);
-  border-image:url(../assets/ui/components/button_secondary.png) 17% 30% 21% 30% fill / 0 var(--bend,34px) stretch; }
-/* 버튼 그림의 띠는 그림 높이의 약 20~72%(위아래는 빈 여백)라 그 부분만 잘라 버튼 높이에 채운다 */
-body.ui-parts .btn.gold::before,body.ui-parts .btn.danger::before,body.ui-parts .btn.on::before,body.ui-parts .tabs .btn.on::before { border-image:url(../assets/ui/components/button_primary.png) 19% 30% 27% 30% fill / 0 var(--bend,34px) stretch; }
-body.ui-parts .btn { --bend:26px; padding-left:40px; padding-right:40px; color:#f6ead0; text-shadow:0 1px 0 #000c; }
-body.ui-parts .btn.small { --bend:18px; padding-left:24px; padding-right:24px; }
-body.ui-parts .btn.big { --bend:36px; padding:14px 60px; min-height:58px; font-size:1.18em; }
-body.ui-parts .btn.ghost::before { opacity:.78; }
-body.ui-parts .btn:disabled::before { filter:grayscale(.85) brightness(.75); }
+/* ---------------- 버튼: UI 키트(docs/ui-kit) 규칙 — 일반 버튼은 CSS(남색 + 금선 · 주요 동작 붉은색 · 44px 이상),
+   PNG 그림 버튼은 짧은 글자의 큰 버튼(.btn.big)에만 9조각으로 늘여 쓴다 ---------------- */
+.btn { font-family:var(--font-body); font-weight:700; letter-spacing:.01em; }
+.btn::before { clip-path:none; border-radius:5px; border:0; border-image:none; background:#202d40; box-shadow:inset 0 0 0 1px #c5a261; }
+.btn.gold::before { background:#9f2934; box-shadow:inset 0 0 0 1px #c5a261; }
+.btn.danger::before { background:#62232e; box-shadow:inset 0 0 0 1px #e5969c; }
+.btn.on::before,.tabs .btn.on::before { background:#1b4444; box-shadow:inset 0 0 0 1px #54c7c0,inset 0 -3px 0 #54c7c0; }
+.btn:hover:not(:disabled)::before { box-shadow:inset 0 0 0 1px #c5a261,0 0 0 2px #c5a261; }
+.btn.on:hover:not(:disabled)::before { box-shadow:inset 0 0 0 1px #54c7c0,inset 0 -3px 0 #54c7c0,0 0 0 2px #54c7c0; }
+.btn:disabled::before { background:#292d32; box-shadow:inset 0 0 0 1px #6c665b; filter:none; }
+.btn { color:#f0e4cb; text-shadow:none; padding-left:20px; padding-right:20px; }
+.btn.gold,.btn.danger { color:#fff4df; }
+.btn:disabled { color:#bdb7ad; }
+.btn.small { padding-left:14px; padding-right:14px; }
+/* 큰 버튼: ChatGPT 붉은(주) · 남색(보조) 버튼 그림. 그림의 띠는 높이의 약 20~72%라 그 부분만 잘라 채운다 */
+body.ui-parts .btn.big::before { background:none; box-shadow:none; border-radius:0; border-style:solid; border-width:0 var(--bend,36px);
+  border-image:url(../assets/ui/components/button_secondary.png) 17% 30% 21% 30% fill / 0 var(--bend,36px) stretch; }
+body.ui-parts .btn.big.gold::before,body.ui-parts .btn.big.danger::before { border-image:url(../assets/ui/components/button_primary.png) 19% 30% 27% 30% fill / 0 var(--bend,36px) stretch; }
+body.ui-parts .btn.big:hover:not(:disabled)::before { box-shadow:none; filter:brightness(1.12); }
+body.ui-parts .btn.big:disabled::before { border-image:none; border-width:0; border-radius:5px; background:#292d32; box-shadow:inset 0 0 0 1px #6c665b; }
+body.ui-parts .btn.big { --bend:36px; padding:14px 60px; min-height:58px; font-size:1.18em; text-shadow:0 1px 0 #000c; }
+.btn.ghost::before { opacity:.85; }
+/* 키보드 포커스(키트): 청록 바깥 선 */
+.btn:focus-visible,.tab:focus-visible,.cx-tab:focus-visible,.cx-tile:focus-visible,.cx-chip:focus-visible,.seg-b:focus-visible,.droom:focus-visible,
+.choice:focus-visible,.tt-slot:focus-visible,.card:focus-visible,.fg-filter:focus-visible,input:focus-visible { outline:3px solid #8ce6de; outline-offset:3px; }
 
 /* ---------------- 패널: 먹색 옻칠 + 금테 두 줄, 큰 패널은 장식 모서리 ---------------- */
 .frame::before { background:linear-gradient(160deg,#18233a,#0d1524 70%); box-shadow:var(--gold-frame); clip-path:none; border-radius:4px; }
@@ -285,17 +300,17 @@ body.ui-parts .modal .box::after { inset:-8px; border-style:solid; border-width:
 .win-head .close:hover::after { background:#fff3cf; }
 /* 가로 탭: 먹색 칸 + 금테, 고른 탭은 옻칠 붉은색(시안 records) */
 .modal .tabs { gap:8px; }
-.modal .tab { clip-path:none; border-radius:3px; padding:9px 20px; font-family:var(--font-serif); font-size:1em; color:#e8dcc0; background:linear-gradient(#16213a,#0b1220);
-  box-shadow:inset 0 0 0 1px var(--gold-m),inset 0 0 0 3px #0b1220,inset 0 0 0 4px #c9a45a55; }
+.modal .tab { clip-path:none; border-radius:4px; padding:9px 18px; min-height:44px; font-family:var(--font-body); font-weight:700; font-size:1em; color:#e8dcc0; background:#111820;
+  box-shadow:inset 0 0 0 1px #80704f; }
 .modal .tab:hover { color:#fff3cf; background:linear-gradient(#1d2b48,#0f1830); }
-.modal .tab.on { color:#fff3df; background:linear-gradient(#b3333e,#7a1a24); box-shadow:inset 0 0 0 1px var(--gold-l),inset 0 0 0 3px #5a1018,inset 0 0 0 4px #e9cf8a88,0 0 14px #9e1f2b66; }
+.modal .tab.on { color:#f0e4cb; background:#1b4444; box-shadow:inset 0 0 0 1px #54c7c0,inset 0 -3px 0 #54c7c0; }
 /* 드롭다운 · 거르기 띠 */
 .modal .filterbar { background:#0b1220; border-radius:4px; box-shadow:inset 0 0 0 1px var(--gold-d); }
 .modal .dd > button { clip-path:none; border-radius:3px; background:var(--hanji-bg); color:var(--ink); font-family:var(--font-serif); box-shadow:inset 0 0 0 1px var(--gold-d); }
 .modal .dd > button small { color:#7a1a22; }
 .modal .dd > button::after { background:var(--ink2); }
-.modal .dd.set > button { background:linear-gradient(#b3333e,#7a1a24); color:#fff3df; }
-.modal .dd.set > button small { color:var(--gold-l); }
+.modal .dd.set > button { background:#1b4444; color:#f0e4cb; box-shadow:inset 0 0 0 1px #54c7c0; }
+.modal .dd.set > button small { color:#8ce6de; }
 .modal .filterbar .count,.cx-bar .count { color:#c9bfa6; }
 .modal .filterbar .count b,.cx-bar .count b { color:var(--gold-l); font-family:var(--font-serif); }
 
@@ -304,19 +319,19 @@ body.ui-parts .modal .box::after { inset:-8px; border-style:solid; border-width:
 .cx-layout { flex:1; min-height:0; display:grid; grid-template-columns:96px minmax(0,1fr) minmax(0,30%); gap:16px; }
 .cx-rail { display:flex; flex-direction:column; gap:10px; }
 .cx-tab { position:relative; display:flex; flex-direction:column; align-items:center; gap:4px; padding:12px 4px 10px; border:none; cursor:pointer; border-radius:3px;
-  font-family:var(--font-serif); color:#e8dcc0; background:linear-gradient(#16213a,#0b1220); box-shadow:inset 0 0 0 1px var(--gold-m),inset 0 0 0 3px #0b1220,inset 0 0 0 4px #c9a45a55; }
+  font-family:var(--font-body); font-weight:700; color:#e8dcc0; background:#111820; box-shadow:inset 0 0 0 1px #80704f; }
 .cx-tab .ico { width:40px; height:40px; }
 .cx-tab:hover { color:#fff3cf; filter:brightness(1.15); }
-.cx-tab.on { color:#fff3df; background:linear-gradient(#b3333e,#7a1a24); box-shadow:inset 0 0 0 1px var(--gold-l),inset 0 0 0 3px #5a1018,inset 0 0 0 4px #e9cf8a88,0 0 14px #9e1f2b66; }
-.cx-tab.on::after { content:''; position:absolute; right:-9px; top:50%; margin-top:-7px; border:7px solid transparent; border-left-color:var(--gold-l); }
+.cx-tab.on { color:#f0e4cb; background:#1b4444; box-shadow:inset 0 0 0 1px #54c7c0,inset -3px 0 0 #54c7c0; }
+.cx-tab.on::after { content:''; position:absolute; right:-9px; top:50%; margin-top:-7px; border:7px solid transparent; border-left-color:#54c7c0; }
 .cx-main { min-width:0; min-height:0; display:flex; flex-direction:column; gap:10px; }
 .cx-bar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
 .cx-bar .filterbar { flex:1; }
 .cx-bar > .count { margin-left:auto; white-space:nowrap; }
 .cx-chips { display:flex; gap:6px; flex-wrap:wrap; }
-.cx-chip { border:none; cursor:pointer; padding:5px 12px; border-radius:14px; font-family:var(--font-serif); font-size:.9em; color:#e8dcc0; background:#0b1220; box-shadow:inset 0 0 0 1px var(--gold-d); }
+.cx-chip { border:none; cursor:pointer; min-height:36px; padding:5px 14px; border-radius:4px; font-family:var(--font-body); font-weight:700; font-size:.9em; color:#e8dcc0; background:#0b1220; box-shadow:inset 0 0 0 1px var(--gold-d); }
 .cx-chip:hover { color:#fff3cf; box-shadow:inset 0 0 0 1px var(--gold-m); }
-.cx-chip.on { color:var(--ink); background:var(--hanji-bg); box-shadow:inset 0 0 0 1px var(--gold-m),0 0 0 1px var(--gold-d); }
+.cx-chip.on { color:#f0e4cb; background:#1b4444; box-shadow:inset 0 0 0 1px #54c7c0; }
 .cx-grid { flex:1; min-height:0; overflow:auto; display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px; align-content:start; padding:4px 6px 8px 2px; }
 .cx-grid.grid.cards { display:flex; flex-wrap:wrap; gap:12px; --ch:204px; justify-content:flex-start; }
 .cx-grid .card.on { outline:3px solid var(--gold-l); outline-offset:3px; }
@@ -387,14 +402,9 @@ body.ui-parts .modal .box::after { inset:-8px; border-style:solid; border-width:
 .set-paper input[type=range]::-moz-range-thumb { width:22px; height:22px; border:none; border-radius:50%; background:radial-gradient(circle at 40% 35%,#fff3cf,#e9cf8a 40%,#8a6a33); box-shadow:0 0 0 1px #5a4520; }
 /* 구간 단추: 먹색 띠 안에서 고른 칸만 청록 */
 .seg { display:inline-flex; justify-self:start; padding:3px; gap:3px; border-radius:6px; background:#0b1220; box-shadow:0 0 0 1px #f6edd6,0 0 0 2px var(--gold-m); }
-.seg-b { border:none; cursor:pointer; min-width:74px; padding:6px 14px; border-radius:4px; font-family:var(--font-serif); font-weight:700; color:#c9bfa6; background:transparent; }
+.seg-b { border:none; cursor:pointer; min-width:74px; min-height:38px; padding:6px 14px; border-radius:4px; font-family:var(--font-body); font-weight:700; color:#c9bfa6; background:transparent; }
 .seg-b:hover { color:#fff3cf; }
-.seg-b.on { color:#fff; background:linear-gradient(#45c9bd,#1f8f86); box-shadow:inset 0 0 0 1px #9af0e6,0 0 10px #3fb8ad66; }
-/* 토글 */
-.tog { justify-self:start; position:relative; width:62px; height:30px; border:none; cursor:pointer; border-radius:15px; background:#0b1220; box-shadow:0 0 0 1px #f6edd6,0 0 0 2px var(--gold-m); transition:background .15s; }
-.tog i { position:absolute; left:4px; top:4px; width:22px; height:22px; border-radius:50%; background:radial-gradient(circle at 40% 35%,#fff3cf,#e9cf8a 40%,#8a6a33); box-shadow:0 1px 3px #0008; transition:left .15s ease; }
-.tog.on { background:linear-gradient(#45c9bd,#1f8f86); }
-.tog.on i { left:36px; }
+.seg-b.on { color:#f0e4cb; background:#1b4444; box-shadow:inset 0 0 0 1px #54c7c0,inset 0 -3px 0 #54c7c0; }
 .set-foot { display:flex; justify-content:flex-end; gap:12px; flex-wrap:wrap; padding-top:12px; }
 .set-paper .set-row:has(.dbg-gold) { grid-template-columns:132px 1fr; }
 .set-paper .set-row:has(.dbg-gold) > span { grid-column:1; }

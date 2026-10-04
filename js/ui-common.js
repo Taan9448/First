@@ -490,11 +490,31 @@
 
   // ---------------- 창 ----------------
   // sticky: 바깥을 눌러도 닫히지 않는다(꼭 골라야 하는 창)
+  // 40단계(UI 키트 규칙): 창은 role=dialog + 제목 연결, Esc 로 닫고, 닫으면 연 단추로 포커스를 돌려준다
+  var modalSeq = 0;
   UI.modal = function (html, cls, sticky) {
-    var m = UI.el('div', 'modal ' + (cls || ''), '<div class="box pix">' + html + '</div>');
+    var m = UI.el('div', 'modal ' + (cls || ''), '<div class="box pix" role="dialog" aria-modal="true">' + html + '</div>');
+    var box = m.firstChild, h = box.querySelector('h2');
+    if (h) { h.id = h.id || 'mdl-' + (++modalSeq); box.setAttribute('aria-labelledby', h.id); }
+    m._sticky = !!sticky;
+    m._back = document.activeElement;
     document.getElementById('app').appendChild(m);
     if (!sticky) m.addEventListener('mousedown', function (e) { if (e.target === m) UI.closeModal(m); });
     return m;
   };
-  UI.closeModal = function (m) { if (m && m.parentNode) m.parentNode.removeChild(m); };
+  UI.closeModal = function (m) {
+    if (!m || !m.parentNode) return;
+    m.parentNode.removeChild(m);
+    var b = m._back;
+    if (b && b.focus && document.body.contains(b)) { try { b.focus({ preventScroll: true }); } catch (e) { /* 무시 */ } }
+  };
+  // Esc: 맨 위 창의 닫기(또는 취소) 단추를 누른 것처럼 — 창마다 닫을 때 하는 일(덱 창의 화면 갱신 등)을 그대로 거친다
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    var all = document.querySelectorAll('#app > .modal'), m = all[all.length - 1];
+    if (!m) return;
+    var btn = m.querySelector('.win-head .close') || m.querySelector('.box > .row .no, .box > .row .close');
+    if (btn) btn.click();
+    else if (!m._sticky) UI.closeModal(m);
+  });
 })();
