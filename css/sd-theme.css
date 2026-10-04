@@ -89,7 +89,8 @@ b { font-weight:700; }
 .lb-banner .bn b { font-size:16px; }
 .lb-banner .bn span { font-size:12px; }
 .lb-bottom { background:#111820f5; border-top:1px solid var(--gold); height:54px; left:0; right:0; bottom:0; justify-content:space-evenly; }
-.lb-bottom button { min-height:44px; }
+.lb-bottom button { min-height:44px; height:44px; flex-direction:row; align-items:center; gap:8px; font-size:14px; padding:8px 12px; }
+.lb-bottom .navbtn .ico { width:24px; height:24px; }
 .lb-foot { left:44%; right:24px; bottom:66px; max-width:none; background:#f0e4cbef; color:#111820; border:1px solid var(--gold); border-radius:5px; padding:10px; font-size:13px; }
 .lb-foot b { color:#603b25; }
 /* Squad retains all stats and deck rules, with a separate live summary. */
