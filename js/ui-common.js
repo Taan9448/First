@@ -266,9 +266,57 @@
         '<div class="cv2g"><img alt="" src="' + G.Assets.cardV2('grade_' + (G.RARITIES.indexOf(def.rarity) >= 0 ? def.rarity : 'legendary')) + '"></div>');
       if (v2 && v2.p && aArt) c.querySelector('.cart').style.backgroundPosition = v2.p;
     }
-    c.setAttribute('data-tip', UI.cardTip(def));
+    c.setAttribute('data-tip', UI.cardTip(def) + '<br><span style="color:#8ce6de">오른쪽 클릭 · 길게 누르기: 크게 보기</span>');
+    c._def = def; c._zopts = { battle: opts.battle, inst: opts.inst, silhouette: opts.silhouette };
     return c;
   };
+
+  // 40단계(사용자 요청): 카드 크게 보기 — 오른쪽 클릭 · 터치로 길게 누르기 · 동작이 없는 카드(덱 · 더미 보기 · 도감 상세)를 누르면.
+  // 크게 볼 때는 카드 v2 원래 시안 비율(원화 크게 · 아래 설명 칸)로 그린다
+  UI.zoomCard = function (def, o) {
+    o = o || {};
+    UI.hideTip();
+    UI.$$('.modal.czoom').forEach(UI.closeModal);
+    var m = UI.modal('<h2 class="cz-h">' + U.esc(def.name) + '</h2><div class="cz-wrap"><div class="cz-card"></div><div class="cz-info"><p class="cz-tip"></p><p class="cz-text"></p>' +
+      '<button type="button" class="btn cz-close">닫기</button></div></div>', 'czoom');
+    var big = UI.cardEl(def, { static: true, battle: o.battle, inst: o.inst, silhouette: o.silhouette });
+    big.classList.add('zoom'); big.removeAttribute('data-tip');
+    if (o.silhouette) { big.querySelector('.cname span').textContent = '???'; big.querySelector('.ctext span').textContent = '아직 얻지 못한 카드'; m.querySelector('.cz-h').textContent = '???'; }
+    m.querySelector('.cz-card').appendChild(big);
+    m.querySelector('.cz-tip').innerHTML = o.silhouette ? '' : UI.cardTip(def);
+    m.querySelector('.cz-text').innerHTML = o.silhouette ? '아직 얻지 못한 카드' : UI.cardText(def, o.battle, o.inst);
+    m.querySelector('.cz-close').onclick = function () { UI.closeModal(m); };
+    m.querySelector('.box').addEventListener('click', function (e) { if (!e.target.closest('.cz-info')) UI.closeModal(m); });
+    // 설명이 칸을 넘치면 글자를 줄인다(붙인 뒤에 잰다)
+    requestAnimationFrame(function () {
+      var t = big.querySelector('.ctext'), sp = t && t.querySelector('span'), fs = 1;
+      while (sp && fs > 0.62 && sp.scrollHeight > t.clientHeight - 2) { fs -= 0.04; sp.style.fontSize = 'calc(var(--czf) * ' + fs.toFixed(2) + ')'; }
+    });
+    return m;
+  };
+  function zoomFrom(e) {
+    var c = e.target.closest && e.target.closest('.card');
+    if (!c || !c._def || c.classList.contains('zoom') || c.closest('.modal.czoom')) return false;
+    UI.zoomCard(c._def, c._zopts);
+    return true;
+  }
+  document.addEventListener('contextmenu', function (e) { if (zoomFrom(e)) { e.preventDefault(); e.stopImmediatePropagation(); } }, true);
+  document.addEventListener('click', function (e) {
+    var c = e.target.closest && e.target.closest('.card.static');
+    if (!c || c.onclick || c.closest('.modal.czoom') || c.closest('[onclick]')) return;
+    zoomFrom(e);
+  });
+  // 터치: 카드를 길게 누르면 툴팁 대신 크게 보기
+  var zlp = null;
+  document.addEventListener('pointerdown', function (e) {
+    if (e.pointerType !== 'touch') return;
+    var c = e.target.closest && e.target.closest('.card');
+    clearTimeout(zlp && zlp.t);
+    if (!c || !c._def) { zlp = null; return; }
+    zlp = { x: e.clientX, y: e.clientY, t: setTimeout(function () { UI.longPressed = true; UI.zoomCard(c._def, c._zopts); }, 500) };
+  }, true);
+  document.addEventListener('pointermove', function (e) { if (zlp && Math.hypot(e.clientX - zlp.x, e.clientY - zlp.y) > 12) { clearTimeout(zlp.t); zlp = null; } }, true);
+  document.addEventListener('pointerup', function () { if (zlp) { clearTimeout(zlp.t); zlp = null; } }, true);
 
   // 비용 보석 색(15단계): 0은 초록, X는 보라, 3 이상은 주황
   function costCls(cost) { return cost == null ? ' none' : cost === 'X' ? ' cx' : cost === 0 ? ' c0' : cost >= 3 ? ' c3' : ''; }

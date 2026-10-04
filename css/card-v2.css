@@ -51,3 +51,39 @@ body.twj-game-skin .card.v2 .cf { display:none !important; }
 .card.v2 { box-shadow:none; }
 .card.v2 .ccost span { font-size:1.55em !important; }
 #fx .cfx2 { position:absolute; z-index:5; pointer-events:none; object-fit:contain; will-change:transform,opacity; filter:drop-shadow(0 0 12px #0006); }
+
+/* ================= 카드 크게 보기(UI.zoomCard) — 크게 볼 때는 전달 시안(preview.css) 비율 그대로 ================= */
+.modal.czoom { z-index:400; background:#05080fd9; }
+.modal.czoom .box { width:auto; max-width:94vw; max-height:94vh; padding:18px 24px 20px; cursor:zoom-out; }
+.modal.czoom .cz-h { margin:0 0 4px; text-align:center; }
+.cz-wrap { display:flex; gap:24px; align-items:center; }
+.cz-card { position:relative; --ch:min(76vh,640px); width:calc(var(--ch) * 125 / 175); height:var(--ch); flex:0 0 auto; }
+.cz-card .card { position:relative; left:0; top:0; cursor:default; animation:czIn .22s ease-out both; }
+@keyframes czIn { from { transform:scale(.86); opacity:0; } to { transform:none; opacity:1; } }
+.cz-info { width:min(300px,26vw); display:flex; flex-direction:column; gap:12px; cursor:default; }
+.cz-tip { margin:0; line-height:1.6; font-size:14px; color:#d8ccb0; }
+.cz-text { margin:0; padding:12px 14px; border-radius:4px; background:#f0e4cb; color:#1f1a14; line-height:1.6; font-size:15px; }
+.cz-text b.kw { color:#722b35; } .cz-text .num { color:#1f5a7a; font-weight:700; }
+.cz-close { align-self:flex-start; }
+@media (max-width:900px) { .cz-wrap { flex-direction:column; } .cz-card { --ch:min(62vh,520px); } .cz-info { width:min(420px,86vw); } }
+/* 시안 비율 — 무공(ink) */
+.card.v2.zoom { --czf:calc(var(--ch) * 0.0243); }
+.card.v2.zoom .cart { left:8% !important; top:13% !important; width:84% !important; height:57% !important; }
+.card.v2.zoom .ctext { left:10.2% !important; top:71.4% !important; width:79.6% !important; height:17% !important; background:#e5dcc7 !important; box-shadow:none !important; border-radius:0 !important; z-index:2; padding:0 6% !important; }
+.card.v2.zoom .ctext span { font-size:var(--czf) !important; line-height:1.55 !important; color:#272820 !important; }
+.card.v2.zoom .cname span { font-size:calc(var(--ch) * 0.033) !important; }
+.card.v2.zoom .ctype span { font-size:calc(var(--ch) * 0.02) !important; }
+.card.v2.zoom .ccost span { font-size:calc(var(--ch) * 0.043) !important; }
+/* 시안 비율 — 마법(split) */
+.card.v2.zoom.v2-split .cart { left:9.5% !important; top:17% !important; width:81% !important; height:48.4% !important; }
+.card.v2.zoom.v2-split .ctext { left:9.2% !important; top:70.4% !important; width:81.6% !important; height:16.4% !important; background:#151827 !important; }
+.card.v2.zoom.v2-split .ctext span { color:#d9d9e4 !important; }
+/* 설명 칸은 틀 아래에(틀의 창으로 보인다) */
+.card.v2.zoom .cv2f { z-index:3; }
+.card.v2.zoom .cname,.card.v2.zoom .ctype,.card.v2.zoom .ccost { z-index:5; }
+.card.v2.zoom .ctext { z-index:4 !important; background:transparent !important; }
+.card.v2.zoom .cin::before { content:''; position:absolute; left:10.2%; top:71.4%; width:79.6%; height:17%; background:#e5dcc7; z-index:2; }
+.card.v2.zoom.v2-split .cin::before { left:9.2%; top:70.4%; width:81.6%; height:16.4%; background:#151827; }
+.card.v2 .ccost.c0,.card.v2 .ccost.c3,.card.v2 .ccost.cx,.card.v2 .ccost.none { background:none !important; box-shadow:none !important; }
+.card.v2 .ccost.c0 span,.card.v2 .ccost.c3 span,.card.v2 .ccost.cx span { background:none !important; box-shadow:none !important; }
+.card.v2 .ccost::before,.card.v2 .ccost::after { display:none !important; }
