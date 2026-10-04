@@ -55,8 +55,8 @@
 
     el.innerHTML = '<div class="lb-bg"></div><div class="lb-shade"></div>' +
       '<header class="lb-top">' +
-        '<div class="lb-profile"><div class="lv"><small>LV</small><b>' + maxLevel() + '</b></div>' +
-        '<div class="pf"><b>하린 일행 <span class="mode-chip" style="--mc:' + St.mode().color + '">' + St.mode().name + '</span></b><small>' + G.Save.slot + '번 칸 · ' + (asc ? '승천 ' + asc + ' 원정' : '기본 원정') + ' · 최고 기록 ' + (d.ascension.best ? '승천 ' + d.ascension.best : d.flags.ended ? '원정 완료' : '진행 중') + '</small><i></i></div></div>' +
+        '<div class="lb-plaque"><b>하린 일행</b><span class="mode-chip" style="--mc:' + St.mode().color + '">' + St.mode().name + '</span>' +
+        '<small>LV ' + maxLevel() + ' · ' + G.Save.slot + '번 칸 · ' + (asc ? '승천 ' + asc : '기본 원정') + '</small></div>' +
         '<span class="spacer"></span>' +
         '<span class="res" data-tip="골드">' + UI.icon('gold') + d.gold + '</span>' +
         '<span class="res" data-tip="모은 카드">' + UI.icon('deck') + owned + '<small>/' + allCards.length + '</small></span>' +
@@ -64,36 +64,38 @@
         '<button class="btn icon ghost to-title" data-tip="타이틀로">' + UI.icon('home') + '</button>' +
       '</header>' +
       '<nav class="lb-left">' +
-        '<button class="navbtn nav-set">' + UI.icon('gear') + '<span>설정</span></button>' +
-        '<button class="navbtn nav-help">' + UI.icon('help') + '<span>도움말</span></button>' +
-        (d.flags.ended ? '<button class="navbtn nav-asc">' + UI.icon('crown') + '<span>승천</span><i class="dot"></i></button>' : '') +
+        '<button class="navbtn nav-set" aria-label="설정" data-tip="설정">' + UI.icon('gear') + '</button>' +
+        '<button class="navbtn nav-help" aria-label="도움말" data-tip="도움말">' + UI.icon('help') + '</button>' +
+        (d.flags.ended ? '<button class="navbtn nav-asc" aria-label="승천" data-tip="승천">' + UI.icon('crown') + '<i class="dot"></i></button>' : '') +
       '</nav>' +
-      '<div class="lb-hero"><div class="plat"></div></div>' +
-      '<div class="lb-name"><small>' + (hc.en || hc.id.toUpperCase()) + '</small><b>' + hc.name + '</b><span>' + hc.job + ' · Lv ' + St.levelOf(hc.id) + '</span></div>' +
+      '<div class="lb-hero"><div class="plat"></div><div class="lb-circle"></div></div>' +
+      '<div class="lb-name"><i class="lb-compass"></i><div><small>' + (hc.en || hc.id.toUpperCase()) + '</small><b>' + hc.name + '</b><span>' + hc.job + ' · Lv ' + St.levelOf(hc.id) + '</span></div></div>' +
       (heroes.length > 1 ? '<button class="btn icon ghost lb-swap" data-tip="다른 동료 보기">' + UI.icon('swap') + '</button>' : '') +
       '<div class="lb-voice"><span class="tag">VOICE</span><p></p></div>' +
       '<section class="lb-tiles">' +
         tile('map', 't-small', '지도', 'WORLD MAP', '<div class="ti"><span>클리어 ' + d.clearedStage + '/' + St.stageCount() + '</span></div>') +
         tile('go', 't-wide hot', '원정', 'EXPEDITION', '<div class="ti"><span class="dim">' + D.THEME_NAME[def.theme] + '</span><b style="color:#fff;font-size:1.15em">STAGE ' + n + ' · ' + D.STAGE_NAME[n - 1] + '</b><span>' +
-          (r ? '진행 중 · 눌러서 이어하기' : n <= d.clearedStage ? '다시 도전' : '지도에서 출발') + '</span></div>' + (asc ? '<span class="badge red">승천 ' + asc + '</span>' : '')) +
+          (r ? '진행 중 · 깊이 ' + Math.min(r.col + 1, r.map.length) + '/' + r.map.length : n <= d.clearedStage ? '돌파한 스테이지' : '새 스테이지') + '</span></div>' + (asc ? '<span class="badge red">승천 ' + asc + '</span>' : '') +
+          '<span class="tgo">' + (r ? '이어하기' : n <= d.clearedStage ? '다시 도전' : '출발') + '</span>') +
         tile('heroes', 't-wide', '동료', 'HEROES', '<div class="ti"><span>합류 ' + heroes.length + '/' + D.characters.length + ' · 최고 Lv ' + maxLevel() + '</span></div>') +
         tile('party', 't-small', '편성', 'SQUAD', '<div class="ti"><span>' + d.party.map(function (id) { return charDef(id).name; }).join(' · ') + '</span></div>' + UI.icon('party', 'ticon'), !canParty) +
         tile('deck', 't-small', '덱', 'DECK', '<span class="badge">' + deckN + '</span><div class="ti"><span>전투 덱 ' + deckN + '장</span></div>' + UI.icon('deck', 'ticon')) +
         tile('story', 't-wide', '스토리', 'STORY', '<div class="ti"><span>' + (sp.seen >= sp.total ? '모든 장면을 보았다' : '제' + n + '장 · ' + D.STAGE_NAME[n - 1] + ' · 본 장면 ' + sp.seen + '/' + sp.total) + '</span>' +
           '<div class="bar"><i style="width:calc(' + sp.pct + '% - 4px)"></i></div></div><span class="pct">' + sp.pct + '<small>%</small></span>', !Meta.story) +
-        tile('forge', 't-full', '대장간', 'FORGE', '<div class="ti"><span>4~10단계 강화 · 벼릴 수 있는 카드 ' + St.forgeList().length + '장</span></div>' + UI.icon('anvil', 'ticon')) +
+        tile('forge', 't-full', '대장간', 'FORGE', '<div class="tpanel"><b>천외 대장간</b><span>4~10단계 강화 · 벼릴 수 있는 카드 <em>' + St.forgeList().length + '</em>장</span></div>') +
       '</section>' +
       '<div class="lb-banner"><div class="bn"></div><div class="lb-dots"></div></div>' +
       '<nav class="lb-bottom">' +
-        nav('heroes', 'party', '동료') + nav('cards', 'deck', '카드') + nav('monsters', 'skull', '몬스터') + nav('relics', 'chest', '유물') + nav('stats', 'stats', '기록') +
+        [nav('heroes', 'party', '동료'), nav('cards', 'deck', '카드'), nav('monsters', 'skull', '몬스터'), nav('relics', 'chest', '유물'), nav('stats', 'stats', '기록')].join('<i class="lb-dia"></i>') +
       '</nav>' +
-      '<div class="lb-foot"><b>[원정 일지]</b> ' + journal() + '</div>';
+      '<div class="lb-foot"><i class="lb-seal"></i><b>원정 일지</b><span>' + journal() + '</span><i class="lb-quill"></i></div>';
 
     var lobbyBg = G.Assets && G.Assets.screenBg('lobby');
     (lobbyBg ? Promise.resolve(lobbyBg) : G.Art.scene(def.theme === 'mirror' ? 'castle' : def.theme)).then(function (u) { if (u) el.querySelector('.lb-bg').style.backgroundImage = 'url(' + u + ')'; });
     G.ArtMap.world().then(function (u) { var t = el.querySelector('[data-go="map"] .tart'); if (u && t) t.style.backgroundImage = 'url(' + u + ')'; });
     G.Art.scene(def.theme === 'mirror' ? 'castle' : def.theme).then(function (u) { var t = el.querySelector('[data-go="go"] .tart'); if (u && t) t.style.backgroundImage = 'url(' + u + ')'; });
     G.Art.scene('castle').then(function (u) { var t = el.querySelector('[data-go="story"] .tart'); if (u && t) t.style.backgroundImage = 'url(' + u + ')'; });
+    G.Art.scene('volcano').then(function (u) { var t = el.querySelector('[data-go="forge"] .tart'); if (u && t) t.style.backgroundImage = 'url(' + u + ')'; });
 
     // 원정 타일: 다음 보스 그림(못 본 보스는 검은 실루엣)
     var bossId = St.stageBoss(n), boss = D.monsterById[bossId], seen = n <= d.clearedStage || !!d.codex.monsters[bossId];
@@ -101,9 +103,19 @@
     bsp.style.position = 'absolute'; bsp.style.right = '10px'; bsp.style.bottom = '6px'; bsp.style.left = 'auto';
     if (!seen) { bsp.style.filter = 'brightness(0)'; bsp.style.animation = 'none'; }
     el.querySelector('[data-go="go"] .tart').appendChild(bsp);
-    var sps = UI.el('div', 'sprites');
-    el.querySelector('[data-go="heroes"] .tart').appendChild(sps);
-    heroes.forEach(function (id) { sps.appendChild(UI.spriteEl(id, heroes.length > 3 ? 0.62 : 0.8)); });
+    // 40단계(시안 lobby): 동료 타일은 동그란 얼굴 문장, 편성 타일은 출전 동료 그림, 덱 타일은 카드 그림
+    var sps = UI.el('div', 'lb-medals');
+    el.querySelector('[data-go="heroes"]').appendChild(sps);
+    D.characters.forEach(function (c) {
+      var m = UI.el('span', 'medal' + (heroes.indexOf(c.id) < 0 ? ' locked' : ''));
+      m.setAttribute('data-tip', heroes.indexOf(c.id) < 0 ? '아직 합류하지 않았다' : c.name);
+      m.appendChild(UI.portraitEl(c.id, 'medal-img') || UI.spriteEl(c.id, 0.6));
+      sps.appendChild(m);
+    });
+    var pa = el.querySelector('[data-go="party"] .tart');
+    d.party.forEach(function (id, i) { var im = UI.portraitEl(id, 'lb-pp p' + i); if (im) pa.appendChild(im); });
+    var dk = el.querySelector('[data-go="deck"] .tart'), dcs = St.battleDeck(d.party).slice(0, 3);
+    dcs.forEach(function (id, i) { var c = UI.el('span', 'lb-dc c' + i), u = G.Assets.cardArt(id); if (u) c.style.backgroundImage = 'url(' + u + ')'; dk.appendChild(c); });
 
     // 큰 캐릭터
     var stage = el.querySelector('.lb-hero');
@@ -189,8 +201,12 @@
     fit();
   };
 
+  var TILE_ICO = { go: 'compass', map: 'compass', party: 'party', deck: 'deck', heroes: 'party', story: 'scroll', forge: 'anvil' };
+  var COMPASS = '<svg viewBox="0 0 40 40" class="ico"><path d="M20 3l3.2 13.8L37 20l-13.8 3.2L20 37l-3.2-13.8L3 20l13.8-3.2z" fill="#e9cf8a"/><path d="M20 10l1.6 8.4L30 20l-8.4 1.6L20 30l-1.6-8.4L10 20l8.4-1.6z" fill="#8a6a33"/></svg>';
   function tile(key, cls, ko, en, inner, disabled) {
+    var ic = TILE_ICO[key];
     return '<button class="tile ' + cls + '" data-go="' + key + '"' + (disabled ? ' disabled' : '') + '><div class="tart"></div>' +
+      '<span class="tmed">' + (ic === 'compass' ? COMPASS : UI.icon(ic)) + '</span>' +
       '<div class="tl"><b>' + ko + '</b><small>' + en + '</small></div>' + (inner || '') + '</button>';
   }
   function nav(key, icon, label) { return '<button class="navbtn" data-nav="' + key + '">' + UI.icon(icon) + '<span>' + label + '</span></button>'; }
