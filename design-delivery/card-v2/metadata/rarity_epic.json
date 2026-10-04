@@ -1,0 +1,12 @@
+{
+  "id": "epic",
+  "kind": "rarity",
+  "source": "/workspace/generated_images/exec-0c0a4fd1-e445-4a3e-92ef-0889ed4a3098.png",
+  "transparent": true,
+  "file": "rarity/epic.png",
+  "width": 2172,
+  "height": 724,
+  "mode": "RGBA",
+  "actual_transparency": true,
+  "opaque_pixels": true
+}

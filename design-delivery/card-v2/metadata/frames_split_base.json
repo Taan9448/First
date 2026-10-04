@@ -1,0 +1,12 @@
+{
+  "id": "split_base",
+  "kind": "frames",
+  "source": "/workspace/generated_images/exec-ab342b14-6524-43a8-a87c-4cb5c43d6bf9.png",
+  "transparent": true,
+  "file": "frames/split_base.png",
+  "width": 1060,
+  "height": 1484,
+  "mode": "RGBA",
+  "actual_transparency": true,
+  "opaque_pixels": true
+}

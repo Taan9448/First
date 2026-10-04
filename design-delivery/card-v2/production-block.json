@@ -1,0 +1,13 @@
+{
+  "reason": "image_tool_usage_limit_reached",
+  "reportedHttpStatus": 429,
+  "reportedResetAtUtc": "2026-10-04T23:58:15+00:00",
+  "workState": "partial_due_to_image_tool_limit",
+  "expectedArt": 296,
+  "expectedEffects": 296,
+  "resumeJobs": "production-jobs.json",
+  "note": "미생성 카드의 실제 PNG는 없다. 프롬프트/메타데이터/HTML 설계를 완성 이미지로 취급하지 않는다.",
+  "actualArt": 187,
+  "actualEffects": 188,
+  "remainingImages": 217
+}

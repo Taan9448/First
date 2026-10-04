@@ -1,0 +1,12 @@
+{
+  "id": "K05",
+  "kind": "effects",
+  "source": "/workspace/generated_images/exec-c8bdd7e6-ada9-4c18-91f0-16c465aa3ae0.png",
+  "transparent": true,
+  "file": "effects/K05.png",
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGBA",
+  "actual_transparency": true,
+  "opaque_pixels": true
+}

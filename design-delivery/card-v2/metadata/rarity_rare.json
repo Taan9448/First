@@ -1,0 +1,12 @@
+{
+  "id": "rare",
+  "kind": "rarity",
+  "source": "/workspace/generated_images/exec-ec6cdfda-615e-4559-818b-cd21c67b77cd.png",
+  "transparent": true,
+  "file": "rarity/rare.png",
+  "width": 1983,
+  "height": 793,
+  "mode": "RGBA",
+  "actual_transparency": true,
+  "opaque_pixels": true
+}

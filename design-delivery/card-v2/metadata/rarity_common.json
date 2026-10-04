@@ -1,0 +1,12 @@
+{
+  "id": "common",
+  "kind": "rarity",
+  "source": "/workspace/generated_images/exec-72e81fb6-dc96-402d-ac11-b0632ccb5a28.png",
+  "transparent": true,
+  "file": "rarity/common.png",
+  "width": 2172,
+  "height": 724,
+  "mode": "RGBA",
+  "actual_transparency": true,
+  "opaque_pixels": true
+}

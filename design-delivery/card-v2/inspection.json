@@ -1,0 +1,5354 @@
+{
+  "files": 382,
+  "errors": [],
+  "images": [
+    {
+      "file": "art/B01.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "220822a50775b0acab3736f817ac3406fbdf223ce10e6521d19f28b167e35e2e",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/B02.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "b53ad1c79e95119ff46d2f538b9f9b9746c4692a5a8e9c99c1eabd66aee9e66a",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/B03.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "bc9e23f88fdc7f500de0d864f4bd609833779696d8abaab962bda94fe071d6df",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/B04.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "94a6dc2e558df740997bbf06ea298da08761bdc7acf9238496c772bd73bdcafc",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/B05.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "72a39341245914f6ab28bac7ad1f65a2b9837735cd57b6b5ea84877647144aaf",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/B06.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "628c2433db652e96a1bff4a494fc88370afbc82222699332b4474a9ee66a2455",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/B07.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "43026ba557a44cddb8fa48bb60454f31c1f0e0e5cc0f3bf8a94abe2ac3d2cb56",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/B08.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "3129e39d84aa33ab00232ad104c80c05f6b3c557c63d7f1c85fde39b33b07b20",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/B09.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "bfb7cccd82408be0687f9502172d44f8b48947514d9b09913042565d1e458491",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/B10.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "a3e647ba21e9ec7dccc8fa4cf3b1a877a190723f60c00079d5ac5c635fd45316",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/B11.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "fe55a5a4d8d52e43fd3f06a4425a04a2a0e6b1fb8f9a2e508770a550a1814e55",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/B12.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "6dcf9e2310d4a7a07ed75ee04dce292b91897149bb4818f06c0d2a8c71787d97",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/B13.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "6129ec59008c66f6ffbafe689476d12daacb7f60894ec0cb38655976324a8423",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/B14.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "f841973fa95b4ef15363d07b6c9cdbf626ddbf45da0636c8a231f1b13fecb291",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/B15.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "c0f7cfbf5ccf08dc93cdaa444446d96f1780b2f0251cbaa95e257a18d40bd3d9",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/B16.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "972a1811b6bc56e39dc06f797f52b3cf22f9348efe7e3411478304b6fa556ee4",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/B17.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "01a733db5218bc8765a341bccaa0114fff088d6c491902a23ef0428b9e7a64f1",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/B18.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "63f2a97a0034478ba022731d8a1134b8f63dae95999578eb695ccf26ea0279fb",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/B19.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "7d23ef680b4f9b7d3d66ee96d8eefe6d3ed57e15a6a707cb5bcf25c24099b36f",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/B20.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "dfca0a042334bf4fb95fc973b452016f2844c3636584e49c24dacbb6ab0fe3e3",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/B21.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "d065620eb796bed0f958adbe89e73f0df995397751be0f78139f121f90ee9f4b",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/B22.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "3591ccb0fde6aaabe32677840ac455a666b0b6a7c168737c2651d1b3fbc590f6",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/B23.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "809a4bcc5800de49b6714bafd8fb00d9c6702887b10ee94aacfff5770659ebf3",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/B24.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "bb21170699cc9524bea89dad9a6b0a69056be7a6c3778a937a07883d6134752d",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/B25.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "ae112fa0feb5e20855e3be4609f41f02034430a59c7913ffb39ef2ecc7eb907c",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/B26.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "39627315f9f7d0345d8c7dcb8ab8e445922bce5c690ca36b46a53778245dabd4",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/B27.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "d0ecbce2cf7f4bbdbd417443ce3193fb3c89cea968536767b66a4a0365bf304b",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/B28.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "96a2581cc66859e5c194070aa363b1ffea5c2dadb217fd7b51a3c493743f4059",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/B29.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "e8934aa844f3b44dad8ac3f95eb6226cccc1019b20ee91e2c604568bbea2da22",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/B30.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "35a80e5fac886448d0336324a8ca355b6e1da8f82160d51439895aa892207b4e",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/B31.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "22ccf695491baaba96d351822955c23abd0da733ee52816ce30af0e0b6404085",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/B32.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "ded6e01ee9381b0cbc270670d519ccd34fa45259e389c6bec5c609b2cc3ed4b0",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/B33.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "397caed94122472a78068b02da3c20e07fb8f6772652d3a90c4d0dbd12aabf0f",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/C01.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "10433912a1dd06ef2b583203e21cc527396fffb707bd0676d2d977a836af0978",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/C02.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "fff996c705623184d87a35939d0ba0dea50a2fbaaa1beb116631eb7a65e3089b",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/C03.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "80551c723707187cc4fb6c9b1544248c83b519bd21a7d0e1f7c9bc783c2b510e",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/C04.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "801c96e3e1e7f488411004e65731c334cfd395d3df27eee698ed129fc65369ec",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/C05.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "79f475a4834dfb47c5308fc3f5b073e3d6de34c032d3d692115507067304c1a4",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/C06.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "11300061a9a09ebd3a6bb848d5a5c1e794d82218d2ddab3e6ddaf7337a1d6793",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/C07.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "743f658ed5d5ef19bf523da0ef1ba754c4422934385f759a9dfdf752d51b3b60",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/C08.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "262649a2b716f471df957206f9aaf8af77588af441acd4a0145d1b5c7702d0cc",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/C09.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "2b5ec6195032caab396b676556221ae1c4b89032b47c9e6bce9ed2748d9458b2",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/C10.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "a8dc231fa24e582b99436dbe789aa5d54d840da2217c0532ec08e01bb068e166",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/C11.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "d660af605a8d5764f70e50869c6d5dc14977c8cae6f8a675ce0076255493287b",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/C12.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "5c35eb79d307f230f9eba83201227e0064f2349ad852fe833d41ec0f539718f8",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/C15.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "a929b99319ca6e313a497bb78b359d2233638cd58328c3c92c922c05110fdd9c",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/C16.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "0ff15d9b476264347f71a78cc1cddda584ab26e2e7016b028ba878da5900b7b1",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/C17.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "1bd686ceaaa1dc2a0f9021db26b4b30a7c240212d45dab9b5cd04adb75d0e957",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/C18.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "ad8ea0ff5a150bed0daaa55a22b102139075bc1e0dc44f4df59d9e1f64441207",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/C19.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "591ec629854605f58611a9030280392f9129b5e960a8bb3efb9630cef4f5627d",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/C20.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "963f38867010133c9ffa1969173f9359893ade8327c0647803d7723833a0e71c",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/C22.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "8f3a5804e45cbed3fc70b6988e20027acaa1204153d87c4273de2e1e40cc085b",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/C29.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "9bf0e52653066450b76b79093857239766cae6b087992aedc23470c1be39a002",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/K01.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "f40829ea8ce2be7795a279119ba3a83e46a549bf5cf8bb2876c658b1a25f72e2",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/K02.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "f9feb3793e46b7b637306e33cee63c9b6a88ac023cc1720ff6d0388bd65426df",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/K03.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "254175a2dd4954019c591a8248b860b1850bb028a86b0df850742bc837347116",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/K04.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "cb702c567326f15879c6713aa355020b092542914cdba74a91dab3779e89f649",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/K05.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "db2afaa99f9e612787d0e3fdb7d4b503df1cdbb40af99acd96ede464fc413ab5",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/K06.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "2c0fa1b6fa995fa4451713e78cf8e5f54660899395a93715dc2276df40c31856",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/K07.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "0c98fde8ca24946ac19f7cb709cf30d31ee6d83145a4a19a5319c16716f26103",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/K08.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "47da2803745ebab995a8c7c6d9d779b1c9f76937d3d4525fef1b485215d8d142",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/K09.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "d95dee88aadd6df23506f3ee18aef8b580dfd3ff19794853d88ed9798132b126",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/K10.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "af78524cca9e97ccdae730e0809f8536100bf9930121ea21afcd8255cbcaa4ee",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/K11.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "69970ae65d6725561bb16fee77511f53d8a9d15c255a629443eedb86ed3bd5a6",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/K12.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "061b43af38e308df9bc06d0bcb2e152ebac0c434e7122c4a17e359617bd09397",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/K13.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "679dc033feac024b046516945451638e2d5c7d8463ec8ec670cd7f95447cff54",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/K14.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "56388c8d3980b62ca5d01e664ac11fd7bad19536b35037bfcef0e752239a3824",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/K15.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "0b1040f88317ed5b9bd2704ddaccff1369c9deb5d96773a5b9da61edac03ef04",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/K16.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "61d80bd920025cbb38f32f5c742a956add99b3163bcad58a44b691dc3b62fd4a",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/K17.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "69d2a86597ae902b79cdaaeace72ddcc324386b7df0260f0cc7100cc1ea758df",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/K18.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "5e220a8105443182dcdf1bbbe971a6321c0b03fd3c169e73e93d40724996ea28",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/K19.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "e015f01128f26411c29707b7fe23dcdb0b1b18fc837e3de8bf7006dcba6177d7",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/K20.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "c313679d9a477c5871d08e72bbcf8a63caf91f0fe0fb8c7860126ffeb94d9d82",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/K21.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "f33453a5dd1ce1a76c14b0ae672cb27879f3072728af910cc9acef34bd831c32",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/K22.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "0a3768c510e0ac2dd1e7de724ca78892b3f04f1836ad5e50ef0bc2aecca2dcb9",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/K23.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "4d41d5884c97e1aed504689d89f423423cbff2d482a168e10c7029e506e796b1",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/K24.png",
+      "width": 1373,
+      "height": 1145,
+      "sha256": "c971e661dd75ee46989b330584cd244d5d6723294e9f362b8513279068c073b2",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1373,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/K25.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "fba418bac7051de109203b2d291dc0cef0eff4209a6f733a3a2a907f0693536e",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/K26.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "665f78e3006f50d770c199d9e2c4b4bb0a6f7153df95c4b044c9c9f8538f870d",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/K27.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "9d0f652fc2a8c23614df1a28418dcdff3c61b34d9636c469a26a7bdcce34358b",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/K28.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "82bf2d790c5585d9b577dd4500cedff3808facb0fede8309253898524dbd98f5",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/K29.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "bd766023ce3100aebeebe17b56467a72ea4501f226e1d5cba978e80b04edb54f",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/K30.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "6ac3ffad698252693b23a907f12fefcda1d39d57f8cf2c3626776c1c48d9f10f",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/K31.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "ff90cd43589418741468ba26c30c4f91b6417c5f0b640be3c7ebd393cfb11866",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/K32.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "b475c4c35649171e79977f89f1d6a421f3bf8ffacb8a7064c0503381ac93e273",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/K33.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "4deb44a0c65c7ded2476d63f42f787c3e3c1e7003702542ce909349b553bf9ab",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/K34.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "fc0678e7eb3897d2b19c2b49990f9f98b1344ee97d5c70bf228a0e5752704997",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/L01.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "2dad9bb40d467430dc746f870e8f6c2b3160d85b2254368d3ea6f3a2c9367c90",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/L02.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "04d5d19141475a85a8d91fae9a11bb838fb9744e41e08aecbce96951ba8c9cd8",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/L03.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "e03b0e84497343864fb7a7de20bd0c2020e0e28e010fa17bb4b6e1a408f9bda9",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/L04.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "046ab4548e92d8b73d10265923f629c9efd04c5773a8f9f2d7b3c3599deaae45",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/L05.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "8523a5493bd6099a78977325cbc603e6573a6e9bdbfaed3ab5cf5f2897c1a58c",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/L06.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "12d6eaf8576d1adaa052433c700fc473bb1557539f0a951ce2cfaf6d4d6c1d2c",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/L07.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "e28e733534d910902bdfcdf3c7342ff0f9f048a43d3589939d2e0bfd9a3657e9",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/L08.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "efa91755d505437f29f7e99f56a7c059194d077a4c483917673b354c6594060d",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/L09.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "f606760d51de9e6b1be621fb79ad2a11b27f638faa013d012ec5431e35d1b76d",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/L10.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "8dd607631ba405e90ee0e5549664aff52fa15f030b0a42a4e4896e5d45024df9",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/L11.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "88b5a6c06bbe0762637e055a8a95bf94d7182766e9cc8e0259727503a47036b2",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/L12.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "5ac31267e20061151b34a1fa1cdd1f1c9bf5e33dcb8513bbc003515167e2271c",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/L13.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "79afd137ab939faeed6897955cc1cf641c8c58eccd0468fe310edec1432b6b24",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/L14.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "5ee4ccdf2da248511e91d8822273a14942d7edf287ca117b87208fd7a4a8669e",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/L15.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "e14fd4baced8e53f2d1516f4cbd75a340ed9628bbf3fae94a139badc940084fd",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/L16.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "645eb3b2a4e0ce2215d11b577d0f2c436c7dc5fc0a501ec687efc6f924af9d34",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/L17.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "802178681360a77fd1a4fc52b414fd99340e97ec683861939d5d3c8556bc8bc8",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/L18.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "ea7c290aef246f9c359e388c725eb03093b6638f568d69228ace41df00cdc3b5",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/L19.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "8d1353de8ddb0c2985aebe63f67a3f25b2d29643f80dcac08b0ebe76c2d7349b",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/L20.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "8bdbc8c8f5bbe41242950d5ef020fd3277a1b4282475937ec4ec2e1225902160",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/L21.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "b64017b7acd0369e45fefad72b6dfda0f8e6cde55a24aec212719f6e9cdd5118",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/L22.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "d04cc970c13d61abe99ed8bf4ffec14b0967fd4356b1d09839007335dab07778",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/L23.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "e09ce64f473ae609e45f989be64a12d467632e5908f5cea8814b2ff5cad42d7e",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/L24.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "84f1fb892911d8d1baf5d236faa536da83c309270722db9c5fee28f726e78399",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/L25.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "7f9c1d57ec7be9ce89eece51c1ca2f6151b34605b99f8cf584556df2721f652a",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/L26.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "8e15fc0c1014f261aa73d48000938baf9e62d443bb8c9e047f14b802ff00c90b",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/L27.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "c3206474d21165fc5d6ee01b413948ee30711ecbe934da8e16b8b111d1c48031",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/L28.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "f8cf09032cb94d73fee4be2e639ad7ed7e75ebf5c7b6d3f575e77e3cd6d8d9e3",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/L29.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "584282d7a06a59f286622b7a7afe86df6b4bc6bf05aec9a33e508e85a88c29e1",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/L30.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "396bc88799bdaa95dcb395bb35a1b88117f57320cc1f5246c56aac7b6be114f2",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/L31.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "e1ad3e32e34f7ab853701f89293c26c63a4306736b71b62c7d79d47ff781440a",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/L32.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "a5081f9da37a68a5704d282615c35f179095e61ed1fce4b6d78aa167da1c29d2",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/L33.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "0bd63f6b83d8f23ae935e514f40696769d2900db8cacd41d0364155711c782ad",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/N01.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "b5cde5008624e814babfc9bfbf4d038eda1f02e29ebeb35f822baa2809386cbb",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/N02.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "e3e0b7a7b7ff6b2b6dabded78531cf42f01d353245dfbaf7235488614cf48db5",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/N03.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "4d9b5fd40bcab27ed787ca41fe8f584b50f8bbca7f76a030824e47ad192b1500",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/N04.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "0f3300e667bf4118a5b8a00f526cba925a474b10df433c6c5c812775b7fb032c",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/N05.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "8c615c9f638fd1274f4fc094365861d154b8ebbfb4d2632ea0a5029d4f6b7331",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/N06.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "2cab29c75c1f48109f38487497074f88aa94aaf36b05f6598c5df3dab29f5cd7",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/N07.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "f8c5f4a8114c9c91dee1e83c5107d114d5318f3e2131279022307e4dad7da878",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/N08.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "2a6aebe82df5c082aff19260532542736324c34d8cc42eb4524c94fc0dd29879",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/N09.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "97b41f03fbcf69a1188b0999f6ac6d214c89c40f1f992c14ba5e18cbba82e1d9",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/N10.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "4666d08840584358376cf6848c3770cdb77ceb776892f2397bb9a72b852741b5",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/N11.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "76171d990e8ecbdca4a86f91167a29da72e6a7205309da6af2766ccdb80cfc6f",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/N12.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "559f9b16fcf06f4e87f3f0d105f224ae86b1e5fa59bd280b78f3aec582bf463b",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/N13.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "91cb5de30ddc0f1a8313b2b3f00b57c870d022ebf0a5e239b95f22d48aae109e",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/N14.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "1a40adf6961d95b564db7a659583fd4e9247443963e6459673b7923b229120fa",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/N15.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "3dc515576d9e7056e58bbc7c95ae904b0501732b98f0d7f241c7772768d6eb06",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/N16.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "bdd5cf4b89b237edde359001dff863e2638ab6cfa2caa840f90cd52db30816b0",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/N17.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "f6a1471b990b329f5745b4ea08f304b6a4d845d42a4f9783102aad2e23eda331",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/N18.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "40b481901d3b175963557d485d7e55150ab42319d417241671510076f83d814b",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/N19.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "e9c093008cc99ac256bd3bfce1afd3137712b122f24a8b6b4f4cec8fc7e37fac",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/N20.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "957110ab9eb17b2fac50ee7ccf957e6a6bca8e8be58dab26b4355af19d172400",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/N21.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "e79c3ed3c7b3e4abeffaeb6598b1c4602ec5a455732192f294d30589688ee47c",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/N22.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "31c4d28070c629b4be92718114e5a82fe7460ce0e11be301d104602e8e0e70ff",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/N23.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "0ece368347dcd84bd6d72d88149b1a8af77e526e70c695d046d01eda68f33f6f",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/N24.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "9918c48852c7c9988e24a3e1cddcda78fae5445db2a7e9fea19cbb246dbdb03c",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/N25.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "b00b1c0c999ed0a1a05af98a586ae6e9d5c04e36f839a79074acdecbca38930f",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/N26.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "a6136498df5f8134f66a581788077b8951ec6228b9b183d333a6169ecb0be14b",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/N27.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "58d131ce074832a6669b1d94ac942107949cabb7d5a3199319fc69704a60dc59",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/N28.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "685068b16aba2db284a9392d67dba8b292f68d4f6a02eeb9a01f09b0554f6acc",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/N29.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "b1a9d0cda50a917c5006aadd1b312bd59ba89c5ae2b2c41bfef2c98d9af41c12",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/N30.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "e818c30f0750f8d8cbddb9f0efe1817cb29907f19c871d9ecbdd75f823bb9633",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/N31.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "181332beacc36415da264544c6f2f9bfd225babd0f14a6305751be32c5677a0d",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/N32.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "b3744f662ade283b4d30d6e20f5259d181224b9a3ce26794753789ecf584cfe5",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/N33.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "1fabfa68dc9727d1f09bffbc60be8c35b52cf85f2e1dde8ac7b7872f4f2b26d5",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/N34.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "82ced30f3d19cc04100e06fc20a81e1427e8b71dc1173c8b6d40666f6cc6da9a",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/S01.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "3a8cf67c9ff438394069cfe0d1efe5a017fb090e673f9b292bfa4103b1626ce1",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/S02.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "3a6d6e0f653e93cc3e10d298272bd0b1ae538afb90bafda51b86910618e7d086",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/S03.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "5127f9b14f2aaab08f7a60fb7e8a89f5bacfd4cf652be1245e05ffde1b565a63",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/S04.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "62450a0f04b7834180bbe402e216f19f3b49e5a51911d07b8fcf9e8391bbcfd1",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/S05.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "795c765d8ad3decaab808477895268b350a22caf42ad1af0d31355f07f38df9f",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/S06.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "5c1c4bb9d0657770fa04b62a8244ff129b441b0e5b80b6ada23d2634c78b90b9",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/S07.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "75283d47ce4248e26d65024afca7e7a5c7683ac5392199ba06bd8416410f927b",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/S08.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "3ddb7eb62c169516b91ff7076401fd08b9bce7feffe10206b7b3edb15bc7f374",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/S09.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "d0e04f5b3a3ee9739006a0e5bc8b571837b05eabfd228142aaf73fe6304d6610",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/S10.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "b8e06158de0c5bc6c5fb393d41c11bcd73bf8d0a3d2ac922967b58aa38ee081d",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/S11.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "839fefd3a2bd374f0b42e428d58898bed3226ae906ea27cf9afbe86a79168e3c",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/S12.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "6c654aa766d853b4f8caa4c33ff2a907a3037e2c4201194d582ce4c1d61a4dc4",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/S13.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "c50e2e143341c7f3a350c5c8a44eff83beadf3550b7b5dec00651c00f43863fb",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/S14.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "c2907c0fc00cb455a2366a87f264d7aa8d46705b01a15d64520be669a49949af",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/S15.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "800a6b0cbec8c58dcab6ae571b702c9edc55432904949b3ebfd659b639cc174a",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/S16.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "3b91dab8d67f536708a6e39e7d5e0c47aafa7822c317a05fc3e29c3dc0cc175b",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/S17.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "6450060911f7c5b1e6347b9c007efa8aae3de830d217642d6a1711d085a7e48a",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/S18.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "9b69d79dbe859410a71bd305dd8f902c882189cc751bcb1f12d79ed5a1b60382",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/S19.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "051c36808f626e8b468d9b3ea8b7d0bcf5e8120487fbbdc493f4a09141eb6761",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/S20.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "f0a8243b8b1ed11d6dfa7869f8938c76d3dde12aff42fecf5c8538f807023f2e",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/S21.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "c031c6cff05c367b051c05155992d4cf9d1a9642f8d3cc086e96f8f58e0c529b",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/S22.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "86de73dc31df8f6b4c8089bab420b4ce7d3582e386ca85fc069cb5094ddae325",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/S23.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "c1c41382bada49780815a9d4a406672b788c4c6b0c07260756b2535f88d9807d",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/S24.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "ba12dbee36de1a9d76b27a646fa45aa13cbaabefca451d7334f75ac7b35ca59d",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/S25.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "3af6c97fe1fffde1a2f4d615f7094c2096de554dbb7eae57dfcaf4f22caeea27",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/S26.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "f040427245517a9ed811fc27d7013fb98019259080f4ea844d2d384978b6254f",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/S27.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "2f2ed556a50f614fd628ba78c9464d1e8720e2ad462ec67174d64cbefb4a1eb5",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/S28.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "f84d6b7ca286805b5faeadf09a75b973c2fb358d2807821b795bf424a6ea5055",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/S29.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "1e7bda5091c2dd71875bd681182cd387366629241e9d981551df47ec8275adc5",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/S30.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "f812db17b4ec3c42a16a899300dd0ec69af58af32daa3e146e0c2bcde3b66a7e",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/S31.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "36cd43d114dee52bb540daa8b7264d77ecfb9cba0e9d8101188213d0cd5399ae",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/S32.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "2116278deecaf31072182253b0bf76b63e0e4f29343751c8ebfa546a36cd77e8",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "art/S33.png",
+      "width": 1374,
+      "height": 1145,
+      "sha256": "094837c46a34db9b6242694272ffee8305525bb653a93ad4c13b48c18240258d",
+      "mode": "RGB",
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "transparent": false
+    },
+    {
+      "file": "effects/B01.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "abaafa3b9ff60149238a0da489c2711369d59de64f2c18ebe7212db1fa17bf44",
+      "mode": "RGBA",
+      "alphaBounds": [
+        59,
+        9,
+        1516,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/B02.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "4f8faba89629d608fee5e08d10d5e938169f8e6d2278551680dde74843fcc7a7",
+      "mode": "RGBA",
+      "alphaBounds": [
+        69,
+        21,
+        1522,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/B03.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "34f0f9b5035ff494e7ca19a977e0028166329a067685dc74a388fddebd154ecb",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        9,
+        1516,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/B04.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "8f7593ebf2c5f4e7a3375b13d7b191b133e7bddf3078c860295d34d7fe5f47f6",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        9,
+        1533,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/B05.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "7a5fe67040043290057de487e3d22cb03c605d13b913c1524a08e058884e3c30",
+      "mode": "RGBA",
+      "alphaBounds": [
+        17,
+        7,
+        1523,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/B06.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "b422db8bcd0de46b6bd145385f1acd3bf2e3866b9a1d7ddf4e4c329a6ca3cbdc",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1522,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/B07.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "475857c95a4863c598acf0921f8001f74fc7bbd61848cf70a90c808568acd442",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1496,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/B08.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "375aa11095430d7f0a9139fc8e52f39847f7ba4a90e82f405fa695641b4cb2ee",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        17,
+        1522,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/B09.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "8d3969ebeaf6ed2837e60d7677a9cc75d7279fdc35fba780f22ab4efc80dec6b",
+      "mode": "RGBA",
+      "alphaBounds": [
+        65,
+        31,
+        1450,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/B10.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "dc49aa02f8dcdfcfa5eb36c953b207347188a50813f62dbfc18cec207dfe6f2e",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1502,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/B11.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "a692dc17583dbf55c89aff5f577bc7f8b10a687d7f0198f5c782959df4889e3b",
+      "mode": "RGBA",
+      "alphaBounds": [
+        31,
+        17,
+        1520,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/B12.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "d02f5217af5ef078a8570117d65502e7ffe3b98932b21f80640aaa51df8f871e",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        7,
+        1485,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/B13.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "838c402d44c25a3aff602f668f2582cfa3a2ee66fbc45436db0c6913b8c7005c",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        15,
+        1520,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/B14.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "f254bc1c78f280d5d2a0349477937d0207b6ec3e7975caf490908ef1351da690",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        20,
+        1522,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/B15.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "871cbae8c97376aac1db7fa13e248ccf25dc9aa1620d1239f063a085107e5464",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1522,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/B16.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "adf06ec6d77510267169ece222d63e99fe380d360759801eabdf3a4edaf5eee8",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1533,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/B17.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "96f84155ba6e9a8f810cc337d1751743d7345961eda0f52fdfede5c61532d320",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1522,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/B18.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "2e7daa63f9233c29e7a912591d4efff69354c0845c8113a00ab1f12ee9866d89",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        21,
+        1522,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/B19.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "020fcdf3a156464c53207635a5ad2aa7b792374324e6c973eee964e638f5107d",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        8,
+        1526,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/B20.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "bbf2a9a3744250faa8886697ef38a243efc08a63a3386691ff0adb804be2c1b9",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1518,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/B21.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "d054d8131fc895c5d08cc09e133b1531e7cef4f227e72ed7fe38df601a2a5b7a",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        21,
+        1506,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/B22.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "0be2c140f23376469c7d268b6af4a51e65360d78ea7125553be21f5b44416c33",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1536,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/B23.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "37273c50fd202439f2899f9e6f632665af74d4e8db42856d0a16325b5d8c7e98",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1533,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/B24.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "10d0674a7d93a12443ec2cc059f110bb495375dc3c3e699008dcdc38359e3cb7",
+      "mode": "RGBA",
+      "alphaBounds": [
+        31,
+        0,
+        1522,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/B25.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "767116af2faea9274f415e6218f628e75bf92d4ad0e1e3d7d72fe3322df60d11",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1522,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/B26.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "47e33218388cf5bc4fa29cd8168fa60cef81042aded5152d7950dc23f9fe1a5f",
+      "mode": "RGBA",
+      "alphaBounds": [
+        17,
+        19,
+        1504,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/B27.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "a9c9afcbeccd9c2f017ec542b358952f205f38aef7a9b8207d76f5e0f7c2e6f4",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1520,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/B28.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "f1af31cc01c5ca051db988820164cbc01403a7177466c2141c33584f4beff0d8",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1533,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/B29.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "19461e8d7c7af97b6876bd86753de457d8f4e0dc47d13772f3971f36a51f1c6b",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1522,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/B30.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "b77317a482affcefc6b6c28a8a739aa8eb6b1379afaab0902c233253dbbc244a",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        21,
+        1533,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/B31.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "f2cfec963f0ad26bb4e1ac49da5bd138efceb4a2248bbfac8f084bda6417f835",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        9,
+        1536,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/B32.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "308d5dbba2d3fd22cbcd07e3eef06d61147ce8e77b792ec8e4adac4678decf94",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1520,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/B33.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "36058f861285f3369b0bac05b7b7ff8a873d6638f10e84f23978e2b2b3d7b66b",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1506,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/C01.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "a7464fb429594b4772b7307c16e741ff91b3b5006e635ca7766e5acc0cbd1d22",
+      "mode": "RGBA",
+      "alphaBounds": [
+        35,
+        0,
+        1484,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/C02.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "645e933b1b43aa92ccd3d0f0996949c1eecc24ab69837df8937e55137ed41846",
+      "mode": "RGBA",
+      "alphaBounds": [
+        65,
+        29,
+        1368,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/C03.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "690f4e87b2c1ab116acd806cb65d8fa106e8ccee526042c58f8aa3983d65c900",
+      "mode": "RGBA",
+      "alphaBounds": [
+        31,
+        9,
+        1522,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/C04.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "edd7628a635247e3189212434d3964ae9a1a470a9f0f23fc2cd4501ac08c03a1",
+      "mode": "RGBA",
+      "alphaBounds": [
+        23,
+        21,
+        1522,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/C05.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "a01ae89db7ee06fa1baa1f1c47ab32f9546662ae3279cd0702ba63f1870b1777",
+      "mode": "RGBA",
+      "alphaBounds": [
+        25,
+        15,
+        1530,
+        988
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/C06.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "3288ca1eaf396aeb7fac98f4eaa9dc1ccd809241d41b3b9140a504d0474bd0a0",
+      "mode": "RGBA",
+      "alphaBounds": [
+        31,
+        17,
+        1500,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/C07.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "f59d1ddb6a99cea383078f264d7216941ca4d6b7e2e6d9e34749a927cf52f336",
+      "mode": "RGBA",
+      "alphaBounds": [
+        65,
+        38,
+        1394,
+        993
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/C08.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "74d41f2b8996287eea5981c6b8a7632e02bc8343249d4424f794d82b14aad6cf",
+      "mode": "RGBA",
+      "alphaBounds": [
+        19,
+        9,
+        1522,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/C09.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "ed7f764bfa1b8aa17a0b4e0ae523766861e127d3f191ba01fd36a73ddbbcb6d5",
+      "mode": "RGBA",
+      "alphaBounds": [
+        17,
+        0,
+        1526,
+        998
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/C10.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "5279cecf2f464a96b0ebab99d267bb25f231e9f96650355ab40004862b103fe2",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        18,
+        1468,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/C11.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "bfc2df2846b75886e99d86fb63f8059aefb26d24dabdb018e3bdd4808f05eeec",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        21,
+        1516,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/C12.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "861f41f60d018c6a676ee3f62631296c1dfc54677ebc4ce6a63cf3232f646748",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        9,
+        1524,
+        1000
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/C15.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "7b54583c4311fea3f2122caf9867aa4ecde2a225c1ca4739ef67fbcb85979367",
+      "mode": "RGBA",
+      "alphaBounds": [
+        65,
+        21,
+        1500,
+        982
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/C16.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "9c7276b6634665ab43844327f0e5bcde025a54bd06a45ff2bbdcd6be07be115f",
+      "mode": "RGBA",
+      "alphaBounds": [
+        27,
+        19,
+        1522,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/C17.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "494ed267e23f26c1d20e659c8991ee751b83777a30eec106d1716575f0383ac4",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1518,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/C18.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "6cd014f591913e8244248dfaea9eae48db194ad092d4a8b397f7709da70f4272",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        17,
+        1506,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/C19.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "27c2aa43de8278656ffa3a79d11e702e700034dd4ab589bdf082e07650db8fb0",
+      "mode": "RGBA",
+      "alphaBounds": [
+        25,
+        9,
+        1506,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/C20.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "4ac185e0b0e090df3c69b62d621414a7a950a005139c28e0c4628db76c53245e",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1535,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/C21.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "abc09027f8142ea7d24b545cb176683caa6418507094631fe07f20395ae48814",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        7,
+        1522,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/C28.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "51b05619df30df8bc01fc53cb3df3c5bda7fc848b11b2d69f34e43ee9ebb6b8b",
+      "mode": "RGBA",
+      "alphaBounds": [
+        65,
+        17,
+        1486,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/C29.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "760a202a86d49a346c1dbe2ec88790ce81ec59dd207749a77c515998fc9b5c86",
+      "mode": "RGBA",
+      "alphaBounds": [
+        57,
+        23,
+        1484,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/K01.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "5575546085f7df4a21736356904a481e2187d5f0aaf39a38b8060c1403407bb3",
+      "mode": "RGBA",
+      "alphaBounds": [
+        27,
+        5,
+        1518,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/K02.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "df84ca67de9b8bee908f123cde112a8f2c722d88ac22ef4408253a629e2801c8",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1526,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/K03.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "8bead3ca239ff21d7cd37dc9cca9cf7008b6513afafd3ed455549ac967d45a9c",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        31,
+        1510,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/K04.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "dff377283648f5d32126b26891b060616a6b87aeb299af38ef5f87ea75b830d1",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        21,
+        1519,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/K05.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "3dc3ac72875903fa830ca31e5f7bb2d8d2078e97c1a535ce8aae95d5734595ad",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        21,
+        1492,
+        982
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/K06.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "884d65f31f1c77769dd336b8d412dbc8f61c841796807722693921f42434340d",
+      "mode": "RGBA",
+      "alphaBounds": [
+        45,
+        19,
+        1522,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/K07.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "78fa922e1e7540ab9024ecb64907b445d9148963215eb0cddeec4d78aa412222",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1536,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/K08.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "19a063c844817816d869b30d04f329e1aee435b65e04ae6cff282cf22d525b6e",
+      "mode": "RGBA",
+      "alphaBounds": [
+        57,
+        0,
+        1522,
+        984
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/K09.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "1f4a911273efd19878806c1b3f1406dd17f21612a1574d4d85ccbbb29fa4fba4",
+      "mode": "RGBA",
+      "alphaBounds": [
+        41,
+        21,
+        1522,
+        982
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/K10.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "cacac6688e1f8c98dc8ee9697ec9fd3ae5a5c1a678e5c452dbd6daaf38d3c2ca",
+      "mode": "RGBA",
+      "alphaBounds": [
+        45,
+        9,
+        1518,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/K11.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "0953f0cfc1a02290b05f55fcbdcc8cafd964a1ce1d6b56a2ed3737732e819fb8",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1505,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/K12.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "3357dfc3f4e7d584b317db432dcf3ce3aed71ce5c8e1540b2b4545601b6a9831",
+      "mode": "RGBA",
+      "alphaBounds": [
+        40,
+        14,
+        1506,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/K13.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "5b7a2ebe00e3430c1cc8e5fd1456af26856f1a0c6a369766365a89fa2f8d4bde",
+      "mode": "RGBA",
+      "alphaBounds": [
+        37,
+        24,
+        1536,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/K14.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "2e7342f32009b677c78b76e9495acb5bc60dd507209555a30cd10d54b7af6c05",
+      "mode": "RGBA",
+      "alphaBounds": [
+        29,
+        9,
+        1536,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/K15.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "875f5db38072c8104b1f66bb9e11d6ee5b2018b28b79523f8a0c9c09d943851b",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        7,
+        1530,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/K16.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "3826aaab72e942875d8563e2af69ada61446b173276fe2d4cc951b211a2ae22b",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        17,
+        1526,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/K17.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "7de9d14f5bff9a4c351248bef905f38a0fc0d529a11f420aa3ab31a608fb8ad3",
+      "mode": "RGBA",
+      "alphaBounds": [
+        19,
+        19,
+        1530,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/K18.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "8f245c87b8ce5be8a5f41fb9e7751e7783f57926917b95cf2742a3b0cb319ddb",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        31,
+        1536,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/K19.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "2479167329f49712538005b93314a3d357af89de5d76bf2c7a4ea68d612ee899",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1522,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/K20.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "c935d45c9b7a367c1ba599d698170151ba5f3847b891f10b9fd35a014c397fa3",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        4,
+        1536,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/K21.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "c444b68b8c9f92c4f8948194e7806f3171784727646fdc7019647b358e5e9581",
+      "mode": "RGBA",
+      "alphaBounds": [
+        31,
+        19,
+        1532,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/K22.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "367a09005c1f216c36ff17c970612bbcdac64c5dd808fa8e2aa866e218b2ad62",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        21,
+        1536,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/K23.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "e5d42baa48ad55071b42ae5aacc827defe250e0a102b62b9b4572efc38a49cbc",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1522,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/K24.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "ee19b85202bdfdbb1a8dba8b79a4fe97dc31f18c1356e0604fb26a6566b84ae6",
+      "mode": "RGBA",
+      "alphaBounds": [
+        15,
+        33,
+        1533,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/K25.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "04228d1eefad11840e7f80c325f563aae8652c14852ba36319a96d235d98afcd",
+      "mode": "RGBA",
+      "alphaBounds": [
+        15,
+        3,
+        1528,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/K26.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "85f4842af2e5b375cd650c295f0e3a296fe647139ceab6400dc713a214eff696",
+      "mode": "RGBA",
+      "alphaBounds": [
+        11,
+        19,
+        1532,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/K27.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "1519d115fd5610a9b4453190723b9f7e8d31e513e89c596cfd5cc7dfd1e5e57c",
+      "mode": "RGBA",
+      "alphaBounds": [
+        30,
+        3,
+        1526,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/K28.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "1ed8c17396b0729dc7f6c5c57ae20e66e7d4e68ee7e0305b225e06945dd97de6",
+      "mode": "RGBA",
+      "alphaBounds": [
+        21,
+        9,
+        1522,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/K29.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "f26aba712d9845dfcd23ea74a145e502b274f451af35d809eaaf7f84b63e11ec",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1526,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/K30.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "c3771e59c6e5af248b5230a2b0fb333cf629cc53eb31b2ac1b787baee71fa4dc",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        11,
+        1524,
+        1008
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/K31.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "693e70f04cddb8859f784ff44d7c29fafd058cfc879f8b1deff85124b103c8c2",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        30,
+        1536,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/K32.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "91837210dbf6225c4ff2bf9bf3ced585965915f318a185c3738015b3b55b6855",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        19,
+        1520,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/K33.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "9d71f4ac912cebaf57c2849e74e7660347ed212b1952c206c224f8bf069ac918",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        16,
+        1521,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/K34.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "e78d6678aa5cbeb94e62558a3fca90616158fee8f69e999a07d25f4c7cc7f2d8",
+      "mode": "RGBA",
+      "alphaBounds": [
+        19,
+        7,
+        1518,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/L01.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "57318163939c0650b253c14cb90e9ad8a498345d37def3a9f3c0698a646f4719",
+      "mode": "RGBA",
+      "alphaBounds": [
+        71,
+        19,
+        1488,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/L02.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "3ca44337f3a626353b54e24a7c62c83483543aac9c385614fec579831f6f365e",
+      "mode": "RGBA",
+      "alphaBounds": [
+        25,
+        21,
+        1522,
+        952
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/L03.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "6258ea1cab28434d579dafa4d6014bba126f7beb1fd0e0399ceee21cb88ade6b",
+      "mode": "RGBA",
+      "alphaBounds": [
+        57,
+        0,
+        1468,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/L04.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "bedf882992194d6daf0715fda34a3d2fcb4dc15998195dffcec1aac39696a659",
+      "mode": "RGBA",
+      "alphaBounds": [
+        14,
+        21,
+        1536,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/L05.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "4cc4b29407b89bc7666ba3bd2fc5d6d8585442da8084da56c6f3ea189d6bad75",
+      "mode": "RGBA",
+      "alphaBounds": [
+        15,
+        21,
+        1530,
+        1000
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/L06.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "242ed7c1ac910038e767d9a22e10bb2222b242bcc1680313536ec12e7a4223d3",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        18,
+        1522,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/L07.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "624da9c81435b9b2f1a96631c7caf181cc860a65cd1e3458844513d26378f794",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        5,
+        1512,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/L08.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "bcde67e0fa9197c501d40f6153d5873fa1100ce10905a6b75793ccd5c3e703d5",
+      "mode": "RGBA",
+      "alphaBounds": [
+        25,
+        10,
+        1522,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/L09.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "13ab5fb7e090b32084ebffa4dc94cb8df17681085f544d412cf3c27639f534de",
+      "mode": "RGBA",
+      "alphaBounds": [
+        65,
+        15,
+        1486,
+        1000
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/L10.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "6c53e280f5719b2fa8147b4e7337960103a542afad63df740b6bd479d25af731",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        13,
+        1536,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/L11.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "68767ced41dcc6bd0eacdcd960e3526d58fc56c2094177abf8a23627c6902043",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1535,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/L12.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "138fe06dfd6f60a9cc32142bc53c9ffb40e5616527c07e2dd7de86b8a049907b",
+      "mode": "RGBA",
+      "alphaBounds": [
+        41,
+        7,
+        1518,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/L13.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "9642427fdae74bf4f4bf07b47514c4ba46931d6637454c55b9c263516a4a4260",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        3,
+        1518,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/L14.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "5843a04454afcf1825ba958523f90eb15e496a3cd9ecd7f5dfdf5e5b4c0db5bc",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1536,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/L15.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "1c969761632b64053e064d6212493ac148476485320fa13a976a8bca5e9882fe",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        8,
+        1536,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/L16.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "38fd00f8e72bc04f6aea40a0f5479b126e3b333aca4142c5f1aa8177b3bb4472",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        9,
+        1518,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/L17.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "af615663444ce032d46096b3e5163e5c59ba598fe7c5e65e733510d73e9371a9",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        9,
+        1518,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/L18.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "8a5edf23a5ef7e662a5e57033e74c3991a2542bbf799b869a4f53a86a32ff7dc",
+      "mode": "RGBA",
+      "alphaBounds": [
+        25,
+        21,
+        1530,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/L19.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "a00b06b9c76cdcbc8508b504b86a3261bdaca499a1d412857e8d8463d9b13a02",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        14,
+        1520,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/L20.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "5952717b20d7dd180cb3783a3015b389217083bac0d10268d74f7e2605be03d9",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1522,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/L21.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "957cd575ad17b2a639c0c5b5688d3b91d1fe8121e97b96abb0574d8ddcf03178",
+      "mode": "RGBA",
+      "alphaBounds": [
+        57,
+        21,
+        1526,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/L22.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "8f6f45b789d25d0ddf7a4f1ba51512dadc72639f0f347ceeef91598a904c7ae3",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        19,
+        1530,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/L23.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "04b84e23646780a7e2c83c07f74ad96929b88d0c89d14c08d3e1ef9714ae783f",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        21,
+        1524,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/L24.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "f266024f59acdb5231f469182238b188f48c6d6dad8650525b7687a77b627f78",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        10,
+        1518,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/L25.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "c2e2a836dfb36b4c28cc0e1e9a9f7d1bd04ef7c8e873f91afd6795dc1ae4e950",
+      "mode": "RGBA",
+      "alphaBounds": [
+        31,
+        20,
+        1530,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/L26.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "c1be3e6d4db665a8bfc8d079e7cbf9b3ce96d9b4cdf43022a1eee04d55bed4f1",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        7,
+        1536,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/L27.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "251edb464e8923713a6c7a11607e150459e9c3d191053746ca3d477482a941d9",
+      "mode": "RGBA",
+      "alphaBounds": [
+        23,
+        21,
+        1516,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/L28.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "b36476be0deb155b696d6b72b7c7d0c70a1ef412d022c6974e574225da0b5281",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        1,
+        1522,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/L29.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "90efe0184729c3e33b977da18a8c5045791dec58124fb2aabdd0d9e4fa3ffff4",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1536,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/L30.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "405e3267be462d297bd8487025f57cf85046c97e8565438af816b670a71fe087",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        21,
+        1518,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/L31.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "7ee0f61410704cd5cdfce91110510674309629c7be60a8215a53fcd80efe1670",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        9,
+        1526,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/L32.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "199bb15b0b9c8f61e34790e424df101da4837ddfcf3eee128350df6f886cac87",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1514,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/L33.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "f7f3c3d382703f4734c85e4c54a18317c9dae2319c6040f033be4c514efb1d80",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1535,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/N01.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "da427fa6e91cbe5394ce05ac06a0a73e5c0c63f1a1353ac78f524099ddc65980",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1533,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/N02.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "51fa061df406bbb65142c3f0d0944104f44ac59d3c5d1877b7ffd3786873406f",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        7,
+        1522,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/N03.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "1407152ab906a84c49a5d547af07cde7fbbd7eb0168ceacd4c18077fecafdbbe",
+      "mode": "RGBA",
+      "alphaBounds": [
+        57,
+        23,
+        1522,
+        992
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/N04.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "6fd283db3fac6bb2189f943d1f601ef96aee309a2868cd1a4b2f91a7c1a6736d",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        21,
+        1530,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/N05.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "9c15f10e74a57c32194640c3335284b1a40de0c51c263ddf8a4aa34dd28cc0c5",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        15,
+        1530,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/N06.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "d51e1a4a530d20561bedfa893577e724daa8ae2fc267a98537fdc172877b6ce6",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1526,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/N07.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "b943af40d69f05388c8d09b56e4024afc0a46cdb10538b68082c0b1219ee5fe9",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        7,
+        1536,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/N08.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "c3675c8a4e85d237193dc8a90dfa39121dc5f96691a34068a1a40a77b240bee6",
+      "mode": "RGBA",
+      "alphaBounds": [
+        23,
+        34,
+        1494,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/N09.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "f7f8129d7f0315cd45fa641fac1e43e521da849f2e3799b78fc587c0843d9d90",
+      "mode": "RGBA",
+      "alphaBounds": [
+        23,
+        19,
+        1506,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/N10.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "290abd138bcdd8ef6a70ce6efc99203e65b56961cbbc3d338b1191b2895c4499",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1524,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/N11.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "329285f0a132303395f6bf0b9702ae8c709d8aa868675ceead96feea29ce0da5",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1535,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/N12.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "c3c69f2762c663b10e27f8b268c1875765b48147f884c55321d5e2d3d1470b52",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        9,
+        1514,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/N13.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "9250ce33791d098ac5ff158b4430da5ca16e74c5b9fcb79633ba5e6ba051ea05",
+      "mode": "RGBA",
+      "alphaBounds": [
+        17,
+        7,
+        1522,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/N14.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "d40566edf60874c50aad6204109ec34c6efe4c4b45d83b1f9e7fa43c030e4ce2",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        2,
+        1526,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/N15.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "a90ba554f256b339b6eec42762aa3b720f3244409d8e1b1eee7e6de9a1e6d45c",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1536,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/N16.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "e23b23a9ff8207c1ecc6ed6305e75d9fb1374a7378d5024d47571a601a07f6a1",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        19,
+        1522,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/N17.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "275abfda4c0c84c349aeb5c8dfc08f1171031996cfce6a712b9e48f7d7a98d20",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        9,
+        1518,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/N18.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "ee8d0237d6ab136998c3e0045d16900d2abaee54adf0df182c2b15a8ac0e139b",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1522,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/N19.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "66617dc28285aafb4af81623aafa54beebdd510d63212497cb5256c62a1399c9",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1535,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/N20.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "d04a9fd38b02ebeb49cb0da6ff5cc42d3aeab2303a18b7ebe6676409ff46eca3",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        19,
+        1518,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/N21.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "c28706279b43a43f47e771965032f03cce0bab371c61cb3ba2f6ceca24106b34",
+      "mode": "RGBA",
+      "alphaBounds": [
+        9,
+        9,
+        1510,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/N22.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "730e1fbc856331dc2cfec33d019655c04cf15c1421fbc9cf2503c22392d61f99",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        7,
+        1522,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/N23.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "3afed454ea99eb5e6c2335e790fb9297f0aa700c67bddb759e213757947668af",
+      "mode": "RGBA",
+      "alphaBounds": [
+        31,
+        3,
+        1518,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/N24.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "5960990742ec73f1cb8ba5446cf74db73e841615e02abd6da84054d0b6c2d411",
+      "mode": "RGBA",
+      "alphaBounds": [
+        31,
+        21,
+        1520,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/N25.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "a6cd7da866edbe5024dda904b62a2449684fb19048f7f9d3e245086a42370562",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        21,
+        1514,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/N26.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "337eace3cebad2c1ae542b94a9dd939e8165dad4085b5959ad596922eb9a4757",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        9,
+        1535,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/N27.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "855f2ca8d00e918499594be2ced1c069fe9e41ad88a8cd0920b4d2e886f5a5bc",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        9,
+        1530,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/N28.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "165322745af2220e836b36ddffe8fa2b665a3e0c221b995826a875ea7ffd3c8d",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1530,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/N29.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "c2b9215be9843ab8bad0cad934361590c59cc05f42222b97f7409c5da7dc4d1e",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        5,
+        1524,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/N30.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "c3f8074dbf13bd0cb23c80cfa1affec15eb7a08913a5d692b75e2a8e74df40d1",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1530,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/N31.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "c662f73a4cd2bb6579013570c2a6347756a26bc8a8c5ccbecafde52a94a8993b",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1524,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/N32.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "017a472faec934c21a4f3ec2ec82f3965e7ac92511ea5e05503e2a28fd7c9fe9",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        7,
+        1514,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/N33.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "f92aca81cea5e74e35abfdc0c34e7930c82ef81d00168252aa8b17a1410876ac",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        7,
+        1530,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/N34.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "ed72552c98d3058e1830c6c6d6bf6d086a250e0bbc30e8260b1108663b77a4b9",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1530,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/S01.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "417026cd075e5e17c2c775038f654715bd342110df16a89c1c2087022b20fab6",
+      "mode": "RGBA",
+      "alphaBounds": [
+        25,
+        30,
+        1524,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/S02.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "d06d52651816856e92e2b0e587a8443be9ccb93b82d2729fabcc00f4ebd75345",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        77,
+        1522,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/S03.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "c41b7cefe10983d35f9dc63c610c16b12e5d019f8022e3fb3ed4cabf9ab3b169",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        19,
+        1526,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/S04.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "0836212836da0e9baa85ad695190ed940db4060a159f4e7102cf862fec160aaa",
+      "mode": "RGBA",
+      "alphaBounds": [
+        31,
+        17,
+        1526,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/S05.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "696232d441ce40c7e27355f029494f5eee43eced81b63d5b7f373ae185735d99",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        19,
+        1526,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/S06.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "5d6aad03d6f0bd500f28cf4eaf355462e4b4fb96ac65b3ffb9f25009a10fa6da",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        3,
+        1536,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/S07.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "38a6a17482e1727d596adfa048ac1597b142d86f2a4bc68682f57368c7379696",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        25,
+        1530,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/S08.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "b167a46fc671de373c9b5c76d8f17ebf1cfd92057458bb510662fcd24110f2d0",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1536,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/S09.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "5ca417cc527cce699a6d168e758be8832220fafb51c89555ad74505c2c4cb23e",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        31,
+        1484,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/S10.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "65b42c31e55a4f0ad01293fd4fd06d9a3d25069cd1b14bb7486eafbb42dd3812",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        5,
+        1522,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/S11.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "65f0e15be32eacebca1b201e7554f44457f4ff77e919accb446444a639306e04",
+      "mode": "RGBA",
+      "alphaBounds": [
+        23,
+        0,
+        1536,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/S12.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "8c9ae6f9647df5232314819fcba376f9f192ca0a0a2bc8b42aaea9b97003edce",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1522,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/S13.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "caf73abed182451db468490b18e180a99f4fdc017ccae02bac86a85a330ab917",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1522,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/S14.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "479356bbea83a07a2d36d5bc3328804d2ce3d110dfdb15d6de74fc74ea5add49",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1520,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/S15.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "bd81b2b07f8f3c928717c6aedf43515cc274c6797af2d0cc7d1211ba733b22d8",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        9,
+        1536,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/S16.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "2e1b1d43dea61efb96916e6ed5c20b9fb341a2661b9abb8cf4d66e3c1174da99",
+      "mode": "RGBA",
+      "alphaBounds": [
+        65,
+        21,
+        1506,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/S17.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "395b01456177c0b5aaf7f06b92da46da2145bd910684bcf6d37ba563c1a31c37",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1518,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/S18.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "8b0e5d27950dcc9c413455f8692abd09d9320da2e4ad65102286b1865c4c0b1b",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1536,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/S19.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "6b699e4899797f7bb8312ace61d127de2844c8dfee5e23b9f59c73959d40d8bc",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        9,
+        1535,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/S20.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "7da365b81b5f3ece63332b706df3f3b83e6733e00a9bd0861ce37a3b99c1e00b",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1520,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/S21.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "28044718b0f43d814ef7bb76f2b55bfd860da694fa7dcd6eb06fa2e38d705259",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        23,
+        1524,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/S22.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "93b86774453e8726e51aba1c9915d1f27dd59e58877ec5169e24772a43ae4292",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1520,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/S23.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "5b7401970d51fdd5ea39222c6a2c37da7f6923b231cbbc1970b8d8499bd07fad",
+      "mode": "RGBA",
+      "alphaBounds": [
+        17,
+        1,
+        1532,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/S24.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "fd683393f3b1288110c317137467eda75cbe48219b7609acf2f68266d748e65e",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1522,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/S25.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "19224f255549d99cb99356b4e6708b904cb9a532068a123f00df064a342ace2f",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1532,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/S26.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "36d3411e7206f1762f3f1369ee4da733eed8ebd7fbecb3ab5a5b8892b1393134",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1532,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/S27.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "6fbd638740bf221200a1134d2aa0c76eb6e84e454a6fc5a07394e23a99f6a334",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        9,
+        1535,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/S28.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "f6c7bb9a65808c88cdfc58230b10ec462ccc1eda9f7d0c7368fb1838788b148c",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1536,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/S29.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "c9fb4fdcecc689c9fee258b368e2ba12625a75dad9a2fcab58cb011d56aff0dd",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1536,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/S30.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "9593336c3bd463403f440e1278dfdcde29ca00ed20c67fbac7d644d2f07dac9c",
+      "mode": "RGBA",
+      "alphaBounds": [
+        63,
+        17,
+        1522,
+        1000
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/S31.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "59a0b6f09afd80eccd01cc41d0166c82d04dde6b5f505b878f2e4edf788bc878",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1522,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/S32.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "5c1ae484f3108ea989556f3e0ff1a92060f30904a00e8c060fa67268bd2b2c67",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        14,
+        1522,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "effects/S33.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "f5a7a67bf27905d597e759d3c3afcf4ed737fee5536d15bb2299c83ebcd0f6c3",
+      "mode": "RGBA",
+      "alphaBounds": [
+        33,
+        0,
+        1522,
+        1024
+      ],
+      "transparent": true
+    },
+    {
+      "file": "frames/ink_base.png",
+      "width": 1060,
+      "height": 1484,
+      "sha256": "3a66632b49f543afb38cecb536f5da29f34af1206bbc935c6502538286e634bc",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        0,
+        1046,
+        1484
+      ],
+      "transparent": true
+    },
+    {
+      "file": "frames/split_base.png",
+      "width": 1060,
+      "height": 1484,
+      "sha256": "8e8ece5e2d26e741c392f31e29b0db5b7c8ec0e51e6e498698f5a397c8f6e59a",
+      "mode": "RGBA",
+      "alphaBounds": [
+        0,
+        1,
+        1060,
+        1466
+      ],
+      "transparent": true
+    },
+    {
+      "file": "rarity/common.png",
+      "width": 2172,
+      "height": 724,
+      "sha256": "e61d3d01e2edb70c670888ec789d0b98d3d7e53b24c9cdd9b02cf7c21fd0d9eb",
+      "mode": "RGBA",
+      "alphaBounds": [
+        48,
+        23,
+        2124,
+        724
+      ],
+      "transparent": true
+    },
+    {
+      "file": "rarity/epic.png",
+      "width": 2172,
+      "height": 724,
+      "sha256": "4c321ab9c3a5ea6ca6cbe330083bd30c11b8afed62b66e4564e2a3cb99a28b96",
+      "mode": "RGBA",
+      "alphaBounds": [
+        17,
+        7,
+        2118,
+        708
+      ],
+      "transparent": true
+    },
+    {
+      "file": "rarity/legendary.png",
+      "width": 2172,
+      "height": 724,
+      "sha256": "76050f78aeb2b1845d8cd85f79c8544bd5bcf3782a18607bf2d7f0f0ad42ca34",
+      "mode": "RGBA",
+      "alphaBounds": [
+        33,
+        25,
+        2043,
+        698
+      ],
+      "transparent": true
+    },
+    {
+      "file": "rarity/rare.png",
+      "width": 1983,
+      "height": 793,
+      "sha256": "afa6248eda5fcb8c18715ce8aa4a6f2ad1a0f5cb35ebc9727092d8e0bbf6ecac",
+      "mode": "RGBA",
+      "alphaBounds": [
+        51,
+        38,
+        1955,
+        750
+      ],
+      "transparent": true
+    },
+    {
+      "file": "rarity/uncommon.png",
+      "width": 2172,
+      "height": 724,
+      "sha256": "39d3fdde8147229a240e74b2b8a208eb481665b861c31c2cab672b18e6e03bc8",
+      "mode": "RGBA",
+      "alphaBounds": [
+        33,
+        23,
+        2072,
+        724
+      ],
+      "transparent": true
+    }
+  ]
+}

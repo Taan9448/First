@@ -1,0 +1,12 @@
+{
+  "id": "K23",
+  "kind": "effects",
+  "source": "/workspace/generated_images/exec-61dd5446-d52e-4750-a314-aa98d22511b2.png",
+  "transparent": true,
+  "file": "effects/K23.png",
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGBA",
+  "actual_transparency": true,
+  "opaque_pixels": true
+}

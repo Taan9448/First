@@ -1,0 +1,12 @@
+{
+  "id": "K07",
+  "kind": "effects",
+  "source": "/workspace/generated_images/exec-4e29491b-a4d4-4f8c-afa1-9a5546c75396.png",
+  "transparent": true,
+  "file": "effects/K07.png",
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGBA",
+  "actual_transparency": true,
+  "opaque_pixels": true
+}

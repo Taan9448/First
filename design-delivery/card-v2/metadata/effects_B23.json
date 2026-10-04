@@ -1,0 +1,12 @@
+{
+  "id": "B23",
+  "kind": "effects",
+  "source": "/workspace/generated_images/exec-c265e4b1-ec40-4d63-b818-10d632e13fd9.png",
+  "transparent": true,
+  "file": "effects/B23.png",
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGBA",
+  "actual_transparency": true,
+  "opaque_pixels": true
+}

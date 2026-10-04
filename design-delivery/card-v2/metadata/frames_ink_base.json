@@ -1,0 +1,12 @@
+{
+  "id": "ink_base",
+  "kind": "frames",
+  "source": "/workspace/generated_images/exec-59e20645-8f40-439d-91b3-75441ee252cc.png",
+  "transparent": true,
+  "file": "frames/ink_base.png",
+  "width": 1060,
+  "height": 1484,
+  "mode": "RGBA",
+  "actual_transparency": true,
+  "opaque_pixels": true
+}

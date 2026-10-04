@@ -1,0 +1,12 @@
+{
+  "id": "K18",
+  "kind": "effects",
+  "source": "/workspace/generated_images/exec-99344cce-5967-442c-93c2-5bf065aed0b8.png",
+  "transparent": true,
+  "file": "effects/K18.png",
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGBA",
+  "actual_transparency": true,
+  "opaque_pixels": true
+}

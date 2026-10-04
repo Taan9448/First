@@ -1,0 +1,12 @@
+{
+  "id": "uncommon",
+  "kind": "rarity",
+  "source": "/workspace/generated_images/exec-87f28441-7240-4861-a0aa-42946c58366e.png",
+  "transparent": true,
+  "file": "rarity/uncommon.png",
+  "width": 2172,
+  "height": 724,
+  "mode": "RGBA",
+  "actual_transparency": true,
+  "opaque_pixels": true
+}

@@ -1,0 +1,12 @@
+{
+  "id": "C11",
+  "kind": "effects",
+  "source": "/workspace/generated_images/exec-51afba1d-9ad0-4ed9-b096-7fc106cbe745.png",
+  "transparent": true,
+  "file": "effects/C11.png",
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGBA",
+  "actual_transparency": true,
+  "opaque_pixels": true
+}

@@ -1,0 +1,12 @@
+{
+  "id": "S32",
+  "kind": "effects",
+  "source": "/workspace/generated_images/exec-c4cf7657-2a6a-473b-aaf5-69608fc45541.png",
+  "transparent": true,
+  "file": "effects/S32.png",
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGBA",
+  "actual_transparency": true,
+  "opaque_pixels": true
+}

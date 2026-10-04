@@ -1,0 +1,12 @@
+{
+  "id": "S02",
+  "kind": "effects",
+  "source": "/workspace/generated_images/exec-c5161ad6-4d51-4ee5-bc42-0046bd73999f.png",
+  "transparent": true,
+  "file": "effects/S02.png",
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGBA",
+  "actual_transparency": true,
+  "opaque_pixels": true
+}

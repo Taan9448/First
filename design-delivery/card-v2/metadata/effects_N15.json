@@ -1,0 +1,12 @@
+{
+  "id": "N15",
+  "kind": "effects",
+  "source": "/workspace/generated_images/exec-d70643b2-7833-4efa-bb0b-5c560b67ce66.png",
+  "transparent": true,
+  "file": "effects/N15.png",
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGBA",
+  "actual_transparency": true,
+  "opaque_pixels": true
+}

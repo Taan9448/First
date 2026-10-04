@@ -1,0 +1,12 @@
+{
+  "id": "S22",
+  "kind": "effects",
+  "source": "/workspace/generated_images/exec-07bab7d6-aa00-4c33-b314-1130db8c343c.png",
+  "transparent": true,
+  "file": "effects/S22.png",
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGBA",
+  "actual_transparency": true,
+  "opaque_pixels": true
+}

@@ -1,0 +1,12 @@
+{
+  "id": "K22",
+  "kind": "effects",
+  "source": "/workspace/generated_images/exec-07029222-c249-4acb-ac86-b2498ddc906a.png",
+  "transparent": true,
+  "file": "effects/K22.png",
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGBA",
+  "actual_transparency": true,
+  "opaque_pixels": true
+}

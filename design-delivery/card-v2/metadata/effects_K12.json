@@ -1,0 +1,12 @@
+{
+  "id": "K12",
+  "kind": "effects",
+  "source": "/workspace/generated_images/exec-732c6bc4-d2a1-477e-98cd-a1be624a6234.png",
+  "transparent": true,
+  "file": "effects/K12.png",
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGBA",
+  "actual_transparency": true,
+  "opaque_pixels": true
+}

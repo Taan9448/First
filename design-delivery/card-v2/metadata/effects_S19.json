@@ -1,0 +1,12 @@
+{
+  "id": "S19",
+  "kind": "effects",
+  "source": "/workspace/generated_images/exec-39a110d3-d848-48f5-a1a0-4115cc303aec.png",
+  "transparent": true,
+  "file": "effects/S19.png",
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGBA",
+  "actual_transparency": true,
+  "opaque_pixels": true
+}

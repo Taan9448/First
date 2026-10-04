@@ -1,0 +1,12 @@
+{
+  "id": "legendary",
+  "kind": "rarity",
+  "source": "/workspace/generated_images/exec-12a75256-b9c1-42bd-b20d-7a4ca7cc51d0.png",
+  "transparent": true,
+  "file": "rarity/legendary.png",
+  "width": 2172,
+  "height": 724,
+  "mode": "RGBA",
+  "actual_transparency": true,
+  "opaque_pixels": true
+}
