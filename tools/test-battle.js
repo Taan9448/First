@@ -907,7 +907,13 @@ function handCard(b, id) {
   check(hp0 - b.heroes[0].hp === 7, '적 공격 피해 ×1.5 = 7 (실제 ' + (hp0 - b.heroes[0].hp) + ')');
   b = await newBattle(['kai'], ['astaroth'], ['C01'], { enemy: { doomMult: 2 } });
   b.monsters[0].intent = 'doom'; b.monsters[0].intentTarget = b.heroes[0];
-  check(b.intentInfo(b.monsters[0]).dmg === 60, '종말 피해 2배 = 60');
+  // 39단계: 공격 1회 상한(최종 보스 70%) — 종말 2배(60)도 하린 최대 체력 70의 70% = 49 를 넘지 않는다
+  check(b.intentInfo(b.monsters[0]).dmg === Math.min(60, Math.floor(b.heroes[0].maxHp * G.Data.difficulty.hitCap.final)), '종말 피해 2배 · 공격 상한 (' + b.intentInfo(b.monsters[0]).dmg + ')');
+  b = await newBattle(['kai'], ['slime'], ['C01'], { enemy: { dmgMult: 20 } });
+  b.monsters[0].intent = 'slam'; b.monsters[0].intentTarget = b.heroes[0];
+  hp0 = b.heroes[0].hp;
+  await b.endTurn();
+  check(hp0 - b.heroes[0].hp === Math.floor(b.heroes[0].maxHp * G.Data.difficulty.hitCap.normal), '일반 몬스터 공격 1회는 최대 체력의 40%까지 (' + (hp0 - b.heroes[0].hp) + ')');
   b = await newBattle(['kai'], ['baltar'], ['C01'], { enemy: { triggerStr: 2 } });
   await b.loseHp(b.monsters[0], Math.ceil(b.monsters[0].maxHp * 0.6));
   check(b.monsters[0].status.strength === 2, '광폭화: 체력 조건 발동 때 힘 +2');

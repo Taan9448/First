@@ -1213,7 +1213,7 @@
     }
     if (crit) d *= 2 + (src ? S.get(src, 'critUp') * 0.5 : 0);
     if (src && src.tm && src.tm.frozenDmgMult && S.has(tgt, 'frozen')) d *= src.tm.frozenDmgMult;
-    d = Math.max(0, Math.floor(d));
+    d = Math.min(Math.max(0, Math.floor(d)), this.hitCap(src, tgt));
     d = Math.max(0, d - S.get(tgt, 'reduce'));
     // 34단계: 엄호(같은 편이 하나라도 더 살아 있으면 받는 공격 피해 절반) · 회피(공격 1회를 통째로 피한다)
     if (S.has(tgt, 'shelter') && this.alive(tgt.side).some(function (u) { return u !== tgt; })) d = Math.floor(d / 2);
@@ -1528,6 +1528,13 @@
   };
 
   // 화면 표시용 행동 예고 정보
+  // 39단계(밸런스): 적 공격 1회가 동료 최대 체력의 일정 비율을 넘지 않는다(한 방에 쓰러지지 않게, data/stages.js 의 difficulty.hitCap)
+  P.hitCap = function (src, tgt) {
+    var cap = (G.Data.difficulty || {}).hitCap;
+    if (!cap || !src || src.side !== 'enemy' || !tgt || tgt.side !== 'ally') return Infinity;
+    var pct = cap[src.def && src.def.rank] || cap.normal;
+    return Math.max(1, Math.floor(tgt.maxHp * pct));
+  };
   P.intentInfo = function (m) {
     var move = this.moveOf(m);
     var info = { name: move.name, kinds: [], dmg: null, times: 1, all: false, target: m.intentTarget };
@@ -1540,7 +1547,9 @@
           if (S.has(m, 'weak')) d *= 0.75;
           d *= (1 + (self.em.dmgMult || 0)) * (m.intent === 'doom' && self.em.doomMult ? self.em.doomMult : 1);
           if (!allT && m.intentTarget && S.has(m.intentTarget, 'vulnerable')) d *= 1.5;
-          info.dmg = Math.floor(d);
+          // 상한: 노린 동료(전체 공격이면 가장 많이 맞을 동료) 기준
+          var capT = allT ? Math.max.apply(null, self.alive('ally').map(function (u) { return self.hitCap(m, u); }).concat([0])) : m.intentTarget ? self.hitCap(m, m.intentTarget) : Infinity;
+          info.dmg = Math.min(Math.floor(d), capT || Infinity);
           info.times = self.num(e.times || 1, {}, null);
           info.all = allT;
           if (info.kinds.indexOf('attack') < 0) info.kinds.push('attack');

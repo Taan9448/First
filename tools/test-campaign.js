@@ -176,7 +176,7 @@ function invariants(where) {
             const pick = G.rng.int(0, 1);
             check(St.chooseTrait(pend.id, pick), '특성 고르기');
             traitsPicked++;
-            const add = pend.options[pick].mods.maxHp || 0;
+            const add = (pend.options[pick].mods.maxHp || 0) + (D.growth.hpPerLevel || 0);   // 39단계: 레벨마다 +6
             check(St.maxHp(pend.id) === max0 + add, '특성 최대 체력 반영');
             if (St.data.run && hpBefore != null) check(St.data.run.hp[pend.id] === hpBefore + add, '최대 체력이 늘면 지금 체력도');
           }
@@ -357,10 +357,10 @@ function invariants(where) {
       St.data.party = ['kai', 'bram']; St.data.flags.personal = {};
       St.startStage(1); St.autoPick();
       let node = St.node(); node.type = 'event'; node.event = 'P02'; node.result = null;
-      const owned = new Set(St.data.cards), exp0 = St.growthOf('bram').exp, kexp0 = St.growthOf('kai').exp;
+      const exp0 = St.growthOf('bram').exp, kexp0 = St.growthOf('kai').exp;
       St.eventChoose(1);
-      const got = St.data.cards.find(id => !owned.has(id));
-      check(got && D.cardById[got].owner === 'bram', '개인 이벤트 카드는 그 동료의 카드');
+      const got = St.node().result.gotCard;
+      check(got && D.cardById[got].owner === 'bram', '개인 이벤트 카드는 그 동료의 카드 (' + got + ')');
       node.result = null; St.data.flags.personal = {};
       St.eventChoose(0);
       check(St.growthOf('bram').exp === exp0 + 40 && St.growthOf('kai').exp === kexp0, '개인 이벤트 경험치는 그 동료만');

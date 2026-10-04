@@ -79,6 +79,11 @@
       return m;
     },
     // 전투에 넘길 적 강화 보정: 스테이지 난이도(data/stages.js 의 difficulty) + 승천
+    // 39단계: 금화 배율 = 승천 규칙 · 하드 규칙의 goldMult × 모드 배율(gold) × (1 + 승천 단계 × goldPer)
+    goldMult: function () {
+      var md = St.data ? St.mode() : {}, per = (D.ascensionScale || {}).goldPer || 0;
+      return (St.ascMods().goldMult || 1) * (md.gold || 1) * (1 + per * St.ascLevel());
+    },
     enemyMods: function (stage) {
       var a = St.ascMods(), dif = D.difficulty || {}, curve = D.ascensionCurve;
       var hp = dif.hp ? dif.hp[stage - 1] || 1 : 1, dmg = dif.dmg ? dif.dmg[stage - 1] || 1 : 1;
@@ -613,7 +618,7 @@
     openTreasure: function () {
       var d = St.data, r = d.run, node = St.node(), T = D.mapRules.treasure, def = St.stageDef(r.stage);
       if (node.result) return node.result;
-      var res = { ambush: G.rng.chance(T.ambush), gold: G.rng.int(T.gold[0], T.gold[1]), relic: null };
+      var res = { ambush: G.rng.chance(T.ambush), gold: Math.round(G.rng.int(T.gold[0], T.gold[1]) * St.goldMult()), relic: null };
       if (res.ambush) {
         res.gold += T.ambushGold;
         node.fight = { kind: 'battle', monsters: G.rng.pick(def.hard).slice() };
@@ -717,7 +722,7 @@
       r.pending = St.rollReward(kind);
       var p = r.pending;
       var mirrors = battle.kills.filter(function (id) { return D.monsterById[id].mirror; }).length;
-      p.gold = Math.round(p.gold * (mods.goldMult || 1) * asc.goldMult) + (battle.affixKills || 0) * 5 + mirrors * eco().mirrorGold;
+      p.gold = Math.round(p.gold * (mods.goldMult || 1) * St.goldMult()) + (battle.affixKills || 0) * 5 + mirrors * eco().mirrorGold;
       if (node.type === 'treasure' && node.result) p.gold += node.result.gold; // 보물 방 매복을 이기면 상자 골드
       if (kind === 'elite') { p.relic = St.rollRelic('elite'); St.addRelic(p.relic); }
       // 22단계: 소모품 — 빈 칸이 있으면 확률로 하나
@@ -1127,7 +1132,10 @@
     },
     traitMods: function (id) {
       var g = St.growthOf(id), list = D.traits[id] || [];
-      return g.traits.map(function (pick, lv) { return list[lv] && list[lv][pick] ? list[lv][pick].mods : null; }).filter(Boolean);
+      var out = g.traits.map(function (pick, lv) { return list[lv] && list[lv][pick] ? list[lv][pick].mods : null; }).filter(Boolean);
+      // 39단계: 레벨마다(특성을 고를 때마다) 최대 체력 +hpPerLevel
+      if (g.traits.length && D.growth.hpPerLevel) out.push({ maxHp: g.traits.length * D.growth.hpPerLevel });
+      return out;
     },
     maxHp: function (id) {
       var add = 0;
@@ -1150,7 +1158,8 @@
       g.traits.push(pick);
       // 최대 체력이 늘면 지금 체력도 같이 는다
       var r = St.data.run;
-      if (opt.mods.maxHp && r && r.hp[id] != null) r.hp[id] += opt.mods.maxHp;
+      var up = (opt.mods.maxHp || 0) + (D.growth.hpPerLevel || 0);
+      if (up && r && r.hp[id] != null) r.hp[id] += up;
       St.save();
       return true;
     },
@@ -1210,7 +1219,7 @@
       if (first) d.clearedStage = n;
       // 33단계: 스테이지 돌파 금화(처음 돌파는 많이, 다시 깨면 절반쯤). 대장간에 쓴다
       var cg = eco().clearGold, clearGold = cg ? (first ? cg.first[0] + cg.first[1] * n : cg.replay[0] + cg.replay[1] * n) : 0;
-      if (clearGold) d.gold += Math.round(clearGold * (St.ascMods().goldMult || 1));
+      if (clearGold) { clearGold = Math.round(clearGold * St.goldMult()); d.gold += clearGold; }
       if (first && def.join && d.characters.indexOf(def.join) < 0) {
         joined = def.join;
         d.characters.push(def.join);

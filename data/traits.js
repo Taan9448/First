@@ -12,7 +12,8 @@
 //   firstDebuffDraw · startRes(30단계: 전투 시작 시 고유 자원) · 전투 전체: firstTurnEnergy · firstTurnDraw · everyN{n, v} · winHeal(전투 승리 후 아군 전체 회복)
 Game.Data.growth = {
   exp: { battle: 8, elite: 16, boss: 35, midboss: 35, final: 50 },  // 15단계: 던전 길이를 절반으로 줄이며 14단계에서 깎은 값을 일부 되돌렸다
-  levels: [40, 120, 250, 450, 700]   // 레벨 1~5 문턱(누적 경험치). 10단계: 한 원정에 최고 레벨까지 가지 않게 올림
+  levels: [40, 120, 250, 450, 700],  // 레벨 1~5 문턱(누적 경험치). 10단계: 한 원정에 최고 레벨까지 가지 않게 올림
+  hpPerLevel: 6                      // 39단계: 레벨마다(특성을 고를 때) 최대 체력 +6 — 후반 적 피해를 버틸 바탕
 };
 
 (function () {

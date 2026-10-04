@@ -979,7 +979,7 @@
     // 고른 단계로 바꿔 계산해 본다(1 스테이지와 10 스테이지 적 보정)
     var cur = d.ascension.current;
     d.ascension.current = lv;
-    var e1 = em(1), e10 = em(10);
+    var e1 = em(1), e10 = em(10), gm = St.goldMult();
     d.ascension.current = cur;
     var levels = '';
     for (var i = 0; i <= D.ascension.length; i++) {
@@ -995,7 +995,7 @@
       '<div class="asc-levels">' + levels + '</div>' +
       '<div class="asc-panel frame"><h2>' + (lv ? '승천 ' + lv : '기본 원정') + '</h2>' +
       (lv ? '<div class="asc-scale"><span>적 체력 <b>×' + (1 + e1.hpMult).toFixed(1) + '</b> ~ <b>×' + (1 + e10.hpMult).toFixed(1) + '</b></span>' +
-        '<span>적 공격 <b>×' + (1 + e1.dmgMult).toFixed(1) + '</b> ~ <b>×' + (1 + e10.dmgMult).toFixed(1) + '</b></span></div>' +
+        '<span>적 공격 <b>×' + (1 + e1.dmgMult).toFixed(1) + '</b> ~ <b>×' + (1 + e10.dmgMult).toFixed(1) + '</b></span><span>얻는 금화 <b>×' + gm.toFixed(2) + '</b></span></div>' +
         '<ul class="asc-rules">' + rules + '</ul>' : '<p class="dim">승천 규칙 없이 처음 원정과 같은 난이도로 떠난다.</p>') +
       '<p class="dim">최고 기록: ' + (d.ascension.best ? '승천 ' + d.ascension.best : '기본 원정') + ' · 그 단계를 깨면 다음 단계가 열린다</p></div>' +
       '<div class="row"><button class="btn ghost back">돌아가기</button><button class="btn gold big go">원정 시작</button></div></div>';
