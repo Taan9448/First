@@ -66,7 +66,7 @@ const pilot = [
   ['0-3', '전투 배경 — 만독곡', 'assets/backgrounds/battle_forest.jpg', sz('bgBattle'), '불투명', THEME_LOOK.forest + '. 위에서 70% 높이가 땅. 가운데 위쪽은 차분하게(숫자가 잘 보이게)'],
   ['0-4', '보스 전투 그림 — 천년 독두꺼비 왕 대기 · 공격', 'assets/characters/monsters/toad_king_idle.png · toad_king_attack.png', '1024×1024', '투명', '만독곡 늪 밑바닥에서 천 년을 산 거대한 독두꺼비. 금관, 혹투성이 등, 보랏빛 띠. 왼쪽을 본다. 공격은 혀를 길게 내뻗는 순간'],
   (function () { const L = D.cards.find(c => c.owner === 'kai' && c.rarity === 'legendary'); return ['0-5', '카드 그림 — ' + D.cardById.K01.name + '(일반) · ' + L.name + '(전설)', 'assets/cards/art/K01.png · ' + L.id + '.png', sz('cardArt'), '불투명',
-    D.cardById.K01.name + ': 하린이 곧은 검으로 내지르는 기본 검식, 푸른 검기 한 줄. ' + L.name + '(' + plain(L.text) + '): 하린의 최종 검식, 수묵 붓 획과 마법진이 겹친 화려한 장면. 작게(약 98×81px) 보여도 주제가 하나로 또렷하게']; })(),
+    D.cardById.K01.name + ': 하린이 서예 붓을 앞으로 내질러 붓끝에서 곧은 먹빛 검기 한 줄이 뻗는 기본 검식. ' + L.name + '(' + plain(L.text) + '): 하린의 최종 검식, 수묵 붓 획과 마법진이 겹친 화려한 장면. 작게(약 98×81px) 보여도 주제가 하나로 또렷하게']; })(),
   ['0-6', '아이콘 — 힘 · 중독 · 공격 예고 · 방어 예고', 'assets/icons/status/strength.png · poison.png, assets/icons/intent/attack.png · block.png', sz('icon'), '투명', '22~32px로 줄어도 알아보게 굵고 단순하게. 배경 판 없음']
 ];
 pilot.filter(Boolean).forEach(r => {
