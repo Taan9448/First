@@ -162,7 +162,8 @@
   UI.keywordize = function (html) {
     if (!kwRe) {
       var names = Object.keys(G.Data.keywords).sort(function (a, b) { return b.length - a.length; });
-      kwRe = new RegExp('(' + names.map(function (n) { return n.replace(/[()]/g, '\\$&'); }).join('|') + ')', 'g');
+      var not = G.Data.keywordNot || {};   // 40단계: 한 글자 키워드가 다른 낱말 속에 든 경우(획 ↔ 획득)는 빼고
+      kwRe = new RegExp('(' + names.map(function (n) { return n.replace(/[()]/g, '\\$&') + (not[n] ? '(?!' + not[n] + ')' : ''); }).join('|') + ')', 'g');
     }
     return html.replace(kwRe, function (m) {
       return '<b class="kw" data-tip="<b>' + m + '</b><br>' + U.esc(G.Data.keywords[m]) + '">' + m + '</b>';

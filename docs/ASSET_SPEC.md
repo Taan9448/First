@@ -29,7 +29,7 @@ ChatGPT(Art Director)가 만드는 그림의 **기술 조건**이다. 화풍·�
 | 카드 틀 | `assets/cards/frames/{ink|split}_{등급}.png`, `duo.png` | 500×700 (5:7) | 투명 |
 | 전투 배경 | `assets/backgrounds/battle_{테마}.jpg` | 1920×1080 | 불투명 |
 | 전투 앞쪽 띠(선택) | `assets/backgrounds/battle_{테마}_fore.png` | 1920×240 | 투명 |
-| 화면 배경 | `assets/backgrounds/{title|lobby|dungeon_map}.jpg` | 1920×1080 | 불투명 |
+| 화면 배경 | `assets/backgrounds/{title|lobby|dungeon_map|shop|camp|forge|reward|codex|records|settings}.jpg` (40단계: 상점 · 휴식 · 대장간 · 보상 화면 배경, 도감 · 기록 · 설정 창 뒤. UI 없는 장면만) | 1920×1080 | 불투명 |
 | 월드맵 | `assets/backgrounds/world_map.jpg` | 2000×1120 | 불투명 |
 | 아이콘 | `assets/icons/{아무 하위 폴더}/{아이콘 이름}.png` | 128×128 | 투명 |
 | 유물 | `assets/items/relics/{유물id}.png` | 128×128 | 투명 |

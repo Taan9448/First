@@ -150,7 +150,7 @@
         add('배경', 'bgFore', t, '전투 앞쪽 띠 · ' + ((D.THEME_NAME || {})[t] || t), path('bgFore', t), { need: false });
       });
       add('배경', 'worldMap', 'world_map', '월드맵', spec('worldMap').dir + '/' + spec('worldMap').name);
-      [['title', '타이틀'], ['lobby', '로비'], ['dungeon_map', '던전 지도 바탕']].forEach(function (x) { add('배경', 'bgScreen', x[0], x[1], path('bgScreen', x[0])); });
+      [['title', '타이틀'], ['lobby', '로비'], ['dungeon_map', '던전 지도 바탕'], ['shop', '상점'], ['camp', '휴식(모닥불)'], ['forge', '대장간'], ['reward', '보상'], ['codex', '도감 창 뒤'], ['records', '기록 창 뒤'], ['settings', '설정 창 뒤']].forEach(function (x) { add('배경', 'bgScreen', x[0], x[1], path('bgScreen', x[0])); });
       var iconNames = G.Pixel && G.Pixel.iconNames ? G.Pixel.iconNames() : [];
       iconNames.forEach(function (n) { add('아이콘', 'icon', n, n, spec('icon').dir + '/' + n); });
       (D.relics || []).forEach(function (r) { add('유물', 'relic', r.id, r.name, path('relic', r.id), { desc: r.desc }); });

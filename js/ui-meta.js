@@ -26,9 +26,11 @@
   }
   Meta.topbar = topbar;
   // 메타 화면 배경: 지금 테마의 전투 배경을 어둡게 깐다
-  function backdrop(el, theme) {
-    var bg = UI.el('div', 'meta-bg');
+  // 40단계: 화면 전용 배경(assets/backgrounds/{key}.jpg — 상점 · 휴식 · 대장간 · 보상)이 올라오면 그것을, 없으면 테마 전투 배경
+  function backdrop(el, theme, key) {
+    var bg = UI.el('div', 'meta-bg'), own = key && G.Assets.screenBg(key);
     el.insertBefore(bg, el.children[1] || null);
+    if (own) { bg.style.backgroundImage = 'url(' + own + ')'; bg.classList.add('own'); return; }
     G.Art.scene(theme || 'forest').then(function (u) { if (u) bg.style.backgroundImage = 'url(' + u + ')'; });
   }
   function runTheme() {
@@ -43,6 +45,18 @@
     if (St.isDead(id)) return '<div class="mini-hero dead"><div class="sp" data-id="' + id + '"></div><span>' + charDef(id).name + '</span><small>사망</small></div>';
     return '<div class="mini-hero"><div class="sp" data-id="' + id + '"></div><span>' + charDef(id).name + '</span>' + hpBar(id) + '</div>';
   }
+  // 40단계: 동그란 금테 문장 안의 동료 얼굴(전신 그림이 있으면 얼굴 쪽을 CSS로 잘라 보여 준다, 없으면 전투 그림)
+  function medalHero(id) {
+    var dead = St.isDead(id);
+    return '<div class="medal-hero' + (dead ? ' dead' : '') + '"><div class="medal" data-mid="' + id + '"></div><span>' + charDef(id).name + '</span>' + (dead ? '<small>사망</small>' : hpBar(id)) + '</div>';
+  }
+  function fillMedals(root) {
+    UI.$$('.medal[data-mid]', root).forEach(function (m) {
+      var id = m.getAttribute('data-mid'), pic = UI.portraitEl(id, 'medal-img');
+      m.appendChild(pic || UI.spriteEl(id, 0.6));
+    });
+  }
+  Meta.medalHero = medalHero; Meta.fillMedals = fillMedals;
   function fillSprites(root, size) {
     UI.$$('.sp[data-id]', root).forEach(function (s) { s.appendChild(UI.spriteEl(s.getAttribute('data-id'), size || 0.75)); });
   }
@@ -57,16 +71,30 @@
   Meta.title = function () {
     var el = screen('title');
     var last = G.Save.lastSlot();
-    el.innerHTML = titleFrame('<div class="lineup"></div>' +
-      '<div class="menu">' +
+    // 40단계: 승인 시안 — 왼쪽 하린, 위 제목 현판, 오른쪽 세로 메뉴, 아래 저장 칸 3개, 오른쪽 아래 설정
+    var slotCards = '';
+    for (var sn = 1; sn <= G.Save.SLOTS; sn++) {
+      var sd = G.Save.peek(sn), smd = sd && (D.modes[sd.mode] || D.modes.normal);
+      slotCards += '<button class="tt-slot' + (sd ? '' : ' empty') + '" data-n="' + sn + '"><span class="tt-medal">' + sn + '</span><span class="tt-sinfo">' +
+        (sd ? '<b>' + sn + '번 칸 <em style="--mc:' + smd.color + '">' + smd.name + '</em></b><small>' +
+          (sd.flags.riftEnded ? '세계의 틈을 닫음' : sd.flags.ended ? '엔딩 도달' : sd.run ? '스테이지 ' + sd.run.stage + ' 진행 중' : '스테이지 ' + Math.min(D.stages.length, sd.clearedStage + 1) + ' 대기') +
+          ' · 동료 ' + sd.characters.length + '명</small>' : '<b>' + sn + '번 칸</b><small>빈 칸 · 새 원정</small>') + '</span></button>';
+    }
+    el.innerHTML = titleFrame('<div class="tt-hero"></div>' +
+      '<div class="menu tt-menu">' +
       (last ? '<button class="btn gold big cont">이어하기 <small>' + last + '번 칸</small></button>'
         : '<button class="btn gold big quick-new">새 게임</button>') +   // 24단계: 저장이 하나도 없으면 바로 모드 선택(1번 칸)
       '<button class="btn big slots">저장 칸 · 새 게임</button>' +
-      '<div class="row sub-menu"><button class="btn daily">오늘의 원정' + (G.Save.exists('daily') ? ' <small>이어하기</small>' : '') + '</button><button class="btn records">업적 · 기록</button></div>' +
+      '<button class="btn big daily">오늘의 원정' + (G.Save.exists('daily') ? ' <small>이어하기</small>' : '') + '</button><button class="btn big records">업적 · 기록</button>' +
       (G.debug ? '<button class="btn small test">전투 테스트 (디버그)</button>' : '') +
-      '</div>');
-    var line = el.querySelector('.lineup');
-    D.characters.forEach(function (c) { var w = UI.el('div', 'slot'); w.appendChild(UI.spriteEl(c.id, 1.1)); line.appendChild(w); });
+      '</div><div class="tt-slots">' + slotCards + '</div>' +
+      '<button class="tt-gear" aria-label="설정" data-tip="설정">' + UI.icon('gear') + '</button>');
+    var hero = el.querySelector('.tt-hero'), pic = UI.portraitEl('kai', 'tt-pic');
+    hero.appendChild(pic || UI.spriteEl('kai', 2.4));
+    UI.$$('.tt-slot', el).forEach(function (b) {
+      b.onclick = function () { var n = +b.getAttribute('data-n'); if (G.Save.peek(n)) openSlot(n); else Meta.modeSelect(n); };
+    });
+    el.querySelector('.tt-gear').onclick = function () { if (G.Extra && G.Extra.settingsWin) G.Extra.settingsWin(); };
     if (last) el.querySelector('.cont').onclick = function () { openSlot(last); };
     else el.querySelector('.quick-new').onclick = function () { Meta.modeSelect(1); };
     el.querySelector('.slots').onclick = function () { Meta.slots(); };
@@ -195,11 +223,11 @@
       (r ? '<button class="btn small ghost view">' + UI.icon('map') + (dungeon ? '월드맵' : '던전 지도') + '</button>' : '') +
       (d.flags.ended ? '<button class="btn small cyan ascend">새 원정</button>' : '') + '<button class="btn small ghost to-title">' + UI.icon('home') + (St.isDaily() ? '타이틀' : '로비') + '</button>') +
       '<div class="map-layout"><div class="map-frame"><div class="map-canvas"></div></div><aside class="map-side frame"></aside></div>' +
-      '<div class="map-bottom"><div class="party-row"></div><div class="items-row item-bar"></div><div class="relic-bar"></div></div>';
+      '<div class="map-bottom"><div class="party-row map-party frame deco"></div><div class="map-bag frame"><div class="items-row item-bar"></div><div class="relic-bar"></div></div></div>';
     var common = function () {
       renderSide(el.querySelector('.map-side'), mapSel, dungeon);
-      el.querySelector('.party-row').innerHTML = d.party.map(miniHero).join('');
-      fillSprites(el.querySelector('.party-row'), 0.6);
+      el.querySelector('.party-row').innerHTML = d.party.map(medalHero).join('');   // 40단계: 시안처럼 동그란 금테 문장
+      fillMedals(el.querySelector('.party-row'));
       el.querySelector('.map-bottom .relic-bar').innerHTML = UI.relicBar(d.relics);
       el.querySelector('.map-bottom .items-row').innerHTML = UI.itemBar(St.items(), false, D.itemEconomy.slots);
       el.querySelector('.to-title').onclick = function () { if (St.isDaily()) Meta.title(); else Meta.lobby(); };   // 오늘의 원정에는 로비가 없다
@@ -499,16 +527,20 @@
         p.relicChoice.map(function (id) { return UI.relicTile(id); }).join('') + '</div>' +
         '<button class="btn small skip-relic">유물 받지 않기</button>';
     }
-    el.innerHTML = topbar('보상') + '<div class="meta-body">' +
-      '<h1 class="big-title">' + title + '</h1>' +
-      '<p class="gain"><i class="ico" style="' + UI.iconStyle('gold') + '"></i> 골드 +' + p.gold +
-      (p.fill ? ' <span class="dim">(카드 후보가 모자라 +' + p.fill * D.economy.fillGold + ')</span>' : '') + '</p>' +
-      (St.lastExp ? '<p class="exp-gain">' + St.lastExp.heroes.map(function (id) { return charDef(id).name; }).join(' · ') + ' 경험치 <b>+' + St.lastExp.amount + '</b></p>' : '') +
-      relicPart +
+    // 40단계: 승인 시안(reward_sd_v1) — 왼쪽 동료, 가운데 제목 현판 · 카드 3장, 오른쪽 보상 목록, 아래 받기 · 넘기기
+    el.innerHTML = topbar('보상') + '<div class="meta-body sd-layout rw-layout"><div class="sd-hero rw-hero"></div>' +
+      '<div class="rw-main"><h1 class="big-title sd-plaque">' + title + '</h1>' +
       '<span class="ribbon">카드 1장을 고른다</span><div class="row reward-cards"></div>' +
       '<p class="dim deck-note">&nbsp;</p>' +
-      '<div class="row"><button class="btn skip">건너뛰기 (골드 +' + D.economy.skipGold + ')</button><button class="btn gold take" disabled>카드 받기</button></div></div>';
-    backdrop(el, runTheme());
+      '<div class="row rw-btns"><button class="btn gold big take" disabled>카드 받기</button><button class="btn skip">건너뛰기 (골드 +' + D.economy.skipGold + ')</button></div></div>' +
+      '<div class="rw-side frame deco"><h2 class="sd-sub">전리품</h2>' +
+      '<p class="gain rw-row"><i class="ico" style="' + UI.iconStyle('gold') + '"></i><span>골드 <b>+' + p.gold + '</b>' +
+      (p.fill ? ' <small class="dim">(후보가 모자라 +' + p.fill * D.economy.fillGold + ')</small>' : '') + '</span></p>' +
+      (St.lastExp ? '<p class="exp-gain rw-row"><i class="ico" style="' + UI.iconStyle('buff') + '"></i><span>' + St.lastExp.heroes.map(function (id) { return charDef(id).name; }).join(' · ') + ' 경험치 <b>+' + St.lastExp.amount + '</b></span></p>' : '') +
+      relicPart + '</div></div>';
+    backdrop(el, runTheme(), 'reward');
+    var rwHero = el.querySelector('.rw-hero'), lead = (St.data.party || [])[0] || 'kai';
+    rwHero.appendChild(UI.portraitEl(lead, 'sd-pic') || UI.spriteEl(lead, 2));
     UI.$$('.relic-tiles.choose .relic-tile', el).forEach(function (t) {
       t.onclick = function () {
         St.takeRelic(t.getAttribute('data-id'));
@@ -555,8 +587,11 @@
     var talk = St.pendingTalk();
     if (talk) return Meta.talk(talk, Meta.rest);
     var d = St.data, el = screen('camp'), e = D.economy, mods = St.mods();
-    el.innerHTML = topbar('휴식') + '<div class="meta-body">' +
-      '<h1 class="big-title">모닥불</h1><p class="dim">하나만 고를 수 있다.</p>' +
+    // 40단계: 승인 시안(camp_sd_v1) — 왼쪽 모닥불 곁의 파티, 오른쪽 세로로 긴 선택 카드, 아래 파티 문장 · 체력
+    var campParty = (d.party || []).filter(function (id) { return !St.isDead(id); });
+    el.innerHTML = topbar('휴식') + '<div class="meta-body cp-layout">' +
+      '<div class="cp-scene"><div class="cp-fire"></div><div class="cp-heroes">' + campParty.map(function (id) { return '<div class="sp" data-id="' + id + '"></div>'; }).join('') + '</div></div>' +
+      '<div class="cp-right"><h1 class="big-title sd-plaque">모닥불</h1><p class="dim cp-hint">하나만 고를 수 있다.</p>' +
       '<div class="row choices">' +
       '<button class="choice rest" ' + (mods.noRestHeal ? 'disabled' : '') + '><i class="ico" style="' + UI.iconStyle('campfire') + '"></i><span>회복</span><small>' +
       (mods.noRestHeal ? '혈마의 관: 휴식으로 회복할 수 없다' : '동료 전원 체력 ' + e.restPct * 100 + '% 회복') + '</small></button>' +
@@ -564,10 +599,12 @@
       (St.upgradable().length ? '보유 카드 1장 강화' : '강화할 카드가 없다') + '</small></button>' +
       '<button class="choice purge" ' + (St.canRemove() ? '' : 'disabled') + '><i class="ico" style="' + UI.iconStyle('scroll') + '"></i><span>정리</span><small>' +
       (St.canRemove() ? '스테이지 덱에서 카드 1장 빼기' : '덱이 ' + e.runDeckMin + '장이라 더 뺄 수 없다') + '</small></button>' +
-      '</div><div class="panel-box"><div class="party-row">' + d.characters.map(miniHero).join('') + '</div></div>' +
-      '<div class="row"><button class="btn party">파티 편성</button><button class="btn back">맵으로</button></div></div>';
-    backdrop(el, runTheme());
-    fillSprites(el, 0.75);
+      '</div></div>' +
+      '<div class="cp-party frame deco"><div class="party-row">' + d.characters.map(medalHero).join('') + '</div></div>' +
+      '<div class="cp-btns"><button class="btn party">파티 편성</button><button class="btn gold big back">맵으로</button></div></div>';
+    backdrop(el, runTheme(), 'camp');
+    fillSprites(el, 1.25);
+    fillMedals(el);
     el.querySelector('.rest').onclick = function () {
       var info = St.rest();
       var m = UI.modal('<h2>모닥불 곁에서 쉬었다</h2><p>동료 전원의 체력이 회복되었다.</p><div class="row" style="justify-content:center"><button class="btn gold ok">계속</button></div>');
@@ -656,33 +693,46 @@
     var list = all.filter(function (id) { return forgeFilter === 'all' || D.cardById[id].owner === forgeFilter; });
     list.sort(function (a, b) { return (St.upLevel(b) - St.upLevel(a)) || (a < b ? -1 : 1); });
     var lowN = d.cards.filter(function (id) { return St.upLevel(id) < F.minLevel; }).length;
-    el.innerHTML = topbar('대장간') + '<div class="meta-body forge">' +
-      '<h1 class="big-title">천외 대장간</h1>' +
-      '<p class="dim forge-rule">3단계까지 강화한 카드를 금화로 <b>10단계</b>까지 벼린다. 단계가 오를수록 금화가 많이 들고 성공 확률이 낮아진다. ' +
-      '<b class="bad">실패하면 1단계 내려간다</b>(3단계 아래로는 떨어지지 않는다). 4~6단계 <b>진(眞)</b> · 7~9단계 <b>각성</b>(비용 -1) · 10단계 <b>극의</b>(보존)는 각인이 크게 강해진다.' +
-      (lowN ? ' <span class="dim">1~3단계 강화는 원정 중 휴식·이벤트에서 한다.</span>' : '') + '</p>' +
-      '<div class="row up-filters">' + owners.map(function (o) {
-        return '<button class="btn small ' + (forgeFilter === o ? 'on' : '') + '" data-o="' + o + '">' + (o === 'all' ? '전체' : o === 'common' ? '공용' : charDef(o).name) + '</button>';
-      }).join('') + '</div>' +
-      '<div class="up-wrap"><div class="up-grid"></div><div class="up-preview frame forge-preview"><p class="dim">벼릴 카드를 고르면<br>다음 단계와 확률·금화를 보여 준다.</p></div></div>' +
-      '<div class="row"><button class="btn back">로비로</button></div></div>';
-    backdrop(el, 'volcano');
-    var grid = el.querySelector('.up-grid'), prev = el.querySelector('.forge-preview');
+    el.innerHTML = topbar('대장간') + '<div class="meta-body forge fg-layout">' +
+      // 왼쪽: 벼릴 카드 목록(주인 고르기 + 2열 격자)
+      '<div class="fg-list frame deco"><div class="fg-head"><i class="fg-emb ico" style="' + UI.iconStyle('anvil') + '"></i>' +
+      '<select class="fg-filter">' + owners.map(function (o) {
+        return '<option value="' + o + '"' + (forgeFilter === o ? ' selected' : '') + '>' + (o === 'all' ? '전체 카드' : o === 'common' ? '공용 카드' : charDef(o).name + '의 카드') + '</option>';
+      }).join('') + '</select></div><div class="up-grid"></div></div>' +
+      // 가운데: 지금 → 다음 단계
+      '<div class="fg-main"><h1 class="big-title sd-plaque">천외 대장간</h1><div class="up-preview forge-preview">' +
+      '<p class="fg-empty hanji">벼릴 카드를 고르면<br>다음 단계와 확률 · 금화를 보여 준다.</p></div></div>' +
+      // 오른쪽: 비용 · 확률 · 벼리기
+      '<div class="fg-side frame deco"><h2 class="sd-sub">벼림</h2><div class="fg-cost"></div>' +
+      '<p class="forge-rule">3단계까지 강화한 카드를 금화로 <b>10단계</b>까지 벼린다. <b class="bad">실패하면 1단계 내려간다</b>(3단계 아래로는 떨어지지 않는다). ' +
+      '4~6 <b>진(眞)</b> · 7~9 <b>각성</b>(비용 -1) · 10 <b>극의</b>(보존)' + (lowN ? '<br><span class="dim">1~3단계 강화는 원정 중 휴식 · 이벤트에서 한다.</span>' : '') + '</p>' +
+      '<div class="fg-go"></div><button class="btn back">로비로</button></div></div>';
+    backdrop(el, 'volcano', 'forge');
+    var grid = el.querySelector('.up-grid'), prev = el.querySelector('.forge-preview'), side = el.querySelector('.fg-cost'), goBox = el.querySelector('.fg-go');
+    var tierName = function (lv) { return lv >= 10 ? '극의' : lv >= 7 ? '각성' : lv >= 4 ? '진(眞)' : '기본'; };
+    var engrHTML = function (def, lv, tag) {
+      var e = def.engrave;
+      return '<div class="fg-note"><div class="fg-cap"><b>' + lv + '단계</b> · ' + tierName(lv) + ' <small>' + tag + '</small></div>' +
+        '<div class="fg-txt hanji">' + (e ? '<b>각인 「' + U.esc(e.name) + '」</b><br>' + U.esc(e.text) : '<span class="dim">각인 없음</span>') + '</div></div>';
+    };
     var show = function (id) {
       forgePick = id;
       UI.$$('.card', grid).forEach(function (x) { x.classList.toggle('selected', x._id === id); });
-      var lv = St.upLevel(id), nx = St.nextDef(id), cost = St.forgeCost(id), p = St.forgeChance(id), failTo = St.forgeFailTo(id);
-      prev.innerHTML = '<div class="up-pair"></div>' +
-        '<div class="forge-odds"><div><span>성공</span><b class="good">' + Math.round(p * 100) + '%</b><small>' + lv + ' → ' + (lv + 1) + '단계</small></div>' +
-        '<div><span>실패</span><b class="bad">' + Math.round((1 - p) * 100) + '%</b><small>' + (failTo === lv ? lv + '단계 유지' : lv + ' → ' + failTo + '단계') + '</small></div>' +
-        '<div><span>금화</span><b class="gold">' + cost + '</b><small>가진 금화 ' + d.gold + '</small></div></div>' +
-        (nx.engrave ? '<p class="up-engr"><b>' + nx.level + '단계 각인 「' + U.esc(nx.engrave.name) + '」</b><br>' + U.esc(nx.engrave.text) + '</p>' : '') +
-        '<button class="btn gold big go"' + (d.gold < cost ? ' disabled' : '') + '>' + (d.gold < cost ? '금화가 모자라다' : '벼리기 · ' + cost + ' 골드') + '</button>';
-      var pair = prev.querySelector('.up-pair');
-      pair.appendChild(UI.cardEl(St.cardDef(id), { static: true }));
-      pair.appendChild(UI.el('div', 'up-arrow', '&#9654;'));
-      pair.appendChild(UI.cardEl(nx, { static: true }));
-      prev.querySelector('.go').onclick = function () { strike(id); };
+      var lv = St.upLevel(id), cur = St.cardDef(id), nx = St.nextDef(id), cost = St.forgeCost(id), p = St.forgeChance(id), failTo = St.forgeFailTo(id);
+      prev.innerHTML = '<div class="up-pair"><div class="fg-col fg-now"></div><div class="up-arrow"><i></i></div><div class="fg-col fg-next"></div></div>';
+      var now = prev.querySelector('.fg-now'), next = prev.querySelector('.fg-next');
+      now.appendChild(UI.cardEl(cur, { static: true }));
+      now.insertAdjacentHTML('beforeend', engrHTML(cur, lv, '지금'));
+      next.appendChild(UI.cardEl(nx, { static: true }));
+      next.insertAdjacentHTML('beforeend', engrHTML(nx, lv + 1, '성공하면'));
+      side.innerHTML = '<div class="fg-gold"><i class="ico" style="' + UI.iconStyle('gold') + '"></i><b>' + cost + '</b><small>가진 금화 ' + d.gold + '</small></div>' +
+        '<ul class="forge-odds">' +
+        '<li><i class="fg-dot good"></i><span>성공</span><b class="good">' + Math.round(p * 100) + '%</b><small>' + lv + ' → ' + (lv + 1) + '단계</small></li>' +
+        '<li><i class="fg-dot bad"></i><span>실패</span><b class="bad">' + Math.round((1 - p) * 100) + '%</b><small>' + (failTo === lv ? lv + '단계 유지' : lv + ' → ' + failTo + '단계') + '</small></li>' +
+        '<li><i class="fg-dot"></i><span>단계</span><b>' + lv + ' / 10</b><small>' + tierName(lv) + '</small></li>' +
+        '<li><i class="fg-dot"></i><span>각인</span><b>' + (nx.engrave ? U.esc(nx.engrave.name) : '—') + '</b></li></ul>';
+      goBox.innerHTML = '<button class="btn danger big go"' + (d.gold < cost ? ' disabled' : '') + '>' + (d.gold < cost ? '금화가 모자라다' : '벼리기 · ' + cost + ' 골드') + '</button>';
+      goBox.querySelector('.go').onclick = function () { strike(id); };
     };
     var strike = function (id) {
       var res = St.forge(id);
@@ -707,7 +757,8 @@
     });
     if (!list.length) grid.innerHTML = '<p class="dim">벼릴 수 있는 카드가 없다. 원정 중 휴식·이벤트에서 카드를 3단계까지 강화하면 여기서 더 올릴 수 있다.</p>';
     if (forgePick && list.indexOf(forgePick) >= 0) show(forgePick);
-    UI.$$('[data-o]', el).forEach(function (b) { b.onclick = function () { forgeFilter = b.getAttribute('data-o'); Meta.forge(); }; });
+    else if (list.length) show(list[0]);
+    el.querySelector('.fg-filter').onchange = function () { forgeFilter = this.value; Meta.forge(); };
     el.querySelector('.back').onclick = function () { Meta.lobby(); };
     UI.show('camp');
   };
@@ -907,8 +958,9 @@
         '<div class="price buy-relic ' + (s.relicSold ? 'sold' : d.gold < rp ? 'poor' : '') + '">' +
         (s.relicSold ? '구매함' : '<i class="ico" style="' + UI.iconStyle('gold') + '"></i>' + rp) + '</div></div>';
     }
-    el.innerHTML = topbar('상점') + '<div class="meta-body">' +
-      '<h1 class="big-title">떠돌이 상인</h1>' +
+    // 40단계: 승인 시안(shop_sd_v1) — 왼쪽 동료, 가운데 상품 진열, 오른쪽 상인의 일(치료 · 새로고침 · 제거 · 복제)과 나가기
+    el.innerHTML = topbar('상점') + '<div class="meta-body sd-layout sh-layout"><div class="sd-hero"></div><div class="sh-main">' +
+      '<h1 class="big-title sd-plaque">떠돌이 상인</h1><div class="sh-goods frame">' +
       '<span class="ribbon">카드</span><div class="row shop-cards"></div>' +
       '<div class="row shop-extras">' +
       (relicHTML ? '<div class="col"><span class="ribbon cyan">유물</span><div class="relic-tiles">' + relicHTML + '</div></div>' : '') +
@@ -916,15 +968,17 @@
         var it = D.itemById[iid], sold = s.itemSold[i], ip = St.itemPrice(iid);
         return '<div class="shop-item">' + UI.itemBar([iid], false, 1) + '<small>' + it.name + '</small><div class="price buy-item ' + (sold ? 'sold' : d.gold < ip || !St.itemRoom() ? 'poor' : '') + '" data-i="' + i + '">' +
           (sold ? '구매함' : '<i class="ico" style="' + UI.iconStyle('gold') + '"></i>' + ip) + '</div></div>';
-      }).join('') + '</div></div>' : '') + '</div>' +
-      '<div class="row">' +
+ }).join('') + '</div></div>' : '') + '</div></div></div>' +
+      '<div class="sh-side frame deco"><h2 class="sd-sub">상인의 일</h2>' +
       '<button class="btn heal" ' + (s.healed || d.gold < e.healCost ? 'disabled' : '') + '>치료: 전원 ' + e.healPct * 100 + '% 회복 (' + e.healCost + ' 골드)' + (s.healed ? ' · 완료' : '') + '</button>' +
       '<button class="btn refresh" ' + (d.gold < e.refreshCost ? 'disabled' : '') + '>진열 새로고침 (' + e.refreshCost + ' 골드)</button>' +
       '<button class="btn remove" ' + (d.gold < St.removeCost() || !St.canRemove() ? 'disabled' : '') + ' data-tip="스테이지 덱에서 한 장을 뺀다. 이 스테이지에서 쓸 때마다 ' + e.removeStep + ' 골드씩 오른다">카드 제거 (' + St.removeCost() + ' 골드)</button>' +
       '<button class="btn dup" ' + (s.duped || d.gold < e.dupCost ? 'disabled' : '') + ' data-tip="스테이지 덱의 카드 한 장을 한 장 더. 상점마다 한 번">카드 복제 (' + e.dupCost + ' 골드)' + (s.duped ? ' · 완료' : '') + '</button>' +
       '<button class="btn party">파티 편성</button>' +
-      '<button class="btn gold leave">상점 나가기</button></div></div>';
-    backdrop(el, runTheme());
+      '<button class="btn gold big leave">상점 나가기</button></div></div>';
+    backdrop(el, runTheme(), 'shop');
+    var shHero = el.querySelector('.sd-hero'), shLead = (St.data.party || [])[0] || 'kai';
+    shHero.appendChild(UI.portraitEl(shLead, 'sd-pic') || UI.spriteEl(shLead, 2));
     var box = el.querySelector('.shop-cards');
     s.cards.forEach(function (id) {
       var sold = s.sold.indexOf(id) >= 0, price = St.price(id);

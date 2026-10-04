@@ -67,6 +67,8 @@ Game.Data.keywords = {
   '낙관': '하린의 마무리 — 대상의 획에 비례해 크게 베고 획을 모두 지운다. 획을 쌓아 둘지(공격 +1) 터뜨릴지 고른다.',
   '증기 폭발': '화상인 적에게 한기를 걸면 터진다 — 화상 × 2 피해(보호막에 막힘), 화상은 절반으로. 리라가 불로 준비하고 얼음으로 터뜨린다.'
 };
+// 40단계: 키워드 바로 뒤에 이 글자가 오면 키워드가 아니다(‘획득’의 ‘획’)
+Game.Data.keywordNot = { '획': '득|책|일적' };
 // 39단계: 카드 규칙 수치 — 획 최대 · 획 공격 보너스 최대 · 증기 폭발 배율
 Game.Data.cardRules = { inkMax: 9, inkBonusCap: 5, steamMult: 2 };
 ['strength', 'focus', 'keen', 'critUp', 'regen', 'thorns', 'taunt', 'poison', 'burn', 'weak',

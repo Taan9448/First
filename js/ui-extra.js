@@ -14,7 +14,7 @@
   function inBattle() { return document.getElementById('screen-battle').classList.contains('on') && G.Battle.current && !G.Battle.current.over(); }
   function tabs(list, cur) {
     return '<div class="tabs">' + list.map(function (t) {
-      return '<button class="tab pix ' + (t[0] === cur ? 'on' : '') + '" data-tab="' + t[0] + '">' + t[1] + '</button>';
+      return '<button class="tab pix ' + (t[0] === cur ? 'on' : '') + '" data-tab="' + t[0] + '">' + (t[2] ? '<i class="ico" style="' + UI.iconStyle(t[2]) + '"></i>' : '') + t[1] + '</button>';
     }).join('') + '</div>';
   }
 
@@ -63,20 +63,58 @@
     UI.$$('.modal.win').forEach(UI.closeModal);
     var m = UI.modal('<div class="win-head"><h2>' + title + '</h2><button class="btn small close">닫기</button></div>' + body, 'win ' + (cls || ''));
     m.querySelector('.close').onclick = function () { UI.closeModal(m); if (cls === 'deckwin') X.refreshScreen(); };
+    // 40단계: 창 뒤 장면(assets/backgrounds/codex · records · settings.jpg)이 올라오면 깐다
+    var bk = { codex: 'codex', statwin: 'records', setwin: 'settings' }[cls], bu = bk && G.Assets && G.Assets.screenBg(bk);
+    if (bu) { m.style.backgroundImage = 'linear-gradient(#05080f99,#05080f99),url(' + bu + ')'; m.style.backgroundSize = 'cover'; m.style.backgroundPosition = 'center'; }
     return m;
   }
 
   // ================= 도감 =================
-  var codexState = { tab: 'cards', rarity: 'all', owner: 'all', type: 'all' };
+  var codexState = { tab: 'heroes', rarity: 'all', owner: 'all', type: 'all' };
   X.codex = function (tab) {
     if (tab) codexState.tab = tab;
     var m = win('도감', '<div class="codex-body"></div>', 'codex');
     renderCodex(m);
   };
 
+  // 40단계: 시안(codex_sd_v1) — 왼쪽 세로 분류 · 가운데 그림 타일 · 오른쪽 상세(그림 + 한지 설명)
+  var CX_TABS = [['heroes', '동료', 'party'], ['cards', '카드', 'deck'], ['monsters', '몬스터', 'skull'], ['relics', '유물', 'r_amulet']];
+  var ROLE_ICON = { '공격': 'attack', '탱커': 'block', '마법': 'energy', '회복': 'heart', '서포트': 'poison', '원거리': 'keen' };
+  function chips(key, opts, cur) {
+    return '<div class="cx-chips">' + opts.map(function (o) {
+      return '<button class="cx-chip' + (o[0] === cur ? ' on' : '') + '" data-' + key + '="' + o[0] + '">' + o[1] + '</button>';
+    }).join('') + '</div>';
+  }
+  // 그림 타일: 위에 동그란 문장, 아래 한지 이름판
+  function tile(art, name, ico, locked) {
+    var t = UI.el('button', 'cx-tile' + (locked ? ' locked' : ''), '<div class="cx-art"></div>' + (ico ? '<i class="cx-emb ico" style="' + UI.iconStyle(ico) + '"></i>' : '') + '<span class="cx-name">' + name + '</span>');
+    if (art) t.querySelector('.cx-art').appendChild(art);
+    return t;
+  }
+  function heroArt(id, h) {
+    var p = UI.portraitEl(id, 'cx-pic');
+    if (p) return p;
+    var w = UI.el('div', 'cx-sp');
+    w.appendChild(UI.spriteEl(id, h || 1));
+    return w;
+  }
   function renderCodex(m) {
     var body = m.querySelector('.codex-body'), d = St().data, cs = codexState;
-    var html = tabs([['cards', '카드'], ['monsters', '몬스터'], ['heroes', '캐릭터'], ['relics', '유물']], cs.tab);
+    if (!CX_TABS.some(function (t) { return t[0] === cs.tab; })) cs.tab = 'heroes';
+    body.innerHTML = '<div class="cx-layout"><nav class="cx-rail">' + CX_TABS.map(function (t) {
+      return '<button class="cx-tab' + (t[0] === cs.tab ? ' on' : '') + '" data-tab="' + t[0] + '"><i class="ico" style="' + UI.iconStyle(t[2]) + '"></i><span>' + t[1] + '</span></button>';
+    }).join('') + '</nav><div class="cx-main"><div class="cx-bar"></div><div class="cx-grid"></div></div><aside class="cx-detail"></aside></div>';
+    var bar = body.querySelector('.cx-bar'), grid = body.querySelector('.cx-grid'), det = body.querySelector('.cx-detail');
+    var pick = function (t, fill) {
+      UI.$$('.cx-tile.on, .cx-grid .card.on', grid).forEach(function (x) { x.classList.remove('on'); });
+      t.classList.add('on');
+      det.innerHTML = '';
+      fill(det);
+    };
+    var detail = function (artEl, title, sub, text) {
+      det.innerHTML = '<div class="cx-dart"></div><div class="cx-dtext hanji"><h3>' + title + '</h3>' + (sub ? '<p class="cx-dsub">' + sub + '</p>' : '') + text + '</div>';
+      if (artEl) det.querySelector('.cx-dart').appendChild(artEl);
+    };
     if (cs.tab === 'cards') {
       var all = D.cards.filter(function (c) { return c.owner !== 'none'; });
       var owned = all.filter(function (c) { return d.cards.indexOf(c.id) >= 0; }).length;
@@ -89,21 +127,19 @@
       var shown = all.filter(function (c) {
         return (cs.rarity === 'all' || c.rarity === cs.rarity) && (cs.owner === 'all' || c.owner === cs.owner) && (cs.type === 'all' || c.type === cs.type);
       });
-      html += '<div class="filterbar">' + Object.keys(FILTERS).map(function (k) {
+      bar.innerHTML = '<div class="filterbar">' + Object.keys(FILTERS).map(function (k) {
         var f = FILTERS[k], cur = f.opts.filter(function (o) { return o[0] === cs[k]; })[0] || f.opts[0];
         return '<div class="dd' + (cs[k] !== 'all' ? ' set' : '') + '" data-f="' + k + '"><button><small>' + f.en + '</small>' + (cs[k] === 'all' ? f.label + ' 전체' : cur[1]) + '</button></div>';
       }).join('') + (cs.rarity !== 'all' || cs.owner !== 'all' || cs.type !== 'all' ? '<button class="btn small ghost f-reset">초기화</button>' : '') +
-        '<span class="spacer"></span><span class="count"><b>' + shown.length + '</b>장 표시 · 수집률 <b>' + owned + '/' + all.length + '</b> (' + Math.floor(owned / all.length * 100) + '%)</span></div>' +
-        (G.debug && inBattle() ? '<div class="codex-sum"><span class="dbg">디버그: 카드를 누르면 손패에 넣는다</span></div>' : '') +
-        '<div class="grid cards"></div>';
-      body.innerHTML = html;
-      var grid = body.querySelector('.grid.cards');
-      UI.$$('.dd', body).forEach(function (dd) {
+        '<span class="spacer"></span><span class="count"><b>' + shown.length + '</b>장 · 수집 <b>' + owned + '/' + all.length + '</b> (' + Math.floor(owned / all.length * 100) + '%)</span></div>' +
+        (G.debug && inBattle() ? '<div class="codex-sum"><span class="dbg">디버그: 카드를 누르면 손패에 넣는다</span></div>' : '');
+      grid.className = 'cx-grid grid cards';
+      UI.$$('.dd', bar).forEach(function (dd) {
         var k = dd.getAttribute('data-f');
         dd.querySelector('button').onclick = function (e) {
           e.stopPropagation();
           var open = dd.querySelector('.dd-menu');
-          UI.$$('.dd-menu', body).forEach(function (x) { x.parentNode.removeChild(x); });
+          UI.$$('.dd-menu', bar).forEach(function (x) { x.parentNode.removeChild(x); });
           if (open) return;
           var menu = UI.el('div', 'dd-menu', FILTERS[k].opts.map(function (o) { return '<button class="' + (cs[k] === o[0] ? 'on' : '') + '" data-v="' + o[0] + '">' + o[1] + '</button>'; }).join(''));
           dd.appendChild(menu);
@@ -111,7 +147,15 @@
         };
       });
       body.onclick = function (e) { if (!e.target.closest('.dd')) UI.$$('.dd-menu', body).forEach(function (x) { x.parentNode.removeChild(x); }); };
-      if (body.querySelector('.f-reset')) body.querySelector('.f-reset').onclick = function () { cs.rarity = cs.owner = cs.type = 'all'; renderCodex(m); };
+      if (bar.querySelector('.f-reset')) bar.querySelector('.f-reset').onclick = function () { cs.rarity = cs.owner = cs.type = 'all'; renderCodex(m); };
+      var cardDetail = function (c, has) {
+        var def = has ? St().cardDef(c.id) : c, lv = has ? St().upLevel(c.id) : 0;
+        var big = UI.cardEl(def, { static: true, silhouette: !has });
+        if (!has) { big.querySelector('.cname span').textContent = '???'; big.querySelector('.ctext span').textContent = '아직 얻지 못한 카드'; }
+        detail(big, has ? U.esc(def.name) : '???', ownerName(c.owner) + ' · ' + G.RARITY_NAME[c.rarity] + ' · ' + G.TYPE_NAME[c.type] + (lv ? ' · ' + lv + '단계' : ''),
+          has ? '<p>' + UI.cardText(def) + '</p>' + (def.engrave ? '<p><b>각인 「' + U.esc(def.engrave.name) + '」</b> ' + U.esc(def.engrave.text) + '</p>' : '') : '<p class="dim">원정에서 얻으면 내용이 드러난다.</p>');
+        det.querySelector('.cx-dart').classList.add('card-art');
+      };
       shown.forEach(function (c) {
         var has = d.cards.indexOf(c.id) >= 0;
         var el = UI.cardEl(has ? St().cardDef(c.id) : c, { static: true, silhouette: !has });
@@ -120,110 +164,110 @@
           el.querySelector('.ctext span').textContent = '아직 얻지 못한 카드';
           el.removeAttribute('data-tip');
         }
-        if (G.debug && inBattle()) {
-          el.style.cursor = 'pointer';
-          el.onclick = function () {
+        el.style.cursor = 'pointer';
+        el.onclick = function () {
+          if (G.debug && inBattle()) {
             var b = G.Battle.current;
             if (b.piles.hand.length < G.Deck.HAND_MAX) { b.piles.hand.push(G.Deck.inst(c.id)); b.update(); }
-          };
-        }
+            return;
+          }
+          pick(el, function () { cardDetail(c, has); });
+        };
         grid.appendChild(el);
       });
+      var first = shown.filter(function (c) { return d.cards.indexOf(c.id) >= 0; })[0];
+      if (first) pick(grid.children[shown.indexOf(first)], function () { cardDetail(first, true); });
     } else if (cs.tab === 'monsters') {
       // 31단계: 엔딩 전에는 세계의 틈 몬스터를 목록·수에서 뺀다
-      var known = St().riftKnown(), shown = D.monsters.filter(function (mo) { return known || mo.theme !== 'rift'; });
-      var seenN = Object.keys(d.codex.monsters).filter(function (id) { return shown.some(function (mo) { return mo.id === id; }); }).length;
-      html += '<div class="codex-sum">만난 몬스터 <b>' + seenN + '/' + shown.length + '</b></div><div class="mon-list"></div>';
-      body.innerHTML = html;
-      var list = body.querySelector('.mon-list');
-      THEMES.filter(function (t) { return known || t !== 'rift'; }).forEach(function (t) {
-        list.appendChild(UI.el('div', 'theme-title', D.THEME_NAME[t]));
-        D.monsters.filter(function (mo) { return mo.theme === t; }).forEach(function (mo) {
-          var rec = d.codex.monsters[mo.id];
-          var row = UI.el('div', 'mon-row pix');
-          var sp = UI.el('div', 'sp');
-          var s = UI.spriteEl(mo.sprite, { h: 96, max: 0.9 });
-          s.style.left = '0';
-          if (!rec) { s.style.filter = 'brightness(0)'; s.style.animation = 'none'; }
-          sp.appendChild(s);
-          row.appendChild(sp);
-          var moves = mo.ai === 'weighted' ? Object.keys(mo.moves).map(function (k) { return mo.moves[k].name; }).join(' · ') + ' (그때그때 고른다)' : mo.pattern.map(function (k) { return mo.moves[k].name; }).join(' → ');
-          // 20단계 고유 규칙(특수 상태)
-          var rules = Object.keys(mo.startStatus || {}).filter(function (k) { return D.statuses[k] && D.statuses[k].kind === 'special'; })
-            .map(function (k) { return D.statuses[k].name + ' ' + mo.startStatus[k] + ': ' + D.statuses[k].desc.replace('{n}', mo.startStatus[k]); });
-          if (rules.length) moves += ' / 규칙 — ' + rules.join(' / ');
-          row.appendChild(UI.el('div', 'info', rec ?
-            '<b>' + mo.name + '</b> <span class="dim">' + RANK[mo.rank] + ' · 체력 ' + mo.hp + ' · 처치 ' + rec.kills + '회</span>' +
-            '<div>' + U.esc(moves) + (mo.triggers ? ' <span class="dim">(체력이 줄면 행동이 바뀐다)</span>' : '') + '</div><div class="dim">' + U.esc(mo.desc || '') + '</div>' :
-            '<b>???</b> <span class="dim">' + RANK[mo.rank] + ' · 아직 만나지 못했다</span>'));
-          list.appendChild(row);
-        });
+      var known = St().riftKnown(), themes = THEMES.filter(function (t) { return known || t !== 'rift'; });
+      if (cs.theme && themes.indexOf(cs.theme) < 0) cs.theme = null;
+      var mons = D.monsters.filter(function (mo) { return themes.indexOf(mo.theme) >= 0; });
+      var seenN = mons.filter(function (mo) { return d.codex.monsters[mo.id]; }).length;
+      var th = cs.theme || 'all', list = mons.filter(function (mo) { return th === 'all' || mo.theme === th; });
+      bar.innerHTML = chips('th', [['all', '전체']].concat(themes.map(function (t) { return [t, D.THEME_NAME[t]]; })), th) + '<span class="count">만난 몬스터 <b>' + seenN + '/' + mons.length + '</b></span>';
+      UI.$$('[data-th]', bar).forEach(function (b) { b.onclick = function () { cs.theme = b.getAttribute('data-th') === 'all' ? null : b.getAttribute('data-th'); renderCodex(m); }; });
+      var monSprite = function (mo, h, rec) {
+        var s = UI.spriteEl(mo.sprite, { h: h, max: 0.9 });
+        if (!rec) { s.style.filter = 'brightness(0)'; s.style.animation = 'none'; }
+        var w = UI.el('div', 'cx-sp'); w.appendChild(s);
+        return w;
+      };
+      var monDetail = function (mo) {
+        var rec = d.codex.monsters[mo.id];
+        if (!rec) return detail(monSprite(mo, 150, null), '???', RANK[mo.rank] + ' · ' + D.THEME_NAME[mo.theme], '<p class="dim">아직 만나지 못했다.</p>');
+        var moves = mo.ai === 'weighted' ? Object.keys(mo.moves).map(function (k) { return mo.moves[k].name; }).join(' · ') + ' (그때그때 고른다)' : mo.pattern.map(function (k) { return mo.moves[k].name; }).join(' → ');
+        // 20단계 고유 규칙(특수 상태)
+        var rules = Object.keys(mo.startStatus || {}).filter(function (k) { return D.statuses[k] && D.statuses[k].kind === 'special'; })
+          .map(function (k) { return '<li><b>' + D.statuses[k].name + ' ' + mo.startStatus[k] + '</b> ' + U.esc(D.statuses[k].desc.replace('{n}', mo.startStatus[k])) + '</li>'; });
+        detail(monSprite(mo, 150, rec), U.esc(mo.name), RANK[mo.rank] + ' · ' + D.THEME_NAME[mo.theme] + ' · 체력 ' + mo.hp + ' · 처치 ' + rec.kills + '회',
+          '<p><b>행동</b> ' + U.esc(moves) + (mo.triggers ? ' <span class="dim">(체력이 줄면 행동이 바뀐다)</span>' : '') + '</p>' + (rules.length ? '<ul>' + rules.join('') + '</ul>' : '') + '<p class="dim">' + U.esc(mo.desc || '') + '</p>');
+      };
+      list.forEach(function (mo) {
+        var rec = d.codex.monsters[mo.id];
+        var t = tile(monSprite(mo, 76, rec), rec ? U.esc(mo.name) : '???', mo.rank === 'normal' ? null : mo.rank === 'elite' ? 'elite' : 'crown', !rec);
+        t.onclick = function () { pick(t, function () { monDetail(mo); }); };
+        grid.appendChild(t);
       });
+      var fm = list.filter(function (mo) { return d.codex.monsters[mo.id]; })[0] || list[0];
+      if (fm) pick(grid.children[list.indexOf(fm)], function () { monDetail(fm); });
     } else if (cs.tab === 'relics') {
-      var have = d.relics || [];
-      html += '<div class="codex-sum">모은 유물 <b>' + have.length + '/' + D.relics.length + '</b> <span class="dim">· 정예·보스 처치, 상점에서 얻는다</span></div><div class="relic-list"></div>';
-      body.innerHTML = html;
-      var rl = body.querySelector('.relic-list');
-      ['common', 'uncommon', 'rare', 'boss'].forEach(function (rar) {
-        rl.appendChild(UI.el('div', 'theme-title', D.RELIC_RARITY[rar] + ' 유물'));
-        D.relics.filter(function (r) { return r.rarity === rar; }).forEach(function (r) {
-          var own = have.indexOf(r.id) >= 0;
-          var row = UI.el('div', 'mon-row');
-          row.innerHTML = '<div class="sp relic-sp"><i class="ico" style="' + UI.iconStyle(r.icon) + (own ? '' : ';filter:brightness(0)') + '"></i></div>' +
-            '<div class="info">' + (own ? '<b>' + U.esc(r.name) + '</b><div>' + U.esc(r.desc) + '</div>' : '<b>???</b><div class="dim">아직 얻지 못한 유물</div>') + '</div>';
-          rl.appendChild(row);
-        });
+      var have = d.relics || [], rar = cs.relicRar || 'all';
+      var rlist = D.relics.filter(function (r) { return rar === 'all' || r.rarity === rar; });
+      bar.innerHTML = chips('rr', [['all', '전체']].concat(['common', 'uncommon', 'rare', 'boss'].map(function (r) { return [r, D.RELIC_RARITY[r]]; })), rar) +
+        '<span class="count">모은 유물 <b>' + have.length + '/' + D.relics.length + '</b></span>';
+      UI.$$('[data-rr]', bar).forEach(function (b) { b.onclick = function () { cs.relicRar = b.getAttribute('data-rr'); renderCodex(m); }; });
+      var relicArt = function (r, own) { return UI.el('div', 'cx-relic', '<i class="ico" style="' + UI.iconStyle(r.icon) + (own ? '' : ';filter:brightness(0)') + '"></i>'); };
+      var relicDetail = function (r) {
+        var own = have.indexOf(r.id) >= 0;
+        detail(relicArt(r, own), own ? U.esc(r.name) : '???', D.RELIC_RARITY[r.rarity] + ' 유물',
+          own ? '<p>' + U.esc(r.desc) + '</p>' : '<p class="dim">아직 얻지 못한 유물. 정예 · 보스 처치, 상점에서 얻는다.</p>');
+      };
+      rlist.forEach(function (r) {
+        var own = have.indexOf(r.id) >= 0;
+        var t = tile(relicArt(r, own), own ? U.esc(r.name) : '???', null, !own);
+        t.classList.add('cx-rel');
+        t.onclick = function () { pick(t, function () { relicDetail(r); }); };
+        grid.appendChild(t);
       });
+      var fr = rlist.filter(function (r) { return have.indexOf(r.id) >= 0; })[0] || rlist[0];
+      if (fr) pick(grid.children[rlist.indexOf(fr)], function () { relicDetail(fr); });
     } else {
-      html += '<div class="hero-list"></div>';
-      body.innerHTML = html;
-      var hl = body.querySelector('.hero-list');
-      D.characters.forEach(function (c) {
-        var joined = d.characters.indexOf(c.id) >= 0;
-        var row = UI.el('div', 'mon-row pix');
-        var sp = UI.el('div', 'sp');
-        var s = UI.spriteEl(c.id, 0.9);
-        if (!joined) { s.style.filter = 'brightness(0)'; s.style.animation = 'none'; }
-        sp.appendChild(s);
-        row.appendChild(sp);
-        var cards = D.cards.filter(function (x) { return x.owner === c.id; }).map(function (x) {
-          return d.cards.indexOf(x.id) >= 0 ? '<span class="cn r-' + x.rarity + '">' + x.name + '</span>' : '<span class="cn dim">???</span>';
-        }).join(' ');
-        // 성장(레벨·경험치·고른 특성)
-        var growth = '';
-        if (joined) {
-          var ei = St().expInfo(c.id), g = St().growthOf(c.id);
-          var pct = ei.need ? Math.round((ei.exp - ei.prev) / (ei.need - ei.prev) * 100) : 100;
-          var picks = g.traits.map(function (p, lv) { var t = D.traits[c.id][lv][p]; return '<span class="trait-chip" data-tip="<b>' + t.name + '</b><br>' + t.desc + '">Lv' + (lv + 1) + ' ' + t.name + '</span>'; }).join('');
-          growth = '<div class="lvline"><span class="lv">Lv ' + ei.level + '</span><span class="expbar"><i style="width:' + pct + '%"></i></span>' +
-            '<span class="dim">' + (ei.need ? ei.exp + '/' + ei.need : '최고 레벨') + '</span></div>' + (picks ? '<div class="cnames">' + picks + '</div>' : '');
-        }
-        row.appendChild(UI.el('div', 'info', joined ?
-          '<b>' + c.name + '</b> <span class="dim">' + c.role + ' · ' + c.job + ' · 체력 ' + St().maxHp(c.id) + ' · 치명타 ' + Math.round(c.crit * 100) + '%</span>' +
-          growth + (c.resource ? '<div class="res-line" style="color:' + c.resource.color + '"><b>고유 자원 · ' + c.resource.name + '</b> <span class="dim">' + U.esc(c.resource.desc) + '</span></div>' : '') + '<div class="dim">' + c.desc + '</div><div class="cnames">' + cards + '</div>' :
-          '<b>???</b> <span class="dim">' + c.joinAfter + ' 스테이지를 클리어하면 합류한다</span>'));
-        hl.appendChild(row);
-      });
-      // 짝 친밀도: 막대, 단계, 다음 해금, 합동기
-      hl.appendChild(UI.el('div', 'theme-title', '친밀도'));
+      bar.innerHTML = '<span class="count">함께하는 동료 <b>' + d.characters.length + '/' + D.characters.length + '</b></span>';
       var chars = D.characters.map(function (c) { return c.id; });
-      for (var i = 0; i < chars.length; i++) for (var j = i + 1; j < chars.length; j++) {
-        var key = St().pairKey(chars[i], chars[j]);
-        if (d.characters.indexOf(chars[i]) < 0 || d.characters.indexOf(chars[j]) < 0) continue;
-        var v = (d.bonds || {})[key] || 0, lv = St().bondLevel(key), next = D.bondLevels[lv];
-        var nextText = lv === 0 ? '대화 1' : lv === 1 ? '대화 2 · 짝 연계 1.5배' : lv === 2 ? '대화 3 · 합동기' : '모두 해금';
-        var duoC = D.duoByPair[key];
-        var pcs = D.pairCombos.filter(function (p) { return St().pairKey(p.from, p.to) === key; })
-          .map(function (p) { return '<span class="trait-chip" data-tip="<b>' + p.name + '</b><br>' + charDef(p.from).name + ' → ' + charDef(p.to).name + ': ' + p.desc + '">' + p.name + '</span>'; }).join('');
-        var br = UI.el('div', 'mon-row bond-row');
-        br.innerHTML = '<div class="info"><b>' + charDef(chars[i]).name + ' · ' + charDef(chars[j]).name + '</b> <span class="dim">' + lv + '단계 · 대화 ' + ((d.talks || {})[key] || 0) + '/3</span>' +
-          '<div class="lvline"><span class="expbar bond"><i style="width:' + Math.min(100, Math.round(v / D.bondLevels[2] * 100)) + '%"></i></span>' +
-          '<span class="dim">' + v + (next ? '/' + next + ' → ' + nextText : ' · ' + nextText) + '</span></div>' +
-          '<div class="cnames">' + pcs + (duoC ? '<span class="trait-chip duo" data-tip="<b>' + duoC.name + '</b> (합동기)<br>' + U.esc(duoC.text.replace(/\{d0\}/, '')) + '">' + (lv >= 3 ? '합동기 ' + duoC.name : '합동기 ???') + '</span>' : '') + '</div></div>';
-        hl.appendChild(br);
-      }
+      var bondsOf = function (id) {
+        return chars.filter(function (o) { return o !== id && d.characters.indexOf(o) >= 0; }).map(function (o) {
+          var key = St().pairKey(id, o), v = (d.bonds || {})[key] || 0, lv = St().bondLevel(key), next = D.bondLevels[lv], duoC = D.duoByPair[key];
+          return '<div class="cx-bond"><b>' + charDef(o).name + '</b><span class="expbar bond"><i style="width:' + Math.min(100, Math.round(v / D.bondLevels[2] * 100)) + '%"></i></span>' +
+            '<small>' + lv + '단계 · 대화 ' + ((d.talks || {})[key] || 0) + '/3' + (next ? ' · ' + v + '/' + next : '') + (duoC ? ' · 합동기 ' + (lv >= 3 ? duoC.name : '???') : '') + '</small></div>';
+        }).join('');
+      };
+      var heroDetail = function (c) {
+        var joined = d.characters.indexOf(c.id) >= 0;
+        var art = heroArt(c.id, 1.6);
+        if (!joined) { art.style.filter = 'brightness(0)'; }
+        if (!joined) return detail(art, '???', c.joinAfter + ' 스테이지를 클리어하면 합류한다', '');
+        var ei = St().expInfo(c.id), g = St().growthOf(c.id);
+        var pct = ei.need ? Math.round((ei.exp - ei.prev) / (ei.need - ei.prev) * 100) : 100;
+        var picks = g.traits.map(function (p, lv) { var t = D.traits[c.id][lv][p]; return '<span class="trait-chip" data-tip="<b>' + t.name + '</b><br>' + t.desc + '">Lv' + (lv + 1) + ' ' + t.name + '</span>'; }).join('');
+        var own = D.cards.filter(function (x) { return x.owner === c.id; }), ownN = own.filter(function (x) { return d.cards.indexOf(x.id) >= 0; }).length;
+        detail(art, U.esc(c.name) + ' <small>' + U.esc(c.en || '') + '</small>', c.role + ' · ' + c.job + ' · 체력 ' + St().maxHp(c.id) + ' · 치명타 ' + Math.round(c.crit * 100) + '%',
+          '<div class="lvline"><span class="lv">Lv ' + ei.level + '</span><span class="expbar"><i style="width:' + pct + '%"></i></span><span class="dim">' + (ei.need ? ei.exp + '/' + ei.need : '최고 레벨') + '</span></div>' +
+          (picks ? '<div class="cnames">' + picks + '</div>' : '') +
+          (c.resource ? '<p><b style="color:' + c.resource.color + '">고유 자원 · ' + c.resource.name + '</b> ' + U.esc(c.resource.desc) + '</p>' : '') +
+          '<p>' + c.desc + '</p><p class="dim">카드 ' + ownN + '/' + own.length + '장 모음</p>' + (bondsOf(c.id) ? '<h4>친밀도</h4>' + bondsOf(c.id) : ''));
+      };
+      D.characters.forEach(function (c) {
+        var joined = d.characters.indexOf(c.id) >= 0, art = heroArt(c.id, 1.1);
+        if (!joined) art.style.filter = 'brightness(0)';
+        var t = tile(art, joined ? c.name : '???', ROLE_ICON[c.role] || 'party', !joined);
+        t.style.setProperty('--hc', c.color);
+        t.onclick = function () { pick(t, function () { heroDetail(c); }); };
+        grid.appendChild(t);
+      });
+      var fh = cs.hero ? D.characters.filter(function (c) { return c.id === cs.hero; })[0] : D.characters[0];
+      pick(grid.children[D.characters.indexOf(fh)], function () { heroDetail(fh); });
     }
-    UI.$$('.tab', body).forEach(function (b) { b.onclick = function () { cs.tab = b.getAttribute('data-tab'); renderCodex(m); }; });
+    UI.$$('.cx-tab', body).forEach(function (b) { b.onclick = function () { cs.tab = b.getAttribute('data-tab'); renderCodex(m); }; });
   }
 
   // ================= 덱 편집 =================
@@ -308,16 +352,35 @@
   X.stats = function (tab) {
     if (tab) statTab = tab;
     if (!St().data && statTab === 'slot') statTab = 'all';
-    var list = (St().data ? [['slot', '이 칸']] : []).concat([['all', '전체 기록'], ['cards', '카드 통계'], ['ach', '업적'], ['daily', '오늘의 원정']]);
-    var m = win('기록', tabs(list, statTab) + '<div class="stats-body"></div>', 'setwin statwin');
+    var list = (St().data ? [['slot', '이 칸', 'stats']] : []).concat([['all', '전체 기록', 'scroll'], ['cards', '카드 통계', 'deck'], ['ach', '업적', 'crown'], ['daily', '오늘의 원정', 'dice']]);
+    // 40단계: 시안(records_sd_v1) — 위 탭, 왼쪽 한지 기록판, 오른쪽 원정 길(스테이지 점) 패널
+    var m = win('기록', tabs(list, statTab) + '<div class="st-layout"><div class="stats-body"></div><aside class="st-side frame">' + recordSide() + '</aside></div>', 'statwin');
     UI.$$('.tab', m).forEach(function (b) { b.onclick = function () { X.stats(b.getAttribute('data-tab')); }; });
-    var body = m.querySelector('.stats-body');
+    var body = m.querySelector('.stats-body'), md = m.querySelector('.st-medal');
+    if (md && St().data && G.Meta.fillMedals) { md.innerHTML = '<div class="medal" data-mid="' + St().data.party[0] + '"></div>'; G.Meta.fillMedals(md); }
     if (statTab === 'slot') body.innerHTML = slotStats();
     else if (statTab === 'all') body.innerHTML = profileStats();
     else if (statTab === 'cards') { body.innerHTML = cardStats(); UI.$$('[data-cs]', body).forEach(function (b) { b.onclick = function () { cardSort = b.getAttribute('data-cs'); X.stats(); }; }); }
     else if (statTab === 'ach') body.innerHTML = achList();
     else body.innerHTML = dailyList();
   };
+  // 오른쪽 패널: 이 칸의 원정 길(깬 스테이지는 붉은 점, 다음 스테이지는 금테) + 승천 · 엔딩
+  function recordSide() {
+    var P = G.Profile, d = St().data;
+    if (!d) return '<h3 class="sd-sub">전체 기록</h3><div class="st-big hanji"><b>' + P.stat('stages') + '</b><small>깬 스테이지</small></div><div class="st-big hanji"><b>' + P.stat('endings') + '</b><small>엔딩</small></div>';
+    var n = St().stageCount(), lead = d.party && d.party[0];
+    var dots = '';
+    for (var i = 1; i <= n; i++) {
+      var sd = St().stageDef(i), cls = i <= d.clearedStage ? 'done' : i === d.clearedStage + 1 ? 'next' : '';
+      dots += '<li class="' + cls + '" data-tip="' + i + ' · ' + D.THEME_NAME[sd.theme] + '"><i></i><small>' + i + '</small></li>';
+    }
+    var mode = (D.modes[d.mode] || D.modes.normal).name;
+    return '<div class="rc-head"><div class="st-medal"></div><div><h3>' + G.Save.slot + '번 칸 · ' + mode + '</h3><small>' + (d.flags.ended ? '혈마를 쓰러뜨렸다' : '다음: ' + (d.clearedStage < n ? (d.clearedStage + 1) + ' 스테이지 ' + D.THEME_NAME[St().stageDef(d.clearedStage + 1).theme] : '모두 돌파')) + '</small></div></div>' +
+      '<div class="st-route hanji"><ol>' + dots + '</ol></div>' +
+      '<div class="st-quad">' + [['클리어', d.clearedStage + '/' + n], ['승천', St().ascLevel() || '기본'], ['동료', d.characters.length + '명'], ['골드', d.gold]].map(function (q) {
+        return '<div class="hanji"><small>' + q[0] + '</small><b>' + q[1] + '</b></div>';
+      }).join('') + '</div>';
+  }
   function stat(label, v, sub) { return '<div class="stat"><small>' + label + '</small><b>' + v + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</div>'; }
   function profileStats() {
     var P = G.Profile, pr = P.get(), s = function (k) { return P.stat(k); };
@@ -469,33 +532,44 @@
   };
 
   // ================= 설정 =================
+  // 설정 줄 아이콘: 금색 선 그림(코드 그림, 이모지 아님)
+  var SET_ICO = {
+    sfx: '<path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/>',
+    bgm: '<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>',
+    fx: '<path d="M12 3l2 6 6 2-6 2-2 6-2-6-6-2 6-2z"/>',
+    speed: '<path d="M4 17a8 8 0 1 1 16 0"/><path d="M12 17l4-5"/>',
+    text: '<path d="M5 19L11 5h2l6 14M8 14h8"/>',
+    cb: '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+    hk: '<rect x="3" y="7" width="18" height="11" rx="2"/><path d="M7 11h1M11 11h1M15 11h1M8 15h8"/>'
+  };
   X.settingsWin = function () {
     var s = X.settings, debug = '';
     if (G.debug) {
       debug = '<div class="set-row"><span>디버그</span><div class="row"><button class="btn small dbg-gold">골드 +500</button>' +
         '<button class="btn small dbg-heal">전원 회복</button><button class="btn small dbg-relic">무작위 유물 +1</button><button class="btn small dbg-exp">경험치 +100</button><button class="btn small dbg-bond">친밀도 +20</button><button class="btn small dbg-test">전투 테스트 메뉴</button></div></div>';
     }
+    // 40단계: 시안(settings_sd_v1) — 왼쪽 하린, 한지 판 위에 문장 아이콘 + 청록 슬라이더 · 구간 단추 · 토글, 아래에 큰 단추
+    var ico = function (k) { return '<i class="set-ico"><svg viewBox="0 0 24 24">' + SET_ICO[k] + '</svg></i>'; };
+    var seg = function (opts) { return '<div class="seg">' + opts.map(function (o) { return '<button class="seg-b ' + o[0] + (o[2] ? ' on' : '') + '"' + (o[3] || '') + '>' + o[1] + '</button>'; }).join('') + '</div>'; };
+    var tog = function (cls, on) { return '<button class="tog ' + cls + (on ? ' on' : '') + '" aria-pressed="' + !!on + '"><i></i></button>'; };
     var m = win('설정',
-      '<div class="settings">' +
-      '<div class="set-row"><span>효과음 볼륨</span><div class="row"><input type="range" min="0" max="100" step="5" class="vol" value="' + s.volume + '"><b class="volv">' + s.volume + '</b></div></div>' +
-      '<div class="set-row"><span>배경음악 볼륨</span><div class="row"><input type="range" min="0" max="100" step="5" class="bgm" value="' + (s.bgm == null ? 45 : s.bgm) + '"><b class="bgmv">' + (s.bgm == null ? 45 : s.bgm) + '</b><small class="dim music-now"></small></div></div>' +
-      '<div class="set-row"><span>이펙트 강도</span><div class="row"><button class="btn small fx-normal ' + (s.fx !== 'low' ? 'on' : '') + '">보통</button>' +
-      '<button class="btn small fx-low ' + (s.fx === 'low' ? 'on' : '') + '">낮음</button><small class="dim">낮음: 파티클 30%, 흔들림·번쩍임 끔</small></div></div>' +
-      '<div class="set-row"><span>전투 속도</span><div class="row"><button class="btn small sp1 ' + (s.speed !== 2 ? 'on' : '') + '">1x</button>' +
-      '<button class="btn small sp2 ' + (s.speed === 2 ? 'on' : '') + '">2x</button></div></div>' +
-      '<div class="set-row"><span>글자 크기</span><div class="row">' + [[1, '보통'], [1.15, '크게'], [1.3, '더 크게']].map(function (t) {
-        return '<button class="btn small ts" data-ts="' + t[0] + '">' + t[1] + '</button>';
-      }).join('') + '</div></div>' +
-      '<div class="set-row"><span>색약 표기</span><div class="row"><button class="btn small cb-on ' + (s.cb ? 'on' : '') + '">켬</button><button class="btn small cb-off ' + (!s.cb ? 'on' : '') + '">끔</button>' +
-      '<small class="dim">행동 예고·상태에 글자 표시, 공격 대상 이름</small></div></div>' +
-      '<div class="set-row"><span>단축키 표시</span><div class="row"><button class="btn small hk-on ' + (s.hotkeys !== false ? 'on' : '') + '">켬</button><button class="btn small hk-off ' + (s.hotkeys === false ? 'on' : '') + '">끔</button>' +
-      '<small class="dim">1~0 카드 · ←→ 대상 · Enter 사용 · E 턴 종료 · Z 되돌리기</small></div></div>' +
-      '<div class="set-row"><span>튜토리얼</span><div class="row"><button class="btn small tut">다음 전투에서 다시 보기</button></div></div>' +
-      (St().data && !St().isDaily() ? '<div class="set-row"><span>저장 옮기기</span><div class="row"><button class="btn small export">' + G.Save.slot + '번 칸 내보내기</button><small class="dim">가져오기는 타이틀의 저장 칸 화면에서</small></div></div>' : '') +
-      '<div class="set-row"><span>저장 데이터</span><div class="row"><button class="btn small reset">초기화</button><small class="dim">' + (G.debug ? '디버그 저장만 지운다' : '모든 진행이 사라진다') + '</small></div></div>' +
-      debug + '</div>', 'setwin');
+      '<div class="settings set-layout"><div class="set-hero"></div><div class="set-paper hanji">' +
+      '<div class="set-row">' + ico('sfx') + '<span>효과음</span><input type="range" min="0" max="100" step="5" class="vol" value="' + s.volume + '"><b class="volv">' + s.volume + '</b></div>' +
+      '<div class="set-row">' + ico('bgm') + '<span>배경음악</span><input type="range" min="0" max="100" step="5" class="bgm" value="' + (s.bgm == null ? 45 : s.bgm) + '"><b class="bgmv">' + (s.bgm == null ? 45 : s.bgm) + '</b><small class="dim music-now"></small></div>' +
+      '<div class="set-row">' + ico('fx') + '<span>이펙트 강도</span>' + seg([['fx-normal', '보통', s.fx !== 'low'], ['fx-low', '낮음', s.fx === 'low']]) + '<small class="dim">낮음: 파티클 30%, 흔들림·번쩍임 끔</small></div>' +
+      '<div class="set-row">' + ico('speed') + '<span>전투 속도</span>' + seg([['sp1', '1x', s.speed !== 2], ['sp2', '2x', s.speed === 2]]) + '</div>' +
+      '<div class="set-row">' + ico('text') + '<span>글자 크기</span>' + seg([[1, '보통'], [1.15, '크게'], [1.3, '더 크게']].map(function (t) { return ['ts', t[1], t[0] === (s.textScale || 1), ' data-ts="' + t[0] + '"']; })) + '</div>' +
+      '<div class="set-row">' + ico('cb') + '<span>색약 표기</span>' + tog('cb-tog', s.cb) + '<small class="dim">행동 예고·상태에 글자 표시, 공격 대상 이름</small></div>' +
+      '<div class="set-row">' + ico('hk') + '<span>단축키 표시</span>' + tog('hk-tog', s.hotkeys !== false) + '<small class="dim">1~0 카드 · ←→ 대상 · Enter 사용 · E 턴 종료 · Z 되돌리기</small></div>' +
+      '<div class="set-foot"><button class="btn tut">튜토리얼 다시 보기</button>' +
+      (St().data && !St().isDaily() ? '<button class="btn export" data-tip="가져오기는 타이틀의 저장 칸 화면에서">' + G.Save.slot + '번 칸 내보내기</button>' : '') +
+      '<button class="btn danger reset" data-tip="' + (G.debug ? '디버그 저장만 지운다' : '모든 진행이 사라진다') + '">저장 초기화</button></div>' +
+      debug + '</div></div>', 'setwin');
+    var hp = UI.portraitEl('kai', 'set-pic');
+    if (hp) m.querySelector('.set-hero').appendChild(hp);
     var re = function () { X.settingsWin(); };
     var vol = m.querySelector('.vol');
+    UI.$$('input[type=range]', m).forEach(function (r) { var f = function () { r.style.setProperty('--v', r.value + '%'); }; f(); r.addEventListener('input', f); });
     vol.oninput = function () { m.querySelector('.volv').textContent = vol.value; };
     vol.onchange = function () { s.volume = +vol.value; X.applySettings(s); G.Audio.play('coin'); };
     var bgm = m.querySelector('.bgm');
@@ -508,13 +582,10 @@
     m.querySelector('.sp1').onclick = function () { s.speed = 1; X.applySettings(s); re(); };
     m.querySelector('.sp2').onclick = function () { s.speed = 2; X.applySettings(s); re(); };
     UI.$$('.ts', m).forEach(function (b) {
-      b.classList.toggle('on', +b.getAttribute('data-ts') === (s.textScale || 1));
       b.onclick = function () { s.textScale = +b.getAttribute('data-ts'); X.applySettings(s); re(); };
     });
-    m.querySelector('.cb-on').onclick = function () { s.cb = true; X.applySettings(s); re(); X.refreshScreen(); };
-    m.querySelector('.cb-off').onclick = function () { s.cb = false; X.applySettings(s); re(); X.refreshScreen(); };
-    m.querySelector('.hk-on').onclick = function () { s.hotkeys = true; X.applySettings(s); re(); };
-    m.querySelector('.hk-off').onclick = function () { s.hotkeys = false; X.applySettings(s); re(); };
+    m.querySelector('.cb-tog').onclick = function () { s.cb = !s.cb; X.applySettings(s); re(); X.refreshScreen(); };
+    m.querySelector('.hk-tog').onclick = function () { s.hotkeys = s.hotkeys === false; X.applySettings(s); re(); };
     if (m.querySelector('.export')) m.querySelector('.export').onclick = function () { St().save(); X.exportWin(G.Save.slot); };
     m.querySelector('.tut').onclick = function () {
       if (St().data) { St().data.flags.tutorialDone = false; St().save(); }

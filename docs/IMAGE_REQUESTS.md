@@ -138,6 +138,13 @@
 | `assets/backgrounds/title.jpg` | 1920×1080 | 타이틀 — 두 세계가 맞닿은 하늘, 가운데 위는 제목 자리로 비운다(제목 글자는 게임이 쓴다) | 있음 |
 | `assets/backgrounds/lobby.jpg` | 1920×1080 | 로비 — 원정대의 야영지(무림 천막과 엘단 마법 등불), 왼쪽에 동료 큰 그림이 서고 오른쪽에 메뉴 타일이 놓인다 | 있음 |
 | `assets/backgrounds/dungeon_map.jpg` | 1920×1080 | 던전 지도 바탕 — 낡은 한지 · 양피지 지도(그 위에 방 아이콘과 길이 그려진다) |  |
+| `assets/backgrounds/shop.jpg` | 1920×1080 | 상점 — 떠돌이 상인의 천막 안(등불 · 진열 선반 · 비단 휘장). 왼쪽에 동료, 가운데에 상품판, 오른쪽에 패널이 놓이니 가운데는 차분하게 · **UI 없이 장면만**(시안 `assets/ui/mockups/shop_sd_v1.png`의 배경) |  |
+| `assets/backgrounds/camp.jpg` | 1920×1080 | 휴식 — 밤의 야영지 모닥불(왼쪽 아래 40%에 불과 동료가 앉을 자리, 오른쪽은 어두운 숲 · 정자) · **UI 없이 장면만**(시안 `assets/ui/mockups/camp_sd_v1.png`의 배경) |  |
+| `assets/backgrounds/forge.jpg` | 1920×1080 | 대장간 — 천외 대장간(화로 · 모루 · 쇠사슬 · 붉은 불티). 가운데에 카드 두 장이 놓인다 · **UI 없이 장면만**(시안 `assets/ui/mockups/forge_sd_v1.png`의 배경) |  |
+| `assets/backgrounds/reward.jpg` | 1920×1080 | 보상 — 전투 뒤 보물 전각(금빛 빛줄기 · 금화 · 깃발). 가운데에 카드 세 장 · **UI 없이 장면만**(시안 `assets/ui/mockups/reward_sd_v1.png`의 배경) |  |
+| `assets/backgrounds/codex.jpg` | 1920×1080 | 도감 창 뒤 — 금서각 서고(책장 · 혼천의 · 촛불) · **UI 없이 장면만**(시안 `assets/ui/mockups/codex_sd_v1.png`의 배경) |  |
+| `assets/backgrounds/records.jpg` | 1920×1080 | 기록 창 뒤 — 서재와 달빛 창(두루마리 · 붓 · 지도) · **UI 없이 장면만**(시안 `assets/ui/mockups/records_sd_v1.png`의 배경) |  |
+| `assets/backgrounds/settings.jpg` | 1920×1080 | 설정 창 뒤 — 밤의 누각과 붉은 달, 등불 난간 · **UI 없이 장면만**(시안 `assets/ui/mockups/settings_sd_v1.png`의 배경) |  |
 
 ## 묶음 3 — UI/UX 시안과 부품 (39단계)
 
@@ -153,6 +160,15 @@
 후보: 패널 틀(9칸 늘이기용 — 모서리 · 가장자리를 가운데와 나눠 그린다), 버튼(보통 · 눌림 · 금빛 강조), 메뉴 타일, 리본 · 제목 띠, 체력 막대, 에너지 보석,
       행동 예고 판, 툴팁 틀, 창 틀, 탭, 지도 방 표식, 카드 뒷면, 진행 막대, 구분선 장식
 크기 · 9칸 나누기 규칙은 3-1 시안을 본 뒤 Claude가 부품마다 정해 요청서를 갱신한다
+```
+
+```
+[IMAGE REQUEST] 3-3 UI 부품 가벼운 판 (40단계, 시안 적용 뒤)
+지금: assets/ui/components/ 의 버튼 · 패널 틀이 1~3MB 이고 그림의 위아래 약 20%가 빈 여백이다. 게임은 CSS border-image(9칸 늘이기)로 쓴다
+요청: ① button_primary.png · button_secondary.png — 여백 없이 띠만, 512×128(PNG 알파, 200KB 이하). 왼쪽 · 오른쪽 장식 끝은 각각 가로 25% 안에
+      ② panel_border.png — 1024×1024, 가운데는 완전 투명, 모서리 장식은 가장자리 14% 안에(PNG 알파, 400KB 이하)
+      ③ 새 부품: 동그란 문장 틀(medallion_ring.png 256×256 — 동료 얼굴 · 방 아이콘 · 닫기 단추에 씀, 가운데 투명), 탭(tab_on.png · tab_off.png 256×96)
+조건: 글자 없음 · 같은 금테 · 먹색 · 옻칠 붉은색. 코드는 지금 CSS로 그린 같은 모양을 쓰고 있어 올라오면 바꿔 끼운다
 ```
 
 ## 묶음 4 — 보스 · 정예 몬스터 (37종)

@@ -16,7 +16,7 @@ Game.Data.assetSpec = {
   cardFrame:   { dir: 'cards/frames', name: '{id}', size: [500, 700], alpha: true, desc: '카드 틀(5:7). 그림 창 · 이름 · 비용 · 본문 자리는 투명. {id} = ink_등급 · split_등급(등급: common uncommon rare epic legendary)' },
   bgBattle:    { dir: 'backgrounds', name: 'battle_{id}', size: [1920, 1080], alpha: false, desc: '전투 배경(16:9). 위에서 70% 높이쯤이 땅(캐릭터가 선다). 가운데는 차분하게(캐릭터·숫자가 잘 보이게)' },
   bgFore:      { dir: 'backgrounds', name: 'battle_{id}_fore', size: [1920, 240], alpha: true, desc: '(선택) 전투 앞쪽 장식 띠. 화면 맨 아래 캐릭터 발 앞에 깔린다' },
-  bgScreen:    { dir: 'backgrounds', name: '{id}', size: [1920, 1080], alpha: false, desc: '화면 배경(타이틀 · 로비 · 던전 지도)' },
+  bgScreen:    { dir: 'backgrounds', name: '{id}', size: [1920, 1080], alpha: false, desc: '화면 배경(타이틀 · 로비 · 던전 지도 · 상점 · 휴식 camp · 대장간 forge · 보상 reward · 도감 codex · 기록 records · 설정 settings). UI 없는 장면만' },
   worldMap:    { dir: 'backgrounds', name: 'world_map', size: [2000, 1120], alpha: false, desc: '월드맵(무림 · 세계의 틈 · 엘단). 스테이지 13곳의 좌표는 요청서 표를 따른다' },
   icon:        { dir: 'icons', name: '{id}', size: [128, 128], alpha: true, desc: '아이콘. 화면에서 22~32px로 줄어도 알아보게 굵고 단순하게. 하위 폴더(status · intent · ui · map)는 자유, 이름이 키' },
   relic:       { dir: 'items/relics', name: '{id}', size: [128, 128], alpha: true, desc: '유물 아이콘' },

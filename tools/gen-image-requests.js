@@ -117,6 +117,16 @@ P('| `assets/backgrounds/world_map.jpg` | ' + SP.worldMap.size.join('×') + ' | 
 P('| `assets/backgrounds/title.jpg` | ' + sz('bgScreen') + ' | 타이틀 — 두 세계가 맞닿은 하늘, 가운데 위는 제목 자리로 비운다(제목 글자는 게임이 쓴다) | ' + mark('backgrounds/title') + ' |');
 P('| `assets/backgrounds/lobby.jpg` | ' + sz('bgScreen') + ' | 로비 — 원정대의 야영지(무림 천막과 엘단 마법 등불), 왼쪽에 동료 큰 그림이 서고 오른쪽에 메뉴 타일이 놓인다 | ' + mark('backgrounds/lobby') + ' |');
 P('| `assets/backgrounds/dungeon_map.jpg` | ' + sz('bgScreen') + ' | 던전 지도 바탕 — 낡은 한지 · 양피지 지도(그 위에 방 아이콘과 길이 그려진다) | ' + mark('backgrounds/dungeon_map') + ' |');
+// 40단계: 시안(assets/ui/mockups)을 실제 화면으로 옮겼다. 시안 그림은 UI가 그려져 있어 배경으로 쓰지 않으므로, 같은 장면을 UI 없이 다시 받는다
+[['shop', '상점 — 떠돌이 상인의 천막 안(등불 · 진열 선반 · 비단 휘장). 왼쪽에 동료, 가운데에 상품판, 오른쪽에 패널이 놓이니 가운데는 차분하게', 'shop_sd_v1'],
+ ['camp', '휴식 — 밤의 야영지 모닥불(왼쪽 아래 40%에 불과 동료가 앉을 자리, 오른쪽은 어두운 숲 · 정자)', 'camp_sd_v1'],
+ ['forge', '대장간 — 천외 대장간(화로 · 모루 · 쇠사슬 · 붉은 불티). 가운데에 카드 두 장이 놓인다', 'forge_sd_v1'],
+ ['reward', '보상 — 전투 뒤 보물 전각(금빛 빛줄기 · 금화 · 깃발). 가운데에 카드 세 장', 'reward_sd_v1'],
+ ['codex', '도감 창 뒤 — 금서각 서고(책장 · 혼천의 · 촛불)', 'codex_sd_v1'],
+ ['records', '기록 창 뒤 — 서재와 달빛 창(두루마리 · 붓 · 지도)', 'records_sd_v1'],
+ ['settings', '설정 창 뒤 — 밤의 누각과 붉은 달, 등불 난간', 'settings_sd_v1']].forEach(x => {
+  P('| `assets/backgrounds/' + x[0] + '.jpg` | ' + sz('bgScreen') + ' | ' + x[1] + ' · **UI 없이 장면만**(시안 `assets/ui/mockups/' + x[2] + '.png`의 배경) | ' + mark('backgrounds/' + x[0]) + ' |');
+});
 P('');
 
 // ---------------- 묶음 3 UI ----------------
@@ -134,6 +144,15 @@ P('[IMAGE REQUEST] 3-2 UI 부품');
 P('후보: 패널 틀(9칸 늘이기용 — 모서리 · 가장자리를 가운데와 나눠 그린다), 버튼(보통 · 눌림 · 금빛 강조), 메뉴 타일, 리본 · 제목 띠, 체력 막대, 에너지 보석,');
 P('      행동 예고 판, 툴팁 틀, 창 틀, 탭, 지도 방 표식, 카드 뒷면, 진행 막대, 구분선 장식');
 P('크기 · 9칸 나누기 규칙은 3-1 시안을 본 뒤 Claude가 부품마다 정해 요청서를 갱신한다');
+P('```');
+P('');
+P('```');
+P('[IMAGE REQUEST] 3-3 UI 부품 가벼운 판 (40단계, 시안 적용 뒤)');
+P('지금: assets/ui/components/ 의 버튼 · 패널 틀이 1~3MB 이고 그림의 위아래 약 20%가 빈 여백이다. 게임은 CSS border-image(9칸 늘이기)로 쓴다');
+P('요청: ① button_primary.png · button_secondary.png — 여백 없이 띠만, 512×128(PNG 알파, 200KB 이하). 왼쪽 · 오른쪽 장식 끝은 각각 가로 25% 안에');
+P('      ② panel_border.png — 1024×1024, 가운데는 완전 투명, 모서리 장식은 가장자리 14% 안에(PNG 알파, 400KB 이하)');
+P('      ③ 새 부품: 동그란 문장 틀(medallion_ring.png 256×256 — 동료 얼굴 · 방 아이콘 · 닫기 단추에 씀, 가운데 투명), 탭(tab_on.png · tab_off.png 256×96)');
+P('조건: 글자 없음 · 같은 금테 · 먹색 · 옻칠 붉은색. 코드는 지금 CSS로 그린 같은 모양을 쓰고 있어 올라오면 바꿔 끼운다');
 P('```');
 P('');
 
