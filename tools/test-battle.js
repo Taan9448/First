@@ -71,6 +71,49 @@ section('데이터');
   check(G.Music.forBattle({ monsters: ['astaroth'], nodeType: 'final' }) === 'final' && G.Music.forBattle({ monsters: ['treant'], nodeType: 'boss', theme: 'forest' }) === 'boss' &&
     G.Music.forBattle({ monsters: ['slime'], nodeType: 'battle', theme: 'desert' }) === 'desert' && G.Music.forBattle({ monsters: ['slime'], nodeType: 'elite', theme: 'mirror' }) === 'castle', '전투 → 곡(혈마·보스·테마·거울의 방)');
 }
+// 37단계: 곡 변주 구간 · 보스 페이즈 · 타격음 고르기
+{
+  const M = G.Data.music, Mu = G.Music;
+  Object.keys(M).forEach(id => {
+    const per = Mu.periodOf(id);
+    check(per % 8 === 0, id + ': 한 바퀴가 마디로 나뉜다');
+    check(M[id].voices.some(v => v.alt != null || v.section === 'B'), id + ': 변주 구간이 있다');
+    // B 구간 전용 목소리는 A 구간에 들리지 않는다
+    M[id].voices.forEach((v, i) => {
+      if (v.section !== 'B') return;
+      let inA = false, inB = false;
+      for (let s = 0; s < per; s++) { if (Mu.voicesAt(id, s, 1, 'calm').includes(i)) inA = true; if (Mu.voicesAt(id, s + per, 1, 'calm').includes(i)) inB = true; }
+      check(!inA && inB, id + ' 목소리 ' + i + ': B 구간에서만 들린다');
+    });
+  });
+  ['boss', 'final', 'riftFinal'].forEach(id => {
+    const per = Mu.periodOf(id), ph = M[id].voices.map((v, i) => v.phase ? i : -1).filter(i => i >= 0);
+    check(ph.length >= 2 && M[id].phaseTempo > 1, id + ': 페이즈 층과 빨라지기');
+    let p1 = false, p3 = new Set();
+    for (let s = 0; s < per * 2; s++) { if (Mu.voicesAt(id, s, 1).some(i => ph.includes(i))) p1 = true; Mu.voicesAt(id, s, 3).forEach(i => p3.add(i)); }
+    check(!p1 && ph.every(i => p3.has(i)), id + ': 페이즈 목소리는 그 페이즈부터');
+  });
+  global.document = { addEventListener() {} };
+  ['data/sfx.js', 'js/audio.js'].forEach(f => vm.runInThisContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), { filename: f }));
+  delete global.document;
+  const A = G.Audio, X = G.Data.sfx, hero = id => ({ side: 'ally', def: G.Data.characterById ? G.Data.characterById[id] : G.Data.characters.find(c => c.id === id) });
+  const names = info => A.forHit(Object.assign({ amount: 6 }, info)).map(x => x.name).join();
+  [].concat(Object.values(X.hero), Object.values(X.style), Object.values(X.element), X.moves.map(m => m[0])).forEach(n => check(A.has(n), '타격음 ' + n + ' 이 있다'));
+  check(names({ el: 'neutral', caster: hero('kai') }) === 'brush' && names({ el: 'steel', caster: hero('bram') }) === 'blunt' &&
+    names({ el: 'neutral', caster: hero('ciel') }) === 'arrow' && names({ el: 'neutral', caster: hero('nox') }) === 'pierce', '동료 무기 소리(붓 · 방패 · 활 · 비도)');
+  check(names({ el: 'fire', caster: hero('kai') }) === 'fire' && names({ el: 'holy', caster: hero('sera') }) === 'holy', '마법 속성 소리');
+  check(names({ enemy: true, move: '물기' }) === 'bite' && names({ enemy: true, move: '앞발 할퀴기' }) === 'claw' && names({ enemy: true, move: '혀 채찍' }) === 'whip' &&
+    names({ enemy: true, move: '용암 망치' }) === 'fire' && names({ enemy: true, move: '박치기' }) === 'blunt' && names({ enemy: true, move: '수수께끼' }) === 'hit', '몬스터 행동 이름 → 소리');
+  check(names({ kind: 'poison' }) === 'poisonTick' && names({ kind: 'burn' }) === 'burnTick' && names({ kind: 'lose' }) === 'drain', '지속 피해 소리');
+  check(names({ el: 'neutral', caster: hero('kai'), crit: true }) === 'brush,crit' && names({ el: 'neutral', caster: hero('kai'), amount: 25 }) === 'brush,heavy', '치명타 · 큰 피해는 소리를 더한다');
+  check(names({ amount: 0, blocked: 5, enemy: true, move: '물기' }) === 'clang' && names({ amount: 3, blocked: 5, enemy: true, move: '물기' }) === 'bite,shatter' && names({ dodged: true, amount: 0 }) === 'dodge', '막기 · 보호막 깨짐 · 회피');
+  const p1 = A.forHit({ amount: 5, el: 'neutral', caster: hero('kai'), streak: 1 })[0].pitch, p5 = A.forHit({ amount: 5, el: 'neutral', caster: hero('kai'), streak: 5 })[0].pitch;
+  check(p5 > p1 && p1 === 1, '연달아 맞히면 음이 올라간다');
+  // 피해를 주는 몬스터 행동 중 고유 소리를 받는 비율(정보)
+  let all = 0, own = 0;
+  G.Data.monsters.forEach(m => Object.values(m.moves).forEach(mv => { if (!(mv.effects || []).some(e => e.op === 'damage')) return; all++; if (A.pickMove(mv.name) !== 'hit') own++; }));
+  check(own / all >= 0.8, '몬스터 공격의 80% 이상이 고유 타격음 (' + own + '/' + all + ')');
+}
 // 24단계: 내장 글꼴(css/fonts.css)이 게임에 쓰는 글자를 모두 담는지 — 빠졌으면 python3 tools/embed-fonts.py 를 다시 돌린다
 {
   const css = fs.readFileSync(path.join(ROOT, 'css/fonts.css'), 'utf8');

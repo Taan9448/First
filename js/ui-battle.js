@@ -639,6 +639,7 @@
   // ---------------- 이펙트 도우미 ----------------
   var cur = null; // 지금 쓰는 카드 { def, caster, el }
   var SND = G.Audio, FX = G.FX;
+  var monMove = null;   // 37단계: 지금 몬스터가 쓰는 행동 이름(타격음 고르기)
 
   function spritePt(u) { return center(u, 0.5); }
   function tipPt(u) {
@@ -735,6 +736,13 @@
       if (d.amount > 0) addLog(nm(d.unit) + ' 피해 ' + d.amount + (d.crit ? ' 치명타' : '') + kind + (d.blocked ? ' · 막음 ' + d.blocked : ''), 'hit');
       else if (d.blocked > 0) addLog(nm(d.unit) + ' 막음 ' + d.blocked, 'blk');
     });
+    // 37단계: 타격음은 무기 · 몬스터 행동 · 속성 · 피해 크기에 따라 고른다(data/sfx.js). 연달아 맞히면 음이 올라간다
+    function hitSounds(d) {
+      var enemy = !!(d.src && d.src.side === 'enemy');
+      SND.forHit({ kind: d.kind, crit: d.crit, amount: d.amount, blocked: d.blocked, dodged: d.dodged, enemy: enemy, move: monMove,
+        el: cur && !enemy ? cur.el : null, caster: d.src && d.src.side === 'ally' ? d.src : cur && cur.caster, streak: enemy ? 1 : hits })
+        .forEach(function (x) { SND.play(x.name, { pitch: x.pitch }); });
+    }
     on('fx:block', function (d) { addLog(nm(d.unit) + ' 보호막 +' + d.n, 'blk'); });
     on('fx:heal', function (d) { if (d.n > 0) addLog(nm(d.unit) + ' 회복 +' + d.n, 'heal'); });
     on('fx:status', function (d) { var st = ST[d.key]; if (st && d.n) addLog(nm(d.unit) + ' ' + U.esc(st.name) + ' ' + (d.n > 0 ? '+' : '') + d.n, st.kind === 'debuff' ? 'debuff' : 'buff'); });
@@ -830,13 +838,15 @@
         SND.play('buff');
       }
     });
-    on('monster:act', function (d) { pulseClass(unitEls[d.unit.uid], 'lunge-l', 330); var me = unitEls[d.unit.uid]; if (me && me._sprite && me._sprite._asset) UI.playAnim(me._sprite, 'attack'); });   // 36단계: 리소스 몬스터는 공격 그림
+    on('monster:act', function (d) { monMove = d.move && d.move.name; pulseClass(unitEls[d.unit.uid], 'lunge-l', 330); var me = unitEls[d.unit.uid]; if (me && me._sprite && me._sprite._asset) UI.playAnim(me._sprite, 'attack'); });   // 36단계: 리소스 몬스터는 공격 그림
     on('monster:summon', function (d) {
       renderUnit(d.unit); pulseClass(unitEls[d.unit.uid], 'summoned', 420);
       FX.burst(spritePt(d.unit), { colors: ['#c9a0ff', '#ffffff'], n: 16, speed: 2 });
     });
     on('monster:trigger', function (d) {
-      FX.flash('#ff8a8a'); FX.shake(true); SND.play('big');
+      FX.flash('#ff8a8a'); FX.shake(true); SND.play('big'); SND.play('phase');
+      // 37단계: 정예 · 보스가 페이즈를 바꾸면 곡도 다음 페이즈로(빨라지고 변주 + 페이즈 층)
+      if (G.Music && d.unit.def && d.unit.def.rank !== 'normal') G.Music.phase();
       var e = unitEls[d.unit.uid];
       pulseClass(e, 'phase', 700);
       var band = UI.el('div', 'phase-band', U.esc(d.name));
@@ -861,12 +871,12 @@
         pulseClass(e, d.unit.side === 'enemy' ? 'knock-r' : 'knock-l', 240);
         FX.impact(p, el, d.crit);
         if (d.amount >= 15 && !d.crit) FX.shake();
-        SND.play(d.crit ? 'crit' : el === 'monster' ? 'hit' : el === 'neutral' || el === 'steel' || el === 'guard' ? 'slash' : SND.forElement(el));
+        hitSounds(d);
       } else if (d.blocked > 0) {
         float(d.unit, '막음 ' + d.blocked, 'block');
         FX.ring(p, '#8fc6ff', 30);
-        SND.play('block');
-      }
+        hitSounds(d);
+      } else if (d.dodged) hitSounds(d);
     });
     on('fx:block', function (d) {
       float(d.unit, '+' + d.n, 'block');

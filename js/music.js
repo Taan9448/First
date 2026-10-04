@@ -54,11 +54,33 @@
         var ev = parseVoice(v, errors, id + ' 목소리 ' + (i + 1));
         if (ev.length % 8) errors.push(id + ' 목소리 ' + (i + 1) + ': 칸 수 ' + ev.length + '가 마디(8칸)로 나뉘지 않는다');
         if (!ev.some(Boolean)) errors.push(id + ' 목소리 ' + (i + 1) + ': 소리가 없다');
+        if (v.alt != null) {
+          var av = parseVoice({ inst: v.inst, notes: v.alt }, errors, id + ' 목소리 ' + (i + 1) + ' 변주');
+          if (av.length % 8) errors.push(id + ' 목소리 ' + (i + 1) + ' 변주: 칸 수 ' + av.length + '가 마디(8칸)로 나뉘지 않는다');
+        }
+        if (v.section && v.section !== 'A' && v.section !== 'B') errors.push(id + ' 목소리 ' + (i + 1) + ': section ' + v.section);
+        if (v.phase != null && !(v.phase >= 2 && v.phase <= 3)) errors.push(id + ' 목소리 ' + (i + 1) + ': phase ' + v.phase);
       });
     });
     Object.keys(G.Data.MUSIC_FOR_THEME || {}).forEach(function (t) { if (!M[G.Data.MUSIC_FOR_THEME[t]]) errors.push('테마 ' + t + ' → 없는 곡'); });
     return errors;
   }
+
+  // ---------------- 37단계: 변주 구간 · 페이즈 ----------------
+  // 곡의 한 바퀴(period) = 목소리 길이들의 최소공배수. 홀수 번째 바퀴는 B 구간(변주): alt 가 있는 목소리는 alt 를 치고,
+  // section 'A' / 'B' 목소리는 그 구간에서만 들린다. 페이즈 2 이상이면 늘 B 구간이고 phase 목소리가 더해진다
+  function gcd(a, b) { return b ? gcd(b, a % b) : a; }
+  function period(voices) { return voices.reduce(function (p, v) { var n = v.ev.length; if (v.alt) n = n * v.alt.length / gcd(n, v.alt.length); return n ? p * n / gcd(p, n) : p; }, 8); }
+  // 칸 s 에서 목소리 v 의 사건(없으면 null)
+  function pick(v, s, per, ph) {
+    var b = ph >= 2 || Math.floor(s / per) % 2 === 1;
+    if (v.def.section && v.def.section !== (b ? 'B' : 'A')) return null;
+    if (v.def.phase && ph < v.def.phase) return null;
+    var ev = b && v.alt ? v.alt : v.ev;
+    return ev[s % ev.length];
+  }
+  function prep(def) { return def.voices.map(function (v) { return { def: v, ev: parseVoice(v), alt: v.alt != null ? parseVoice({ inst: v.inst, notes: v.alt }) : null }; }); }
+  function tempo(def, ph) { return def.bpm * (ph >= 2 ? Math.pow(def.phaseTempo || 1.06, ph - 1) : 1); }
 
   // ---------------- 악기 ----------------
   var ac = null, out = null, noiseBuf = null, volume = 0.5;
@@ -196,11 +218,9 @@
     var t = ac.currentTime, bus = ac.createGain();
     bus.gain.setValueAtTime(0.0001, t); bus.gain.exponentialRampToValueAtTime(1, t + 1.2);
     bus.connect(out);
-    var voices = def.voices.map(function (v) {
-      var g = ac.createGain(); g.gain.value = layerGain(v); g.connect(bus);
-      return { def: v, ev: parseVoice(v), gain: g };
-    });
-    cur = { id: id, bus: bus, voices: voices, step: 0, next: t + 0.1, dur: 60 / def.bpm / 2 };
+    var voices = prep(def);
+    voices.forEach(function (v) { var g = ac.createGain(); g.gain.value = layerGain(v.def); g.connect(bus); v.gain = g; });
+    cur = { id: id, def: def, bus: bus, voices: voices, per: period(voices), phase: 1, step: 0, next: t + 0.1, dur: 60 / def.bpm / 2 };
   }
   function fadeOut(tr) {
     if (!tr || !ac) return;
@@ -216,7 +236,7 @@
     while (cur.next < now + 0.15) {
       var t = cur.next, s = cur.step;
       cur.voices.forEach(function (v) {
-        var e = v.ev[s % v.ev.length];
+        var e = pick(v, s, cur.per, cur.phase);
         if (!e) return;
         try { INST[v.def.inst](e.drums || e.notes, t, e.len * cur.dur, v.def.vol, v.gain); } catch (err) { /* 소리 실패는 무시 */ }
       });
@@ -226,6 +246,13 @@
 
   var Music = G.Music = {
     parse: parseVoice, validate: validate, token: token, INST: INST,
+    // 37단계(테스트용): 곡 id 의 칸 s 에서 들리는 목소리 번호들
+    voicesAt: function (id, s, ph, lay) {
+      var def = G.Data.music[id], vs = prep(def), per = period(vs), keep = layer; layer = lay || 'battle';
+      var r = []; vs.forEach(function (v, i) { if (layerGain(v.def) && pick(v, s, per, ph || 1)) r.push(i); });
+      layer = keep; return r;
+    },
+    periodOf: function (id) { return period(prep(G.Data.music[id])); },
     // 곡 틀기(같은 곡이면 그대로). 소리를 켤 수 있기 전(첫 클릭 전)이면 기억해 두었다가 튼다
     play: function (id) {
       want = id;
@@ -236,6 +263,20 @@
       if (!timer) timer = setInterval(tick, 25);
     },
     stop: function () { want = null; fadeOut(cur); cur = null; },
+    // 37단계: 보스 페이즈 전환 — 다음 페이즈(최대 3)로. 빨라지고, 다음 마디부터 변주(B 구간)와 phase 목소리가 들어온다. 징 한 번
+    phase: function (n) {
+      if (!cur || !ac) return;
+      var ph = n || Math.min(3, cur.phase + 1);
+      if (ph === cur.phase) return;
+      cur.phase = ph;
+      cur.dur = 60 / tempo(cur.def, ph) / 2;
+      if (ph >= 2) {
+        var bar = Math.ceil(cur.step / 8) * 8;   // 다음 마디 첫 칸부터 변주
+        cur.next += (bar - cur.step) * cur.dur; cur.step = bar;
+        try { INST.drums(['g', 'b'], cur.next, cur.dur * 8, 0.2, cur.bus); } catch (e) { /* 소리 실패는 무시 */ }
+      }
+    },
+    phaseOf: function () { return cur ? cur.phase : 1; },
     current: function () { return cur ? cur.id : want; },
     // 'battle' 이면 전투 층(북)을, 'calm' 이면 잔잔한 층을 켠다
     setLayer: function (l) {
@@ -255,7 +296,7 @@
       if (want) Music.play(want);
     },
     // 개발용: 곡을 소리 없이 secs 초 동안 그려 세기(최대·평균)를 잰다. 반환: Promise({ peak, rms })
-    render: function (id, secs, lay) {
+    render: function (id, secs, lay, ph) {
       var def = G.Data.music[id], OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
       if (!def || !OAC) return Promise.resolve(null);
       var keep = [ac, out, noiseBuf, layer], sr = 22050;
@@ -264,11 +305,11 @@
       var nd = noiseBuf.getChannelData(0);
       for (var i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
       layer = lay || 'battle';
-      var dur = 60 / def.bpm / 2, steps = Math.floor(secs / dur) - 2, oac = ac;
-      def.voices.forEach(function (v) {
-        if (!layerGain(v)) return;
-        var ev = parseVoice(v);
-        for (var st = 0; st < steps; st++) { var e = ev[st % ev.length]; if (e) INST[v.inst](e.drums || e.notes, st * dur + 0.01, e.len * dur, v.vol, out); }
+      ph = ph || 1;
+      var dur = 60 / tempo(def, ph) / 2, steps = Math.floor(secs / dur) - 2, oac = ac, vs = prep(def), per = period(vs);
+      vs.forEach(function (v) {
+        if (!layerGain(v.def)) return;
+        for (var st = 0; st < steps; st++) { var e = pick(v, st, per, ph); if (e) INST[v.def.inst](e.drums || e.notes, st * dur + 0.01, e.len * dur, v.def.vol, out); }
       });
       ac = keep[0]; out = keep[1]; noiseBuf = keep[2]; layer = keep[3];
       return oac.startRendering().then(function (buf) {
@@ -291,7 +332,7 @@
       var theme = opts.theme || (mons[mons.length - 1] || {}).theme;
       return G.Data.MUSIC_FOR_THEME[theme] || 'forest';
     },
-    battle: function (opts) { Music.setLayer('battle'); Music.play(Music.forBattle(opts)); },
+    battle: function (opts) { Music.setLayer('battle'); Music.play(Music.forBattle(opts)); Music.phase(1); },
     screen: function (id) {
       var song = Music.forScreen(id);
       if (!song) return;

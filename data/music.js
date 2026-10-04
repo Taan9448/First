@@ -5,6 +5,7 @@
 //     북(drums): k 큰북 · s 작은북 · h 닫힌 하이햇 · o 열린 하이햇 · t 탐 · b 태고 · g 징. '+' 로 겹친다(k+h)
 //   목소리마다 길이가 달라도 각자 되풀이한다(멜로디 16마디 위에 반주 8마디가 두 번 도는 식)
 //   layer: 'battle' 은 전투 중에만, 'calm' 은 전투가 아닐 때만 들린다(없으면 늘)
+//   alt: B 구간(변주)에서 칠 글자 · section: 'A'|'B' 그 구간에서만 · phase: 2|3 보스 페이즈 이상에서만(37단계, 아래 변주 표)
 //   inst: pluck(고쟁·비파 뜯는 소리) · flute(죽적) · erhu(이호) · bell(종) · pad(현악 바탕) · stab(짧은 화음) · bass · subbass · brass(금관) · drums
 // 화면 → 곡: 타이틀·로비·스토리 lobby, 던전·보상·휴식 그 스테이지 테마, 전투는 같은 테마 + 전투 층, 보스전 boss, 혈마 final
 (function () {
@@ -149,6 +150,92 @@
         'b . . b k . s .', 'b . k b s . s s', 'b . . b k . s .', 'b t b t s s s s') }
     ]
   };
+
+  // ---------------- 37단계: 변주 구간 · 보스 페이즈 ----------------
+  // 곡은 한 바퀴(목소리 길이들의 최소공배수)마다 A 구간 → B 구간(변주)을 번갈아 친다.
+  //   vary(곡, 목소리 번호, 글자): 그 목소리가 B 구간에서 칠 변주 · add(곡, 목소리): 목소리를 더한다
+  //   목소리의 section: 'B' → B 구간에서만 · phase: 2|3 → 보스가 그 페이즈 이상일 때만(페이즈 2부터는 늘 B 구간, 빠르기 × phaseTempo)
+  var M = Game.Data.music;
+  var vary = function (id, i, notes) { M[id].voices[i].alt = notes; };
+  var add = function (id, v) { M[id].voices.push(v); };
+
+  // 로비 — 죽적이 한 옥타브 위에서 대답하고, 종이 화음 꼭대기를 짚는다
+  vary('lobby', 2, bars('A5 - - - G5 E5 G5 -', 'F5 - E5 - C5 - . .', 'E5 - G5 - C6 - B5 A5', 'B5 - - - G5 - . .',
+    'C6 - B5 - A5 - E5 -', 'F5 - E5 - C5 - A4 -', 'D5 - F5 - A5 - G5 F5', 'E5 - - - G#5 - . .') + ' | ' + rest(8));
+  add('lobby', { inst: 'bell', vol: 0.035, section: 'B', notes: bars('. . . . E6 . . .', '. . . . C6 . . .', '. . . . G5 . . .', '. . . . D6 . . .',
+    '. . . . E6 . . .', '. . . . A5 . . .', '. . . . F5 . . .', '. . . . B5 . . .') });
+
+  // 만독곡 — 뜯는 소리가 쉼 없이 흐르고, 죽적이 높이 올라간다. 북은 끝 마디를 채운다
+  vary('forest', 1, bars('D4 F4 A4 D5 A4 F4 D4 A3', 'C4 E4 G4 C5 G4 E4 C4 G3', 'Bb3 D4 F4 Bb4 F4 D4 Bb3 F3', 'C4 E4 G4 C5 G4 E4 C4 G3',
+    'D4 F4 A4 D5 A4 F4 D4 A3', 'Bb3 D4 F4 Bb4 F4 D4 Bb3 F3', 'G3 Bb3 D4 G4 D4 Bb3 G3 D3', 'A3 C#4 E4 A4 E4 C#4 A3 E3'));
+  vary('forest', 2, bars('D5 - - - F5 - A5 -', 'G5 - E5 - C5 - . .', 'D5 - - - F5 - D5 -', 'C5 - - - E5 - G5 -',
+    'F5 - - - A5 - D6 -', 'D6 - C6 - Bb5 - F5 -', 'G5 - Bb5 - D6 - C6 Bb5', 'A5 - - - C#6 - . .') + ' | ' + rest(8));
+  vary('forest', 4, bars('k . h . s . h k', 'k . h k s . h h', 'k . h k s . h .', 's s t t t t s s'));
+
+  // 타오르는 사막 — 이호가 높은 음에서 내려오며 꺾이고, 북이 엇박을 친다
+  vary('desert', 2, bars('B5 - - - G#5 - F5 E5', 'F5 - A5 - - - F5 -', 'G5 - F5 - D5 - B4 -', 'C5 - - - A4 - . .',
+    'E5 - F5 - E5 - D5 -', 'D5 - F5 - A5 - F5 -', 'F5 - E5 - C5 - A4 -', 'B4 - - - G#4 - . .') + ' | ' + rest(8));
+  vary('desert', 4, bars('k . h s k h s .', 'k k h s t t s s'));
+  add('desert', { inst: 'flute', vol: 0.05, section: 'B', notes: rest(8) + ' | ' + bars('E6 - - - - - . .', 'F6 - - - - - . .', 'D6 - - - - - . .', 'C6 - - - - - . .',
+    'B5 - - - - - . .', 'A5 - - - - - . .', 'C6 - - - - - . .', 'B5 - - - - - . .') });
+
+  // 얼어붙은 설원 — 종이 위에서 아래로 떨어지고, 죽적이 더 높이 운다
+  vary('snow', 1, bars('A5 . E5 . C5 . F4 .', 'A5 . D5 . B4 . G4 .', 'A5 . E5 . C5 . F4 .', 'B5 . D5 . B4 . G4 .',
+    'A5 . F5 . A4 . D4 .', 'B5 . G5 . B4 . E4 .', 'A5 . E5 . C5 . F4 .', 'D6 . B5 . D5 . G4 .'));
+  vary('snow', 2, rest(8) + ' | ' + bars('C6 - - - - - A5 -', 'B5 - - - G5 - - -', 'A5 - - - F5 - E5 -', 'D5 - - - - - - -',
+    'F5 - - - A5 - - -', 'G5 - - - B5 - - -', 'A5 - - - G5 - E5 -', 'D5 - - - - - . .'));
+  vary('snow', 4, bars('k . . h s . h h', 'k k . h s . s s'));
+
+  // 용암 화산 — 금관이 한 옥타브 위로 치솟고, 끝 마디는 북이 몰아친다
+  vary('volcano', 2, bars('G5 - - - Ab5 - G5 Eb5', 'C5 - Eb5 - Ab5 - . .', 'F5 - - - D5 - Bb4 D5', 'D5 - - - B4 - G4 -',
+    'C5 - Eb5 - G5 - C6 -', 'C6 - Bb5 - Ab5 - Eb5 -', 'D5 - F5 - Bb5 - Ab5 -', 'G5 - - - F5 - D5 -') + ' | ' + rest(4));
+  vary('volcano', 3, bars('k . h k s k h s', 'k k h k s . h s', 'k . h k s k h s', 's s s s t t t t'));
+
+  // 청운문 — 이호의 두 번째 노래, 죽적의 긴 대답, 태고가 굴러간다
+  vary('castle', 2, bars('G5 - - - F5 - D5 -', 'Eb5 - G5 - Bb5 - G5 -', 'A5 - - - F5 - C5 -', 'D5 - - - F#5 - A5 -',
+    'Bb5 - - - A5 - G5 -', 'G5 - - - Eb5 - Bb4 -', 'C5 - Eb5 - G5 - F5 Eb5', 'D5 - - - - - . .') + ' | ' + rest(8));
+  vary('castle', 4, bars('b . b . b . s .', 'b . b b s . s .', 'b . . b . b b .', 'b b s s b b s s'));
+  add('castle', { inst: 'flute', vol: 0.055, section: 'B', notes: bars('. . . . D6 - - -', '. . . . G5 - - -', '. . . . C6 - - -', '. . . . A5 - - -',
+    '. . . . D6 - - -', '. . . . Bb5 - - -', '. . . . G5 - - -', '. . . . F#5 - - -') });
+
+  // 세계의 틈 — 종이 거꾸로 흐르고, 죽적이 균열 너머로 올라간다
+  vary('rift', 1, bars('F#5 . D5 . A4 . D4 .', 'G#5 . E5 . B4 . E4 .', 'G#5 . E5 . C#5 . G#4 .', 'F#5 . D5 . B4 . F#4 .',
+    'A5 . F#5 . D5 . A4 .', 'B5 . G#5 . E5 . B4 .', 'A5 . F#5 . C#5 . F#4 .', 'D5 . B4 . G#4 . E4 .'));
+  vary('rift', 2, bars('A5 - - - B5 - A5 F#5', 'G#5 - - - E5 - B4 -', 'C#6 - - - B5 - G#5 -', 'F#5 - - - D5 - . .',
+    'D6 - - - C#6 - A5 -', 'B5 - G#5 - E5 - - -', 'F#5 - A5 - C#6 - E6 -', 'D6 - - - B5 - . .') + ' | ' + rest(8));
+  vary('rift', 4, bars('k . h t t . h .', 'k . h k s . h h', 'k t h . t . h t', 't t s t t s t t'));
+
+  // 결전(보스) — B 구간은 금관의 두 번째 노래. 페이즈 2: 종의 급한 반복 + 열린 하이햇, 페이즈 3: 이호가 높이 운다
+  M.boss.phaseTempo = 1.06;
+  vary('boss', 2, bars('A5 - - - F5 - D5 -', 'D5 - F5 - Bb5 - A5 G5', 'G5 - - - E5 - C5 -', 'C#5 - E5 - A5 - G5 -',
+    'F5 - A5 - D6 - C6 -', 'Bb5 - A5 - F5 - D5 -', 'D5 - G5 - Bb5 - A5 G5', 'A5 - - - - - . .'));
+  vary('boss', 3, bars('k h s h k k s s', 'k h s k k h s s', 'k k s h k k s h', 's s s s t t t t'));
+  add('boss', { inst: 'bell', vol: 0.04, phase: 2, notes: bars('D6 . A5 . D6 . A5 .', 'D6 . Bb5 . D6 . Bb5 .', 'E6 . C6 . E6 . C6 .', 'E6 . C#6 . E6 . C#6 .',
+    'D6 . A5 . D6 . A5 .', 'D6 . Bb5 . D6 . Bb5 .', 'D6 . Bb5 . D6 . Bb5 .', 'E6 . C#6 . E6 . C#6 .') });
+  add('boss', { inst: 'drums', vol: 0.09, phase: 2, notes: bars('o . o . o . o .', 'o . o . o . o o') });
+  add('boss', { inst: 'erhu', vol: 0.05, phase: 3, notes: bars('D6 - - - - - - -', 'D6 - - - - - - -', 'E6 - - - - - - -', 'E6 - - - - - - -',
+    'F6 - - - - - - -', 'F6 - - - - - - -', 'G6 - - - - - - -', 'E6 - - - - - - -') });
+
+  // 혈마 — B 구간은 이호가 한 옥타브 위에서 비명처럼. 페이즈 2: 금관 합창, 페이즈 3: 종이 몰아친다
+  M.final.phaseTempo = 1.05;
+  vary('final', 2, bars('E6 - - - D#6 - B5 -', 'C6 - - - G5 - E5 -', 'A5 - - - C6 - E6 -', 'D#6 - - - F#6 - B5 -',
+    'B5 - - - G5 - E5 -', 'A5 - - - F5 - C6 -', 'B5 - A5 - F#5 - D#5 -', 'B4 - - - - - - -'));
+  vary('final', 3, bars('g+b . . b k . s s', 'b . k b s s s s', 'b . . b k b s .', 'b . k b s t t t',
+    'b . . b k . s s', 'b b k b s . s s', 'b . . b k . s .', 'b t b t b t b t'));
+  add('final', { inst: 'brass', vol: 0.065, phase: 2, notes: bars('E5 - - - B4 - E5 -', 'E5 - - - G5 - - -', 'E5 - - - C5 - A4 -', 'F#5 - - - D#5 - B4 -',
+    'G5 - - - E5 - B4 -', 'A5 - - - F5 - C5 -', 'B5 - - - F#5 - D#5 -', 'B5 - - - - - . .') });
+  add('final', { inst: 'bell', vol: 0.035, phase: 3, notes: bars('E6 . B5 . E6 . B5 .', 'E6 . C6 . E6 . C6 .', 'E6 . C6 . E6 . A5 .', 'D#6 . B5 . D#6 . F#6 .',
+    'E6 . B5 . E6 . B5 .', 'F6 . C6 . F6 . A5 .', 'D#6 . B5 . F#6 . B5 .', 'D#6 . B5 . F#6 . B5 .') });
+
+  // 고대 혈마 — B 구간은 금관의 두 번째 노래. 페이즈 2: 이호가 높이, 페이즈 3: 열린 하이햇이 몰아친다
+  M.riftFinal.phaseTempo = 1.05;
+  vary('riftFinal', 2, bars('G#5 - - - E5 - C#5 -', 'C#5 - E5 - A5 - G#5 -', 'A5 - - - F#5 - C#5 -', 'B#4 - D#5 - G#5 - F#5 -',
+    'E5 - G#5 - C#6 - B5 -', 'A5 - F#5 - D5 - A4 -', 'G#4 - - - B#4 - D#5 -', 'G#5 - - - - - . .'));
+  vary('riftFinal', 4, bars('g+b . . b k . s s', 'b . k b s s s s', 'b . . b k b s .', 'b . k b s t t t',
+    'b . . b k . s s', 'b b k b s . s s', 'b . . b k . s .', 'b t b t b t b t'));
+  add('riftFinal', { inst: 'erhu', vol: 0.055, phase: 2, notes: bars('C#6 - - - B5 - G#5 -', 'A5 - - - C#6 - E6 -', 'F#5 - - - A5 - C#6 -', 'B#5 - - - D#6 - - -',
+    'E6 - - - C#6 - G#5 -', 'F#6 - - - D6 - A5 -', 'G#5 - B#5 - D#6 - F#6 -', 'G#6 - - - - - . .') });
+  add('riftFinal', { inst: 'drums', vol: 0.09, phase: 3, notes: bars('o . o . o . o .', 'o o o . o . o o') });
 
   // 스테이지 테마 → 곡(거울의 방은 청운문)
   Game.Data.MUSIC_FOR_THEME = { forest: 'forest', desert: 'desert', snow: 'snow', volcano: 'volcano', castle: 'castle', rift: 'rift', mirror: 'castle' };
