@@ -48,7 +48,7 @@
 
   /* ---------- 메뉴(A안): 세로 3개, 모두 A안 이어하기 모양(붉은 그림 버튼) ---------- */
   .mk-menu { position:absolute; left:50%; top:55%; transform:translateX(-50%); width:380px; display:flex; flex-direction:column; gap:12px; transition:opacity .2s, transform .2s; }
-  .mk-menu .btn { width:100%; min-height:64px; font-size:1.2em; font-family:var(--font-serif); letter-spacing:.18em; }
+  .mk-menu .btn { width:100%; height:64px; min-height:64px; padding-top:0; padding-bottom:0; font-size:1.2em; font-family:var(--font-serif); letter-spacing:.18em; }
   .mk-menu .btn small,.mk-pick .btn small { font-weight:400; opacity:.85; margin-left:8px; font-size:.72em; }
   .mk.picking .mk-menu { opacity:0; pointer-events:none; transform:translate(-50%,10px); }
 
@@ -60,6 +60,11 @@
   body.ui-parts .mk-pick::after { content:''; position:absolute; inset:-10px; pointer-events:none; border-style:solid; border-width:34px;
     border-image:url(../../assets/ui/components/panel_border.png) 14% / 34px stretch; }
   .mk.picking .mk-foot { opacity:0; }
+  /* 3차: 뒤를 어둡고 회색으로 흐리게 → 판만 강조(게임 css/sd-screens.css .tt-dim 과 같다) */
+  .mk-dim { position:absolute; inset:0; z-index:8; opacity:0; pointer-events:none; transition:opacity .22s; background:#2a303acc;
+    -webkit-backdrop-filter:grayscale(.85) blur(3px) brightness(.6); backdrop-filter:grayscale(.85) blur(3px) brightness(.6); }
+  .mk.picking .mk-dim { opacity:1; pointer-events:auto; }
+  .mk-pick { z-index:9; }
   .mk-sub { transition:opacity .2s; }
   .mk.picking .mk-pick { opacity:1; pointer-events:auto; transform:translate(-50%,0); }
   .mk-pick h2 { margin:0 0 16px; font-family:var(--font-serif); font-size:20px; color:#eed4a0; letter-spacing:.3em; text-align:center; }
@@ -120,6 +125,7 @@
       <button type="button" class="btn big">DAILY EXPEDITION</button>
     </nav>
 
+    <div class="mk-dim" onclick="document.getElementById('back').click()"></div>
     <section class="mk-pick" id="pick" role="dialog" aria-modal="true" aria-labelledby="pick-title" aria-hidden="true">
       <h2 id="pick-title">SELECT SAVE</h2>
       <div class="mk-slots" id="slots"></div>

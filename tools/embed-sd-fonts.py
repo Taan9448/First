@@ -18,6 +18,7 @@ for folder in ('data', 'js'):
     for file in (root / folder).glob('*.js'):
         text.update(file.read_text(encoding='utf-8'))
 text.update((root / 'css/sd-theme.css').read_text(encoding='utf-8'))
+text.update('天外')   # 40단계: 시작 화면 붉은 인장(코드에는 &#…; 로 쓴다)
 def woff(path, number):
     font = TTFont(path, fontNumber=number)
     options = subset.Options()

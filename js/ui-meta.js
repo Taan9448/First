@@ -68,52 +68,104 @@
   }
 
   // ================= 타이틀 =================
+  // 40단계(사용자 확정 목업 docs/mockups/title-v3.html): 인물 없이 배경이 주인공. 영어 제목 · 세로 메뉴 3개(CONTINUE만 붉은색) ·
+  // CONTINUE → SELECT SAVE 판(뒤는 어둡게 · 흐리게) · 오른쪽 아래 동그라미 단추(업적 · 기록 / 도움말 / 설정)
+  var TT_ICO = {
+    records: '<path d="M7 4h10v4a5 5 0 0 1-10 0z"/><path d="M7 6H4.5a2.5 2.5 0 0 0 2.6 3.6M17 6h2.5a2.5 2.5 0 0 1-2.6 3.6"/><path d="M12 13v4M8.5 20h7M9.5 17h5"/>',
+    help: '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 1 1 3.6 2.3c-.8.4-1.2 1-1.2 1.9M12 16.8v.2"/>',
+    settings: '<circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v2.6M12 18.6v2.6M2.8 12h2.6M18.6 12h2.6M5.5 5.5l1.8 1.8M16.7 16.7l1.8 1.8M5.5 18.5l1.8-1.8M16.7 7.3l1.8-1.8"/>'
+  };
+  function slotInfo(d) {
+    return d.flags.riftEnded ? '세계의 틈을 닫음' : d.flags.ended ? '엔딩 도달' : d.run ? '스테이지 ' + d.run.stage + ' 진행 중' : '스테이지 ' + Math.min(D.stages.length, d.clearedStage + 1) + ' 대기';
+  }
   Meta.title = function () {
     var el = screen('title');
-    var last = G.Save.lastSlot();
-    // 40단계: 승인 시안 — 왼쪽 하린, 위 제목 현판, 오른쪽 세로 메뉴, 아래 저장 칸 3개, 오른쪽 아래 설정
-    var slotCards = '';
-    for (var sn = 1; sn <= G.Save.SLOTS; sn++) {
-      var sd = G.Save.peek(sn), smd = sd && (D.modes[sd.mode] || D.modes.normal);
-      slotCards += '<button class="tt-slot' + (sd ? '' : ' empty') + '" data-n="' + sn + '"><span class="tt-medal">' + sn + '</span><span class="tt-sinfo">' +
-        (sd ? '<b>' + sn + '번 칸 <em style="--mc:' + smd.color + '">' + smd.name + '</em></b><small>' +
-          (sd.flags.riftEnded ? '세계의 틈을 닫음' : sd.flags.ended ? '엔딩 도달' : sd.run ? '스테이지 ' + sd.run.stage + ' 진행 중' : '스테이지 ' + Math.min(D.stages.length, sd.clearedStage + 1) + ' 대기') +
-          ' · 동료 ' + sd.characters.length + '명</small>' : '<b>' + sn + '번 칸</b><small>빈 칸 · 새 원정</small>') + '</span></button>';
-    }
-    el.innerHTML = titleFrame('<div class="tt-hero"></div>' +
-      '<div class="menu tt-menu">' +
-      (last ? '<button class="btn gold big cont">이어하기 <small>' + last + '번 칸</small></button>'
-        : '<button class="btn gold big quick-new">새 게임</button>') +   // 24단계: 저장이 하나도 없으면 바로 모드 선택(1번 칸)
-      '<button class="btn big slots">저장 칸 · 새 게임</button>' +
-      '<button class="btn big daily">오늘의 원정' + (G.Save.exists('daily') ? ' <small>이어하기</small>' : '') + '</button><button class="btn big records">업적 · 기록</button>' +
-      (G.debug ? '<button class="btn small test">전투 테스트 (디버그)</button>' : '') +
-      '</div><div class="tt-slots">' + slotCards + '</div>' +
-      '<button class="tt-gear" aria-label="설정" data-tip="설정">' + UI.icon('gear') + '</button>');
-    var hero = el.querySelector('.tt-hero'), pic = UI.portraitEl('kai', 'tt-pic');
-    hero.appendChild(pic || UI.spriteEl('kai', 2.4));
-    UI.$$('.tt-slot', el).forEach(function (b) {
-      b.onclick = function () { var n = +b.getAttribute('data-n'); if (G.Save.peek(n)) openSlot(n); else Meta.modeSelect(n); };
-    });
-    el.querySelector('.tt-gear').onclick = function () { if (G.Extra && G.Extra.settingsWin) G.Extra.settingsWin(); };
-    if (last) el.querySelector('.cont').onclick = function () { openSlot(last); };
-    else el.querySelector('.quick-new').onclick = function () { Meta.modeSelect(1); };
-    el.querySelector('.slots').onclick = function () { Meta.slots(); };
+    var any = false;
+    for (var k = 1; k <= G.Save.SLOTS; k++) if (G.Save.peek(k)) any = true;
+    el.innerHTML = titleFrame(
+      '<nav class="tt-menu" aria-label="시작 메뉴">' +
+      '<button type="button" class="btn gold big cont"' + (any ? '' : ' disabled') + '>CONTINUE</button>' +
+      '<button type="button" class="btn big newg">NEW GAME</button>' +
+      '<button type="button" class="btn big daily">DAILY EXPEDITION</button>' +
+      (G.debug ? '<button type="button" class="btn small test">전투 테스트 (디버그)</button>' : '') + '</nav>' +
+      '<div class="tt-dim"></div>' +
+      '<section class="tt-pick" role="dialog" aria-modal="true" aria-labelledby="tt-pick-h" aria-hidden="true"><h2 id="tt-pick-h">SELECT SAVE</h2>' +
+      '<div class="tt-slots"></div><div class="tt-pickfoot"><button type="button" class="btn back">BACK</button>' +
+      '<button type="button" class="btn manage" data-tip="저장 내보내기 · 가져오기 · 지우기">MANAGE</button></div></section>' +
+      '<div class="tt-tools">' + [['records', '업적 · 기록'], ['help', '도움말'], ['settings', '설정']].map(function (t) {
+        return '<button type="button" class="tt-ico ' + t[0] + '" aria-label="' + t[1] + '"><svg viewBox="0 0 24 24">' + TT_ICO[t[0]] + '</svg></button>';
+      }).join('') + '</div>', true);
+    var pick = el.querySelector('.tt-pick'), list = el.querySelector('.tt-slots');
+    // 칸 고르기. mode 'cont' = 빈 칸은 못 고름, 'new' = 빈 칸은 바로, 찬 칸은 덮어쓸지 묻는다
+    var openPick = function (mode) {
+      var h = '';
+      for (var n = 1; n <= G.Save.SLOTS; n++) {
+        var d = G.Save.peek(n), md = d && (D.modes[d.mode] || D.modes.normal);
+        var pct = d ? Math.round(Math.min(1, d.clearedStage / (D.MAIN_STAGES || 10)) * 100) : 0;
+        h += '<button type="button" class="tt-slot' + (d ? '' : ' empty') + '" data-n="' + n + '"' + (!d && mode === 'cont' ? ' disabled' : '') + '>' +
+          '<span class="tt-sn">' + n + '</span>' +
+          (d ? '<b>SLOT ' + n + ' <em style="--mc:' + md.color + '">' + md.name + '</em></b><small>' + slotInfo(d) + ' · 동료 ' + d.characters.length + '명</small><span class="tt-bar"><i style="width:' + pct + '%"></i></span>'
+            : '<b>SLOT ' + n + '</b><small>빈 칸</small>') +
+          '<span class="tt-go">' + (mode === 'cont' ? (d ? 'CONTINUE' : 'EMPTY') : d ? 'OVERWRITE' : 'NEW GAME') + '</span></button>';
+      }
+      list.innerHTML = h;
+      UI.$$('.tt-slot', list).forEach(function (b) {
+        b.onclick = function () {
+          var n = +b.getAttribute('data-n'), d = G.Save.peek(n);
+          if (mode === 'cont') return openSlot(n);
+          if (!d) return Meta.modeSelect(n);
+          confirmBox(n + '번 칸의 기록을 덮어쓸까요? 모드를 고르고 시작하면 이전 기록은 사라진다.', '덮어쓰기', function () { Meta.modeSelect(n); });
+        };
+      });
+      el.classList.add('tt-picking');
+      pick.setAttribute('aria-hidden', 'false');
+      var f = list.querySelector('.tt-slot:not(:disabled)');
+      if (f) try { f.focus({ preventScroll: true }); } catch (e) { /* 무시 */ }
+    };
+    var closePick = function () {
+      el.classList.remove('tt-picking');
+      pick.setAttribute('aria-hidden', 'true');
+      try { el.querySelector('.cont').focus({ preventScroll: true }); } catch (e) { /* 무시 */ }
+    };
+    el.querySelector('.cont').onclick = function () { openPick('cont'); };
+    // NEW GAME: 빈 칸이 있으면 첫 빈 칸에서 바로 모드 고르기, 모두 차 있으면 덮어쓸 칸을 고른다
+    el.querySelector('.newg').onclick = function () {
+      for (var n = 1; n <= G.Save.SLOTS; n++) if (!G.Save.peek(n)) return Meta.modeSelect(n);
+      openPick('new');
+    };
     el.querySelector('.daily').onclick = function () { Meta.dailyIntro(); };
-    el.querySelector('.records').onclick = function () { St.data = null; G.Extra.stats('all'); };
+    el.querySelector('.tt-pick .back').onclick = closePick;
+    el.querySelector('.tt-dim').onclick = closePick;
+    el.querySelector('.tt-pick .manage').onclick = function () { Meta.slots(); };
+    el.querySelector('.tt-ico.records').onclick = function () { St.data = null; G.Extra.stats('all'); };
+    el.querySelector('.tt-ico.help').onclick = function () { G.Extra.help(); };
+    el.querySelector('.tt-ico.settings').onclick = function () { if (G.Extra && G.Extra.settingsWin) G.Extra.settingsWin(); };
     if (G.debug) el.querySelector('.test').onclick = function () { G.TestMenu.open(); };
+    if (!titleKeyBound) {
+      titleKeyBound = true;
+      document.addEventListener('keydown', function (e) {
+        var t = screen('title');
+        if (e.key === 'Escape' && t.classList.contains('tt-picking') && !document.querySelector('#app > .modal')) { var b = t.querySelector('.tt-pick .back'); if (b) b.click(); }
+      });
+    }
     UI.show('title');
   };
-  function titleFrame(inner) {
+  var titleKeyBound = false;
+  function titleFrame(inner, home) {
+    var t = screen('title');
+    t.classList.toggle('tt-home', !!home);
+    t.classList.remove('tt-picking');
     var stars = '';
     for (var i = 0; i < 40; i++) {
       stars += '<i style="left:' + (Math.random() * 100).toFixed(1) + '%;top:' + (Math.random() * 45).toFixed(1) + '%;animation-delay:-' + (Math.random() * 2.4).toFixed(2) + 's"></i>';
     }
     var html = '<div class="title-bg"></div><div class="title-shade"></div><div class="stars">' + stars + '</div>' +
       '<div class="title-wrap">' +
-      '<div class="logo-sub">' + TITLE_SUB + '</div>' +
-      '<h1 class="logo">천외검결</h1><div class="logo-tag">두 세계의 검</div><div class="logo-line"></div>' + inner +
+      // 40단계: 영어 제목 + 붉은 인장(天外 — 글자는 &#…; 로 써서 도트 글꼴 검사에서 뺀다, 명조 글꼴에는 embed-sd-fonts 가 넣는다)
+      '<header class="tt-head"><h1 class="tt-name" aria-label="Sword Beyond the Heavens"><span class="l1">SWORD BEYOND</span><span class="l2">THE HEAVENS</span></h1>' +
+      '<span class="tt-seal" aria-hidden="true">&#22825;<br>&#22806;</span></header>' + inner +
       (G.debug ? '<div class="debugtag">디버그 모드 · 별도 저장</div>' : '') + '</div>' +
-      '<div class="title-foot">저장 칸 3개 · 진행은 브라우저에 자동 저장된다</div>';
+      '<div class="title-foot">저장 칸 ' + G.Save.SLOTS + '개 · 진행은 브라우저에 자동 저장된다</div>';
     setTimeout(function () {
       var bg = screen('title').querySelector('.title-bg');
       var titleBg = G.Assets.screenBg('title') || G.Assets.screenBg('lobby');
@@ -195,7 +247,7 @@
         '<div class="menu row"><button class="btn back">뒤로</button><button class="btn gold big start">' + D.modes[pick].name + ' 모드로 시작</button></div>');
       UI.$$('.boon', el).forEach(function (b) { b.onclick = function () { var id = b.getAttribute('data-b'); boon = id === 'none' ? null : id; SND('click'); render(); }; });
       UI.$$('.mode-card', el).forEach(function (b) { b.onclick = function () { pick = b.getAttribute('data-k'); SND('click'); render(); }; });
-      el.querySelector('.back').onclick = Meta.slots;
+      el.querySelector('.back').onclick = Meta.title;
       el.querySelector('.start').onclick = function () {
         G.Save.use(slot);
         St.newGame(pick);
