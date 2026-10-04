@@ -1,0 +1,54 @@
+/* Opt-in adapter for the existing game DOM. Load AFTER css/sd-theme.css.
+   Claude enables body.twj-game-skin. No dimensions, transforms or events replaced. */
+body.twj-game-skin {
+  --bg0:#0b1017; --bg1:#111820; --bg2:#202d40; --bg3:#293648;
+  --text:#f0e4cb; --dim:#c3bbad; --gold:#c5a261; --gold2:#eed4a0;
+  --cyan:#54c7c0; --green:#80ba79; --blue:#6fb8e4;
+  --font-body:'SD Sans','Malgun Gothic','Apple SD Gothic Neo',sans-serif;
+}
+body.twj-game-skin .btn { border-radius:5px; min-height:44px; }
+body.twj-game-skin .btn::before { background:#202d40; box-shadow:inset 0 0 0 1px #c5a261; }
+body.twj-game-skin .btn.gold::before { background:#9f2934; }
+body.twj-game-skin .btn.gold { --bt:#fff4df; }
+body.twj-game-skin .btn:focus-visible,
+body.twj-game-skin .navbtn:focus-visible,
+body.twj-game-skin .hero-pick:focus-visible { outline:3px solid #8ce6de; outline-offset:3px; }
+body.twj-game-skin .btn:disabled { opacity:1; --bt:#bdb7ad; }
+body.twj-game-skin .btn:disabled::before { background:#292d32; box-shadow:inset 0 0 0 1px #6c665b; }
+body.twj-game-skin .topbar,
+body.twj-game-skin .lb-top,
+body.twj-game-skin .lb-bottom { background:#111820f5; }
+body.twj-game-skin .tile { border:1px solid #c5a261; border-radius:6px; }
+body.twj-game-skin .tile::before { background:#202d40ed; }
+body.twj-game-skin .tile.hot::before { background:linear-gradient(120deg,#11182077,#9f2934d9); }
+body.twj-game-skin .squad-summary,
+body.twj-game-skin .modal,
+body.twj-game-skin .tip { background:#111820fa; border:1px solid #c5a261; border-radius:6px; }
+body.twj-game-skin .squad-note,
+body.twj-game-skin .lb-voice,
+body.twj-game-skin .lb-foot { background:#f0e4cb; color:#111820; }
+body.twj-game-skin .hero-pick.on { border-color:#54c7c0; box-shadow:0 0 0 1px #54c7c0; }
+/* CSS card shell only when no dedicated PNG frame exists. Keep every original
+   condition, chain, rarity, tier, NEW marker, tooltip and action element. */
+body.twj-game-skin .card:not(.has-frame) .cin { background:#f0e4cb; border:2px solid var(--rc,#c5a261); border-radius:8px; }
+body.twj-game-skin .card:not(.has-frame) .cf {
+  background-image:none!important; background-color:transparent; opacity:1;
+  border:4px double #c5a261; border-radius:6px; clip-path:none;
+}
+body.twj-game-skin .card:not(.has-frame).lay-ink .cin { border-left:4px solid #9f2934; }
+body.twj-game-skin .card:not(.has-frame).lay-split .cin { border-left:4px solid #9f2934; border-right:4px solid #54c7c0; }
+body.twj-game-skin .card:not(.has-frame).duo .cf { border-width:6px; }
+body.twj-game-skin .card:not(.has-frame) .cname span { color:#111820; text-shadow:none; }
+body.twj-game-skin .card:not(.has-frame) .cname.upg span { color:#742735; }
+body.twj-game-skin .card:not(.has-frame) .csub,
+body.twj-game-skin .card:not(.has-frame) .csub span { color:#443b2c; }
+body.twj-game-skin .card:not(.has-frame) .ccost { background:#9f2934; }
+body.twj-game-skin .card:not(.has-frame) .ctext { background:#f0e4cb; }
+body.twj-game-skin .card:not(.has-frame) .ctext span { color:#111820; font-size:max(14px,.86em); }
+body.twj-game-skin .hpbar { background:#070d12; border-radius:4px; }
+body.twj-game-skin .hpbar i { background:#80ba79; }
+body.twj-game-skin .hpbar.has-block i { background:#6fb8e4; }
+body.twj-game-skin input[type=range] { accent-color:#54c7c0; }
+@media(prefers-reduced-motion:reduce) {
+  body.twj-game-skin .btn,body.twj-game-skin .tile { transition:none; }
+}
