@@ -1,0 +1,235 @@
+{
+  "version": 1,
+  "purpose": "portable UI implementation contract; not runtime game data",
+  "rootClass": "twj-kit",
+  "files": [
+    "ui-kit.css",
+    "index.html",
+    "preview.js",
+    "game-skin.css"
+  ],
+  "minimumTargetPx": 44,
+  "minimumCardTextPx": 14,
+  "assetRootFromKit": "../../assets/",
+  "newPngFiles": [],
+  "existingUiPng": [
+    "ui/components/button_primary.png",
+    "ui/components/button_secondary.png",
+    "ui/components/panel_border.png"
+  ],
+  "components": [
+    {
+      "name": "button",
+      "class": "twj-button",
+      "variants": [
+        "primary",
+        "secondary",
+        "art",
+        "danger"
+      ],
+      "states": [
+        "default",
+        "hover",
+        "focus-visible",
+        "active",
+        "disabled"
+      ],
+      "required": [
+        "label",
+        "type",
+        "disabled reason"
+      ],
+      "bind": "existing click handlers"
+    },
+    {
+      "name": "panel",
+      "class": "twj-panel",
+      "variants": [
+        "paper",
+        "ornate",
+        "painted"
+      ],
+      "required": [
+        "title",
+        "content"
+      ],
+      "notes": "ornate/painted aspect 4:3; long content uses ordinary CSS panel"
+    },
+    {
+      "name": "card",
+      "class": "twj-card",
+      "attributes": {
+        "data-frame": [
+          "ink_common",
+          "split_common",
+          "duo"
+        ],
+        "data-rarity": [
+          "common",
+          "uncommon",
+          "rare",
+          "epic",
+          "legendary"
+        ]
+      },
+      "slots": [
+        "frame",
+        "art",
+        "cost",
+        "name",
+        "meta",
+        "effect",
+        "details"
+      ],
+      "required": [
+        "full game effect",
+        "owner",
+        "rarity",
+        "cost",
+        "upgrade",
+        "conditions"
+      ],
+      "bind": "UI.cardEl / UI.cardTip",
+      "notes": "CSS frame, no new PNG; details demo button is an example of full-effect access"
+    },
+    {
+      "name": "meter",
+      "class": "twj-meter",
+      "variants": [
+        "health",
+        "block"
+      ],
+      "properties": [
+        "--twj-value"
+      ],
+      "required": [
+        "label",
+        "current",
+        "max",
+        "aria-valuenow",
+        "aria-valuemax"
+      ]
+    },
+    {
+      "name": "intent",
+      "class": "twj-intent",
+      "required": [
+        "kind",
+        "damage",
+        "hits",
+        "target",
+        "area/special distinction"
+      ],
+      "bind": "existing enemy intent data"
+    },
+    {
+      "name": "status",
+      "class": "twj-status",
+      "required": [
+        "icon",
+        "name",
+        "count",
+        "full tooltip"
+      ]
+    },
+    {
+      "name": "hero selection",
+      "class": "twj-hero",
+      "states": [
+        "selected",
+        "unselected",
+        "locked"
+      ],
+      "required": [
+        "aria-pressed",
+        "join condition",
+        "class",
+        "level",
+        "health",
+        "deck"
+      ],
+      "bind": "existing party selection renderer"
+    },
+    {
+      "name": "map node",
+      "class": "twj-node",
+      "attributes": {
+        "data-state": [
+          "current",
+          "complete",
+          "available",
+          "locked"
+        ]
+      },
+      "required": [
+        "state label",
+        "room type",
+        "selection condition"
+      ],
+      "notes": "52px target; original route data retained"
+    },
+    {
+      "name": "settings",
+      "classes": [
+        "twj-setting",
+        "twj-switch",
+        "twj-tab"
+      ],
+      "required": [
+        "label",
+        "actual input",
+        "saved value",
+        "aria-pressed for segment"
+      ]
+    },
+    {
+      "name": "table",
+      "class": "twj-table",
+      "container": "twj-table-wrap",
+      "required": [
+        "thead",
+        "header labels",
+        "complete rows",
+        "horizontal scroll"
+      ]
+    },
+    {
+      "name": "dialog",
+      "class": "twj-dialog",
+      "required": [
+        "title id",
+        "aria-labelledby",
+        "close",
+        "focus return",
+        "Esc support"
+      ]
+    },
+    {
+      "name": "message",
+      "class": "twj-message",
+      "variants": [
+        "information",
+        "warning",
+        "error"
+      ],
+      "required": [
+        "plain reason",
+        "next action when applicable"
+      ]
+    }
+  ],
+  "demoOnly": [
+    "all sample values",
+    "confirmation actions",
+    "fixed hero selection",
+    "sample card names/effects"
+  ],
+  "gameCodeEdited": false,
+  "optionalGameSkin": {
+    "file": "game-skin.css",
+    "rootClass": "twj-game-skin",
+    "loadAfter": "css/sd-theme.css",
+    "changes": "presentation only; existing game DOM and events",
+    "enableBy": "Claude adds local stylesheet link and body class"
+  }
+}

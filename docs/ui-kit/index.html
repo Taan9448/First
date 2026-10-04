@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>천외검결 — 적용용 UI 키트</title>
+  <link rel="stylesheet" href="../../css/sd-fonts.css">
+  <link rel="stylesheet" href="ui-kit.css">
+  <style>
+    body { margin:0; background:#080e15; }
+    .kit-shell { max-width:1440px; margin:auto; padding:24px; }
+    .kit-header { padding-bottom:20px; }
+    .kit-nav { position:sticky; top:0; z-index:10; padding:12px 0; background:#080e15f5; margin-bottom:20px; }
+    .kit-page[hidden] { display:none; }
+    .kit-section { margin:24px 0; }
+    .kit-preview-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; }
+    .kit-anchor { color:#8ce6de; }
+    @media(max-width:760px) { .kit-shell { padding:12px; }.kit-preview-grid { grid-template-columns:1fr; }.kit-nav { position:static; } }
+  </style>
+</head>
+<body>
+<main class="twj-kit kit-shell" id="kit">
+  <header class="kit-header">
+    <h1>천외검결 — 적용용 UI 키트</h1>
+    <p class="twj-muted">독립 부품과 화면 조합 · 샘플 데이터</p>
+    <a class="kit-anchor" href="README.md">Claude 연결 가이드</a>
+  </header>
+  <nav class="twj-tabs kit-nav" aria-label="키트 미리보기">
+    <button class="twj-tab" type="button" data-page="components" aria-pressed="true">공통 부품</button>
+    <button class="twj-tab" type="button" data-page="lobby" aria-pressed="false">로비</button>
+    <button class="twj-tab" type="button" data-page="battle" aria-pressed="false">전투</button>
+    <button class="twj-tab" type="button" data-page="party" aria-pressed="false">편성</button>
+    <button class="twj-tab" type="button" data-page="systems" aria-pressed="false">상점·강화·설정</button>
+  </nav>
+  <section id="page-components" class="kit-page" aria-label="공통 부품"></section>
+  <section id="page-lobby" class="kit-page" aria-label="로비 조합" hidden></section>
+  <section id="page-battle" class="kit-page" aria-label="전투 조합" hidden></section>
+  <section id="page-party" class="kit-page" aria-label="편성 조합" hidden></section>
+  <section id="page-systems" class="kit-page" aria-label="시스템 화면 조합" hidden></section>
+  <dialog class="twj-dialog" id="card-dialog" aria-labelledby="detail-title">
+    <h2 id="detail-title"></h2><p id="detail-meta"></p><p id="detail-effect"></p>
+    <form method="dialog"><button class="twj-button" autofocus>닫기</button></form>
+  </dialog>
+  <dialog class="twj-dialog" id="sample-dialog" aria-labelledby="sample-title">
+    <h2 id="sample-title">선택 확인</h2><p id="sample-message"></p>
+    <form method="dialog" class="twj-row"><button class="twj-button twj-button--primary" value="confirm">확인</button><button class="twj-button" value="cancel">취소</button></form>
+  </dialog>
+</main>
+<script src="preview.js"></script>
+</body>
+</html>
