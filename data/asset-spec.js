@@ -24,6 +24,7 @@ Game.Data.assetSpec = {
   story:       { dir: 'backgrounds/story', name: '{id}', size: [1600, 900], alpha: false, desc: '이야기 장면 삽화' },
   event:       { dir: 'backgrounds/events', name: '{id}', size: [800, 450], alpha: false, desc: '이벤트 삽화' },
   ui:          { dir: 'ui', name: '{id}', alpha: true, desc: 'UI 부품(39단계에 시안과 함께 정한다)' },
+  cardV2:      { dir: 'cards/v2', name: '{id}', alpha: true, desc: '(40단계) 카드 v2 공통 틀 frame_ink · frame_split(5:7, 1060×1484) · 하단 등급 띠 grade_{등급}' },
   effect:      { dir: 'effects', name: '{id}', alpha: true, desc: '이펙트 그림(42단계에 정한다)' },
   // 프레임이 고른 스프라이트 시트(선택): 동작 파일 이름 뒤에 _s{프레임 수} — 예: kai_idle_s8.png 는 가로로 8칸, 칸마다 위 크기
   sheet: { suffix: '_s', fps: { idle: 8, attack: 14, skill: 14, hit: 12, down: 10 } }

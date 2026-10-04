@@ -132,3 +132,8 @@ js/ui-common.js(화면 전환·카드 HTML·툴팁)  ui-battle.js  ui-meta.js(�
 - 생성 원본은 `/workspace/generated_images/`에 보존했고 전달 폴더는 별도 사본이다. 기존 리소스와 게임 로직은 바꾸지 않았다. 새 PNG를 게임에 연결하는 작업은 Claude가 handoff에 따라 진행한다.
 - 원본 PNG 382개 비율/알파/중복 검사와 연결표/미리보기 검사 통과. `inspection.json`, `validation.json` 확인.
 - 기존 `?card-design=1` 코드 그림 갤러리는 폴백/연출 설계 참고다. 새 PNG 프레임의 공통 틀 + 하단 띠 방식과 실제 게임 유형 이름(공격/보조/방어/회복/지속/방해)을 우선한다.
+
+## 2026-10-04 — 카드 v2 게임 연결 (Claude)
+- 위 전달물을 연결했다: `node tools/import-card-v2.js` → `node tools/sync-assets.js`. 결정은 GAME_DESIGN 17.47
+- 남은 109장(원화) · 108개(이펙트)가 납품되면 같은 두 명령만 다시 돌린다. 이미 옮긴 파일은 다시 복사될 뿐 이름은 같다
+- `G.Assets.preload`는 카드 원화 · 카드 이펙트 · 배경을 미리 읽지 않는다(너무 커서 동료 그림이 시간 초과됐다)

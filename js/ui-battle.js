@@ -666,6 +666,43 @@
   var monMove = null;   // 37단계: 지금 몬스터가 쓰는 행동 이름(타격음 고르기)
 
   function spritePt(u) { return center(u, 0.5); }
+  // 40단계: 카드 v2 독립 이펙트(assets/effects/card-v2/{id}.png, 정지 그림 한 장) — data/card-v2.js 의 대상 · 시간 · 움직임으로
+  // CSS 변환(Web Animations)만 써서 생성 → 타격 → 잔광. 피해 · 상태는 바꾸지 않는다(보이기만)
+  function v2Fx(def, d) {
+    var info = G.Data.cardV2 && G.Data.cardV2[def.base || def.id], fx = info && info.fx, url = fx && G.Assets.cardFx(def.base || def.id);
+    if (!url) return false;
+    var fr = fxEl.getBoundingClientRect(), alive = function (l) { return l.filter(function (u) { return !u.dead; }); };
+    var group = function (l) {
+      l = alive(l); if (!l.length) return null;
+      var ps = l.map(spritePt), x = 0, y = 0; ps.forEach(function (p) { x += p.x; y += p.y; });
+      return { x: x / ps.length, y: y / ps.length, wide: l.length > 1 };
+    };
+    var one = function (u) { return u && !u.dead ? { x: spritePt(u).x, y: spritePt(u).y } : null; };
+    var spots = [];
+    if (fx.t === 'allEnemies') spots.push(group(B.monsters));
+    else if (fx.t === 'allAllies') spots.push(group(B.heroes));
+    else if (fx.t === 'enemy' || fx.t === 'randomEnemy') spots.push(one(d.target && d.target.side === 'enemy' ? d.target : null) || group(B.monsters));
+    else if (fx.t === 'ally' || fx.t === 'downedAlly') spots.push(one(d.target && d.target.side !== 'enemy' ? d.target : d.caster) || group(B.heroes));
+    else spots.push(one(d.caster) || { x: fr.width / 2, y: fr.height * 0.45 });
+    var spd = G.speed || 1, dur = Math.max(260, (fx.d || 700) / spd), reduce = FX.low || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+    spots.filter(Boolean).forEach(function (p) {
+      var w = Math.min(fr.width * (p.wide ? 0.62 : 0.44), 760), h = w * 2 / 3;
+      var anc = fx.dir === 'lr' ? (fx.imp || [0.75, 0.55]) : [0.5, 0.5];
+      var im = UI.el('img', 'cfx2');
+      im.src = url; im.alt = '';
+      im.style.width = w + 'px'; im.style.height = h + 'px';
+      im.style.left = (p.x - w * anc[0]) + 'px'; im.style.top = (p.y - h * anc[1]) + 'px';
+      if (fx.blend) im.style.mixBlendMode = fx.blend;
+      fxEl.appendChild(im);
+      var kf = (fx.kf && fx.kf.length ? fx.kf : [[0, 0, .8, 0, 0], [.3, 1, 1, 0, 0], [1, 0, 1.06, 0, 0]]).map(function (k) {
+        return reduce ? { offset: k[0], opacity: k[1] } : { offset: k[0], opacity: k[1], transform: 'translate(' + (k[3] * w).toFixed(1) + 'px,' + (k[4] * h).toFixed(1) + 'px) scale(' + k[2] + ')' };
+      });
+      var done = function () { if (im.parentNode) im.parentNode.removeChild(im); };
+      if (im.animate) { var a = im.animate(kf, { duration: dur, easing: fx.ease || 'ease-out', fill: 'both' }); a.onfinish = done; }
+      setTimeout(done, dur + 200);
+    });
+    return true;
+  }
   function tipPt(u) {
     var e = unitEls[u.uid];
     if (!e) return spritePt(u);
@@ -802,7 +839,9 @@
       SND.play('play');
       var el = cardEls[d.inst.uid];
       // 18단계: 카드가 떠올라 빛나다 도트 조각으로 부서지고, 카드에 배정된 도트 연출이 이어진다(data/fx.js)
-      var pkey = FX.low || !el ? null : G.PFX.keyFor(def, cur.el), pixel = pkey && pkey !== 'release';
+      // 40단계: 카드 v2 이펙트 그림이 있으면 그것을 쓰고 예전 도트 연출 · 고유 sfx 연출은 건너뛴다(겹치지 않게)
+      var hasV2 = !!(G.Data.cardV2 && G.Data.cardV2[def.base || def.id] && G.Data.cardV2[def.base || def.id].fx && G.Assets.cardFx(def.base || def.id));
+      var pkey = FX.low || !el || hasV2 ? null : G.PFX.keyFor(def, cur.el), pixel = pkey && pkey !== 'release';
       var gather = pkey ? G.PFX.gatherMs(def.rarity) / (G.speed || 1) : 140;
       if (pkey) d.hold = castCard(el, d, pkey);
       else if (el) {
@@ -820,6 +859,7 @@
         el.style.transform = 'scale(0.4)';
       }
       pulseClass($('.energy'), 'pulse', 400);
+      if (hasV2) setTimeout(function () { v2Fx(def, d); }, gather);
       if (d.caster) {
         var ce = unitEls[d.caster.uid], magic = FX.MAGIC[cur.el];
         setTimeout(function () {
@@ -829,7 +869,7 @@
           pulseClass(ce, def.type === 'attack' && !magic ? 'lunge-r' : 'hop', 330);
         }, pkey ? gather : 0);
         // 마법 공격: 무기 끝에서 탄이 포물선으로 날아간다 (도트 연출이 없을 때)
-        if (def.type === 'attack' && magic && !pixel) {
+        if (def.type === 'attack' && magic && !pixel && !hasV2) {
           var from = tipPt(d.caster), colors = FX.colors(cur.el);
           var to = d.target ? [spritePt(d.target)] : def.target === 'allEnemies' ? pts(B.monsters) : [fieldCenter()];
           to.forEach(function (t) { FX.projectile(from, t, colors[0], null, { trail: colors[1], frames: 12 }); });
@@ -837,7 +877,8 @@
         }
       }
       // 희귀 이상 카드의 고유 이펙트. 도트 연출이 맡은 공격·회복 카드는 겹치지 않게 생략한다
-      if (def.sfx && !pixel) {
+      if (hasV2) SND.play(def.rarity === 'legendary' || def.rarity === 'epic' ? 'big' : 'magic');
+      else if (def.sfx && !pixel) {
         var ctx = { from: d.caster ? tipPt(d.caster) : fieldCenter(), targets: d.target ? [spritePt(d.target)] : [],
           enemies: pts(B.monsters), allies: pts(B.heroes), center: fieldCenter(), el: cur.el };
         setTimeout(function () { FX.play(def.sfx, ctx); }, gather);

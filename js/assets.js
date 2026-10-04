@@ -59,6 +59,13 @@
       var c = D.cardById && D.cardById[base];
       return c && c.owner && c.owner !== 'none' ? url(find(path('cardShared', c.owner))) : null;
     },
+    // 40단계: 카드 v2 — 공통 틀(ink · split) + 하단 등급 띠 다섯이 모두 있어야 v2 카드로 그린다
+    cardV2: function (part) { return url(find('cards/v2/' + part)); },
+    cardV2Ready: function () {
+      var self = this;
+      return ['frame_ink', 'frame_split', 'grade_common', 'grade_uncommon', 'grade_rare', 'grade_epic', 'grade_legendary'].every(function (k) { return !!self.cardV2(k); });
+    },
+    cardFx: function (id) { return url(find('effects/card-v2/' + String(id).split('+')[0])); },
     cardArtOwn: function (id) { return url(find(path('cardArt', String(id).split('+')[0]))); },
     cardFrame: function (lay, rarity, duo) { return url(find(path('cardFrame', duo ? 'duo' : lay + '_' + rarity))); },
     battleBg: function (theme) { return url(find(path('bgBattle', theme))); },
@@ -91,7 +98,8 @@
 
     // 시작할 때 목록의 그림을 모두 미리 읽는다. 읽지 못한 파일은 빼서 코드 그림으로 되돌린다(최대 wait ms 기다린다)
     preload: function (wait) {
-      var list = Object.keys(files());
+      // 40단계: 카드 원화 · 카드 이펙트 · 배경은 크고 많아(수백 MB) 미리 읽지 않는다 — 한꺼번에 읽으면 동료 그림 로딩이 밀려 시간 초과가 난다. 쓸 때 읽는다
+      var list = Object.keys(files()).filter(function (p) { return !/^(cards\/art|effects\/card-v2|backgrounds|ui\/screens)\//.test(p); });
       if (!list.length || typeof Image === 'undefined') return Promise.resolve(0);
       var done = 0;
       return new Promise(function (res) {

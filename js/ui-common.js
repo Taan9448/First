@@ -257,6 +257,15 @@
     var f = aFrame || G.ArtCards.frameCached(def.rarity, school), a = aArt || G.ArtCards.artCached(def);
     if (f) setImg('.cf', f); else G.ArtCards.frame(def.rarity, school).then(function (u) { setImg('.cf', u); });
     if (a) setImg('.cart', a); else G.ArtCards.art(def).then(function (u) { setImg('.cart', u); });
+    // 40단계: 카드 v2 — 공통 틀(무공 ink · 마법 split) + 하단 등급 띠 하나(오른쪽 위는 유형). 틀 · 띠가 다 있을 때만
+    if (G.Assets && G.Assets.cardV2Ready && G.Assets.cardV2Ready()) {
+      var v2 = G.Data.cardV2 && G.Data.cardV2[def.base || def.id], fk = v2 ? v2.f : lay === 'ink' ? 'ink' : 'split';
+      c.classList.add('v2', 'v2-' + fk);
+      var cin = c.querySelector('.cin');
+      cin.insertAdjacentHTML('beforeend', '<img class="cv2f" alt="" src="' + G.Assets.cardV2('frame_' + fk) + '">' +
+        '<div class="cv2g"><img alt="" src="' + G.Assets.cardV2('grade_' + (G.RARITIES.indexOf(def.rarity) >= 0 ? def.rarity : 'legendary')) + '"></div>');
+      if (v2 && v2.p && aArt) c.querySelector('.cart').style.backgroundPosition = v2.p;
+    }
     c.setAttribute('data-tip', UI.cardTip(def));
     return c;
   };
