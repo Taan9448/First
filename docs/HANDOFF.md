@@ -3,7 +3,7 @@
 이 문서를 새 Claude Code 세션의 첫 메시지로 붙여넣고 "이 요약대로 처음부터 만들어 줘. 먼저 GAME_DESIGN.md부터 작성해서 저장소에 커밋해 줘"라고 요청한다.
 아래 내용은 이전 세션에서 7단계까지 만들면서 확정한 결정 사항이다. 세부 수치(카드 192장 목록, 몬스터 수치)는 이전 GAME_DESIGN.md에 있었고, 여기에는 규칙과 방향만 적는다.
 
-## 0. 최근 진행(19~35단계, 2026-10) — 먼저 읽을 것
+## 0. 최근 진행(19~36단계, 2026-10) — 먼저 읽을 것
 - **동료 목업 적용(2026-10-04, 사용자 승인)**: ChatGPT가 승인된 주인공·동료 6명(`kai/bram/lyra/sera/nox/ciel`)의 투명 PNG를 `assets/characters/*_poses.png`에 추가하고 화면에 연결했다. 자세는 대기·공격·스킬·피격 각 1장으로, 기존 돌진·점프·이펙트와 함께 전환한다. 원본 영역/몸 높이/얼굴 좌표는 `data/character-art.js`, 로딩과 대체 그림 선택은 `js/character-art.js` 및 `G.Pixel.sheet`, CSS 영역 표시는 `UI.spriteEl`/`drawAnim`에 있다. 타이틀 전에 미리 읽으며 실패·크기 불일치·6초 초과 시 기존 그림을 사용한다. 로비는 PNG 전체 영역에 맞춰 크기를 잡고, 전투는 첫 아군의 무기가 왼쪽 끝에서 잘리지 않도록 여백을 확보한다. PNG의 캔버스 변환은 하지 않는다. 게임 규칙·저장 형식·해금 조건은 변경하지 않았다. `assets/README.md`의 규격을 확인한다. 검증: 전투 6,000회·캠페인 테스트 통과, Chromium에서 6명×4자세·로비·편성·도감·스토리·전투·컷인·PNG 실패 대체 표시·움직임 줄이기 확인. 1000×680/1280×800/1440×900 확인; 390px 창은 기존 최소 폭 860px 제한이 유지된다. 이 환경의 브라우저 정책으로 file:// 직접 실행은 검증하지 못했으며, 일반 스크립트·Image·상대 CSS 경로만 사용한다.
 - **공동 개발(34단계 뒤)**: 이제 Claude(코드)와 ChatGPT(이미지·UI/UX)가 저장소를 함께 쓴다. `docs/COLLAB.md`, `assets/README.md`를 먼저 읽는다. 이미지는 `assets/`에 올라오며 Claude는 연결만 한다(다시 만들거나 덮어쓰지 않는다). file:// 라서 PNG를 캔버스로 가공하면 보안 오류가 나므로 `<img>`·CSS 배경으로 그대로 쓴다
 아래 1~11장은 v0.7 재구축 때의 요약이다. 그 뒤 게임은 크게 바뀌었으니 최신 규칙은 `GAME_DESIGN.md`(16장 단계표, 17.20~17.27 결정 사항)를 기준으로 한다.
@@ -17,6 +17,7 @@
 - 33 강화 10단계. 원정 중 강화는 3단계까지(`upgradeRules.fieldMax`), 4~10은 로비 대장간(`Game.Data.forge`, `St.forge(id, roll)`). 4단계부터는 3단계 각인을 경지 배율로 키운다(`js/upgrade.js`의 `bigEngrave`). 카드 id 뒤 `+4`~`+10`. 금화 수급은 `economy.gold`·`clearGold`. 남은 단계 34~41은 16장 표대로(사용자 요청: 노말 스테이지마다 첫 시도 클리어 20% 이하는 35단계)
 - 34 적 다양화. 마지막 방은 처음 돌파 전엔 이야기 보스 고정, 그 뒤·승천·오늘의 원정은 `altBosses` 중 무작위(`St.pickBoss`/`bossFree`). 몬스터 기믹은 데이터로: `split`(분열), `ai:'pattern'` + `selfDestruct`(자폭), 상태 `shelter`(엄호)·`dodge`(회피), op `costUp`·`drainEnergy`·`drainDraw`, 대상 `lowestMonster`·`otherMonsters`, 저주 카드 `CUR_*`(`inHandEnd`). 새 그림 `js/sprites-variety.js`. 새 몬스터 op 를 쓰면 `tools/test-battle.js`의 `KNOWN_OPS`에도 넣는다
 - 35 난이도: 노말은 스테이지마다 첫 시도 20% 이하가 사용자 목표다. 수치를 바꾸면 반드시 시뮬레이터로 다시 잰다 — `node tools/sim.js 15 <시드>`를 시드 4개로 병렬(4코어, 한 번 1분 남짓), 하드는 `... 0 hard`, 승천은 `... 4`(승천 4까지 이어서). 기본 AI는 앞보기(`Battle.saveState/loadState`로 써 보고 되돌림). 같은 전투로 AI를 비교하려면 `SIM_DUMP=파일`로 모으고 `tools/sim-bench.js`. 연패 보정은 `modes.retryEase`
+- 36 리소스 연결: 그림이 올라오면 `node tools/sync-assets.js` → `node tools/gen-image-requests.js` → `index.html?assets=1` 확인. 연결 입구는 `js/assets.js`(G.Assets) 하나로 모았다(17.39). 리소스 그림은 캔버스로 읽을 수 없으니 픽셀을 읽는 연출(FX.shatter 등)은 `_asset`이면 건너뛴다. 시험할 때 임시 그림을 넣었다면 반드시 지우고 목록을 되돌린다
 - **노력(effort) 추천**: 사용자 요청으로 단계를 마칠 때마다 다음 단계에 알맞은 노력 수준(낮음 · 중간 · 높음)을 함께 알린다. 남은 단계(35단계 뒤 다시 세움, 16장) 추천 — 36 리소스 연결 기반 **높음** · 37 소리 **중간** · 38 이야기 **중간** · 39 UI/UX 전면 개편 **높음** · 40 전투 리소스 적용 **높음** · 41 카드 리소스 **중간** · 42 스킬 연출 **중간** · 43 아이콘 **낮음** · 44 이야기 그림 **낮음** · 45 최종 점검 **높음**. 문서 수정·리소스 하나 연결 같은 작은 일은 **낮음**
 - **전면 개편(35단계 뒤 결정)**: 이미지·UI/UX를 모두 ChatGPT 리소스로 바꾼다. 동료·몬스터는 동작별 그림 + CSS 움직임. 단계표는 GAME_DESIGN.md 16장 36~45
 - 글자를 새로 넣으면 `python3 tools/embed-fonts.py`(빠지면 `test-battle`이 알려 준다). 테스트: `node tools/test-battle.js`, `node tools/test-campaign.js`, 밸런스: `node tools/sim.js 12 1 0 normal|hard`

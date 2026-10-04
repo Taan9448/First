@@ -8,7 +8,7 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 global.window = global;
 ['js/core.js', 'data/keywords.js', 'data/characters.js', 'data/cards.js', 'data/monsters.js', 'data/relics.js', 'data/items.js',
- 'data/upgrades.js', 'data/events.js', 'data/bonds.js', 'data/traits.js', 'data/ascension.js', 'data/modes.js', 'js/status.js', 'js/deck.js', 'js/upgrade.js', 'js/battle.js', 'js/effects.js', 'data/fx.js', 'js/fx-pixel.js', 'data/music.js', 'js/music.js', 'js/puppet.js', 'js/puppet-heroes.js'].forEach(f => {
+ 'data/upgrades.js', 'data/events.js', 'data/bonds.js', 'data/traits.js', 'data/ascension.js', 'data/modes.js', 'js/status.js', 'js/deck.js', 'js/upgrade.js', 'js/battle.js', 'js/effects.js', 'data/fx.js', 'js/fx-pixel.js', 'data/music.js', 'js/music.js', 'js/puppet.js', 'js/puppet-heroes.js', 'data/asset-spec.js', 'data/assets.js', 'js/assets.js', 'data/relics.js', 'data/stages.js'].forEach(f => {
   vm.runInThisContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), { filename: f });
 });
 const G = global.Game;
@@ -19,6 +19,27 @@ function check(cond, msg) {
   if (!cond) { failures++; console.log('  실패: ' + msg); }
 }
 function section(name) { console.log('\n■ ' + name); }
+
+// ---------------------------------------------------------------- 36단계: 리소스 연결
+section('리소스');
+{
+  const A = G.Assets, real = G.Data.assets.files;
+  check(A.sprite('kai') === null && A.cardArt('K01') === null && A.icon('strength') === null, '리소스가 없으면 null(코드 그림)');
+  G.Data.assets.files = { 'characters/heroes/kai_idle.png': [512, 512, 1], 'characters/heroes/kai_attack_s6.png': [3072, 512, 1], 'characters/monsters/toad_king_idle.webp': [1024, 1024, 1],
+    'cards/art/K01.jpg': [600, 500, 0], 'cards/frames/ink_rare.png': [500, 700, 1], 'icons/status/strength.png': [128, 128, 1], 'items/relics/R01.png': [128, 128, 1],
+    'backgrounds/battle_forest.jpg': [1920, 1080, 0], 'backgrounds/world_map.png': [2000, 1120, 0], 'characters/heroes/kai_portrait.png': [1024, 1536, 1] };
+  const k = A.sprite('kai'), t = A.sprite('toad_king');
+  check(k && k.hero && k.poses.idle.url === 'assets/characters/heroes/kai_idle.png' && k.poses.attack.frames === 6 && k.poses.attack.w === 512 && !k.poses.hit, '동료 동작: 한 장 · 가로 시트(_s6)');
+  check(t && !t.hero && /toad_king_idle\.webp$/.test(t.poses.idle.url) && A.sprite('slime') === null, '몬스터 동작(확장자 webp), 없는 몬스터는 null');
+  check(A.cardArt('K01+3') === 'assets/cards/art/K01.jpg' && A.cardFrame('ink', 'rare') && !A.cardFrame('split', 'rare'), '카드 그림은 강화 단계와 상관없이 원래 id, 틀은 계열·등급');
+  check(A.icon('strength') === 'assets/icons/status/strength.png' && A.relic('R01') && !A.item('I01'), '아이콘은 하위 폴더와 상관없이 이름으로');
+  check(A.battleBg('forest') && !A.battleFore('forest') && A.worldMap() && A.portrait('kai') && !A.face('kai'), '배경 · 월드맵 · 전신 일러스트');
+  const ex = A.expected();
+  check(ex.filter(o => o.kind === 'monsterPose' && o.pose === 'idle').length === G.Data.monsters.length && ex.some(o => o.kind === 'cardArt' && o.id === 'K01' && o.have), '필요한 그림 목록(몬스터마다 동작 · 있는 것 표시)');
+  G.Data.assets.files = real;
+  const r = require('child_process').spawnSync('node', [path.join(ROOT, 'tools/sync-assets.js'), '--check'], { encoding: 'utf8' });
+  check(r.status === 0, '리소스 폴더와 목록이 같고 규격 오류가 없다 (node tools/sync-assets.js)' + (r.status ? '\n' + r.stdout : ''));
+}
 
 // ---------------------------------------------------------------- 데이터 검사
 section('데이터');

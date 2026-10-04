@@ -145,6 +145,7 @@
     },
 
     // 도트 아이콘 (rows 전체 격자, 윤곽선 자동, 음영 없음)
+    iconNames: function () { return Object.keys(ICONS); },   // 36단계: 리소스 요청서·확인 화면이 아이콘 목록을 쓴다
     icon: function (id) {
       if (icons[id]) return icons[id];
       var spec = ICONS[id] || ICONS.special;

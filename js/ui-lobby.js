@@ -106,10 +106,11 @@
 
     // 큰 캐릭터
     var stage = el.querySelector('.lb-hero');
-    var sp = UI.spriteEl(heroPick, 1);
+    var sp = UI.portraitEl(heroPick, 'lb-portrait') || UI.spriteEl(heroPick, 1);   // 36단계: 전신 일러스트 리소스가 있으면 그것
     stage.appendChild(sp);
     var size = 0;
     var fit = function () {
+      if (!sp._sheet) return;   // 일러스트는 CSS 로 화면 높이에 맞춘다
       var s = heroSize(el);
       var sh = sp._sheet;
       if (sh.art) s = Math.min(stage.clientHeight * 0.92 / (sh.h * 4), stage.clientWidth * 0.96 / (sh.w * 4));

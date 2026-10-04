@@ -116,7 +116,11 @@
     G.FX.init();
     G.BattleUI.init();
     G.Extra.initMenu();
-    G.CharacterArt.load().then(function () { G.Meta.title(); });
+    // 36단계: 리소스(assets/)를 먼저 읽는다. 읽지 못한 파일은 코드 그림으로 되돌린다. ?assets=1 이면 리소스 확인 화면
+    Promise.all([G.Assets.preload(4000), G.CharacterArt.load()]).then(function () {
+      if (/[?&]assets=1/.test(location.search) && G.AssetView) G.AssetView.open();
+      else G.Meta.title();
+    });
     // 나머지 카드 그림은 뒤에서 미리 변환해 둔다
     setTimeout(function () { G.ArtCards.preload(G.Data.cards); }, 300);
   });

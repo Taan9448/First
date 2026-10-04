@@ -1419,3 +1419,47 @@ body.cb .st .cb-lab.bu { background: #12324a; color: #c2ecff; }
 .card-stat td.ok { color: #7cf27c; } .card-stat td.bad { color: #ff7a7a; }
 .stats-body { max-height: 62vh; overflow-y: auto; }
 .retry-ease { color: #7cf27c; text-align: center; }
+
+/* ================= 36단계: 리소스 그림(동작별) ================= */
+/* 자리는 코드 그림과 같고, 그림은 높이에 맞춰 아래 가운데에 선다. 동료는 오른쪽, 몬스터는 왼쪽으로 움직인다 */
+.sprite.asset { background: none !important; animation: none !important; overflow: visible; --dir: 1; }
+.sprite.asset.a-mon { --dir: -1; }
+.sprite.asset .apic { position: absolute; bottom: 0; left: 50%; height: 100%; background-repeat: no-repeat; background-position: center bottom;
+  transform: translateX(-50%); transform-origin: 50% 100%; image-rendering: auto; animation: aBreath 2.6s ease-in-out infinite; pointer-events: none; }
+.sprite.asset .apic.sheet { background-position: 0 0; animation: aSheet var(--sheet-dur, 1s) steps(var(--frames, 2), jump-none) infinite; }
+@keyframes aBreath { 0%, 100% { transform: translateX(-50%) scale(1, 1); } 50% { transform: translateX(-50%) scale(1.012, 0.986); } }
+@keyframes aSheet { from { background-position: 0 0; } to { background-position: 100% 0; } }
+.sprite.asset.a-attack .apic { animation: aAttack 0.52s cubic-bezier(.2,.7,.3,1); }
+@keyframes aAttack { 0% { transform: translateX(-50%); } 25% { transform: translateX(calc(-50% - 8px * var(--dir))) scale(0.97, 1.03); } 55% { transform: translateX(calc(-50% + 34px * var(--dir))) scale(1.05, 0.96); } 100% { transform: translateX(-50%); } }
+.sprite.asset.a-skill .apic { animation: aSkill 0.9s ease-out; }
+@keyframes aSkill { 0% { transform: translateX(-50%); filter: none; } 30% { transform: translateX(-50%) scale(1.06) translateY(-6px); filter: brightness(1.5) drop-shadow(0 0 14px #ffe6a0); } 100% { transform: translateX(-50%); filter: none; } }
+.sprite.asset.a-hit .apic { animation: aHit 0.36s ease-out; }
+@keyframes aHit { 0% { transform: translateX(-50%); filter: brightness(2.2) saturate(0); } 30% { transform: translateX(calc(-50% - 10px * var(--dir))) rotate(calc(-3deg * var(--dir))); filter: brightness(1.3) sepia(1) hue-rotate(-40deg) saturate(4); } 100% { transform: translateX(-50%); filter: none; } }
+.sprite.asset.a-down .apic { animation: aDown 0.7s ease-in forwards; }
+@keyframes aDown { 0% { transform: translateX(-50%); opacity: 1; } 100% { transform: translateX(-50%) translateY(10%) rotate(calc(-12deg * var(--dir))) scale(0.92); opacity: 0.25; filter: grayscale(1) brightness(0.5); } }
+.sprite.asset.a-face .apic { animation: none; }
+.field.has-bg .floor { opacity: 0.25; }
+.portrait-art { display: block; height: 100%; width: auto; max-width: 100%; object-fit: contain; object-position: bottom center; }
+.lb-portrait { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); height: 92%; }
+.story-portrait { height: 70vh; width: auto; }
+.card.has-art .cart { background-size: cover !important; background-position: center !important; image-rendering: auto; filter: none; }
+.card.has-frame .cf { background-size: 100% 100% !important; image-rendering: auto; }
+
+/* 리소스 확인 화면(index.html?assets=1) */
+#asset-view { position: fixed; inset: 0; z-index: 9999; overflow: auto; background: #10131c; color: #dde4f0; padding: 16px 20px; font-size: 13px; }
+#asset-view h1 { font-size: 22px; margin: 0 0 4px; }
+#asset-view .av-head p { margin: 0 0 10px; color: #9aa8c4; }
+#asset-view .av-back { position: absolute; right: 20px; top: 18px; color: #5ee6ff; }
+#asset-view .av-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+#asset-view .av-tab { background: #1c2232; color: #c8d2e8; border: 1px solid #2c3550; padding: 5px 10px; cursor: pointer; }
+#asset-view .av-tab.on { background: #2a5a78; color: #fff; }
+#asset-view .av-table { width: 100%; border-collapse: collapse; }
+#asset-view th, #asset-view td { border-bottom: 1px solid #222a3c; padding: 6px 8px; text-align: left; vertical-align: middle; }
+#asset-view tr.have { background: rgba(124, 242, 124, 0.06); }
+#asset-view .av-pv { width: 120px; height: 84px; position: relative; }
+#asset-view .av-pv .sprite { position: relative; margin: 0 auto; }
+#asset-view .av-pv .card { transform: scale(0.42); transform-origin: top left; }
+#asset-view .av-pv .ico { width: 40px; height: 40px; display: inline-block; background-size: contain; }
+#asset-view .av-bg { width: 112px; height: 63px; background-size: cover; background-position: center; }
+#asset-view code { color: #ffd27a; }
+#asset-view .ok { color: #7cf27c; } #asset-view .bad { color: #ff7a7a; } #asset-view .dim { color: #6a7690; }

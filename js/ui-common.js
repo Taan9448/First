@@ -55,7 +55,11 @@
       var t = cls ? el.closest(cls) || el : el;
       t.classList.remove('bump'); void t.offsetWidth; t.classList.add('bump');
     },
-    iconStyle: function (id) { return 'background-image:url(' + G.Pixel.icon(id) + ')'; },
+    // 36단계: assets/icons 에 같은 이름의 그림이 있으면 그것을(부드럽게 줄인다), 없으면 도트 아이콘
+    iconStyle: function (id) { var a = G.Assets && G.Assets.icon(id); return a ? 'background-image:url(' + a + ');background-size:contain;background-position:center;background-repeat:no-repeat;image-rendering:auto' : 'background-image:url(' + G.Pixel.icon(id) + ')'; },
+    // 유물 · 소모품: 그 id 의 그림이 있으면 그것, 없으면 아이콘 이름으로
+    relicStyle: function (r) { var a = G.Assets && G.Assets.relic(r.id); return a ? 'background-image:url(' + a + ');background-size:contain;background-position:center;background-repeat:no-repeat;image-rendering:auto' : UI.iconStyle(r.icon); },
+    itemStyle: function (it) { var a = G.Assets && G.Assets.item(it.id); return a ? 'background-image:url(' + a + ');background-size:contain;background-position:center;background-repeat:no-repeat;image-rendering:auto' : UI.iconStyle(it.icon); },
     icon: function (id, cls) { return '<i class="ico ' + (cls || '') + '" style="' + UI.iconStyle(id) + '"></i>'; }
   };
 
@@ -74,7 +78,7 @@
     return (ids || []).map(function (id) {
       var r = G.Data.relicById[id];
       if (!r) return '';
-      return '<span class="relic r-' + r.rarity + '" data-relic="' + id + '" data-tip="' + UI.relicTip(r) + '"><i class="ico" style="' + UI.iconStyle(r.icon) + '"></i></span>';
+      return '<span class="relic r-' + r.rarity + '" data-relic="' + id + '" data-tip="' + UI.relicTip(r) + '"><i class="ico" style="' + UI.relicStyle(r) + '"></i></span>';
     }).join('');
   };
   // 22단계: 소모품 칸(빈 칸 포함). usable 이면 누를 수 있다
@@ -83,7 +87,7 @@
     var out = '';
     for (var i = 0; i < (slots || 3); i++) {
       var it = ids[i] && G.Data.itemById[ids[i]];
-      out += it ? '<button class="item i-' + it.rarity + (usable ? ' usable' : '') + '" data-i="' + i + '" data-tip="' + UI.itemTip(it) + (usable ? '<br><span class=&quot;dim&quot;>누르면 쓴다</span>' : '') + '"><i class="ico" style="' + UI.iconStyle(it.icon) + '"></i></button>'
+      out += it ? '<button class="item i-' + it.rarity + (usable ? ' usable' : '') + '" data-i="' + i + '" data-tip="' + UI.itemTip(it) + (usable ? '<br><span class=&quot;dim&quot;>누르면 쓴다</span>' : '') + '"><i class="ico" style="' + UI.itemStyle(it) + '"></i></button>'
         : '<span class="item empty"></span>';
     }
     return out;
@@ -91,7 +95,7 @@
   UI.relicTile = function (id, cls) {
     var r = G.Data.relicById[id];
     return '<button class="relic-tile ' + (r.rarity === 'boss' ? 'boss ' : '') + (cls || '') + '" data-id="' + id + '">' +
-      '<i class="ico" style="' + UI.iconStyle(r.icon) + '"></i><div><b>' + U.esc(r.name) + '</b><small>' + G.Data.RELIC_RARITY[r.rarity] + ' 유물</small>' +
+      '<i class="ico" style="' + UI.relicStyle(r) + '"></i><div><b>' + U.esc(r.name) + '</b><small>' + G.Data.RELIC_RARITY[r.rarity] + ' 유물</small>' +
       '<span>' + U.esc(r.desc) + '</span></div></button>';
   };
   UI.flashRelic = function (id) {
@@ -245,7 +249,11 @@
       '<div class="ccond"><span>조건 충족</span></div><div class="cchain"></div></div>';
     if (opts.silhouette) c.classList.add('silhouette');
     var setImg = function (sel, url) { if (url) c.querySelector(sel).style.backgroundImage = 'url(' + url + ')'; };
-    var f = G.ArtCards.frameCached(def.rarity, school), a = G.ArtCards.artCached(def);
+    // 36단계: 카드 그림 · 틀 리소스가 있으면 그것을, 없으면 코드로 그린 그림
+    var aArt = G.Assets && G.Assets.cardArt(def.base || def.id), aFrame = G.Assets && G.Assets.cardFrame(lay, def.rarity, !!def.duo);
+    if (aArt) c.classList.add('has-art');
+    if (aFrame) c.classList.add('has-frame');
+    var f = aFrame || G.ArtCards.frameCached(def.rarity, school), a = aArt || G.ArtCards.artCached(def);
     if (f) setImg('.cf', f); else G.ArtCards.frame(def.rarity, school).then(function (u) { setImg('.cf', u); });
     if (a) setImg('.cart', a); else G.ArtCards.art(def).then(function (u) { setImg('.cart', u); });
     c.setAttribute('data-tip', UI.cardTip(def));
@@ -328,6 +336,12 @@
     e.style.left = 'calc(var(--px) * ' + ((0.5 - sh.anchor) * sh.w * size).toFixed(2) + ')';
     e._sheet = sh;
     e._size = size;
+    // 36단계: 리소스 그림이 있으면 코드 그림 대신 쓴다(자리 크기는 코드 그림과 같게 — 화면 배치가 그대로다)
+    var as = G.Assets && G.Assets.sprite(spriteId);
+    if (as && !as.atlas) {
+      if (sh.anims && !native) { var sp0 = Math.max(0, (sh.w - 34) * size / 2); e.style.marginLeft = e.style.marginRight = 'calc(var(--px) * -' + sp0.toFixed(2) + ')'; }
+      return assetSprite(e, as);
+    }
     if (sh.art) {
       e.classList.add('asset-sprite');
       e.style.backgroundImage = 'none';
@@ -346,6 +360,53 @@
     }
     return e;
   };
+  // ---------------- 36단계: 리소스 그림(동작별 한 장 또는 가로 시트) ----------------
+  // 자리(e)는 코드 그림과 같은 크기, 그림은 높이에 맞춰 아래 가운데에 선다. 움직임은 CSS(숨쉬기 · 공격 · 스킬 · 맞음 · 쓰러짐)
+  var POSE_MS = { attack: 520, skill: 900, hit: 360 };
+  function assetSprite(e, as) {
+    e.classList.add('asset', as.hero ? 'a-hero' : 'a-mon');
+    e.style.backgroundImage = 'none';
+    e.style.removeProperty('background-size');
+    e._asset = as;
+    var pic = UI.el('div', 'apic');
+    e.appendChild(pic);
+    setAssetPose(e, 'idle');
+    return e;
+  }
+  function setAssetPose(e, name) {
+    var as = e._asset, p = as.poses[name] || as.poses.idle, pic = e.querySelector('.apic');
+    if (!pic) return;
+    pic.style.backgroundImage = 'url(' + p.url + ')';
+    pic.style.aspectRatio = p.w + ' / ' + p.h;
+    if (p.frames > 1) {
+      pic.classList.add('sheet');
+      pic.style.backgroundSize = p.frames * 100 + '% 100%';
+      pic.style.setProperty('--frames', p.frames);
+      pic.style.setProperty('--sheet-dur', (p.frames / (p.fps || 10)).toFixed(2) + 's');
+    } else { pic.classList.remove('sheet'); pic.style.backgroundSize = 'contain'; }
+    e.setAttribute('data-pose', name);
+  }
+  function assetAnim(e, name) {
+    clearTimeout(e._poseT);
+    if (name === 'down') { setAssetPose(e, 'down'); e.classList.add('a-down'); return true; }
+    e.classList.remove('a-down', 'a-attack', 'a-skill', 'a-hit');
+    setAssetPose(e, name);
+    if (name === 'idle') return true;
+    void e.offsetWidth;
+    e.classList.add('a-' + name);
+    e._poseT = setTimeout(function () { e.classList.remove('a-' + name); setAssetPose(e, 'idle'); }, POSE_MS[name] || 500);
+    return true;
+  }
+  UI.assetAnim = assetAnim;
+  // 동료 전신 · 컷인 얼굴 리소스(있으면 img 요소, 없으면 null)
+  UI.portraitEl = function (id, cls) {
+    var u = G.Assets && G.Assets.portrait(id);
+    if (!u) return null;
+    var im = UI.el('img', 'portrait-art ' + (cls || ''));
+    im.src = u; im.alt = '';
+    return im;
+  };
+
   // ---------------- 27단계: 영웅 동작 ----------------
   var ANIMATED = [];
   function drawAnim(e, now) {
@@ -380,6 +441,7 @@
   }, 50);
   // name: 'attack' · 'skill' · 'hit'. 동작이 없는 그림이면 false
   UI.playAnim = function (e, name) {
+    if (e && e._asset) return assetAnim(e, name);
     if (!e || !e._sheet || !e._sheet.anims || !e._sheet.anims[name]) return false;
     e._anim = { name: name, t0: Date.now() };
     e._fixed = null;
@@ -389,6 +451,11 @@
   };
   // 한 장면에 멈춰 둔다(컷인 얼굴: 얼굴 위치를 아는 대기 첫 장면). 여백 겹치기도 푼다
   UI.holdPose = function (e) {
+    if (e && e._asset) {   // 36단계: 컷인 얼굴 리소스가 있으면 그것으로
+      var fu = G.Assets.face(e._asset.id), pic = e.querySelector('.apic');
+      if (fu && pic) { pic.style.backgroundImage = 'url(' + fu + ')'; pic.style.backgroundSize = 'contain'; pic.classList.remove('sheet'); e.classList.add('a-face'); }
+      return true;
+    }
     if (!e || !e._sheet || !e._sheet.anims) return false;
     e._fixed = e._sheet.anims.idle.start;
     e.classList.add('fixed-pose');

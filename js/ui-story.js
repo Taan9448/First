@@ -16,7 +16,7 @@
 
   // 영웅은 정해진 배율, 몬스터는 화면 높이에 맞춘다
   function portrait(id, flip) {
-    var sp = hero(id) ? UI.spriteEl(id, 3) : UI.spriteEl(D.monsterById[id] ? D.monsterById[id].sprite : id, { h: 340, max: 2.6 });
+    var sp = hero(id) ? (UI.portraitEl(id, 'story-portrait') || UI.spriteEl(id, 3)) : UI.spriteEl(D.monsterById[id] ? D.monsterById[id].sprite : id, { h: 340, max: 2.6 });   // 36단계: 동료 전신 일러스트
     if (flip) sp.style.transform = 'scaleX(-1)';
     return sp;
   }

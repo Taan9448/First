@@ -6,7 +6,7 @@
 - 이전 세션의 결정 사항과 주의점은 `docs/HANDOFF.md`에 있다
 - 순수 HTML/CSS/JS만 쓴다. 프레임워크·빌드 도구·npm·ES 모듈·`fetch()`를 쓰지 않는다(file://에서 실행되어야 함). 전역 네임스페이스는 `window.Game` 하나
 - Claude(Lead Developer)와 ChatGPT(Art Director / UI·UX)가 이 저장소를 함께 쓴다. 역할·리소스·Git 규칙은 `docs/COLLAB.md`를 따른다
-- 이미지는 ChatGPT가 만들어 `assets/`에 올린다. Claude는 이미지를 직접 만들거나 덮어쓰지 않고, 필요하면 [IMAGE REQUEST]를 쓴다. 리소스가 없는 대상은 지금의 코드 그림을 쓰고, 코드 그림을 지우지 않는다. file:// 에서는 PNG를 캔버스로 가공할 수 없으니 그대로 표시한다
+- 이미지는 ChatGPT가 만들어 `assets/`에 올린다. Claude는 이미지를 직접 만들거나 덮어쓰지 않고, 필요하면 [IMAGE REQUEST]를 쓴다. 리소스가 없는 대상은 지금의 코드 그림을 쓰고, 코드 그림을 지우지 않는다. file:// 에서는 PNG를 캔버스로 가공할 수 없으니 그대로 표시한다. 그림이 올라오면 `node tools/sync-assets.js`로 검사·목록을 만든다(규격 `docs/ASSET_SPEC.md`)
 - 효과음·배경음악은 Web Audio로 합성한다. 화면에 이모지를 쓰지 않는다
 - 작업 전에 원격을 받아 다른 작업자의 변경을 확인한다. force push · 남의 변경 덮어쓰기 · 대량 삭제를 하지 않는다
 - 카드·몬스터 효과는 `data/`의 효과 목록 데이터로 기술하고, `js/`의 로직과 섞지 않는다
