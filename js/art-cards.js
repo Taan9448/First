@@ -1,5 +1,5 @@
 // art-cards.js — 카드 속성 배경, 카드 틀(17단계: 무공 = 수묵 족자, 그 밖 = 두 세계 분할), 카드 그림 조합
-// 프레임(125×175)과 그림(80×66)은 SVG로 그린 뒤 절반 해상도로 찍어 도트 그림으로 쓴다.
+// 프레임(125×175)과 그림(80×66)은 SVG를 직접 표시해 부드럽게 축소한다.
 (function () {
   'use strict';
   var G = Game;
@@ -82,12 +82,12 @@
     frame: function (rarity, school) {
       school = school || 'neutral';
       var ink = school === 'martial';
-      return G.Pixel.raster('frame4:' + rarity + ':' + school, ink ? inkFrameSvg(rarity) : splitFrameSvg(rarity, school), 125, 175, 14);
+      return G.Pixel.vector('frame4:' + rarity + ':' + school, ink ? inkFrameSvg(rarity) : splitFrameSvg(rarity, school), 125, 175, 14);
     },
     frameCached: function (rarity, school) { return G.Pixel.rasterCached('frame4:' + rarity + ':' + (school || 'neutral')); },
     art: function (def) {
-      if (def.school === 'martial') return G.Pixel.raster('artInk:' + (def.base || def.id), inkArtSvg(def), 50, 41, 10);
-      return G.Pixel.raster('art2:' + (def.base || def.id), artSvg(def), 50, 41, 10);
+      if (def.school === 'martial') return G.Pixel.vector('artInk:' + (def.base || def.id), inkArtSvg(def), 50, 41, 10);
+      return G.Pixel.vector('art2:' + (def.base || def.id), artSvg(def), 50, 41, 10);
     },
     artCached: function (def) { return G.Pixel.rasterCached((def.school === 'martial' ? 'artInk:' : 'art2:') + (def.base || def.id)); },
     // 미리 변환해 둔다(화면에 처음 뜰 때 빈 그림이 보이지 않도록)

@@ -89,7 +89,8 @@
       '</nav>' +
       '<div class="lb-foot"><b>[원정 일지]</b> ' + journal() + '</div>';
 
-    G.Art.scene(def.theme === 'mirror' ? 'castle' : def.theme).then(function (u) { if (u) el.querySelector('.lb-bg').style.backgroundImage = 'url(' + u + ')'; });
+    var lobbyBg = G.Assets && G.Assets.screenBg('lobby');
+    (lobbyBg ? Promise.resolve(lobbyBg) : G.Art.scene(def.theme === 'mirror' ? 'castle' : def.theme)).then(function (u) { if (u) el.querySelector('.lb-bg').style.backgroundImage = 'url(' + u + ')'; });
     G.ArtMap.world().then(function (u) { var t = el.querySelector('[data-go="map"] .tart'); if (u && t) t.style.backgroundImage = 'url(' + u + ')'; });
     G.Art.scene(def.theme === 'mirror' ? 'castle' : def.theme).then(function (u) { var t = el.querySelector('[data-go="go"] .tart'); if (u && t) t.style.backgroundImage = 'url(' + u + ')'; });
     G.Art.scene('castle').then(function (u) { var t = el.querySelector('[data-go="story"] .tart'); if (u && t) t.style.backgroundImage = 'url(' + u + ')'; });

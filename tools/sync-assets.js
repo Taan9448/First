@@ -83,6 +83,8 @@ function kindOf(rel) {
 // ---------------- 훑기 ----------------
 const files = {}, errors = [], warns = [];
 function walk(d) {
+  // Approved review mockups are opaque references, never runtime UI parts.
+  if (path.relative(DIR, d).split(path.sep).join('/') === 'ui/mockups') return;
   if (!fs.existsSync(d)) return;
   fs.readdirSync(d).forEach(n => {
     const f = path.join(d, n);
