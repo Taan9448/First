@@ -250,7 +250,12 @@ function invariants(where) {
     check(JSON.stringify([d.cards, d.relics, d.gold, d.characters, d.growth, d.upgraded, d.codex]) === keep, '카드·유물·골드·동료·성장·강화·도감 유지');
     const m = St.ascMods(10);
     check(m.restPct === 0.25 && m.downedPct === 0.1 && m.rewardCards === 2 && m.affixMult === 2 && m.doomMult === 2 && m.triggerStr === 2, '승천 10 규칙 누적');
-    check(St.enemyMods(1).hpMult > St.enemyMods(1).dmgMult && St.enemyMods(10).hpMult > St.enemyMods(1).hpMult, '승천 적 보정은 스테이지가 오를수록 큼');
+    // 35단계: 승천은 스테이지별 배율 표 — 기본 원정 10 스테이지보다 세고, 승천 단계가 오를수록 세진다
+    const a1 = St.enemyMods(10).hpMult;
+    d.ascension.current = 0; const n10 = St.enemyMods(10).hpMult;
+    d.ascension.current = 3; const a3 = St.enemyMods(10).hpMult;
+    d.ascension.current = 1;
+    check(St.enemyMods(1).hpMult > St.enemyMods(1).dmgMult && a1 > n10 && a3 > a1, '승천 적 보정: 기본 원정보다 크고 단계가 오를수록 큼');
     // 승천 1 원정을 빠르게(전투는 즉시 승리) 끝까지. 31단계: 이어서 세계의 틈(11~13)
     const quick = async (n) => {
       St.startStage(n);
@@ -431,6 +436,19 @@ function invariants(where) {
       check(sd.easy.length >= 6 && sd.hard.length >= 6 && sd.easy.concat(sd.hard).every(c => c.every(id => D.monsterById[id] && D.monsterById[id].rank === 'normal') && c.length <= 4), sd.n + ' 스테이지 일반 조합 6개 이상');
     });
     check(D.stages.filter(sd => !sd.layout).every(sd => St.bossPool(sd).length >= 2), '최종 스테이지 밖은 마지막 방 후보 2종 이상');
+    St.data = JSON.parse(keep);
+  }
+  // 35단계: 재도전 보정 — 같은 스테이지에서 연달아 지면 적이 약해지고, 돌파하면 초기화
+  {
+    const keep = JSON.stringify(St.data);
+    St.data.ascension.current = 0; delete St.data.flags.daily; St.data.mode = 'normal'; delete St.data.flags.retry;
+    const base = St.enemyMods(3);
+    St.data.flags.retry = { stage: 3, n: 2 };
+    const e2 = St.enemyMods(3), re = D.modes.normal.retryEase;
+    check(Math.abs((1 + e2.hpMult) - (1 + base.hpMult) * (1 - 2 * re.per)) < 1e-9 && e2.dmgMult < base.dmgMult, '재도전 보정: 2패면 적 체력·피해 ' + Math.round(2 * re.per * 100) + '% 감소');
+    St.data.flags.retry = { stage: 3, n: 99 };
+    check(Math.abs((1 + St.enemyMods(3).hpMult) - (1 + base.hpMult) * (1 - re.max * re.per)) < 1e-9, '재도전 보정 한도');
+    check(St.enemyMods(4).hpMult === St.enemyMods(4).hpMult && St.retryEase(4) === 0, '다른 스테이지에는 보정 없음');
     St.data = JSON.parse(keep);
   }
   // 모든 카드가 4~10단계까지 만들어진다

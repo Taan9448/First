@@ -327,7 +327,8 @@
       html += '<div class="depth"><span>깊이</span><div class="bar"><i style="width:calc(' + Math.round(sm.depth / sm.total * 100) + '% - 4px)"></i></div><b>' + sm.depth + '/' + sm.total + '</b></div>' +
         '<div class="info-line" data-tip="방에 들어갈 때 그 방과 이어진 다음 방의 내용이 드러날 확률' + (d.party.indexOf('nox') >= 0 ? ' (소연이 정찰을 돕는다)' : '') + '"><span>정찰</span><span>' + sp + '%</span></div>' +
         '<div class="info-line"><span>밝혀진 방</span><span>' + sm.known + '/' + sm.ahead + '</span></div>' +
-        '<div class="info-line"><span>보상</span><span>' + join + '</span></div>';
+        '<div class="info-line"><span>보상</span><span>' + join + '</span></div>' +
+        (St.retryEase(n) ? '<div class="info-line" data-tip="같은 스테이지에서 연달아 지면 다음 시도의 적이 약해진다. 돌파하면 사라진다"><span>재도전의 기세</span><span class="good">적 −' + Math.round(St.retryEase(n) * 100) + '%</span></div>' : '');
       var node = St.node();
       if (r.scouted && r.scouted.length && node && !r.pending) html += '<p class="scout-note">정찰: 앞의 방 ' + r.scouted.length + '곳이 드러났다.</p>';
       if (!node && !r.pending) {
@@ -342,6 +343,7 @@
       html += '<div class="info-line"><span>상태</span><span>' + state + '</span></div>' +
         '<div class="info-line"><span>보상</span><span>' + join + '</span></div>' +
         '<div class="info-line"><span>깊이</span><span>' + cols + '칸</span></div>' +
+        (St.retryEase(n) ? '<div class="info-line" data-tip="같은 스테이지에서 연달아 지면 다음 시도의 적이 약해진다. 돌파하면 사라진다"><span>재도전의 기세</span><span class="good">적 −' + Math.round(St.retryEase(n) * 100) + '%</span></div>' : '') +
         (def.altBosses ? '<div class="info-line" data-tip="처음 돌파하기 전에는 이야기의 ' + tag + '와 싸운다. 돌파한 뒤 다시 하거나 승천·오늘의 원정에서는 후보 중 무작위로 나온다"><span>' + tag + ' 후보</span><span>' +
           St.bossPool(def).map(function (id) { return d.codex.monsters[id] || (id === def.boss && cleared) ? D.monsterById[id].name : '???'; }).join(' · ') + (St.bossFree(def) ? '' : ' (돌파 뒤)') + '</span></div>' : '') +
         '<p class="dim route-note">들어갈 때마다 길이 새로 짜인다. 방 안에 무엇이 있는지는 들어가거나 정찰해야 알 수 있다.</p>';
@@ -433,6 +435,7 @@
     }
     var m = UI.modal('<h2>패배…</h2>' + (names ? '<p class="died">' + names + '은(는) 돌아오지 못했다.</p>' : '') +
       '<p>스테이지를 처음부터 다시 시작한다. 스테이지 덱은 준비 덱으로 돌아가고,<br>골드 ' + (lost.goldLost || 0) + '을(를) 잃었다. 처음 얻은 카드·강화·유물은 남는다.</p>' +
+      (St.data && St.data.run && St.retryEase(St.data.run.stage) ? '<p class="retry-ease">재도전의 기세 — 연속 ' + St.retryStreak(St.data.run.stage) + '패, 다음 시도의 적 체력·피해 −' + Math.round(St.retryEase(St.data.run.stage) * 100) + '%</p>' : '') +
       '<div class="row" style="justify-content:center"><button class="btn gold ok">맵으로</button></div>', 'result lose');
     m.querySelector('.ok').onclick = function () { UI.closeModal(m); Meta.map(); };
   }

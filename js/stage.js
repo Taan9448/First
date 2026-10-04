@@ -83,17 +83,34 @@
       var a = St.ascMods(), dif = D.difficulty || {}, curve = D.ascensionCurve;
       var hp = dif.hp ? dif.hp[stage - 1] || 1 : 1, dmg = dif.dmg ? dif.dmg[stage - 1] || 1 : 1;
       if (St.ascLevel() > 0 && curve) {
-        hp = curve.hp * (1 + curve.hpPerStage * (stage - 1));
-        dmg = curve.dmg * (1 + curve.dmgPerStage * (stage - 1));
+        // 35단계: 스테이지마다 배율 표(배열)면 그 값, 아니면 예전 직선식
+        hp = Array.isArray(curve.hp) ? curve.hp[stage - 1] || curve.hp[curve.hp.length - 1] : curve.hp * (1 + curve.hpPerStage * (stage - 1));
+        dmg = Array.isArray(curve.dmg) ? curve.dmg[stage - 1] || curve.dmg[curve.dmg.length - 1] : curve.dmg * (1 + curve.dmgPerStage * (stage - 1));
         var gr = D.ascensionGrowth, lv = St.ascLevel() - 1;
-        if (gr && lv > 0) { hp *= Math.min(gr.cap || 99, Math.pow(gr.hp, lv)); dmg *= Math.min(gr.cap || 99, Math.pow(gr.dmg, lv)); }
+        // 35단계: 단계별 배율 표(hpTable · dmgTable, 승천 1 = 첫 칸)가 있으면 그 값, 아니면 예전 거듭제곱
+        // stageShape: 그 스테이지에 증가분을 얼마나 줄지(앞쪽 스테이지는 크게, 승천 규칙이 몰리는 9·10은 작게)
+        if (gr && gr.hpTable) {
+          var gi = Math.min(lv, gr.hpTable.length - 1), sh = gr.stageShape ? gr.stageShape[stage - 1] || 1 : 1;
+          hp *= 1 + (gr.hpTable[gi] - 1) * sh; dmg *= 1 + (gr.dmgTable[gi] - 1) * sh;
+        }
+        else if (gr && lv > 0) { hp *= Math.min(gr.cap || 99, Math.pow(gr.hp, lv)); dmg *= Math.min(gr.cap || 99, Math.pow(gr.dmg, lv)); }
       }
       // 게임 모드(15단계): 체력·피해 배율을 모두 곱한다
       var md = St.mode(), mh = md.enemyHp || 1, mdg = md.enemyDmg || 1;
       // 23단계: 정예·보스 체력 보정(difficulty.bossHp, 보스전이 너무 빨리 끝나지 않게)
       var bh = (dif.bossHp ? dif.bossHp[stage - 1] || 1 : 1) - 1;
-      return { hpMult: (a.hpMult + hp) * mh - 1, bossHpMult: (a.bossHpMult + bh * hp) * mh, finalHpMult: a.finalHpMult * mh, dmgMult: (a.dmgMult + dmg) * mdg - 1,
+      // 35단계: 재도전 보정 — 연달아 진 만큼 적 체력·피해를 줄인다
+      var ez = 1 - St.retryEase(stage);
+      if (md.stageMult && md.stageMult[stage] && !St.ascLevel()) ez *= md.stageMult[stage];
+      return { hpMult: (a.hpMult + hp) * mh * ez - 1, bossHpMult: (a.bossHpMult + bh * hp) * mh * ez, finalHpMult: a.finalHpMult * mh * ez, dmgMult: (a.dmgMult + dmg) * mdg * ez - 1,
         triggerStr: a.triggerStr, doomMult: a.doomMult, eliteStr: a.eliteStr || 0 };
+    },
+    // 35단계: 이 스테이지에서 연달아 진 횟수와 그에 따른 적 약화 비율(0~)
+    retryStreak: function (stage) { var r = St.data && St.data.flags && St.data.flags.retry; return r && r.stage === stage ? r.n : 0; },
+    retryEase: function (stage) {
+      var re = St.mode().retryEase;
+      if (!re || St.isDaily()) return 0;
+      return Math.min(St.retryStreak(stage), re.max) * re.per;
     },
     maxAscension: function () { return Math.min((D.ascension || []).length, ((St.data.ascension || {}).best || 0) + 1); },
     // 새 원정: 엔딩을 본 뒤 승천 단계를 골라 1 스테이지부터. 카드·강화·유물·골드·동료·성장·친밀도·도감은 그대로
@@ -728,6 +745,7 @@
         }
       }
       // 19단계: 지면 골드 일부를 잃는다(모드마다 비율). 그 스테이지에서 얻은 카드는 보유 카드에 남지만 스테이지 덱은 준비 덱으로 돌아간다
+      St.data.flags.retry = { stage: n, n: St.retryStreak(n) + 1 };   // 35단계: 재도전 보정
       var lossPct = St.mode().defeatGold != null ? St.mode().defeatGold : eco().defeatGold, lost = Math.floor(St.data.gold * lossPct);
       St.data.gold -= lost;
       St.startStage(n);
@@ -1162,6 +1180,7 @@
       if (d.flags.daily) return { stage: n, daily: St.finishDaily(true) };
       var first = n > d.clearedStage;
       var joined = null;
+      if (d.flags.retry && d.flags.retry.stage === n) delete d.flags.retry;   // 35단계: 돌파하면 재도전 보정 초기화
       if (first) d.clearedStage = n;
       // 33단계: 스테이지 돌파 금화(처음 돌파는 많이, 다시 깨면 절반쯤). 대장간에 쓴다
       var cg = eco().clearGold, clearGold = cg ? (first ? cg.first[0] + cg.first[1] * n : cg.replay[0] + cg.replay[1] * n) : 0;

@@ -1403,3 +1403,12 @@ body.cb .st .cb-lab.bu { background: #12324a; color: #c2ecff; }
 @keyframes clvRainbow { 0% { color: #ff7a7a; } 25% { color: #ffd27a; } 50% { color: #7cf2c8; } 75% { color: #9ab8ff; } 100% { color: #ff7a7a; } }
 .card[data-tier="각성"] .cin, .card[data-tier="극의"] .cin { filter: drop-shadow(0 0 0.35em rgba(200, 140, 255, 0.55)); }
 .card[data-tier="극의"] .cin { filter: drop-shadow(0 0 0.45em rgba(255, 230, 150, 0.8)); }
+/* 35단계: 카드 통계 표 */
+.card-sort { gap: 6px; margin-bottom: 8px; }
+.card-stat { width: 100%; border-collapse: collapse; font-size: 13px; }
+.card-stat th { text-align: left; color: var(--dim, #8aa0c0); font-weight: normal; padding: 4px 6px; border-bottom: 2px solid rgba(255,255,255,0.12); }
+.card-stat td { padding: 3px 6px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.card-stat td:nth-child(n+4), .card-stat th:nth-child(n+4) { text-align: right; font-variant-numeric: tabular-nums; }
+.card-stat td.ok { color: #7cf27c; } .card-stat td.bad { color: #ff7a7a; }
+.stats-body { max-height: 62vh; overflow-y: auto; }
+.retry-ease { color: #7cf27c; text-align: center; }

@@ -543,6 +543,19 @@
     Object.keys(this).forEach(function (k) { if (!UNDO_SKIP[k]) snap[k] = cloneDeep(self[k], memo); });
     this._snap = snap;
   };
+  // 35단계: 전투 상태 전체를 저장·복구한다(시뮬레이터가 카드를 써 보고 되돌릴 때). 턴 되돌리기와 같은 복제를 쓴다
+  P.saveState = function () {
+    if (!dataObjs) collectData();
+    var memo = new Map(), snap = {}, self = this;
+    Object.keys(this).forEach(function (k) { if (!UNDO_SKIP[k]) snap[k] = cloneDeep(self[k], memo); });
+    return { snap: snap, rng: G.rng.getState() };
+  };
+  P.loadState = function (st) {
+    var snap = st.snap, memo = new Map(), self = this;
+    Object.keys(this).forEach(function (k) { if (!UNDO_SKIP[k] && !(k in snap)) delete self[k]; });
+    Object.keys(snap).forEach(function (k) { self[k] = cloneDeep(snap[k], memo); });
+    G.rng.setState(st.rng);
+  };
   // 되돌릴 게 있을 때만(카드를 썼거나 소모품을 썼을 때)
   P.canUndo = function () {
     return !!(this._snap && this.phase === 'player' && !this.busy && !this.over() &&

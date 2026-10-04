@@ -5,7 +5,7 @@
   'use strict';
   var G = Game, D = G.Data;
   function key() { return G.debug ? 'fiveHeroes.profile.debug' : 'fiveHeroes.profile'; }
-  function blank() { return { version: 1, stats: {}, heroUse: {}, cardUse: {}, ach: {}, daily: {} }; }
+  function blank() { return { version: 1, stats: {}, heroUse: {}, cardUse: {}, cardStat: {}, ach: {}, daily: {} }; }   // 35단계 cardStat: { 카드 id: [덱에 든 전투, 그중 승리, 쓴 횟수] }
 
   var P = G.Profile = {
     data: null,
@@ -92,6 +92,11 @@
       var pr = P.get();
       b.heroes.forEach(function (h) { pr.heroUse[h.id] = (pr.heroUse[h.id] || 0) + 1; });
       Object.keys(t.plays || {}).forEach(function (id) { pr.cardUse[id] = (pr.cardUse[id] || 0) + t.plays[id]; });
+      // 35단계: 카드별 통계(강화 단계는 합쳐 원래 카드 id 로). 덱에 든 전투 · 이긴 전투 · 쓴 횟수
+      var base = function (id) { return String(id).split('+')[0]; }, seenIds = {};
+      ((b.opts && b.opts.deck) || []).forEach(function (id) { var k = base(id); if (D.cardById[k] && D.cardById[k].owner !== 'none') seenIds[k] = 1; });
+      Object.keys(seenIds).forEach(function (k) { var c = pr.cardStat[k] || (pr.cardStat[k] = [0, 0, 0]); c[0]++; if (win) c[1]++; });
+      Object.keys(t.plays || {}).forEach(function (id) { var k = base(id); if (pr.cardStat[k]) pr.cardStat[k][2] += t.plays[id]; });
       return P.check(win ? 'battleWin' : 'battleLost', { node: info.node, stage: info.stage, mode: info.mode, asc: info.asc, turn: b.turn, tally: t });
     },
     stage: function (info) { P.add('stages'); return P.check('stageClear', info); },

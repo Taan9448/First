@@ -24,6 +24,9 @@
   var state = (Date.now() ^ 0x9e3779b9) >>> 0;
   G.rng = {
     seed: function (s) { state = (s >>> 0) || 1; },
+    // 35단계: 시뮬레이터의 앞보기(써 보고 되돌리기)가 난수 흐름을 저장·복구한다
+    getState: function () { return state; },
+    setState: function (s) { state = s >>> 0; },
     next: function () {
       state = (state + 0x6d2b79f5) >>> 0;
       var t = state;

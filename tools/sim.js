@@ -2,7 +2,7 @@
 // 간단한 판단 규칙 AI가 캠페인 전체를 반복 플레이하고 스테이지별 시도 횟수와 실패 지점을 보고한다.
 // 실행: node tools/sim.js [캠페인 횟수=12] [시드=1] [승천 최고 단계=0] [모드=normal|hard] (승천은 기본 원정 뒤 1단계부터 차례로, 진행 상태를 이어서)
 //
-// AI 규칙
+// AI 규칙(35단계부터 기본은 앞보기 AI — 카드를 실제로 써 보고 상태 점수로 고른 뒤 되돌린다. 아래 '카드 점수'는 SIM_AI=greedy 일 때)
 //  - 카드 점수 = 예상 피해(처치 보너스) + 막아야 할 만큼의 보호막 + 잃은 체력만큼의 회복 + 드로우·에너지·상태 가치
 //  - 에너지 1당 점수가 높은 카드부터 쓴다. 단일 공격은 처치 가능한 적 → 체력이 낮은 적 순서로 노린다
 //  - 보상은 높은 등급 우선. 갈림길: 체력이 넉넉하면(평균 70% 이상) 정예, 아니면 전투/이벤트 쪽
@@ -21,9 +21,19 @@ global.window = global;
   vm.runInThisContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), { filename: f });
 });
 const G = global.Game, St = G.Stage, D = G.Data, S = G.Status;
+// 35단계: 난이도 탐색용 — SIM_HP · SIM_DMG(스테이지 난이도 표 전체에 곱) · SIM_BOSS(정예·보스 추가 체력 표에 곱)
+// SIM_F='{"4":1.2}' 이면 그 스테이지의 체력·피해 배율에 곱한다(스테이지마다 맞출 때)
+// SIM_AF='{"4":1.2}' 이면 승천 배율 표에 곱한다
+if (process.env.SIM_AF) { const F = JSON.parse(process.env.SIM_AF); Object.keys(F).forEach(k => { D.ascensionCurve.hp[k - 1] *= F[k]; D.ascensionCurve.dmg[k - 1] *= F[k]; }); }
+// SIM_GROWTH='1.1,1.05' 이면 승천 단계별 배율 표 전체에 곱한다
+if (process.env.SIM_GROWTH) { const g = process.env.SIM_GROWTH.split(',').map(Number); D.ascensionGrowth.hpTable = D.ascensionGrowth.hpTable.map(v => v * g[0]); D.ascensionGrowth.dmgTable = D.ascensionGrowth.dmgTable.map(v => v * g[1]); }   // 승천 표 전체에 곱
+if (process.env.SIM_F) { const F = JSON.parse(process.env.SIM_F); Object.keys(F).forEach(k => { D.difficulty.hp[k - 1] *= F[k]; D.difficulty.dmg[k - 1] *= F[k]; }); }
+['hp', 'dmg', 'bossHp'].forEach((k, i) => { const f = +(process.env[['SIM_HP', 'SIM_DMG', 'SIM_BOSS'][i]] || 1); if (f !== 1) D.difficulty[k] = D.difficulty[k].map(v => v * f); });
 G.instant = true;
 
 const MAX_TRIES = 8;
+// 35단계: AI 종류 — look(앞보기, 기본) · greedy(34단계까지의 어림 점수). 환경 변수 SIM_AI 로 고른다
+let AI = process.env.SIM_AI || 'look';
 const PARTY_ORDERS = [
   ['kai', 'bram', 'lyra', 'sera', 'nox', 'ciel'],
   ['bram', 'sera', 'kai', 'lyra', 'nox', 'ciel'],
@@ -143,7 +153,84 @@ function bestTarget(b, inst) {
   return best;
 }
 
+// ---------------------------------------------------------------- 35단계: 앞보기 AI
+// 쓸 수 있는 카드(× 대상)마다 실제로 써 본 뒤 전투 상태를 점수로 매기고 되돌린다(b.saveState/loadState).
+// 점수 증가 ÷ 쓴 에너지가 가장 큰 카드를 쓴다. 무작위 효과는 다른 난수로 굴려 보아 결과를 미리 알지 못하게 한다.
+// 상태 점수 가중치(sim-bench 로 맞춘 값). W_JSON 환경 변수로 바꿔 볼 수 있다
+const W = Object.assign({ hp: 1.5, inc: 1.5, death: 45, threat: 0.8, kill: 12, block: 0.6, hand: 1.6, power: 9, samples: 1 }, process.env.W_JSON ? JSON.parse(process.env.W_JSON) : {});
+function threat(b, m) {
+  if (m.dead || S.has(m, 'frozen') || S.has(m, 'stun')) return 0;
+  const info = b.intentInfo(m);
+  return info.dmg == null ? 3 : info.dmg * info.times * (info.all ? b.alive('ally').length : 1);
+}
+function evalState(b) {
+  if (b.over()) return b.result === 'win' ? 1e6 : -1e6;
+  let v = 0;
+  const allies = b.alive('ally');
+  b.monsters.forEach(m => {
+    if (m.dead) { if (!m.vanished) v += W.kill; return; }
+    const th = threat(b, m);
+    v -= m.hp + m.block * W.block + th * W.threat;
+    const st = m.status;
+    v += Math.min((st.poison || 0) * ((st.poison || 0) + 1) / 2, m.hp) * 0.6 + Math.min((st.burn || 0) * 1.8, m.hp) * 0.5;
+    v += (st.weak ? th * 0.25 + 2 : 0) + Math.min(st.vulnerable || 0, 3) * 3 + (st.chill || 0) * 2.5 + (st.frozen || st.stun ? th + 4 : 0);
+    v -= (st.strength || 0) * 3 + (st.dodge || 0) * 6;
+  });
+  let incoming = 0;
+  b.heroes.forEach(h => {
+    if (h.dead) { v -= 70; return; }
+    v += h.hp * W.hp + (h.res || 0) * 2;
+    const st = h.status, un = need(b, h);
+    incoming += un;
+    v -= un * W.inc + (un >= h.hp ? W.death : 0);
+    v += (st.strength || 0) * 5 + (st.tempStr || 0) * 1.2 + (st.focus || 0) * 4 + (st.keen || 0) * 3 + (st.critUp || 0) * 3 + (st.regen || 0) * 1.5 +
+      (st.thorns || 0) * 2 + (st.reduce || 0) * 4 + (st.fortress ? 8 : 0) + (st.hold ? 3 : 0) + (st.affinity || 0) * 3;
+    v -= (st.poison || 0) * 1.2 + (st.burn || 0) * 1.2 + (st.weak || 0) * 2.5 + (st.vulnerable || 0) * 3 + (st.chill || 0) * 2;
+  });
+  // 손패 · 다음 턴 · 지속 효과 · 저주 카드
+  v += b.piles.hand.filter(c => !c.def.unplayable).length * W.hand + b.nextEnergy * 5 + b.nextDraw * 2.5 + b.powers.length * W.power - (b.costUpNext || 0) * 2;
+  const curses = b.piles.hand.concat(b.piles.draw, b.piles.discard).filter(c => c.def.type === 'curse').length;
+  v -= curses * 2.5;
+  return v;
+}
+async function tryPlay(b, c, t, base) {
+  // samples 번 다른 난수로 써 보고 평균(치명타·무작위 효과의 운을 덜 탄다). 복구하면 카드가 새 복제본이 되므로 손패 순번으로 다시 찾는다
+  const idx = b.piles.hand.indexOf(c), tid = t ? t.uid : null;
+  let gain = 0, spent = 0;
+  for (let k = 0; k < W.samples; k++) {
+    const st = b.saveState(), e0 = b.energy;
+    const cc = b.piles.hand[idx], tt = tid == null ? null : b.heroes.concat(b.monsters).find(u => u.uid === tid);
+    G.rng.setState((st.rng ^ (0x5bd1e995 + k * 0x9e3779b9)) >>> 0);
+    try { await b.play(cc, tt); } catch (err) { b.loadState(st); return null; }
+    gain += evalState(b) - base; spent += e0 - b.energy;
+    b.loadState(st);
+  }
+  return { gain: gain / W.samples, spent: spent / W.samples };
+}
+async function playTurnLook(b) {
+  // 복구하면 카드·유닛이 새 복제본이 되므로 손패 순번과 대상 uid 로 다시 찾는다
+  const unitOf = uid => uid == null ? null : b.heroes.concat(b.monsters).find(u => u.uid === uid) || null;
+  for (let guard = 0; guard < 25 && b.phase === 'player' && !b.over(); guard++) {
+    const base = evalState(b);
+    let pick = -1, pickT = null, best = 0.4;
+    for (let i = 0; i < b.piles.hand.length; i++) {
+      const c0 = b.piles.hand[i];
+      if (!b.canPlay(c0).ok) continue;
+      const tids = b.needsTarget(c0) ? b.validTargets(c0).map(u => u.uid) : [null];
+      for (const tid of tids) {
+        const r = await tryPlay(b, b.piles.hand[i], unitOf(tid), base);
+        if (!r) continue;
+        const per = r.gain >= 1e5 ? 1e9 : r.spent > 0 ? r.gain / r.spent : r.gain * 2 + (r.spent < 0 ? -r.spent * 6 : 0);
+        if (per > best) { best = per; pick = i; pickT = tid; }
+      }
+    }
+    if (pick < 0) break;
+    await b.play(b.piles.hand[pick], unitOf(pickT));
+  }
+}
+
 async function playTurn(b) {
+  if (AI === 'look') return playTurnLook(b);
   for (let guard = 0; guard < 25 && b.phase === 'player' && !b.over(); guard++) {
     let pick = null, pickT = null, best = 0.5;
     b.piles.hand.forEach(c => {
@@ -224,7 +311,7 @@ function useForge() {
 }
 
 // 한 원정(스테이지 1~10, 6번째 인자가 rift 면 세계의 틈 11~13까지). 진행 상태는 이어진다
-const LAST = process.argv[6] === 'rift' ? D.stages.length : (D.MAIN_STAGES || 10);
+const LAST = process.env.SIM_LAST ? +process.env.SIM_LAST : process.argv[6] === 'rift' ? D.stages.length : (D.MAIN_STAGES || 10);
 async function expedition(order) {
   const out = [];
   for (let n = 1; n <= LAST; n++) {
@@ -270,7 +357,9 @@ async function expedition(order) {
         if (!res.fight && St.eventFinish()) done = true;
         continue;
       }
-      const b = G.Battle.create(St.battleOptions());
+      const bo = St.battleOptions();
+      if (DUMP) DUMP.push(JSON.parse(JSON.stringify(bo)));
+      const b = G.Battle.create(bo);
       let result;
       if (rec.tries >= MAX_TRIES) { await b.start(); await b.debugKillAll(); result = 'win'; rec.forced = true; }
       else result = await fight(b);
@@ -313,7 +402,10 @@ async function campaign(seed, order, ascMax, mode) {
   return runs;
 }
 
-(async () => {
+// 35단계: SIM_DUMP=파일 이면 캠페인에서 만난 전투 설정을 모아 저장한다(tools/sim-bench.js 가 같은 전투를 AI마다 다시 싸운다)
+const DUMP = process.env.SIM_DUMP ? [] : null;
+module.exports = { fight, evalState, W, setAI: a => { AI = a; } };
+if (require.main === module) (async () => {
   // node tools/sim.js [캠페인 수] [시드] [승천 최고 단계] [normal|hard] [rift]
   const N = +(process.argv[2] || 12), seed0 = +(process.argv[3] || 1), ascMax = +(process.argv[4] || 0), mode = process.argv[5] || 'normal';
   const mk = () => { const a = []; for (let n = 1; n <= LAST; n++) a.push({ attempts: 0, first: 0, within3: 0, forced: 0, lost: {}, turns: [], left: [], lostTurn: [] }); return a; };
@@ -369,4 +461,5 @@ async function campaign(seed, order, ascMax, mode) {
     ' · 마지막 캠페인 4단계 이상 ' + JSON.stringify(lvls));
   console.log('\n파티 선호 순서별 총 패배 수');
   byOrder.forEach((o, i) => console.log('  ' + PARTY_ORDERS[i].slice(0, 3).join('/') + ' 우선: 캠페인 ' + o.runs + '회, 패배 ' + o.fails));
+  if (DUMP) { fs.writeFileSync(process.env.SIM_DUMP, JSON.stringify(DUMP)); console.log('전투 ' + DUMP.length + '개를 ' + process.env.SIM_DUMP + ' 에 저장'); }
 })().catch(err => { console.error(err); process.exit(1); });

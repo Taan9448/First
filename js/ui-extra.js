@@ -308,12 +308,13 @@
   X.stats = function (tab) {
     if (tab) statTab = tab;
     if (!St().data && statTab === 'slot') statTab = 'all';
-    var list = (St().data ? [['slot', '이 칸']] : []).concat([['all', '전체 기록'], ['ach', '업적'], ['daily', '오늘의 원정']]);
+    var list = (St().data ? [['slot', '이 칸']] : []).concat([['all', '전체 기록'], ['cards', '카드 통계'], ['ach', '업적'], ['daily', '오늘의 원정']]);
     var m = win('기록', tabs(list, statTab) + '<div class="stats-body"></div>', 'setwin statwin');
     UI.$$('.tab', m).forEach(function (b) { b.onclick = function () { X.stats(b.getAttribute('data-tab')); }; });
     var body = m.querySelector('.stats-body');
     if (statTab === 'slot') body.innerHTML = slotStats();
     else if (statTab === 'all') body.innerHTML = profileStats();
+    else if (statTab === 'cards') { body.innerHTML = cardStats(); UI.$$('[data-cs]', body).forEach(function (b) { b.onclick = function () { cardSort = b.getAttribute('data-cs'); X.stats(); }; }); }
     else if (statTab === 'ach') body.innerHTML = achList();
     else body.innerHTML = dailyList();
   };
@@ -339,6 +340,25 @@
       '</div><p class="dim rec-line">가장 많이 함께한 동료: ' + top(pr.heroUse, 5, heroName) + '</p>' +
       '<p class="dim rec-line">가장 많이 쓴 카드: ' + top(pr.cardUse, 5, cardName) + '</p>' +
       '<p class="dim rec-line">저장 칸과 상관없이 이 브라우저 전체의 기록이다.</p>';
+  }
+  // 35단계: 카드 통계 — 덱에 든 전투 수 · 승률 · 쓴 횟수(강화 단계는 합친다). 전투 3번 이상 든 카드만
+  var cardSort = 'plays';
+  function cardStats() {
+    var cs = G.Profile.get().cardStat || {};
+    var rows = Object.keys(cs).filter(function (k) { return D.cardById[k] && cs[k][0] >= 3; }).map(function (k) { var c = cs[k]; return { id: k, n: c[0], w: c[1], p: c[2], rate: c[1] / c[0] }; });
+    if (!rows.length) return '<p class="dim">아직 기록이 모자라다. 같은 카드가 덱에 든 채로 전투를 세 번 이상 하면 여기에 나온다.</p>';
+    var key = { plays: function (r) { return r.p; }, rate: function (r) { return r.rate * 1000 + r.n / 1000; }, battles: function (r) { return r.n; }, perBattle: function (r) { return r.p / r.n; } }[cardSort];
+    rows.sort(function (a, b) { return key(b) - key(a); });
+    var owner = function (o) { if (o === 'common') return '공용'; var c = D.characters.filter(function (x) { return x.id === o; })[0]; return c ? c.name : o; };
+    var head = [['plays', '쓴 횟수'], ['perBattle', '전투당'], ['battles', '든 전투'], ['rate', '승률']];
+    return '<div class="row card-sort">' + head.map(function (h) { return '<button class="btn small ' + (cardSort === h[0] ? 'on' : '') + '" data-cs="' + h[0] + '">' + h[1] + ' 순</button>'; }).join('') + '</div>' +
+      '<table class="card-stat"><thead><tr><th>카드</th><th>주인</th><th>등급</th><th>쓴 횟수</th><th>전투당</th><th>든 전투</th><th>승률</th></tr></thead><tbody>' +
+      rows.slice(0, 60).map(function (r) {
+        var c = D.cardById[r.id];
+        return '<tr><td><b>' + U.esc(c.name) + '</b> <small class="dim">' + r.id + '</small></td><td>' + owner(c.owner) + '</td><td>' + (G.RARITY_NAME ? G.RARITY_NAME[c.rarity] : c.rarity) + '</td>' +
+          '<td>' + r.p + '</td><td>' + (r.p / r.n).toFixed(1) + '</td><td>' + r.n + '</td><td class="' + (r.rate >= 0.6 ? 'ok' : r.rate < 0.4 ? 'bad' : '') + '">' + Math.round(r.rate * 100) + '%</td></tr>';
+      }).join('') + '</tbody></table>' +
+      '<p class="dim rec-line">이 브라우저 전체 기록. 강화 단계는 합쳐 센다. 승률은 그 카드가 덱에 든 전투 중 이긴 비율이다(카드 자체의 힘만은 아니다). 위에서 60장까지.</p>';
   }
   function achList() {
     var P = G.Profile;
@@ -389,7 +409,7 @@
       ['전투', '매 턴 에너지 3으로 카드를 쓴다. 적의 머리 위 예고를 보고 막거나 먼저 쓰러뜨린다. 쓰러진 동료는 전투 뒤 25%로 돌아온다.'],
       ['카드 등급', '카드 위쪽의 별이 등급이다. 별 1 일반 · 2 고급 · 3 희귀 · 4 영웅 · 5 전설. 합동기는 무지갯빛 테두리.'],
       ['동료', '2·4·6·8 스테이지를 깨면 새 동료가 합류한다. 전투로 경험치를 얻어 레벨이 오르면 특성을 고르고, 함께 싸울수록 친밀도가 쌓인다.'],
-      ['패배', '스테이지를 처음부터 다시 한다. 골드 일부(노말 15%)를 잃고 스테이지 덱은 처음으로 돌아간다. 보유 카드·유물은 남는다.'],
+      ['패배', '스테이지를 처음부터 다시 한다. 골드 일부(노말 15%)를 잃고 스테이지 덱은 처음으로 돌아간다. 보유 카드·유물은 남는다. 같은 스테이지에서 연달아 지면 다음 시도의 적이 약해진다(재도전의 기세).'],
       ['단축키', '1~9·0 카드 고르기(같은 번호를 다시 누르면 쓴다) · ←→ 대상 바꾸기 · Enter/Space 쓰기 · E 턴 종료 · Z 턴 되돌리기(노말) · L 전투 기록 · Esc 취소. 적의 턴에 전장을 누르면 빨리 감는다'],
       ['터치', '카드를 끌어 쓰거나 두 번 눌러 쓴다. 길게 누르면 설명이 나온다']
     ];
