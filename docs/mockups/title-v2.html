@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>시작 화면 목업 v2</title>
+<!-- 40단계(Claude): 시작 화면 새 목업. 인물 없이 타이틀 배경(세계의 틈)을 주인공으로. 게임 CSS · UI 키트를 그대로 읽어 실제 부품으로 그린다.
+     안 고르기: 주소 뒤 #a · #b · #c (아래 단추로도 바꾼다). 게임 코드에는 아직 연결하지 않았다 -->
+<link rel="stylesheet" href="../../css/style.css">
+<link rel="stylesheet" href="../../css/sd-fonts.css">
+<link rel="stylesheet" href="../../css/sd-theme.css">
+<link rel="stylesheet" href="../ui-kit/ui-kit.css">
+<link rel="stylesheet" href="../ui-kit/game-skin.css">
+<link rel="stylesheet" href="../../css/sd-screens.css">
+<link rel="stylesheet" href="../../css/ui-kit-adapter.css">
+<style>
+  /* ---------- 공통: 배경 · 빛 · 먹 입자 ---------- */
+  .mk { position:absolute; inset:0; overflow:hidden; background:#0b1220; font-family:var(--font-body); color:#f0e4cb; }
+  .mk-bg { position:absolute; inset:-2%; background:url(../../assets/backgrounds/title.png) center 38% / cover no-repeat; animation:mkDrift 40s ease-in-out infinite alternate; }
+  @keyframes mkDrift { from { transform:scale(1.02) translateX(-.6%); } to { transform:scale(1.06) translateX(.6%); } }
+  /* 세계의 틈: 그림 속 소용돌이 자리에 청록 · 보랏빛 숨을 얹는다 */
+  .mk-rift { position:absolute; left:50%; top:-6%; width:44%; height:58%; transform:translateX(-14%); pointer-events:none; mix-blend-mode:screen;
+    background:radial-gradient(40% 50% at 50% 40%,#54c7c055,transparent 70%),radial-gradient(30% 40% at 58% 30%,#b59ce855,transparent 70%); animation:mkPulse 6s ease-in-out infinite; }
+  @keyframes mkPulse { 50% { opacity:.55; } }
+  .mk-shade { position:absolute; inset:0; pointer-events:none; }
+  .mk-ink { position:absolute; inset:0; pointer-events:none; }
+  .mk-ink i { position:absolute; bottom:-10px; width:4px; height:4px; border-radius:50%; background:#eed4a0; opacity:0; animation:mkRise linear infinite; }
+  .mk-ink i:nth-child(3n) { background:#8ce6de; }
+  @keyframes mkRise { 0% { transform:translateY(0); opacity:0; } 15% { opacity:.8; } 100% { transform:translateY(-70vh) translateX(30px); opacity:0; } }
+
+  /* ---------- 공통: 제목 글자 ---------- */
+  .mk-en { font-size:12px; letter-spacing:.55em; color:#fff1cf; text-shadow:0 0 6px #000,0 0 12px #000c,0 1px 2px #000; white-space:nowrap; }
+  .mk-name { position:relative; margin:0; font-family:var(--font-serif); font-weight:700; line-height:1; letter-spacing:.12em; white-space:nowrap;
+    background:linear-gradient(#fff6dc 0%,#eed4a0 42%,#c5a261 58%,#8a6a33 100%); -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 2px 0 #3a2a12) drop-shadow(0 6px 14px #000c); }
+  .mk-seal { display:inline-grid; place-items:center; width:46px; height:46px; border-radius:6px; background:#9f2934; color:#fff4df; font-family:var(--font-serif); font-weight:700; font-size:15px; line-height:1.05;
+    box-shadow:inset 0 0 0 2px #fff4df55,0 3px 8px #000a; transform:rotate(-4deg); text-align:center; }
+  .mk-sub { display:flex; align-items:center; gap:14px; font-family:var(--font-serif); font-weight:700; letter-spacing:.5em; color:#fff6dc; text-shadow:0 0 6px #000,0 0 14px #000c,0 2px 4px #000; white-space:nowrap; }
+  .mk-sub::before,.mk-sub::after { content:''; width:70px; height:1px; background:linear-gradient(90deg,transparent,#c5a261); }
+  .mk-sub::after { transform:scaleX(-1); }
+
+  /* ---------- 공통: 저장 칸 ---------- */
+  .mk-slot { display:grid; grid-template-columns:40px 1fr; gap:4px 12px; align-items:center; padding:10px 14px; border:0; border-radius:6px; text-align:left; cursor:pointer;
+    background:#111820e6; box-shadow:inset 0 0 0 1px #80704f; color:#f0e4cb; font:inherit; }
+  .mk-slot:hover { box-shadow:inset 0 0 0 1px #c5a261,0 0 0 2px #c5a26155; }
+  .mk-slot.on { box-shadow:inset 0 0 0 1px #54c7c0,inset 0 -3px 0 #54c7c0; background:#13252ae6; }
+  .mk-slot:focus-visible { outline:3px solid #8ce6de; outline-offset:3px; }
+  .mk-slot .n { grid-row:1 / 3; width:40px; height:40px; border-radius:50%; display:grid; place-items:center; font-family:var(--font-serif); font-weight:700; font-size:18px; color:#111820;
+    background:radial-gradient(circle,#f0e4cb 0 60%,#c5a261 62% 70%,#111820 72%); }
+  .mk-slot b { font-size:15px; display:flex; align-items:center; gap:8px; }
+  .mk-slot b em { font-style:normal; font-size:11px; padding:1px 7px; border-radius:3px; background:#54c7c0; color:#111820; }
+  .mk-slot small { color:#c3bbad; font-size:12.5px; }
+  .mk-slot .bar { grid-column:2; height:6px; border-radius:3px; background:#070d12; box-shadow:inset 0 0 0 1px #80704f; overflow:hidden; }
+  .mk-slot .bar i { display:block; height:100%; width:var(--v); background:linear-gradient(90deg,#c5a261,#eed4a0); }
+  .mk-slot.empty .n { background:radial-gradient(circle,#2a3346 0 60%,#80704f 62% 70%,#111820 72%); color:#c3bbad; }
+  .mk-slot.empty b { color:#c3bbad; }
+
+  /* ---------- 공통: 둥근 아이콘 단추(설정 · 도움말) ---------- */
+  .mk-ico { width:48px; height:48px; border-radius:50%; border:0; cursor:pointer; display:grid; place-items:center;
+    background:radial-gradient(circle,#16213a 0 58%,#c5a261 60% 65%,#0b1220 67%); box-shadow:0 4px 10px #0009; }
+  .mk-ico svg { width:22px; height:22px; fill:none; stroke:#eed4a0; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+  .mk-ico:hover svg { stroke:#fff6dc; }
+  .mk-ico:focus-visible { outline:3px solid #8ce6de; outline-offset:3px; }
+  .mk-foot { font-size:12px; color:#c3bbad; text-shadow:0 1px 2px #000; }
+  .mk-foot b { color:#eed4a0; font-weight:700; }
+  .mk .btn small { font-weight:400; opacity:.85; margin-left:6px; font-size:.78em; }
+
+  /* ================= A안: 틈 아래 현판 — 가운데 정렬 ================= */
+  .va .mk-shade { background:radial-gradient(70% 55% at 50% 42%,transparent 30%,#0b122066 70%,#0b1220cc 100%),linear-gradient(transparent 55%,#0b1220d9 88%); }
+  .va .mk-head { position:absolute; left:50%; top:16%; transform:translateX(-50%); display:flex; flex-direction:column; align-items:center; gap:10px; }
+  .va .mk-plate { position:relative; display:flex; align-items:center; gap:22px; padding:18px 46px 16px 54px; border-radius:6px;
+    background:linear-gradient(#111820e6,#0b1220d9); box-shadow:inset 0 0 0 1px #c5a261,inset 0 0 0 5px #0b1220,inset 0 0 0 6px #c5a26166,0 12px 30px #000b; }
+  .va .mk-plate::before,.va .mk-plate::after { content:''; position:absolute; top:50%; width:14px; height:14px; margin-top:-7px; background:#c5a261; transform:rotate(45deg); box-shadow:0 0 0 3px #0b1220,0 0 0 4px #c5a261; }
+  .va .mk-plate::before { left:-7px; } .va .mk-plate::after { right:-7px; }
+  .va .mk-name { font-size:96px; }
+  .va .mk-sub { font-size:18px; }
+  .va .mk-menu { position:absolute; left:50%; top:52%; transform:translateX(-50%); width:380px; display:flex; flex-direction:column; gap:10px; }
+  .va .mk-menu .btn { width:100%; min-height:52px; font-size:1.05em; }
+  .va .mk-menu .btn.big { min-height:62px; font-size:1.2em; }
+  .va .mk-row2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .va .mk-slots { position:absolute; left:50%; bottom:46px; transform:translateX(-50%); width:min(900px,calc(100% - 200px)); display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+  .va .mk-tools { position:absolute; right:24px; bottom:46px; display:flex; flex-direction:column; gap:10px; }
+  .va .mk-foot { position:absolute; left:0; right:0; bottom:14px; text-align:center; }
+
+  /* ================= B안: 시네마틱 — 제목만 크게, 메뉴는 아래 먹색 띠 ================= */
+  .vb .mk-shade { background:linear-gradient(#0b122099,transparent 22%,transparent 58%,#0b1220ee 84%); }
+  .vb .mk-head { position:absolute; left:50%; top:24%; transform:translateX(-50%); display:flex; flex-direction:column; align-items:center; gap:14px; }
+  .vb .mk-head::before { content:''; position:absolute; inset:-30% -18%; z-index:-1; background:radial-gradient(closest-side,#0b1220b0,#0b122055 55%,transparent); }
+  .vb .mk-name { font-size:132px; letter-spacing:.18em; }
+  .vb .mk-titlerow { display:flex; align-items:flex-start; gap:6px; }
+  .vb .mk-seal { width:54px; height:54px; font-size:17px; margin-top:8px; }
+  .vb .mk-sub { font-size:20px; }
+  .vb .mk-band { position:absolute; left:0; right:0; bottom:0; height:150px; display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); align-items:center; gap:24px; padding:0 32px;
+    background:linear-gradient(#111820d0,#0b1220f5); box-shadow:inset 0 1px 0 #c5a261,inset 0 4px 0 #0b1220,inset 0 5px 0 #c5a26155; }
+  .vb .mk-band::before { content:''; position:absolute; left:50%; top:-8px; width:16px; height:16px; margin-left:-8px; background:#c5a261; transform:rotate(45deg); box-shadow:0 0 0 3px #0b1220; }
+  .vb .mk-slots { display:flex; flex-direction:column; gap:6px; }
+  .vb .mk-slot { grid-template-columns:28px 1fr auto; padding:5px 10px; gap:2px 10px; }
+  .vb .mk-slot .n { grid-row:auto; width:28px; height:28px; font-size:14px; }
+  .vb .mk-slot small { grid-column:3; text-align:right; font-size:11.5px; white-space:nowrap; }
+  .vb .mk-slot b { white-space:nowrap; font-size:14px; }
+  .vb .mk-band { grid-template-columns:minmax(300px,1fr) auto minmax(0,1fr); }
+  .vb .mk-slot .bar { display:none; }
+  .vb .mk-menu { display:flex; align-items:center; gap:12px; }
+  .vb .mk-menu .btn { min-height:50px; }
+  .vb .mk-menu .btn.big { min-width:250px; min-height:66px; font-size:1.25em; }
+  .vb .mk-side { display:flex; flex-direction:column; align-items:flex-end; gap:10px; }
+  .vb .mk-tools { display:flex; gap:10px; }
+
+  /* ================= C안: 옻칠 패널 — 왼쪽 어두운 바위 쪽에 패널 하나 ================= */
+  .vc .mk-bg { background-position:62% 38%; }
+  .vc .mk-shade { background:linear-gradient(90deg,#0b1220e0 0%,#0b1220a8 30%,transparent 52%),linear-gradient(transparent 70%,#0b1220aa); }
+  .vc .mk-panel { position:absolute; left:5%; top:6%; bottom:6%; width:min(440px,38%); display:flex; flex-direction:column; gap:10px; padding:40px 40px 40px;
+    background:linear-gradient(170deg,#16213af2,#0b1220f2); border-radius:6px; box-shadow:inset 0 0 0 1px #c5a261,inset 0 0 0 5px #0b1220,inset 0 0 0 6px #c5a26166,0 18px 40px #000c; }
+  body.ui-parts .vc .mk-panel::after { content:''; position:absolute; inset:-10px; pointer-events:none; border-style:solid; border-width:34px;
+    border-image:url(../../assets/ui/components/panel_border.png) 14% / 34px stretch; }
+  .vc .mk-head { display:flex; flex-direction:column; align-items:center; gap:6px; padding-bottom:10px; border-bottom:1px solid #80704f; }
+  .vc .mk-name { font-size:70px; }
+  .vc .mk-sub { font-size:15px; letter-spacing:.4em; }
+  .vc .mk-sub::before,.vc .mk-sub::after { width:40px; }
+  .vc .mk-menu { display:flex; flex-direction:column; gap:8px; }
+  .vc .mk-menu .btn { width:100%; min-height:44px; }
+  .vc .mk-menu .btn.big { min-height:56px; font-size:1.15em; }
+  .vc .mk-label { font-size:12px; letter-spacing:.3em; color:#c5a261; margin-top:4px; }
+  .vc .mk-slots { display:flex; flex-direction:column; gap:6px; }
+  .vc .mk-slot { padding:5px 12px; grid-template-columns:30px 1fr; gap:0 10px; }
+  .vc .mk-slot .n { width:30px; height:30px; font-size:14px; }
+  .vc .mk-slot .bar { display:none; }
+  .vc .mk-panelfoot { margin-top:auto; display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .vc .mk-caption { position:absolute; right:4%; bottom:6%; text-align:right; }
+  .vc .mk-caption b { display:block; font-family:var(--font-serif); font-size:20px; letter-spacing:.3em; color:#f0e4cb; text-shadow:0 2px 8px #000; }
+  .vc .mk-caption small { font-size:12px; letter-spacing:.2em; color:#eed4a0; text-shadow:0 1px 3px #000; }
+
+  /* 안 고르기(목업 전용) */
+  .mk-pick { position:absolute; top:12px; left:50%; transform:translateX(-50%); z-index:50; display:flex; gap:6px; padding:6px; border-radius:8px; background:#111820e6; box-shadow:inset 0 0 0 1px #80704f; }
+  .mk-pick button { border:0; cursor:pointer; padding:6px 14px; border-radius:4px; background:transparent; color:#f0e4cb; font:700 13px var(--font-body); }
+  .mk-pick button[aria-pressed=true] { background:#1b4444; box-shadow:inset 0 0 0 1px #54c7c0; }
+  .shot .mk-pick { display:none; }
+  @media (prefers-reduced-motion:reduce) { .mk-bg,.mk-rift,.mk-ink i { animation:none; } }
+</style>
+</head>
+<body class="sd-ui twj-game-skin ui-parts">
+<div id="app">
+  <div class="mk" id="mk">
+    <div class="mk-bg"></div><div class="mk-rift"></div><div class="mk-shade"></div><div class="mk-ink" id="ink"></div>
+    <div id="view"></div>
+    <nav class="mk-pick" aria-label="목업 안 고르기">
+      <button type="button" data-v="a">A · 틈 아래 현판</button><button type="button" data-v="b">B · 시네마틱</button><button type="button" data-v="c">C · 옻칠 패널</button>
+    </nav>
+  </div>
+</div>
+<script>
+(function () {
+  'use strict';
+  // 실제 게임과 같은 문구 · 정보(저장 칸 3개 중 3번 칸에 노말 진행이 있는 상태)
+  var SLOTS = [
+    { n: 1, empty: true },
+    { n: 2, empty: true },
+    { n: 3, mode: '노말', info: '스테이지 9 대기 · 동료 6명', v: 80, on: true }
+  ];
+  var ICO = {
+    gear: '<circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v2.6M12 18.6v2.6M2.8 12h2.6M18.6 12h2.6M5.5 5.5l1.8 1.8M16.7 16.7l1.8 1.8M5.5 18.5l1.8-1.8M16.7 7.3l1.8-1.8"/>',
+    help: '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 1 1 3.6 2.3c-.8.4-1.2 1-1.2 1.9M12 16.8v.2"/>'
+  };
+  function slot(s) {
+    return '<button type="button" class="mk-slot' + (s.empty ? ' empty' : '') + (s.on ? ' on' : '') + '" aria-pressed="' + !!s.on + '"><span class="n">' + s.n + '</span>' +
+      (s.empty ? '<b>' + s.n + '번 칸</b><small>빈 칸 · 새 원정</small>'
+        : '<b>' + s.n + '번 칸 <em>' + s.mode + '</em></b><small>' + s.info + '</small><span class="bar" style="--v:' + s.v + '%"><i></i></span>') + '</button>';
+  }
+  function ico(k, label) { return '<button type="button" class="mk-ico" aria-label="' + label + '"><svg viewBox="0 0 24 24">' + ICO[k] + '</svg></button>'; }
+  var name = '<h1 class="mk-name">천외검결</h1>';
+  var en = '<div class="mk-en">SWORD BEYOND THE HEAVENS · MURIM × MAGIC</div>';
+  var sub = '<div class="mk-sub">두 세계의 검</div>';
+  var cont = '<button type="button" class="btn gold big">이어하기<small>3번 칸 · 스테이지 9</small></button>';
+  var VIEWS = {
+    a: '<div class="mk-head">' + en + '<div class="mk-plate">' + name + '<span class="mk-seal">天<br>外</span></div>' + sub + '</div>' +
+      '<div class="mk-menu">' + cont + '<button type="button" class="btn">저장 칸 · 새 게임</button>' +
+      '<div class="mk-row2"><button type="button" class="btn">오늘의 원정</button><button type="button" class="btn">업적 · 기록</button></div></div>' +
+      '<div class="mk-slots">' + SLOTS.map(slot).join('') + '</div>' +
+      '<div class="mk-tools">' + ico('help', '도움말') + ico('gear', '설정') + '</div>' +
+      '<div class="mk-foot">저장 칸 3개 · 진행은 브라우저에 자동 저장된다 · <b>v0.40</b></div>',
+    b: '<div class="mk-head">' + en + '<div class="mk-titlerow">' + name + '<span class="mk-seal">天<br>外</span></div>' + sub + '</div>' +
+      '<div class="mk-band"><div class="mk-slots">' + SLOTS.map(slot).join('') + '</div>' +
+      '<div class="mk-menu"><button type="button" class="btn">저장 칸 · 새 게임</button>' + cont + '<button type="button" class="btn">오늘의 원정</button></div>' +
+      '<div class="mk-side"><div class="mk-tools"><button type="button" class="btn">업적 · 기록</button>' + ico('help', '도움말') + ico('gear', '설정') + '</div>' +
+      '<div class="mk-foot">진행은 브라우저에 자동 저장된다 · <b>v0.40</b></div></div></div>',
+    c: '<div class="mk-panel"><div class="mk-head">' + en.replace('class="mk-en"', 'class="mk-en" style="letter-spacing:.32em;font-size:10.5px"') + name + sub + '</div>' +
+      '<div class="mk-menu">' + cont + '<button type="button" class="btn">저장 칸 · 새 게임</button><button type="button" class="btn">오늘의 원정</button><button type="button" class="btn">업적 · 기록</button></div>' +
+      '<div class="mk-label">저장 칸</div><div class="mk-slots">' + SLOTS.map(slot).join('') + '</div>' +
+      '<div class="mk-panelfoot"><span class="mk-foot">자동 저장 · <b>v0.40</b></span><span style="display:flex;gap:8px">' + ico('help', '도움말') + ico('gear', '설정') + '</span></div></div>' +
+      '<div class="mk-caption"><b>무림 · 세계의 틈 · 엘단</b><small>두 세계가 이어진 날</small></div>'
+  };
+  var mk = document.getElementById('mk'), view = document.getElementById('view');
+  function show(v) {
+    if (!VIEWS[v]) v = 'a';
+    mk.className = 'mk v' + v;
+    view.innerHTML = VIEWS[v];
+    Array.prototype.forEach.call(document.querySelectorAll('.mk-pick button'), function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-v') === v)); });
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('.mk-pick button'), function (b) { b.onclick = function () { location.hash = b.getAttribute('data-v'); }; });
+  window.addEventListener('hashchange', function () { show(location.hash.slice(1)); });
+  // 저장 칸 고르기(목업 안에서만): 고른 칸이 청록으로
+  view.addEventListener('click', function (e) {
+    var s = e.target.closest('.mk-slot'); if (!s) return;
+    Array.prototype.forEach.call(view.querySelectorAll('.mk-slot'), function (x) { x.classList.toggle('on', x === s); x.setAttribute('aria-pressed', String(x === s)); });
+  });
+  // 떠오르는 먹 · 금빛 입자
+  var ink = '';
+  for (var i = 0; i < 26; i++) ink += '<i style="left:' + (Math.random() * 100).toFixed(1) + '%;animation-duration:' + (9 + Math.random() * 9).toFixed(1) + 's;animation-delay:-' + (Math.random() * 18).toFixed(1) + 's"></i>';
+  document.getElementById('ink').innerHTML = ink;
+  if (/shot/.test(location.search)) document.body.classList.add('shot');
+  show(location.hash.slice(1));
+})();
+</script>
+</body>
+</html>
