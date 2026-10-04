@@ -29,7 +29,7 @@
     opts = opts || {};
     if (!opts.replay && sc.kind !== 'ascend') St.markStory(sc.id); // 먼저 표시해 두어 같은 장면이 되풀이되지 않게 한다
     var el = screen(), ch = chapterOf(sc);
-    var head = sc.kind === 'ascend' ? ['ASCENSION', '승천 원정 · 승천 ' + St.ascLevel()] : [(ch ? ch.en : 'STORY') + ' · ' + (KIND_NAME[sc.kind] || ''), ch ? ch.title : ''];
+    var head = sc.kind === 'ascend' ? ['ASCENSION', '승천 원정 · 승천 ' + (sc.asc || St.ascLevel())] : [(ch ? ch.en : 'STORY') + ' · ' + (KIND_NAME[sc.kind] || ''), ch ? ch.title : ''];
     el.innerHTML = '<div class="st-bg"></div><div class="st-shade"></div><div class="st-bar top"></div><div class="st-bar bot"></div>' +
       '<div class="st-head"><small>' + head[0] + '</small><b>' + head[1] + '</b></div>' +
       '<div class="st-ctrl"><button class="btn small ghost auto">자동</button><button class="btn small ghost skip">건너뛰기</button></div>' +
@@ -125,6 +125,12 @@
     });
   };
 
+  // 승천 장면은 그 단계까지 올라갔으면 볼 수 있다(38단계: 단계별 장면은 asc 이상)
+  function ascSeen(sc) {
+    if (sc.kind !== 'ascend') return St.storySeen(sc.id);
+    var top = Math.max(St.data.ascension.best || 0, St.ascLevel());
+    return sc.asc ? top >= sc.asc : top > 0;
+  }
   // ================= 스토리 다시 보기 =================
   Meta.story = function () {
     var el = screen(), prog = St.storyProgress();
@@ -132,13 +138,13 @@
     el.classList.remove('narrating');
     var known = St.riftKnown();   // 31단계: 엔딩 전에는 세계의 틈 장(11~13, 21)을 목록에서 뺀다
     var cards = (D.story || []).filter(function (ch) { return known || !St.riftChapter(ch.n); }).map(function (ch) {
-      var anySeen = ch.scenes.some(function (sc) { return sc.kind === 'ascend' ? St.data.ascension.best > 0 || St.ascLevel() > 0 : St.storySeen(sc.id); });
+      var anySeen = ch.scenes.some(function (sc) { return ascSeen(sc); });
       var stageTheme = ch.n >= 1 && ch.n <= D.stages.length ? D.stages[ch.n - 1].theme : ch.n === 21 ? 'rift' : 'castle'; // 프롤로그·에필로그는 청운문, 31단계 세계의 틈 에필로그는 틈
       return '<div class="sc-card' + (anySeen ? '' : ' locked') + '" data-theme="' + stageTheme + '"><div class="sc-art"></div>' +
         '<div class="sc-head"><small>' + ch.en + '</small><b>' + (anySeen ? ch.title : '???') + '</b></div><div class="sc-btns">' +
         ch.scenes.map(function (sc) {
-          var ok = sc.kind === 'ascend' ? St.data.ascension.best > 0 || St.ascLevel() > 0 : St.storySeen(sc.id);
-          return '<button class="btn small ' + (ok ? '' : 'ghost') + '" data-id="' + sc.id + '" ' + (ok ? '' : 'disabled') + '>' + (ok ? KIND_NAME[sc.kind] : '???') + '</button>';
+          var ok = ascSeen(sc);
+          return '<button class="btn small ' + (ok ? '' : 'ghost') + '" data-id="' + sc.id + '" ' + (ok ? '' : 'disabled') + '>' + (ok ? KIND_NAME[sc.kind] + (sc.asc ? ' ' + sc.asc : '') : '???') + '</button>';
         }).join('') + '</div></div>';
     }).join('');
     el.innerHTML = Meta.topbar('스토리', '<button class="btn small ghost back">' + UI.icon('home') + '로비</button>') +

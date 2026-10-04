@@ -717,7 +717,9 @@
     var d = St.data, r = d.run, node = St.node(), ev = St.eventDef(), el = screen('camp');
     if (!ev) return Meta.map();
     var res = node.result;
-    var body = '<div class="event-card frame"><div class="event-icon"><i class="ico" style="' + UI.iconStyle(ev.icon) + '"></i></div>' +
+    var hc = ev.hero && charDef(ev.hero);   // 38단계: 동료 개인 이벤트는 그 동료가 함께 선다
+    var body = '<div class="event-card frame">' + (hc ? '<div class="event-hero"><div class="eh-art"></div><small>' + U.esc(hc.name) + '의 이야기</small></div>' :
+      '<div class="event-icon"><i class="ico" style="' + UI.iconStyle(ev.icon) + '"></i></div>') +
       '<div class="event-text"><p>' + U.esc(ev.text) + '</p>';
     if (!res) {
       body += '<div class="event-choices">' + ev.choices.map(function (ch, i) {
@@ -732,7 +734,7 @@
     body += '</div></div>';
     var waiting = res && (res.cards || r.upgrades || r.purges || r.dups);
     el.innerHTML = topbar('이벤트') + '<div class="meta-body">' +
-      '<span class="ribbon">이벤트</span><h1 class="big-title">' + U.esc(ev.name) + '</h1>' + body +
+      '<span class="ribbon">' + (hc ? '동료 이야기' : '이벤트') + '</span><h1 class="big-title">' + U.esc(ev.name) + '</h1>' + body +
       (res && res.cards ? '<span class="ribbon">카드 1장을 고른다</span><div class="row reward-cards"></div><button class="btn small skip-card">받지 않기</button>' : '') +
       (res && res.relic ? '<div class="relic-tiles">' + UI.relicTile(res.relic, 'static') + '</div>' : '') +
       (res && res.item && D.itemById[res.item] ? '<p class="gain item-gain">' + UI.itemBar([res.item], false, 1) + ' 소모품 <b>' + D.itemById[res.item].name + '</b></p>' : '') +
@@ -742,6 +744,7 @@
         '<button class="btn ' + (waiting ? '' : 'gold ') + 'next" ' + (waiting ? 'disabled' : '') + '>' + (res.fight ? '전투 시작' : '계속') + '</button></div>' :
         '<div class="row"><button class="btn back">맵으로</button></div>') + '</div>';
     backdrop(el, runTheme());
+    if (hc) el.querySelector('.eh-art').appendChild(UI.spriteEl(hc.id, 1));
     UI.$$('.choice-line', el).forEach(function (b) {
       b.onclick = function () { if (St.eventChoose(+b.getAttribute('data-i'))) { SND('coin'); Meta.event(); } };
     });
@@ -1003,7 +1006,7 @@
       confirmBox((lv ? '승천 ' + lv : '기본') + ' 원정을 시작할까요? 스테이지 진행이 처음부터 시작된다.', '원정 시작', function () {
         if (St.newExpedition(lv)) {
           UI.wipe();
-          var sc = lv > 0 && St.sceneFor('ascend', 20);
+          var sc = lv > 0 && St.sceneFor('ascend', 20, lv);
           if (sc) Meta.scene(sc, function () { Meta.map(1); }); else Meta.map(1);
         }
       });

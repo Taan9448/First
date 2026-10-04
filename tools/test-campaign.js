@@ -318,12 +318,15 @@ function invariants(where) {
 
   // 22단계: 이벤트 40종(29단계)의 선택지를 모두 실행해 본다(테마 이벤트는 그 테마 스테이지에서), 소모품
   {
-    check(D.events.length === 40, '이벤트 40종');
+    check(D.events.length === 46, '이벤트 46종');
     St.data.party = ['kai']; St.data.gold = 999;
+    const allHeroes = ['kai', 'bram', 'lyra', 'sera', 'nox', 'ciel'];
+    allHeroes.forEach(id => { if (!St.data.characters.includes(id)) St.data.characters.push(id); });
     const stageOfTheme = th => D.stages.findIndex(s => s.theme === th) + 1;
     let ran = 0;
     D.events.forEach(ev => {
       ev.choices.forEach((ch, ci) => {
+        St.data.party = ev.hero && ev.hero !== 'kai' ? ['kai', ev.hero] : ['kai']; St.data.flags.personal = {};   // 38단계: 개인 이벤트는 그 동료가 있어야
         St.startStage(ev.themes ? stageOfTheme(ev.themes[0]) : 1); St.autoPick();
         const node = St.node(); node.type = 'event'; node.event = ev.id; node.result = null;
         St.data.gold = 999; St.data.items = [];
@@ -342,6 +345,37 @@ function invariants(where) {
     St.startStage(1);
     const themed = St.data.run.map.flat().filter(n => n.event).map(n => D.eventById[n.event]).filter(e => e.themes);
     check(themed.every(e => e.themes.includes('forest')), '만독곡에는 만독곡 이벤트만');
+    // 38단계: 동료 개인 이벤트 — 그 동료가 있을 때만 · 한 번만 · 그 동료의 카드와 경험치 · 빠지면 다른 이벤트로
+    {
+      St.data.party = ['kai']; St.data.flags.personal = {};
+      let bad = 0;
+      for (let i = 0; i < 300; i++) { const e = D.eventById[St.pickEvent()]; if (e.hero && e.hero !== 'kai') bad++; }
+      check(bad === 0, '파티에 없는 동료의 개인 이벤트는 나오지 않는다');
+      let kaiSeen = 0; St.data.eventsSeen = [];
+      for (let i = 0; i < 200; i++) { if (St.pickEvent() === 'P01') kaiSeen++; if (St.data.eventsSeen.length > 30) St.data.eventsSeen = []; }
+      check(kaiSeen > 0, '파티에 있는 동료의 개인 이벤트는 나온다');
+      St.data.party = ['kai', 'bram']; St.data.flags.personal = {};
+      St.startStage(1); St.autoPick();
+      let node = St.node(); node.type = 'event'; node.event = 'P02'; node.result = null;
+      const owned = new Set(St.data.cards), exp0 = St.growthOf('bram').exp, kexp0 = St.growthOf('kai').exp;
+      St.eventChoose(1);
+      const got = St.data.cards.find(id => !owned.has(id));
+      check(got && D.cardById[got].owner === 'bram', '개인 이벤트 카드는 그 동료의 카드');
+      node.result = null; St.data.flags.personal = {};
+      St.eventChoose(0);
+      check(St.growthOf('bram').exp === exp0 + 40 && St.growthOf('kai').exp === kexp0, '개인 이벤트 경험치는 그 동료만');
+      check(St.data.flags.personal.P02 === 1, '고른 개인 이벤트는 기록된다');
+      for (let i = 0; i < 300; i++) if (St.pickEvent() === 'P02') bad++;
+      check(bad === 0, '이미 본 개인 이벤트는 다시 나오지 않는다');
+      St.data.flags.personal = {};
+      node.event = 'P02'; node.result = null; St.data.party = ['kai'];
+      check(!St.eventDef().hero, '그 동료가 빠지면 개인 이벤트는 다른 이벤트로 바뀐다');
+      St.data.party = ['kai'];
+      St.abandon();
+    }
+    // 38단계: 승천 단계마다 시작 장면
+    check([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].every(n => (St.sceneFor('ascend', 20, n) || {}).asc === n), '승천 단계마다 시작 장면');
+    check(!St.sceneFor('ascend', 20, 11).asc && St.sceneFor('ascend', 20, 11).id === 'ascend', '장면이 없는 단계는 기본 승천 장면');
     // 소모품: 칸 3개, 전투 중 사용
     St.data.items = [];
     check(St.addItem('I02') && St.addItem('I05') && St.addItem('I06') && !St.addItem('I01'), '소모품 칸 3개');

@@ -1,17 +1,17 @@
-// events.js — 이벤트 노드 40종 (GAME_DESIGN.md 19.3절, 22단계에 15종 · 29단계에 10종 추가)
+// events.js — 이벤트 노드 46종 (GAME_DESIGN.md 19.3절, 22단계에 15종 · 29단계에 10종 · 38단계에 동료 개인 이벤트 6종 추가)
 // 선택지의 effects 는 이벤트 효과 목록이다. 처리는 js/stage.js 의 St.eventOp 가 맡는다.
 //   gold{value}                  골드 증감
 //   hp{who, value | pct}         who: leader(선두) · party(파티 전원) · random(파티 중 1명). 음수는 잃음(1 아래로는 안 내려감)
 //                                pct 는 최대 체력 비율
-//   card{minRarity | rarity}     미보유 카드 1장을 무작위로 얻음
+//   card{minRarity | rarity, owner?} 미보유 카드 1장을 무작위로 얻음. owner: 'hero' 면 그 동료의 카드
 //   cardChoice{count, minRarity} 미보유 카드 count장 중 1장 고르기
 //   relic{pool}                  common(일반) · low(일반·고급) · any(보스 제외 전부)
 //   upgrade{count}               보유 카드 강화
 //   buff{name, battles, effects} 다음 battles번의 전투 시작 때 효과(아군 대상)
 //   curse{card, count, battles}  다음 battles번의 전투 덱에 방해 카드
 //   mirror{}                     다음 전투에 파티 중 무작위 캐릭터의 그림자가 함께 나온다
-//   exp{value}                   파티 전원 경험치(9단계 캐릭터 성장에 쓰인다)
-//   bond{value}                  파티의 짝마다 친밀도(9단계)
+//   exp{value, who?}             파티 전원 경험치(9단계 캐릭터 성장에 쓰인다). who: 'hero' 면 그 동료만
+//   bond{value, who?}            파티의 짝마다 친밀도(9단계). who: 'hero' 면 그 동료가 든 짝만
 //   chance{p | crit, then, else} 확률 판정. crit:3 은 파티 최고 치명타 확률 × 3
 //   fight{kind}                  이 자리에서 전투(kind: elite = 이 테마의 정예)
 //   cutNext{}                    다음 열의 갈림길 하나를 없앤다
@@ -19,6 +19,7 @@
 //   purge{} · dup{}              (22단계) 스테이지 덱에서 카드 1장 빼기 · 1장 복제(고르는 화면)
 // themes: 이 테마의 스테이지에서만 나온다(없으면 어디서나)
 // need: 선택 조건(gold 이상). text: 결과 문구
+// hero(38단계): 동료 개인 이벤트 — 그 동료가 파티에 있을 때만, 저장 칸마다 한 번. who: 'hero'(hp · exp · bond) · card{owner: 'hero'} 는 그 동료
 Game.Data.events = [
   { id: 'E01', name: '수상한 상인', icon: 'gold',
     text: '두건을 깊게 눌러쓴 상인이 길을 막는다. "피 몇 방울이면 전설의 무기를 넘기지. 금화는 필요 없어."',
@@ -298,6 +299,63 @@ Game.Data.events = [
     choices: [
       { label: '다리를 건넌다', desc: '스테이지 덱의 카드 1장 복제, 1장 빼기', effects: [{ op: 'dup' }, { op: 'purge' }], text: '다리를 건너는 동안 익힌 것과 잊은 것이 하나씩 생겼다.' },
       { label: '다리 아래서 쉰다', desc: '파티 전원 체력 15% 회복, 경험치 +10', effects: [{ op: 'hp', who: 'party', pct: 0.15 }, { op: 'exp', value: 10 }], text: '두 세계의 바람이 번갈아 불어왔다.' }
+    ] },
+
+  // ---------------- 38단계: 동료 개인 이벤트(그 동료가 파티에 있을 때만, 저장 칸마다 한 번) ----------------
+  // hero: 이 동료가 파티에 있어야 나온다. 효과의 who: 'hero' · owner: 'hero' 는 그 동료를 가리킨다
+  { id: 'P01', name: '먹 가는 소리', icon: 'book', hero: 'kai',
+    text: '버려진 서당 툇마루에 금 간 벼루와 몽당 먹이 놓여 있다. 하린이 걸음을 멈춘다. "금서각에서 밤마다 이 소리를 들었어. 사각, 사각… 먹 가는 소리."',
+    choices: [
+      { label: '먹을 갈아 검결을 옮겨 쓴다', desc: '하린 경험치 +40, 하린의 고급 이상 카드 1장', effects: [{ op: 'exp', who: 'hero', value: 40 }, { op: 'card', owner: 'hero', minRarity: 'uncommon' }],
+        text: '하린이 붓을 세우자 먹 획마다 희미한 검기가 일었다. "천외검선도 이렇게 썼겠지. 한 획이 한 검이야."' },
+      { label: '사부님께 편지를 쓴다', desc: '파티 전원 체력 15% 회복, 하린과 동료들의 친밀도 +3', effects: [{ op: 'hp', who: 'party', pct: 0.15 }, { op: 'bond', who: 'hero', value: 3 }],
+        text: '"사부님, 저는 살아 있어요. 좋은 친구들이 생겼어요." 하린은 편지를 접어 품에 넣었다. 언젠가 직접 건넬 날을 위해.' }
+    ] },
+  { id: 'P02', name: '모래 속의 묘비', icon: 'shield', hero: 'bram',
+    text: '모래에 반쯤 묻힌 은빛 묘비들이 줄지어 서 있다. 브리아가 투구를 벗었다. "……은빛 기사단. 내 형제들이다."',
+    choices: [
+      { label: '이름을 하나씩 부른다', desc: '브리아 경험치 +40, 다음 3번의 전투 첫 턴 아군 전체 보호막 6', effects: [{ op: 'exp', who: 'hero', value: 40 },
+        { op: 'buff', name: '기사단의 맹세', battles: 3, effects: [{ op: 'block', value: 6, target: 'allAllies' }] }],
+        text: '브리아는 묘비마다 이름을 불렀다. 마지막 이름을 부르고 나서야 고개를 들었다. "……이제 너희가 내 기사단이다."' },
+      { label: '방패를 닦고 떠난다', desc: '브리아의 희귀 이상 카드 1장', effects: [{ op: 'card', owner: 'hero', minRarity: 'rare' }],
+        text: '브리아는 말없이 방패의 모래를 털었다. 방패에 새겨진 십자가가 햇빛을 받아 빛났다.' }
+    ] },
+  { id: 'P03', name: '백 년 전의 연구 노트', icon: 'book', hero: 'lyra',
+    text: '무너진 탑 아래에서 리라가 비명을 질렀다. "내 노트! 봉인되기 전에 숨겨 둔 거야! 백 년 동안 아무도 안 열어 봤어!"',
+    choices: [
+      { label: '미완성 공식을 완성한다', desc: '60% 확률로 리라의 영웅 이상 카드 1장, 아니면 리라 체력 -12', effects: [{ op: 'chance', p: 0.6,
+        then: [{ op: 'card', owner: 'hero', minRarity: 'epic' }], else: [{ op: 'hp', who: 'hero', value: -12 }],
+        thenText: '공식의 마지막 줄이 맞아떨어지자 노트가 빛으로 타올랐다. "됐다! 백 년 걸린 답이 이거였어!"', elseText: '펑! 노트 대신 리라의 앞머리가 타올랐다. "…괜찮아, 실패도 데이터야."' }],
+        text: '' },
+      { label: '하린에게 내공 공식을 묻는다', desc: '리라 경험치 +30, 리라와 동료들의 친밀도 +4', effects: [{ op: 'exp', who: 'hero', value: 30 }, { op: 'bond', who: 'hero', value: 4 }],
+        text: '둘은 밤새 노트에 단전과 마나 회로를 그렸다. 리라는 "무림 수학"이라고 부르며 즐거워했다.' }
+    ] },
+  { id: 'P04', name: '깨진 종의 조각', icon: 'regen', hero: 'sera',
+    text: '눈 속에서 금빛 쇳조각이 반짝인다. 세라가 무릎을 꿇고 조심스레 들어 올렸다. "수도원의 종이에요. 서리 여왕이 깨뜨린…."',
+    choices: [
+      { label: '조각을 안고 기도한다', desc: '파티 전원 체력 25% 회복, 세라 경험치 +30', effects: [{ op: 'hp', who: 'party', pct: 0.25 }, { op: 'exp', who: 'hero', value: 30 }],
+        text: '세라의 기도에 조각이 맑게 울렸다. 지친 몸들이 종소리 속에서 조금씩 데워졌다.' },
+      { label: '조각을 지팡이에 단다', desc: '세라의 희귀 이상 카드 1장, 일반·고급 유물', effects: [{ op: 'card', owner: 'hero', minRarity: 'rare' }, { op: 'relic', pool: 'low' }],
+        text: '"언젠가 이 조각들을 다 모아 종을 다시 울릴 거예요." 지팡이 끝에서 작은 종소리가 났다.' }
+    ] },
+  { id: 'P05', name: '당가의 전서구', icon: 'poison', hero: 'nox',
+    text: '다리에 붉은 끈을 묶은 비둘기가 소연의 어깨에 내려앉았다. "…당가의 전서구야. 이 세계까지 날아오다니, 할아버지가 보낸 거야."',
+    choices: [
+      { label: '답장을 보낸다', desc: '골드 -20, 소연 경험치 +40, 소연과 동료들의 친밀도 +3', need: { gold: 20 }, effects: [{ op: 'gold', value: -20 }, { op: 'exp', who: 'hero', value: 40 }, { op: 'bond', who: 'hero', value: 3 }],
+        text: '"막내는 살아 있어요. 독도 잘 쓰고, 친구도 다섯이나 생겼어요." 소연은 모이를 넉넉히 주어 비둘기를 날려 보냈다.' },
+      { label: '전서구가 물고 온 비급을 펼친다', desc: '소연 체력 -10, 소연의 희귀 이상 카드 1장', effects: [{ op: 'hp', who: 'hero', value: -10 }, { op: 'card', owner: 'hero', minRarity: 'rare' }],
+        text: '쪽지에는 당가 비전의 독 배합이 적혀 있었다. 소연이 손끝으로 맛을 보고 얼굴을 찌푸렸다. "…역시 할아버지 독은 맵다."' }
+    ] },
+  { id: 'P06', name: '길 잃은 정령', icon: 'buff', hero: 'ciel',
+    text: '얼어붙은 덤불 속에서 손톱만 한 빛이 떨고 있다. 시엘이 숨을 죽였다. "서리숲의 정령이야. 붉은 금에 쫓겨 여기까지 왔나 봐."',
+    choices: [
+      { label: '숨결로 녹여 준다', desc: '시엘 경험치 +30, 다음 2번의 전투 첫 턴 아군 전체 힘 +2', effects: [{ op: 'exp', who: 'hero', value: 30 },
+        { op: 'buff', name: '정령의 축복', battles: 2, effects: [{ op: 'status', status: 'tempStr', value: 2, target: 'allAllies' }] }],
+        text: '정령이 시엘의 손바닥에서 깨어나 파티 주위를 한 바퀴 돌았다. 바람이 등을 밀어 주는 것 같았다.' },
+      { label: '숲으로 가는 길을 일러 준다', desc: '소모품 1개, 시엘과 동료들의 친밀도 +3', effects: [{ op: 'item' }, { op: 'bond', who: 'hero', value: 3 }],
+        text: '정령은 북쪽으로 날아가며 반짝이는 씨앗 하나를 떨어뜨렸다. "고맙대. 숲에서 기다리겠대."' }
     ] }
 ];
+// 38단계: 지나가는 이벤트 칸에서 개인 이벤트가 먼저 나올 확률(그 동료가 파티에 있고 아직 보지 않았을 때)
+Game.Data.personalEventChance = 0.35;
 Game.Data.eventById = Game.util.byId(Game.Data.events);

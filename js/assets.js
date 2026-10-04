@@ -139,6 +139,7 @@
       (D.relics || []).forEach(function (r) { add('유물', 'relic', r.id, r.name, path('relic', r.id), { desc: r.desc }); });
       (D.items || []).forEach(function (r) { add('소모품', 'item', r.id, r.name, path('item', r.id), { desc: r.desc }); });
       (D.story || []).forEach(function (ch) { add('이야기 삽화', 'story', 'ch' + ch.n, ch.title, path('story', 'ch' + ch.n), { need: false }); });
+      add('이야기 삽화', 'story', 'ascend', '승천 원정 시작', path('story', 'ascend'), { need: false });   // 38단계
       (D.events || []).forEach(function (e) { add('이벤트 삽화', 'event', e.id, e.name, path('event', e.id), { need: false, desc: e.text }); });
       // 아이콘 목록이 비면(테스트 환경 등) 찾을 때 쓰는 경로 판단을 위해 하위 폴더 이름을 바로잡는다
       out.forEach(function (o) { if (o.kind === 'icon') o.have = !!A.icon(o.id); });

@@ -220,7 +220,8 @@ P('');
 P('| 파일 | 크기 | 장면 | 상태 |');
 P('|---|---|---|---|');
 (D.story || []).forEach(ch => P('| `assets/backgrounds/story/ch' + ch.n + '.jpg` | ' + sz('story') + ' | ' + ch.title + ' | ' + mark('backgrounds/story/ch' + ch.n) + ' |'));
-(D.events || []).forEach(e => P('| `assets/backgrounds/events/' + e.id + '.jpg` | ' + sz('event') + ' | 이벤트 「' + e.name + '」 — ' + plain(e.text).slice(0, 70) + ' | ' + mark('backgrounds/events/' + e.id) + ' |'));
+P('| `assets/backgrounds/story/ascend.jpg` | ' + sz('story') + ' | 승천 원정 시작(38단계) — 혈마가 흩어진 뒤 다시 벌어진 붉은 틈 앞에 선 여섯 동료의 뒷모습 | ' + mark('backgrounds/story/ascend') + ' |');
+(D.events || []).forEach(e => P('| `assets/backgrounds/events/' + e.id + '.jpg` | ' + sz('event') + ' | ' + (e.hero ? '동료 이야기(' + D.characters.find(c => c.id === e.hero).name + ')' : '이벤트') + ' 「' + e.name + '」 — ' + plain(e.text).slice(0, 70) + ' | ' + mark('backgrounds/events/' + e.id) + ' |'));
 P('');
 
 fs.writeFileSync(path.join(ROOT, 'docs/IMAGE_REQUESTS.md'), out.join('\n'));

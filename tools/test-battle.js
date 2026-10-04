@@ -242,8 +242,9 @@ HEROES.forEach(id => {
 });
 check(traitN === 60, '특성 60개 (' + traitN + ')');
 
-// 이벤트 40종(22단계 30, 29단계 40)
-check(G.Data.events.length === 40, '이벤트 40종');
+// 이벤트 46종(22단계 30, 29단계 40, 38단계 동료 개인 이벤트 6)
+check(G.Data.events.length === 46, '이벤트 46종');
+check(['kai', 'bram', 'lyra', 'sera', 'nox', 'ciel'].every(id => G.Data.events.filter(e => e.hero === id).length === 1), '동료마다 개인 이벤트 1개');
 const EVENT_OPS = ['gold', 'hp', 'card', 'cardChoice', 'relic', 'upgrade', 'buff', 'curse', 'mirror', 'exp', 'bond', 'chance', 'fight', 'cutNext', 'item', 'purge', 'dup'];
 G.Data.events.forEach(ev => {
   check(ev.choices.length >= 2, ev.id + ': 선택지 2개 이상');

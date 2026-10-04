@@ -546,7 +546,10 @@
       var d = St.data, seen = d.eventsSeen = d.eventsSeen || [];
       // 22단계: 테마 이벤트는 그 테마의 스테이지에서만
       var theme = St._genTheme || (d.run ? (St.stageDef(d.run.stage) || {}).theme : null);
-      var ok = function (e) { return !e.themes || !theme || e.themes.indexOf(theme) >= 0; };
+      var ok = function (e) { return !e.hero && (!e.themes || !theme || e.themes.indexOf(theme) >= 0); };
+      // 38단계: 동료 개인 이벤트 — 그 동료가 파티에 있고 이 저장 칸에서 아직 보지 않았으면 먼저 나올 수 있다
+      var mine = D.events.filter(function (e) { return St.personalOk(e) && seen.indexOf(e.id) < 0; });
+      if (mine.length && G.rng.chance(D.personalEventChance || 0)) { var pe = G.rng.pick(mine); seen.push(pe.id); return pe.id; }
       var free = D.events.filter(function (e) { return seen.indexOf(e.id) < 0 && ok(e); });
       if (!free.length) { seen.length = 0; free = D.events.filter(ok); }
       var e = G.rng.pick(free);
@@ -929,7 +932,24 @@
     },
 
     // ================= 이벤트 =================
-    eventDef: function () { var n = St.node(); return n && n.event ? D.eventById[n.event] : null; },
+    // 개인 이벤트를 지금 낼 수 있는지: 그 동료가 파티에 있고(살아 있고) 아직 고른 적이 없다
+    personalOk: function (e) {
+      var d = St.data;
+      return !!(e && e.hero && d.party.indexOf(e.hero) >= 0 && !St.isDead(e.hero) && !((d.flags.personal || {})[e.id]));
+    },
+    eventDef: function () {
+      var n = St.node();
+      if (!n || !n.event) return null;
+      var ev = D.eventById[n.event];
+      // 개인 이벤트인데 그 동료가 그사이 파티에서 빠졌으면 다른 이벤트로 바꾼다(고르기 전만)
+      if (ev && ev.hero && !n.result && !St.personalOk(ev)) {
+        var chance = D.personalEventChance; D.personalEventChance = 0;
+        n.event = St.pickEvent(); D.personalEventChance = chance;
+        ev = D.eventById[n.event];
+        St.save();
+      }
+      return ev;
+    },
     canChoose: function (ch) { return !ch.need || !ch.need.gold || St.data.gold >= ch.need.gold; },
     // 선택지를 고르고 결과를 노드에 저장한다(새로고침해도 결과 화면이 이어진다)
     eventChoose: function (i) {
@@ -938,6 +958,7 @@
       var ch = ev.choices[i];
       if (!ch || !St.canChoose(ch)) return null;
       var res = node.result = { choice: i, log: [], text: ch.text || '', cards: null, fight: false };
+      if (ev.hero) { var fl = St.data.flags; fl.personal = fl.personal || {}; fl.personal[ev.id] = 1; }
       ch.effects.forEach(function (op) { St.eventOp(op, res); });
       St.save();
       return res;
@@ -949,13 +970,15 @@
     eventOp: function (op, res) {
       var d = St.data, r = d.run, party = St.partyAlive(), node = St.node(), def = St.stageDef(r.stage);
       var name = function (id) { return charDef(id).name; };
+      var hero = (St.eventDef() || {}).hero;   // 38단계: 개인 이벤트의 동료
+      if (hero && party.indexOf(hero) < 0) hero = null;
       switch (op.op) {
         case 'gold':
           d.gold = Math.max(0, d.gold + op.value);
           res.log.push('골드 ' + (op.value > 0 ? '+' : '') + op.value);
           break;
         case 'hp': {
-          var who = op.who === 'leader' ? party.slice(0, 1) : op.who === 'random' ? [G.rng.pick(party)] :
+          var who = op.who === 'hero' && hero ? [hero] : op.who === 'leader' ? party.slice(0, 1) : op.who === 'random' ? [G.rng.pick(party)] :
             op.who === 'all' ? Object.keys(r.hp) : party;
           var sum = 0;
           who.forEach(function (id) {
@@ -964,13 +987,13 @@
             r.hp[id] = loss ? Math.max(1, r.hp[id] - n) : Math.min(max, r.hp[id] + n);
             sum = n;
           });
-          var label = op.who === 'all' ? '동료 전원' : op.who === 'party' ? '파티 전원' : name(who[0]);
+          var label = op.who === 'all' ? '동료 전원' : op.who === 'party' || (op.who === 'hero' && !hero) ? '파티 전원' : name(who[0]);
           var sign = (op.pct != null ? op.pct : op.value) < 0 ? '-' : '+';
           res.log.push(label + ' 체력 ' + sign + (op.pct != null ? Math.round(Math.abs(op.pct) * 100) + '%' : sum));
           break;
         }
         case 'card': {
-          var id = St.rollEventCards(1, op.minRarity, op.rarity)[0];
+          var id = St.rollEventCards(1, op.minRarity, op.rarity, op.owner === 'hero' ? hero : op.owner)[0];
           if (id) { St.gainCard(id); res.log.push('카드 획득: ' + D.cardById[id].name + ' (' + G.RARITY_NAME[D.cardById[id].rarity] + ')'); res.gotCard = id; }
           else { d.gold += 30; res.log.push('얻을 카드가 없어 골드 +30'); }
           break;
@@ -1018,11 +1041,13 @@
           res.log.push('스테이지 덱의 카드 1장 복제');
           break;
         case 'exp':
+          if (op.who === 'hero' && hero) { St.growthOf(hero).exp += op.value; res.log.push(name(hero) + ' 경험치 +' + op.value); break; }
           party.forEach(function (id) { St.growthOf(id).exp += op.value; });
           res.log.push('파티 전원 경험치 +' + op.value);
           break;
         case 'bond': {
           var pairs = St.partyPairs(party);
+          if (op.who === 'hero' && hero) pairs = pairs.filter(function (k) { return k.split('+').indexOf(hero) >= 0; });
           pairs.forEach(function (k) { d.bonds[k] = (d.bonds[k] || 0) + op.value; });
           res.log.push(pairs.length ? '파티 짝마다 친밀도 +' + op.value : '친밀도를 나눌 동료가 없다');
           break;
@@ -1051,10 +1076,11 @@
       }
     },
     // 미보유 카드 count장. rarity 를 주면 그 등급(없으면 가까운 등급), minRarity 는 그 이상
-    rollEventCards: function (count, minRarity, rarity) {
+    rollEventCards: function (count, minRarity, rarity, owner) {
       var out = [];
       for (var i = 0; i < count; i++) {
         var pool = St.candidatePool(out), at = [];
+        if (owner) { var own = pool.filter(function (c) { return c.owner === owner; }); if (own.length) pool = own; }   // 38단계: 그 동료의 카드(없으면 아무 카드)
         if (rarity) {
           var want = rarityIdx(rarity);
           for (var k = 0; k < 5 && !at.length; k++) {
@@ -1318,12 +1344,13 @@
       var sv = St.data.story;
       if (sv.seen.indexOf(id) < 0) { sv.seen.push(id); St.save(); }
     },
-    // n 장의 kind 장면 중 아직 보지 않은 것(승천 장면은 매번 보여 준다)
-    sceneFor: function (kind, n) {
+    // n 장의 kind 장면 중 아직 보지 않은 것(승천 장면은 매번 보여 준다). 38단계: 승천은 asc(승천 단계)가 같은 장면이 먼저
+    sceneFor: function (kind, n, asc) {
       var ch = (D.story || []).filter(function (c) { return c.n === n; })[0];
       if (!ch && kind === 'ascend') ch = (D.story || [])[(D.story || []).length - 1];
       if (!ch) return null;
-      var sc = ch.scenes.filter(function (x) { return x.kind === kind; })[0];
+      var list = ch.scenes.filter(function (x) { return x.kind === kind; });
+      var sc = (asc && list.filter(function (x) { return x.asc === asc; })[0]) || list.filter(function (x) { return !x.asc; })[0];
       if (!sc || (kind !== 'ascend' && St.storySeen(sc.id))) return null;
       return sc;
     },
