@@ -52,7 +52,14 @@
     },
     portrait: function (id) { return url(find(path('portrait', id))); },
     face: function (id) { return url(find(path('face', id))); },
-    cardArt: function (id) { return url(find(path('cardArt', String(id).split('+')[0]))); },
+    // 카드 그림: 전용(cards/art/{id}) → 40단계: 주인별 공유(cards/shared/{owner}) → 없으면 null(코드 그림)
+    cardArt: function (id) {
+      var base = String(id).split('+')[0], own = url(find(path('cardArt', base)));
+      if (own) return own;
+      var c = D.cardById && D.cardById[base];
+      return c && c.owner && c.owner !== 'none' ? url(find(path('cardShared', c.owner))) : null;
+    },
+    cardArtOwn: function (id) { return url(find(path('cardArt', String(id).split('+')[0]))); },
     cardFrame: function (lay, rarity, duo) { return url(find(path('cardFrame', duo ? 'duo' : lay + '_' + rarity))); },
     battleBg: function (theme) { return url(find(path('bgBattle', theme))); },
     battleFore: function (theme) { return url(find(path('bgFore', theme))); },
@@ -90,6 +97,13 @@
       });
     },
     missing: function () { return Object.keys(missing); },
+    // 40단계: UI 부품(버튼 · 패널 테두리)이 모두 읽혔으면 body 에 ui-parts 를 붙여 CSS 가 그 그림을 쓴다
+    applyUiParts: function () {
+      if (typeof document === 'undefined' || !document.body) return;
+      var need = ['button_primary', 'button_secondary', 'panel_border'];
+      var ok = need.every(function (n) { return A.has('ui/components/' + n + '.png'); });
+      document.body.classList.toggle('ui-parts', ok);
+    },
 
     // ---------------- 필요한 그림 전체 목록(확인 화면 · 요청서) ----------------
     // 반환: [{ group, kind, id, label, base(확장자 없는 경로), size, alpha, need, desc, have }]
@@ -124,6 +138,9 @@
       });
       ['ink', 'split'].forEach(function (lay) { (G.RARITIES || []).forEach(function (r) { add('카드 틀', 'cardFrame', lay + '_' + r, (lay === 'ink' ? '무공(수묵)' : '마법·융합(두 세계)') + ' · ' + (G.RARITY_NAME || {})[r], path('cardFrame', lay + '_' + r)); }); });
       add('카드 틀', 'cardFrame', 'duo', '합동기', path('cardFrame', 'duo'));
+      (D.characters || []).map(function (c) { return [c.id, c.name]; }).concat([['common', '공용']]).forEach(function (o) {   // 40단계
+        add('카드 공유 그림', 'cardShared', o[0], o[1] + ' 카드 공유 그림', path('cardShared', o[0]), { need: false, desc: '전용 그림이 없는 카드가 쓴다' });
+      });
       (D.cards || []).concat(D.duoCards || []).forEach(function (c) {
         if (String(c.id).indexOf('+') >= 0) return;
         add('카드 그림', 'cardArt', c.id, c.name, path('cardArt', c.id), { rarity: c.rarity, owner: c.owner, desc: c.text, need: c.owner !== 'none' });

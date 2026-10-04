@@ -26,7 +26,11 @@ function section(name) { console.log('\n■ ' + name); }
 section('리소스');
 {
   const A = G.Assets, real = G.Data.assets.files;
+  G.Data.assets.files = {};
   check(A.sprite('kai') === null && A.cardArt('K01') === null && A.icon('strength') === null, '리소스가 없으면 null(코드 그림)');
+  // 40단계: 카드 그림은 전용 → 주인별 공유 → 없으면 null
+  G.Data.assets.files = { 'cards/shared/kai.png': [600, 500, 0], 'cards/shared/common.png': [600, 500, 0] };
+  check(/shared\/kai\.png$/.test(A.cardArt('K03+2')) && /shared\/common\.png$/.test(A.cardArt('C01')) && A.cardArt('B01') === null, '카드 그림: 전용이 없으면 주인별 공유 그림');
   G.Data.assets.files = { 'characters/heroes/kai_idle.png': [512, 512, 1], 'characters/heroes/kai_attack_s6.png': [3072, 512, 1], 'characters/monsters/toad_king_idle.webp': [1024, 1024, 1],
     'cards/art/K01.jpg': [600, 500, 0], 'cards/frames/ink_rare.png': [500, 700, 1], 'icons/status/strength.png': [128, 128, 1], 'items/relics/R01.png': [128, 128, 1],
     'backgrounds/battle_forest.jpg': [1920, 1080, 0], 'backgrounds/world_map.png': [2000, 1120, 0], 'characters/heroes/kai_portrait.png': [1024, 1536, 1] };

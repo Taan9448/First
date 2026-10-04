@@ -61,8 +61,9 @@ function kindOf(rel) {
     return { kind: '?', id: base };
   }
   if (p.startsWith('cards/art/')) return { kind: 'cardArt', id: base, known: !!(cards[base] || duo[base]) };
+  if (p.startsWith('cards/shared/')) return { kind: 'cardShared', id: base, known: heroes.includes(base) || base === 'common' };   // 40단계: 카드 주인별 공유 그림
   if (p.startsWith('cards/frames/')) return { kind: 'cardFrame', id: base, known: /^(ink|split)_(common|uncommon|rare|epic|legendary)$|^duo$/.test(base) };
-  if (p.startsWith('backgrounds/story/')) return { kind: 'story', id: base, known: /^ch\d+$/.test(base) };
+  if (p.startsWith('backgrounds/story/')) return { kind: 'story', id: base, known: /^ch\d+$|^ascend$/.test(base) };
   if (p.startsWith('backgrounds/events/')) return { kind: 'event', id: base, known: !!(D.events || []).find(e => e.id === base) };
   if (p.startsWith('backgrounds/')) {
     if (base === 'world_map') return { kind: 'worldMap', id: base, known: true };

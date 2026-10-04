@@ -111,6 +111,7 @@
     G.Extra.initMenu();
     // 36단계: 리소스(assets/)를 먼저 읽는다. 읽지 못한 파일은 코드 그림으로 되돌린다. ?assets=1 이면 리소스 확인 화면
     Promise.all([G.Assets.preload(4000), G.CharacterArt.load()]).then(function () {
+      G.Assets.applyUiParts();   // 40단계: UI 부품 그림이 있으면 큰 버튼 · 패널에 쓴다
       if (/[?&]assets=1/.test(location.search) && G.AssetView) G.AssetView.open();
       else G.Meta.title();
     });

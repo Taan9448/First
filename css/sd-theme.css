@@ -187,3 +187,12 @@ b { font-weight:700; }
 .card .ctemp.new,.card.lay-ink .ctemp.new,.card.lay-split .ctemp.new { left:auto; right:1.4em; top:2.6em; }
 .sc-btns .asc-row { display:flex; flex-wrap:wrap; gap:4px; width:100%; }
 .sc-btns .asc-row .btn { min-width:0; min-height:32px; padding:2px 9px; }
+/* ---- 40단계(Claude): ChatGPT UI 부품 — 큰 버튼 · 큰 패널. 파일이 목록에 있을 때만 body.ui-parts(js/assets.js)가 켠다.
+   border-image 9조각이라 장식 끝이 늘어나지 않는다(캔버스 가공 없음). 글자는 그대로 HTML ---- */
+body.ui-parts .btn.big::before { clip-path:none; background:none; box-shadow:none; border-style:solid; border-width:0 48px;
+  border-image:url(../assets/ui/components/button_secondary.png) 4% 30% fill / 0 48px stretch; }
+body.ui-parts .btn.gold.big::before { border-image-source:url(../assets/ui/components/button_primary.png); }
+body.ui-parts .btn.big { padding:14px 56px; min-height:58px; }
+body.ui-parts .btn.big:focus-visible { outline-offset:0; }
+body.ui-parts .asc-panel::after,body.ui-parts .event-card::after,body.ui-parts .map-side::after { background:none; opacity:1; inset:-6px;
+  border-style:solid; border-width:34px; border-image:url(../assets/ui/components/panel_border.png) 14% / 34px stretch; }

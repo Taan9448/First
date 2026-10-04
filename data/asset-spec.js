@@ -12,6 +12,7 @@ Game.Data.assetSpec = {
   portrait:    { dir: 'characters/heroes', name: '{id}_portrait', size: [1024, 1536], alpha: true, desc: '동료 전신 일러스트(로비 큰 그림 · 이야기 화면). 무릎 위 또는 전신, 살짝 오른쪽을 보는 3/4 자세' },
   face:        { dir: 'characters/heroes', name: '{id}_face', size: [512, 512], alpha: true, desc: '필살기 컷인 얼굴(가슴 위). 얼굴이 가운데보다 조금 위' },
   cardArt:     { dir: 'cards/art', name: '{id}', size: [600, 500], alpha: false, desc: '카드 그림 창(가로 6 : 세로 5). 가장자리까지 채운 그림, 글자 넣지 않음' },
+  cardShared:  { dir: 'cards/shared', name: '{id}', size: [600, 500], alpha: false, desc: '(40단계) 카드 주인별 공유 그림. 전용 그림(cards/art/{카드id})이 없는 카드가 쓴다. {id} = 동료 id 또는 common' },
   cardFrame:   { dir: 'cards/frames', name: '{id}', size: [500, 700], alpha: true, desc: '카드 틀(5:7). 그림 창 · 이름 · 비용 · 본문 자리는 투명. {id} = ink_등급 · split_등급(등급: common uncommon rare epic legendary)' },
   bgBattle:    { dir: 'backgrounds', name: 'battle_{id}', size: [1920, 1080], alpha: false, desc: '전투 배경(16:9). 위에서 70% 높이쯤이 땅(캐릭터가 선다). 가운데는 차분하게(캐릭터·숫자가 잘 보이게)' },
   bgFore:      { dir: 'backgrounds', name: 'battle_{id}_fore', size: [1920, 240], alpha: true, desc: '(선택) 전투 앞쪽 장식 띠. 화면 맨 아래 캐릭터 발 앞에 깔린다' },

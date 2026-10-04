@@ -24,6 +24,8 @@ ChatGPT(Art Director)가 만드는 그림의 **기술 조건**이다. 화풍·�
 | 동료 컷인 얼굴 | `assets/characters/heroes/{동료id}_face.png` | 512×512 | 투명 |
 | 몬스터 전투 동작 | `assets/characters/monsters/{몬스터id}_{동작}.png` | 일반 512 · 정예 768 · 보스 1024 (정사각) | 투명 |
 | 카드 그림 | `assets/cards/art/{카드id}.png` | 600×500 (6:5) | 불투명 |
+| 카드 공유 그림(40단계) | `assets/cards/shared/{동료id \| common}.png` — 전용 그림이 없는 그 동료(공용) 카드가 쓴다 | 600×500 (6:5) | 불투명 |
+| UI 부품(40단계) | `assets/ui/components/button_primary.png` · `button_secondary.png` · `panel_border.png` — 9조각으로 늘린다(버튼 좌우 30% · 패널 모서리 14%는 늘어나지 않는다) | 3:1 · 4:3 | 투명 |
 | 카드 틀 | `assets/cards/frames/{ink|split}_{등급}.png`, `duo.png` | 500×700 (5:7) | 투명 |
 | 전투 배경 | `assets/backgrounds/battle_{테마}.jpg` | 1920×1080 | 불투명 |
 | 전투 앞쪽 띠(선택) | `assets/backgrounds/battle_{테마}_fore.png` | 1920×240 | 투명 |
