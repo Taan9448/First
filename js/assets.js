@@ -64,6 +64,8 @@
     battleBg: function (theme) { return url(find(path('bgBattle', theme))); },
     battleFore: function (theme) { return url(find(path('bgFore', theme))); },
     screenBg: function (name) { return url(find(path('bgScreen', name))); },
+    // 40단계: 사용자가 만든 화면 전체 디자인(ui/screens/{name}_skin) — 있으면 그 화면은 이 그림 위에 글자 · 단추만 얹는다
+    uiSkin: function (name) { return url(find('ui/screens/' + name + '_skin')); },
     // 40단계: 시작 화면 배경 후보 — 타이틀(title · title_2 …) · 로비 · 전투 배경 7종 중 있는 것(사용자 요청: 열 때마다 무작위)
     titleBgs: function () {
       var out = [], self = this;

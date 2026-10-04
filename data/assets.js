@@ -43,5 +43,6 @@ Game.Data.assets = { files: {
   "icons/status/strength.png": [1254,1254,1],
   "ui/components/button_primary.png": [2172,724,1],
   "ui/components/button_secondary.png": [2172,724,1],
-  "ui/components/panel_border.png": [1448,1086,1]
+  "ui/components/panel_border.png": [1448,1086,1],
+  "ui/screens/lobby_skin.png": [1586,992,1]
 } };

@@ -52,6 +52,8 @@
     var deckN = St.battleDeck(d.party).length;
     var canParty = !r || (r.col === 0 && !r.pending);
     var hc = charDef(heroPick);
+    var skin = G.Assets && G.Assets.uiSkin && G.Assets.uiSkin('lobby');
+    if (skin) return lobbySkin(el, skin, { n: n, def: def, r: r, asc: asc, owned: owned, all: allCards.length, sp: sp, deckN: deckN, canParty: canParty, hc: hc });
 
     el.innerHTML = '<div class="lb-bg"></div><div class="lb-shade"></div>' +
       '<header class="lb-top">' +
@@ -203,6 +205,72 @@
 
   var TILE_ICO = { go: 'compass', map: 'compass', party: 'party', deck: 'deck', heroes: 'party', story: 'scroll', forge: 'anvil' };
   var COMPASS = '<svg viewBox="0 0 40 40" class="ico"><path d="M20 3l3.2 13.8L37 20l-13.8 3.2L20 37l-3.2-13.8L3 20l13.8-3.2z" fill="#e9cf8a"/><path d="M20 10l1.6 8.4L30 20l-8.4 1.6L20 30l-1.6-8.4L10 20l8.4-1.6z" fill="#8a6a33"/></svg>';
+  // 40단계(사용자 디자인 assets/ui/screens/lobby_skin.png, 1586×992): 그림을 화면 가득 깔고 빈 칸 자리에 글자 · 투명 단추만 얹는다
+  var SW = 1586, SH = 992;
+  function at(x1, y1, x2, y2) {
+    return 'left:' + (x1 / SW * 100).toFixed(3) + '%;top:' + (y1 / SH * 100).toFixed(3) + '%;width:' + ((x2 - x1) / SW * 100).toFixed(3) + '%;height:' + ((y2 - y1) / SH * 100).toFixed(3) + '%';
+  }
+  function hit(cls, box, inner, tip) { return '<button type="button" class="lk-hit ' + cls + '" style="' + at.apply(null, box) + '"' + (tip ? ' aria-label="' + tip + '" data-tip="' + tip + '"' : '') + '>' + (inner || '') + '</button>'; }
+  function txt(cls, box, inner) { return '<div class="lk-t ' + cls + '" style="' + at.apply(null, box) + '">' + inner + '</div>'; }
+  function lobbySkin(el, skin, c) {
+    var d = St.data, r = c.r, n = c.n, hc = c.hc;
+    var b0 = banners()[0];
+    var forgeN = St.forgeList().length;
+    el.innerHTML = '<div class="lk"><img class="lk-img" src="' + skin + '" alt=""><div class="lk-ui">' +
+      txt('lk-plaque', [92, 16, 365, 56], '<b>하린 일행</b><span class="mode-chip" style="--mc:' + St.mode().color + '">' + St.mode().name + '</span><small>LV ' + maxLevel() + ' · ' + G.Save.slot + '번 칸' + (c.asc ? ' · 승천 ' + c.asc : '') + '</small>') +
+      txt('lk-res', [1000, 14, 1095, 54], '<b>' + d.gold + '</b>') +
+      txt('lk-res', [1182, 14, 1278, 54], '<b>' + c.owned + '</b><small>/' + c.all + '</small>') +
+      txt('lk-res', [1362, 14, 1472, 54], '<b>' + d.relics.length + '</b><small>/' + D.relics.length + '</small>') +
+      hit('to-title', [1502, 12, 1564, 60], '', '타이틀로') +
+      hit('nav-set', [38, 92, 96, 146], '', '설정') +
+      hit('nav-help', [38, 160, 96, 214], '', '도움말') +
+      txt('lk-name', [200, 156, 404, 202], '<b>' + hc.name + '</b><small>' + hc.job + ' · Lv ' + St.levelOf(hc.id) + '</small>') +
+      hit('lk-hero', [60, 220, 600, 700], '', '') +
+      txt('lk-voice', [42, 712, 282, 772], '<p></p>') +
+      hit('lk-target', [28, 795, 617, 897], '<span class="lk-tx"><small>' + U.esc(b0.small) + '</small><b>' + U.esc(b0.title) + '</b><span>' + U.esc(b0.sub) + '</span></span>') +
+      hit('t-go', [652, 82, 1545, 282], '<span class="lk-tl" style="left:9%;top:10%"><b>원정</b><small>EXPEDITION</small></span>' +
+        '<span class="lk-info" style="left:9%;bottom:12%"><small>' + D.THEME_NAME[c.def.theme] + '</small><b>STAGE ' + n + ' · ' + D.STAGE_NAME[n - 1] + '</b><span>' +
+        (r ? '진행 중 · 깊이 ' + Math.min(r.col + 1, r.map.length) + '/' + r.map.length : n <= d.clearedStage ? '돌파한 스테이지' : '새 스테이지') + (c.asc ? ' · 승천 ' + c.asc : '') + '</span></span>' +
+        '<span class="lk-go">' + (r ? '이어하기' : n <= d.clearedStage ? '다시 도전' : '출발') + '</span>') +
+      hit('t-map', [652, 293, 937, 485], '<span class="lk-tl"><b>지도</b><small>WORLD MAP</small></span><span class="lk-info"><span>클리어 ' + d.clearedStage + '/' + St.stageCount() + '</span></span>') +
+      hit('t-party', [952, 293, 1302, 485], '<span class="lk-tl"><b>편성</b><small>SQUAD</small></span><span class="lk-info"><span>' + d.party.map(function (id) { return charDef(id).name; }).join(' · ') + '</span></span>', c.canParty ? '' : '진행 중인 스테이지에서는 첫 갈림길 · 휴식 · 상점에서만 편성을 바꿀 수 있다') +
+      hit('t-deck', [1317, 293, 1545, 485], '<span class="lk-tl"><b>덱</b><small>DECK</small></span><span class="lk-info"><span>전투 덱 ' + c.deckN + '장</span></span>') +
+      hit('t-heroes', [652, 497, 1102, 650], '<span class="lk-tl"><b>동료</b><small>HEROES · ' + d.characters.length + '/' + D.characters.length + '</small></span>') +
+      hit('t-story', [1118, 497, 1545, 650], '<span class="lk-tl"><b>스토리</b><small>STORY</small></span><span class="lk-pct">' + c.sp.pct + '<small>%</small></span>' +
+        '<span class="lk-bar" style="' + at(1185 - 1118, 620 - 497, 1483 - 1118, 633 - 497).replace(/[\d.]+%/g, function (v, i) { return v; }) + '"></span>') +
+      hit('t-forge', [652, 662, 1545, 795], '<span class="lk-tl"><b>대장간</b><small>FORGE</small></span>') +
+      txt('lk-forge', [1140, 690, 1505, 772], '<b>천외 대장간</b><span>4~10단계 강화 · 벼릴 수 있는 카드 <em>' + forgeN + '</em>장</span>') +
+      txt('lk-journal', [740, 830, 1380, 885], '<b>원정 일지</b><span>' + journal() + '</span>') +
+      [['heroes', 238, '동료'], ['cards', 490, '카드'], ['monsters', 755, '몬스터'], ['relics', 1015, '유물'], ['stats', 1272, '기록']].map(function (k) {
+        return hit('lk-nav', [k[1], 915, k[1] + 76, 985], '', k[2]).replace('class="lk-hit lk-nav"', 'class="lk-hit lk-nav" data-nav="' + k[0] + '"');
+      }).join('') +
+      '</div></div>';
+    // 스토리 진행 막대(타일 안 좌표)
+    var bar = el.querySelector('.lk-bar');
+    bar.style.cssText = 'left:' + ((1185 - 1118) / (1545 - 1118) * 100) + '%;top:' + ((619 - 497) / (650 - 497) * 100) + '%;width:' + ((1483 - 1185) / (1545 - 1118) * 100) + '%;height:' + (15 / (650 - 497) * 100) + '%';
+    bar.innerHTML = '<i style="width:' + c.sp.pct + '%"></i>';
+    // 대사
+    var voice = el.querySelector('.lk-voice p'), lines = hc.voice || [], vi = Math.floor(Math.random() * lines.length);
+    var say = function () { if (!lines.length) return; vi = (vi + 1) % lines.length; voice.textContent = lines[vi]; };
+    say(); timers.push(setInterval(say, 9000));
+    el.querySelector('.lk-hero').onclick = function () { say(); SND('click'); };
+    // 동작
+    var on = function (sel, f) { el.querySelector(sel).onclick = function () { SND('click'); f(); }; };
+    on('.t-go', function () { if (r) Meta.continueRun(); else Meta.map(n); });
+    on('.t-map', function () { Meta.map(); });
+    on('.t-party', function () { if (c.canParty) Meta.party(Meta.lobby, '확인', Meta.lobby); });
+    on('.t-deck', function () { G.Extra.deck(); });
+    on('.t-heroes', function () { G.Extra.codex('heroes'); });
+    on('.t-story', function () { if (Meta.story) Meta.story(); });
+    on('.t-forge', function () { Meta.forge(); });
+    on('.lk-target', function () { b0.go(); });
+    on('.nav-set', function () { G.Extra.settingsWin(); });
+    on('.nav-help', function () { G.Extra.help(); });
+    on('.to-title', function () { stop(); Meta.title(); });
+    UI.$$('.lk-nav', el).forEach(function (b) { b.onclick = function () { var k = b.getAttribute('data-nav'); if (k === 'stats') G.Extra.stats(); else G.Extra.codex(k); }; });
+    UI.show('lobby');
+  }
+
   function tile(key, cls, ko, en, inner, disabled) {
     var ic = TILE_ICO[key];
     return '<button class="tile ' + cls + '" data-go="' + key + '"' + (disabled ? ' disabled' : '') + '><div class="tart"></div>' +

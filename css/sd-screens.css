@@ -703,3 +703,39 @@ body.ui-parts #gmenu .btn.icon::before { border:none; border-image:none; border-
   .lb-medals .medal { max-width:44px; } .lb-medals { bottom:7px; }
   #screen-lobby .tile .ti { bottom:7px; }
 }
+
+/* ================= 로비 — 사용자 디자인 그림(assets/ui/screens/lobby_skin.png) 위에 글자 · 투명 단추만 얹는다 ================= */
+#screen-lobby .lk { position:absolute; left:50%; top:50%; width:min(100%,calc(100vh * 1586 / 992)); aspect-ratio:1586 / 992; transform:translate(-50%,-50%); container-type:inline-size; }
+#screen-lobby:has(.lk) { background:#05080f; }
+.lk-img { position:absolute; inset:0; width:100%; height:100%; display:block; user-select:none; pointer-events:none; }
+.lk-ui { position:absolute; inset:0; font-size:1.05cqw; color:#f3e6c4; }
+.lk-t,.lk-hit { position:absolute; box-sizing:border-box; }
+.lk-hit { border:0; padding:0; margin:0; background:transparent; cursor:pointer; color:inherit; font:inherit; text-align:left; border-radius:.4em; transition:box-shadow .15s,background .15s; }
+.lk-hit:hover { background:#eed4a012; box-shadow:0 0 0 .14em #eed4a0aa,0 0 1.2em #eed4a055; }
+.lk-hit:focus-visible { outline:.2em solid #8ce6de; outline-offset:.2em; }
+.lk-hero:hover { background:none; box-shadow:none; }
+.lk-t { display:flex; align-items:center; pointer-events:none; }
+.lk-plaque { gap:.6em; } .lk-plaque b { font:700 1.35em var(--font-serif); } .lk-plaque small { color:#c3bbad; font-size:.8em; }
+.lk-plaque .mode-chip { font-size:.75em; }
+.lk-res { justify-content:flex-start; gap:.15em; font-family:var(--font-body); } .lk-res b { font-size:1.35em; } .lk-res small { color:#c3bbad; font-size:.85em; }
+.lk-name { flex-direction:column; align-items:flex-start; justify-content:center; padding-left:.8em; color:var(--ink); }
+.lk-name b { font:700 1.6em/1.1 var(--font-serif); } .lk-name small { color:var(--ink2); font-size:.8em; }
+.lk-voice { padding:.2em .9em; color:var(--ink); } .lk-voice p { margin:0; font-size:.92em; line-height:1.45; }
+.lk-target .lk-tx { position:absolute; left:15%; right:4%; top:0; bottom:0; display:flex; flex-direction:column; justify-content:center; gap:.1em; text-shadow:0 .1em .3em #000; }
+.lk-target small { color:#e5969c; letter-spacing:.2em; font-size:.75em; } .lk-target b { font:700 1.3em var(--font-serif); } .lk-target span span { color:#d8ccb0; font-size:.85em; }
+.lk-tl { position:absolute; left:4.8em; top:1.25em; display:flex; flex-direction:column; line-height:1.1; text-shadow:0 .1em .4em #000,0 0 .8em #000; }
+.lk-tl b { font:700 1.55em var(--font-serif); color:#f6ead0; } .lk-tl small { font-size:.62em; letter-spacing:.3em; color:#e9cf8a; }
+.lk-info { position:absolute; left:1.2em; bottom:.9em; display:flex; flex-direction:column; gap:.1em; font-size:.9em; text-shadow:0 .1em .3em #000,0 0 .6em #000; }
+.lk-info b { font:700 1.3em var(--font-serif); color:#fff4df; } .lk-info small { color:#e9cf8a; }
+.lk-go { position:absolute; left:75.2%; top:71.5%; width:22%; height:23%; display:grid; place-items:center; font:700 1.35em var(--font-serif); letter-spacing:.25em; color:#fff4df; text-shadow:0 .1em .2em #000; }
+.lk-pct { position:absolute; right:1em; top:.8em; font:700 1.6em var(--font-serif); text-shadow:0 .1em .3em #000; } .lk-pct small { font-size:.55em; color:#8ce6de; }
+.lk-bar { position:absolute; overflow:hidden; border-radius:1em; } .lk-bar i { display:block; height:100%; background:linear-gradient(90deg,#3fb8ad,#8ce6de); }
+.t-story .lk-tl { color:var(--ink); }
+.lk-forge { flex-direction:column; align-items:flex-start; justify-content:center; gap:.2em; padding-left:1.2em; }
+.lk-forge b { font:700 1.35em var(--font-serif); } .lk-forge span { color:#c3bbad; font-size:.9em; } .lk-forge em { font-style:normal; color:#e9cf8a; font-weight:700; }
+.lk-journal { gap:1em; color:var(--ink); } .lk-journal b { font:700 1.1em var(--font-serif); color:#7a1a22; white-space:nowrap; } .lk-journal span { font-size:.92em; }
+.lk-nav { border-radius:.6em; }
+.lk-name b { color:#1f1a14 !important; text-shadow:none; } .lk-name small { color:#4a3f30 !important; }
+.lk-bar { background:#0b1220; box-shadow:inset 0 0 0 .08em #8a6a33; }
+.lk-info { padding:.25em .7em; border-radius:.3em; background:#0b1220c4; }
+.t-go .lk-info { background:#0b122099; }
